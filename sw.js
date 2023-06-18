@@ -1,11 +1,7 @@
 
 const cacheName = 'collections-v1';
-const contentToCache = [
+const preferCacheContent = [
   '/',
-  // Don't cache these until we have code to pull new versions automatically.
-  // 'index.html',
-  // 'app.js',
-  // 'collections.css',
   'favicon.ico',
   'icons/icon-32.png',
   'icons/icon-64.png',
@@ -15,42 +11,68 @@ const contentToCache = [
   'icons/icon-192.png',
   'icons/icon-256.png',
   'icons/icon-512.png',
+  '/images/IMG_0521.small.jpg',
+];
+
+const preferNetContent = [
+  'index.html',
+  'app.js',
+  'collections.css',
 ];
 
 self.addEventListener('install', (e) => {
   console.log('service worker install event');
   e.waitUntil((async () => {
     const cache = await caches.open(cacheName);
-    console.log('caching files');
+
+    console.log('cache all files');
+    const contentToCache = preferNetContent.concat(preferCacheContent);
     await cache.addAll(contentToCache);
   })());
 });
 
 self.addEventListener('fetch', (e) => {
-  console.log('service worker fetch event');
+  // Get the url to fetch.
+  const url = e.request.url
+
+  console.log(`service worker fetch event for ${url}`);
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
-  if (!(e.request.url.startsWith('http:') ||
-        e.request.url.startsWith('https:'))) {
-    console.log(`ignore: ${e.request.url}`);
-    return; 
+  if (!(url.startsWith('http:') || url.startsWith('https:'))) {
+    console.log(`ignore: ${url}`)
+    // Do the default thing.
+    return
   }
 
   e.respondWith((async () => {
-    // Look for the file in the cache.
-    const r = await caches.match(e.request);
-    if (r) {
-      console.log(`found in cache: ${e.request.url}`);
-      return r;
+    // If the file prefers the net, try to fetch it from there.
+
+    // Get the last conponent of the url.
+    const lastComponent = url.split("/").pop()
+
+    if (preferNetContent.includes(lastComponent)) {
+      var response = await fetch(e.request);
+      if (response) {
+        console.log(`found on net: ${url}`);
+
+        // Add the file to the cache.
+        console.log(`add to cache: ${url}`);
+        const cache = await caches.open(cacheName);
+        cache.put(e.request, response.clone());
+        return response;
+      }
+      console.log(`prefer net file not found on net: ${url}`);
     }
 
-    // Fetch the file from the net.
-    const response = await fetch(e.request);
+    // Look for the file in the cache.
+    const cacheReponse = await caches.match(e.request);
+    if (cacheReponse) {
+      console.log(`found in cache: ${url}`);
+      return cacheReponse;
+    } else {
+      console.log(`not found: ${url}`);
+    }
+    return await fetch(e.request);
 
-    // Add the file to the cache.
-    console.log(`add to cache: ${e.request.url}`);
-    const cache = await caches.open(cacheName);
-    cache.put(e.request, response.clone());
-    return response;
   })());
 });
