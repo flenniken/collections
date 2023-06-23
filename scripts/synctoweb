@@ -1,0 +1,6 @@
+#!/bin/bash
+
+rsync -vrhpu --exclude '*~' --exclude '#*' --exclude '.git' \
+ /Users/steve/code/collections \
+ 1and1:flenniken/site/web/
+ 
