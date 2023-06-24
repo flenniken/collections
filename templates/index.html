@@ -19,15 +19,19 @@
 </head>
 <body id="collections-page">
   <h1>Flenniken.net Collections</h1>
-    <a href="pages/thumbnails-1.html">
-      <img class="thumbnail" src="images/3-t.jpg" alt="Glacier Park">
+<!--$ block -->
+<!--$ : t.repeat = len(s.collections) -->
+<!--$ : collection = s.collections[t.row] -->
+    <a href="{collection.url}">
+      <img class="thumbnail" src="{collection.thumbnail}" alt="{collection.title}">
     </a>
     <div>
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
+      <p class="title">{collection.title}</p>
+      <a href="{collection.url}">
+        <p class="description">{collection.description}</p>
       </a>
-      <p class="posted">June 2023</p>
+      <p class="posted">{collection.posted}</p>
     </div>
+<!--$ endblock -->
 </body>
 </html>

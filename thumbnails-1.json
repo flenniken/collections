@@ -1,0 +1,54 @@
+{
+  "title": "Glacier Park",
+  "collection": 1,
+  "images": [
+    {
+      "pageUrl": "../pages/image-1.html",
+      "url": "../images/1-p.jpg",
+      "thumbnail": "../images/1-t.jpg",
+      "title": "Glacier Park"
+    },
+    {
+      "pageUrl": "../pages/image-2.html",
+      "url": "../images/2-p.jpg",
+      "thumbnail": "../images/2-t.jpg",
+      "title": "Glacier Park"
+    },
+    {
+      "pageUrl": "../pages/image-3.html",
+      "url": "../images/3-p.jpg",
+      "thumbnail": "../images/3-t.jpg",
+      "title": "Glacier Park"
+    },
+    {
+      "pageUrl": "../pages/image-4.html",
+      "url": "../images/4-p.jpg",
+      "thumbnail": "../images/4-t.jpg",
+      "title": "Glacier Park"
+    },
+    {
+      "pageUrl": "../pages/image-5.html",
+      "url": "../images/5-p.jpg",
+      "thumbnail": "../images/5-t.jpg",
+      "title": "Glacier Park"
+    },
+    {
+      "pageUrl": "../pages/image-6.html",
+      "url": "../images/6-p.jpg",
+      "thumbnail": "../images/6-t.jpg",
+      "title": "Glacier Park"
+    },
+    {
+      "pageUrl": "../pages/image-7.html",
+      "url": "../images/7-p.jpg",
+      "thumbnail": "../images/7-t.jpg",
+      "title": "Glacier Park"
+    },
+    {
+      "pageUrl": "../pages/image-8.html",
+      "url": "../images/8-p.jpg",
+      "thumbnail": "../images/8-t.jpg",
+      "title": "Glacier Park"
+    }
+  ]
+}
