@@ -1,6 +1,8 @@
 {
   "title": "Glacier Park",
   "collection": 1,
+  "width": 480,
+  "height": 480,
   "images": [
     {
       "pageUrl": "../pages/image-1.html",

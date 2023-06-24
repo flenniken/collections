@@ -3,5 +3,7 @@
   "description": "description",
   "keywords": "",
   "url": "../images/2-p.jpg",
-  "thumbnail": "../images/2-t.jpg"
+  "thumbnail": "../images/2-t.jpg",
+  "pWidth": 4032,
+  "pHeight": 3024
 }
