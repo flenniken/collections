@@ -1,4 +1,5 @@
 // image.js
+"use strict";
 
 // The collection's json data.
 var cJson = null

@@ -1,4 +1,5 @@
 // thumbnails.js
+"use strict";
 
 window.addEventListener("load", showPageSize)
 window.addEventListener("resize", showPageSize)
