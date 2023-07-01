@@ -32,7 +32,7 @@ function nextImage() {
 function setImage(ix) {
   // Set the current image.
   let image = cJson.images[ix]
-  let img = `<img id="image" width="${image.pWidth}" height="${image.pHeight}" src="${image.url}" alt="${image.title}">`
+  let img = `<img id="image" width="${image.width}" height="${image.height}" src="${image.url}" alt="${image.title}">`
   console.log(`${img}`);
   document.getElementById("imageDiv").innerHTML = img
 }

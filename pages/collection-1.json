@@ -11,8 +11,8 @@
     "title":"Glacier Park",
     "description": "",
     "keywords": "",
-    "pWidth":3024,
-    "pHeight":4032
+    "width":3024,
+    "height":4032
   },
   {
     "url":"../images/2-p.jpg",
@@ -20,8 +20,8 @@
     "title":"Glacier Park",
     "description": "",
     "keywords": "",
-    "pWidth":4032,
-    "pHeight":3024
+    "width":4032,
+    "height":3024
   },
   {
      "url":"../images/3-p.jpg",
@@ -29,8 +29,8 @@
      "title":"Glacier Park",
     "description": "",
     "keywords": "",
-     "pWidth":4032,
-     "pHeight":3024
+     "width":4032,
+     "height":3024
   },
   {
      "url":"../images/4-p.jpg",
@@ -38,8 +38,8 @@
      "title":"Glacier Park",
     "description": "",
     "keywords": "",
-     "pWidth":4032,
-     "pHeight":3024
+     "width":4032,
+     "height":3024
   },
   {
      "url":"../images/5-p.jpg",
@@ -47,8 +47,8 @@
      "title":"Glacier Park",
     "description": "",
     "keywords": "",
-     "pWidth":4032,
-     "pHeight":3024
+     "width":4032,
+     "height":3024
   },
   {
      "url":"../images/6-p.jpg",
@@ -56,8 +56,8 @@
      "title":"Glacier Park",
     "description": "",
     "keywords": "",
-     "pWidth":4032,
-     "pHeight":3024
+     "width":4032,
+     "height":3024
   },
   {
      "url":"../images/7-p.jpg",
@@ -65,8 +65,8 @@
      "title":"Glacier Park",
     "description": "",
     "keywords": "",
-     "pWidth":3024,
-     "pHeight":4032
+     "width":3024,
+     "height":4032
   },
   {
      "url":"../images/8-p.jpg",
@@ -74,8 +74,8 @@
      "title":"Glacier Park",
     "description": "",
     "keywords": "",
-     "pWidth":2556,
-     "pHeight":2556
+     "width":2556,
+     "height":2556
   }
 ]
 }
