@@ -11,7 +11,6 @@ const preferCacheContent = [
   'icons/icon-192.png',
   'icons/icon-256.png',
   'icons/icon-512.png',
-  '/images/IMG_0521.small.jpg',
 ];
 
 const preferNetContent = [

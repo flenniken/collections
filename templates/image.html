@@ -6,16 +6,18 @@
   <title>{s.title}</title>
   <link rel="stylesheet" href="../collections.css">
   <script type="text/javascript" src="../js/image.js"></script>
+  <!-- <script type="text/javascript" src="../pages/collection-1.json"></script> -->
 </head>
 <body id="image-page">
 <!--$ block -->
-  <div>
-    <img id="image" width="{s.pWidth}" height="{s.pHeight}" src="{s.url}" alt="{s.title}">
+<!--$ : image = s.images[0] -->
+  <div id="imageDiv">
+    <img id="image" width="{image.pWidth}" height="{image.pHeight}" src="{image.url}" alt="{image.title}">
   </div>
   <div>
-    <h3 id="title">{s.title}</h3>
-    <p id="description">{s.description}</p>
-    <p id="keywords">{s.keywords}</p>
+    <h3 id="title">{image.title}</h3>
+    <p id="description">{image.description}</p>
+    <p id="keywords">{image.keywords}</p>
     <p id="favorite"><input type="checkbox" id="favorite" name="favorite" value="favorite">favorite</p>
   </div>
 <!--$ endblock -->

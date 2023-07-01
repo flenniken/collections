@@ -4,11 +4,8 @@
 statictea -t templates/index.html -s collections.json -r index.html
 
 # Create the thumbnails page.
-statictea -t templates/thumbnails.html -s thumbnails-1.json -r pages/thumbnails-1.html
+statictea -t templates/thumbnails.html -s pages/collection-1.json -r pages/thumbnails-1.html
 
-# Create the image pages.
-for num in 1 2 3 4 5 6 7 8
-do
-  statictea -t templates/image.html -s image-$num.json -r pages/image-$num.html
-done
+# Create the image page.
+statictea -t templates/image.html -s pages/collection-1.json -r pages/image-1.html
 

@@ -1,9 +1,11 @@
 
 // Register the Service Worker if it is supported.
-if ('serviceWorker' in navigator) {
-  console.log('register service worker sw.js');
-  navigator.serviceWorker.register('sw.js');
-}
+// if ('serviceWorker' in navigator) {
+//   console.log('register service worker sw.js');
+//   navigator.serviceWorker.register('sw.js');
+// }
+
+
 
 // // Progressive loading images
 // const imagesToLoad = document.querySelectorAll('img[data-src]');

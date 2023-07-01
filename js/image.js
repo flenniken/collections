@@ -1,5 +1,48 @@
 // image.js
 
+// The collection's json data.
+var cJson = null
+
+// The index of the image we are currently viewing.
+var imageIx = 0
+
+function previousImage() {
+  // Switch to the previous image in the collection.
+  if (!cJson)
+    return
+  imageIx -= 1
+  if (imageIx < 0)
+    imageIx = cJson.images.length - 1
+  console.log(`previous image. imageIx = ${imageIx}`);
+  setImage(imageIx)
+}
+
+function nextImage() {
+  // Switch to the next image in the collection.
+  if (!cJson)
+    return
+  imageIx += 1
+  if (imageIx >= cJson.images.length)
+    imageIx = 0
+  console.log(`next image. imageIx = ${imageIx}`);
+  setImage(imageIx)
+  sizeImage()
+}
+
+function setImage(ix) {
+  // Set the current image.
+  let image = cJson.images[ix]
+  let img = `<img id="image" width="${image.pWidth}" height="${image.pHeight}" src="${image.url}" alt="${image.title}">`
+  console.log(`${img}`);
+  document.getElementById("imageDiv").innerHTML = img
+}
+
+// Read the collection's json file.
+fetch('../pages/collection-1.json')
+    .then((response) => response.json())
+    .then((json) => cJson = json);
+
+// Handle swiping.
 document.addEventListener('touchstart', handleTouchStart, false);
 document.addEventListener('touchmove', handleTouchMove, false);
 
@@ -30,20 +73,18 @@ function handleTouchMove(evt) {
 
   if (Math.abs(xDiff) > Math.abs(yDiff)) {
     if ( xDiff > 0 ) {
-      console.log(`pull left: xDiff = ${xDiff}`);
-      /* pull right */
+      console.log(`swipe right: xDiff = ${xDiff}`);
+      nextImage()
     } else {
-      console.log(`pull right: xDiff = ${xDiff}`);
-      /* pull left */
+      console.log(`swipe left: xDiff = ${xDiff}`);
+      previousImage()
     }
   } else {
     console.log(`yDiff: ${yDiff}`);
     if ( yDiff > 0 ) {
-      console.log(`pull up: xDiff = ${xDiff}`);
-      /* pull up */
+      console.log(`swipe up: xDiff = ${xDiff}`);
     } else {
-      /* pull down */
-      console.log(`pull down: xDiff = ${xDiff}`);
+      console.log(`swipe down: xDiff = ${xDiff}`);
       window.location.href = "thumbnails-1.html"
     }
   }
