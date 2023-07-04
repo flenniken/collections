@@ -3,7 +3,7 @@
   "collection":1,
   "width":480,
   "height":480,
-  "pageUrl":"../pages/image-1.html",
+  "baseUrl":"../pages/image-1.html",
   "images":[
   {
     "url":"../images/1-p.jpg",

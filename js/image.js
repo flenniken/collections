@@ -6,17 +6,49 @@ var cJson = null
 
 // The image index into the json collection of the image we are
 // currently viewing.
-var imageIx = 0
+var imageIx = null
 
 // Area of the screen available.
 var areaWidth = null
 var areaHeight = null
 
+window.addEventListener("load", loadEvent)
+window.addEventListener("DOMContentLoaded", fnDOMContentLoaded)
+window.addEventListener("readystatechange", fnreadystatechange)
+// window.addEventListener("resize", sizeCurrentImage)
+
+function fnDOMContentLoaded() {
+  console.log("DOMContentLoaded")
+}
+
+function fnreadystatechange() {
+  console.log("readystatechange")
+}
+
+function firstImage() {
+  // Set the first image to show based on the query parameter ix.
+
+  console.log(`window.location.search = ${window.location.search}`)
+  const searchParams = new URLSearchParams(window.location.search);
+  const ix = searchParams.get("ix")
+  if (ix && ix >= 0)
+    imageIx = parseInt(ix);
+  else
+    imageIx = 0
+  console.log(`first imageIx = ${imageIx}`)
+}
+
 function previousImage() {
   // Switch to the previous image in the collection.
 
-  if (!cJson)
+  if (!cJson) {
+    console.log("no cJson")
     return
+  }
+  if (imageIx === null) {
+    console.log("no imageIx")
+    return
+  }
   if (imageIx > 0)
     imageIx -= 1
   console.log(`set imageIx = ${imageIx}`)
@@ -26,8 +58,14 @@ function previousImage() {
 function nextImage() {
   // Switch to the next image in the collection.
 
-  if (!cJson)
+  if (!cJson) {
+    console.log("no cJson")
     return
+  }
+  if (imageIx === null) {
+    console.log("no imageIx")
+    return
+  }
   if (imageIx < cJson.images.length - 1)
     imageIx += 1
   console.log(`set imageIx = ${imageIx}`)
@@ -39,6 +77,10 @@ function setCurrentImage() {
 
   if (!cJson) {
     console.log("no cJson")
+    return
+  }
+  if (imageIx === null) {
+    console.log("no imageIx")
     return
   }
   if (!areaWidth) {
@@ -72,9 +114,6 @@ function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
   return {width, height}
 }
 
-window.addEventListener("load", loadEvent)
-// window.addEventListener("resize", sizeCurrentImage)
-
 function loadEvent() {
   // The page finished loading, load json and size things.
 
@@ -88,7 +127,7 @@ function setJson(json) {
   //
   cJson = json
   console.log(`read collection json, ${cJson.images.length} images`)
-
+  firstImage()
   sizeImageArea()
   setCurrentImage()
 }
