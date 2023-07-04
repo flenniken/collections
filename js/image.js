@@ -41,44 +41,35 @@ function setCurrentImage() {
     console.log("no cJson")
     return
   }
-
-  const image = cJson.images[imageIx]
-  const img = document.getElementById("image")
-  img.src = image.url
-  img.alt = image.alt
-
   if (!areaWidth) {
     console.log("no areaWidth")
     return
   }
 
-  // Set the image to fit the area maintaining the image ratio.
+  const image = cJson.images[imageIx]
+  const img = document.getElementById("image")
 
-  let width = null
-  let height = null
-  let longSide = null
-  let shortSide = null
-
-  if (areaWidth > areaHeight) {
-    longSide = areaWidth
-  } else {
-    longSide = areaHeight
-  }
-
-  if (image.width > image.height) {
-    shortSide = image.height * longSide / image.width
-    width = longSide
-    height = shortSide
-  } else {
-    shortSide = image.width * longSide / image.height
-    width = shortSide
-    height = longSide
-  }
-
+  // Fit the image in the area maintaining the image ratio.
+  let {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
   img.style.width = `${width}px`;
   img.style.height = `${height}px`;
 
+  img.src = image.url
+
   console.log(`set image size: ${width} X ${height}`)
+}
+
+function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
+  // Fix the image tite inside the area keeping the image aspect ratio
+  // constant. Return the new image width and height.
+
+  console.assert(imageWidth != 0 && imageHeight != 0)
+  const hScale = areaWidth / imageWidth
+  const vScale = areaHeight / imageHeight
+  const scale = Math.min(hScale, vScale)
+  const width = scale * imageWidth
+  const height = scale * imageHeight
+  return {width, height}
 }
 
 window.addEventListener("load", loadEvent)

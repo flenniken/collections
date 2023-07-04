@@ -7,5 +7,7 @@ statictea -t templates/index.html -s collections.json -r index.html
 statictea -t templates/thumbnails.html -s pages/collection-1.json -r pages/thumbnails-1.html
 
 # Create the image page.
-statictea -t templates/image.html -s pages/collection-1.json -r pages/image-1.html
+statictea -t templates/image.html \
+  -s pages/collection-1.json \
+  -r pages/image-1.html
 
