@@ -79,7 +79,7 @@ function setCurrentImage() {
     console.log("no cJson")
     return
   }
-  if (imageIx === null) {
+  if (imageIx == null) {
     console.log("no imageIx")
     return
   }
@@ -88,17 +88,51 @@ function setCurrentImage() {
     return
   }
 
-  const image = cJson.images[imageIx]
-  const img = document.getElementById("image")
+  configureImage("previousImage", imageIx - 1)
+  configureImage("image", imageIx)
+  configureImage("nextImage", imageIx + 1)
+}
 
-  // Fit the image in the area maintaining the image ratio.
-  let {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
-  img.style.width = `${width}px`;
-  img.style.height = `${height}px`;
+function configureImage(idName, ix) {
+  // Configure the image in the image area with the given name and
+  // image index.
+
+  let img = document.getElementById(idName);
+  const area = document.getElementById("area");
+
+  if (ix < 0 || ix >= cJson.images.length) {
+    if (img)
+      area.remove(img)
+    return
+  }
+
+  if (!img) {
+    img = document.createElement("img");
+    img.id = idName
+    img.style.position = "absolute"
+    if (ix < imageIx)
+      area.prepend(img)
+    else
+      area.append(img)
+  }
+
+  const image = cJson.images[ix]
+  const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
+
+  let left
+  if (ix < imageIx)
+    left = -width
+  else if (ix > imageIx)
+    left = areaWidth
+  else
+    left = 0
 
   img.src = image.url
-
-  console.log(`set image size: ${width} X ${height}`)
+  img.style.top = 0
+  img.style.left = `${left}px`
+  img.style.width = `${width}px`;
+  img.style.height = `${height}px`;
+  console.log(`set ${idName} left: ${left}, size: ${width} X ${height}`)
 }
 
 function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
