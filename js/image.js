@@ -12,10 +12,14 @@ var imageIx = null
 var areaWidth = null
 var areaHeight = null
 
-window.addEventListener("load", loadEvent)
 window.addEventListener("DOMContentLoaded", fnDOMContentLoaded)
 window.addEventListener("readystatechange", fnreadystatechange)
+window.addEventListener("load", loadEvent)
 // window.addEventListener("resize", sizeCurrentImage)
+document.addEventListener('touchstart', handleTouchStart, false)
+document.addEventListener('touchmove', handleTouchMove, false)
+document.addEventListener('touchend', handleTouchEnd, false)
+document.addEventListener('touchcancel', handleTouchEnd, false)
 
 function fnDOMContentLoaded() {
   console.log("DOMContentLoaded")
@@ -23,6 +27,24 @@ function fnDOMContentLoaded() {
 
 function fnreadystatechange() {
   console.log("readystatechange")
+}
+
+function loadEvent() {
+  // The page finished loading, load json and size things.
+
+  // Read the collection's json file.
+  fetch('../pages/collection-1.json')
+    .then(response => response.json())
+    .then(json => setupPage(json))
+}
+
+function setupPage(json) {
+  //
+  cJson = json
+  console.log(`read collection json, ${cJson.images.length} images`)
+  firstImage()
+  sizeImageArea()
+  setCurrentImage()
 }
 
 function firstImage() {
@@ -36,6 +58,81 @@ function firstImage() {
   else
     imageIx = 0
   console.log(`first imageIx = ${imageIx}`)
+}
+
+function sizeImageArea() {
+  // Size the image area to the size of the usable screen.
+
+  // Get the screen width and height that we can use and store them in
+  // globals.
+  areaWidth = window.innerWidth || document.documentElement.clientWidth ||
+    document.body.clientWidth
+  areaHeight = window.innerHeight || document.documentElement.clientHeight ||
+      document.body.clientHeight
+
+  // Size the image area to the screen area.
+  const area = document.getElementById("area")
+  area.style.width = `${areaWidth}px`
+  area.style.height = `${areaHeight}px`
+  console.log(`set area: ${areaWidth} X ${areaHeight}`)
+}
+
+function setCurrentImage() {
+  // Set the current image.
+
+  if (!cJson) {
+    console.log("no cJson")
+    return
+  }
+  if (imageIx == null) {
+    console.log("no imageIx")
+    return
+  }
+  if (!areaWidth) {
+    console.log("no areaWidth")
+    return
+  }
+
+  configureImage("previousImage", imageIx - 1)
+  configureImage("image", imageIx)
+  configureImage("nextImage", imageIx + 1)
+
+  // Scroll the image into view.
+  const previousImg = document.getElementById("previousImage");
+  area.scrollLeft = parseFloat(previousImg.style.width)
+  console.log(`set area.scrollLeft = ${previousImg.style.width}`)
+  console.log(`area.scrollLeft = ${area.scrollLeft}`)
+}
+
+function configureImage(idName, ix) {
+  // Configure the image in the image area with the given name and
+  // image index.
+
+  let img = document.getElementById(idName);
+  const area = document.getElementById("area");
+
+  if (ix < 0 || ix >= cJson.images.length) {
+    if (img)
+      area.remove(img)
+    return
+  }
+
+  if (!img) {
+    img = document.createElement("img");
+    img.id = idName
+    if (ix < imageIx)
+      area.prepend(img)
+    else
+      area.append(img)
+  }
+
+  const image = cJson.images[ix]
+  const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
+
+  img.src = image.url
+  img.style.width = `${width}px`;
+  img.style.height = `${height}px`;
+  console.log(`set ${idName} ${width} X ${height}`)
 }
 
 function previousImage() {
@@ -72,69 +169,6 @@ function nextImage() {
   setCurrentImage()
 }
 
-function setCurrentImage() {
-  // Set the current image.
-
-  if (!cJson) {
-    console.log("no cJson")
-    return
-  }
-  if (imageIx == null) {
-    console.log("no imageIx")
-    return
-  }
-  if (!areaWidth) {
-    console.log("no areaWidth")
-    return
-  }
-
-  configureImage("previousImage", imageIx - 1)
-  configureImage("image", imageIx)
-  configureImage("nextImage", imageIx + 1)
-}
-
-function configureImage(idName, ix) {
-  // Configure the image in the image area with the given name and
-  // image index.
-
-  let img = document.getElementById(idName);
-  const area = document.getElementById("area");
-
-  if (ix < 0 || ix >= cJson.images.length) {
-    if (img)
-      area.remove(img)
-    return
-  }
-
-  if (!img) {
-    img = document.createElement("img");
-    img.id = idName
-    img.style.position = "absolute"
-    if (ix < imageIx)
-      area.prepend(img)
-    else
-      area.append(img)
-  }
-
-  const image = cJson.images[ix]
-  const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
-
-  let left
-  if (ix < imageIx)
-    left = -width
-  else if (ix > imageIx)
-    left = areaWidth
-  else
-    left = 0
-
-  img.src = image.url
-  img.style.top = 0
-  img.style.left = `${left}px`
-  img.style.width = `${width}px`;
-  img.style.height = `${height}px`;
-  console.log(`set ${idName} left: ${left}, size: ${width} X ${height}`)
-}
-
 function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
   // Fix the image tite inside the area keeping the image aspect ratio
   // constant. Return the new image width and height.
@@ -148,47 +182,9 @@ function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
   return {width, height}
 }
 
-function loadEvent() {
-  // The page finished loading, load json and size things.
-
-  // Read the collection's json file.
-  fetch('../pages/collection-1.json')
-    .then(response => response.json())
-    .then(json => setJson(json))
-}
-
-function setJson(json) {
-  //
-  cJson = json
-  console.log(`read collection json, ${cJson.images.length} images`)
-  firstImage()
-  sizeImageArea()
-  setCurrentImage()
-}
-
-function sizeImageArea() {
-  // Size the image area to the size of the screen.
-
-  // Get the screen width and height that we can use and store them in
-  // globals.
-  areaWidth = window.innerWidth || document.documentElement.clientWidth ||
-    document.body.clientWidth
-  areaHeight = window.innerHeight || document.documentElement.clientHeight ||
-      document.body.clientHeight
-
-  // Size the image area to the screen area.
-  const area = document.getElementById("area")
-  area.style.width = `${areaWidth}px`
-  area.style.height = `${areaHeight}px`
-  console.log(`set area: ${areaWidth} X ${areaHeight}`)
-}
 
 // Handle swiping left, right and down using the touch events.
 
-document.addEventListener('touchstart', handleTouchStart, false)
-document.addEventListener('touchmove', handleTouchMove, false)
-document.addEventListener('touchend', handleTouchEnd, false)
-document.addEventListener('touchcancel', handleTouchEnd, false)
 
 // Start touch point.
 var xDown = null
@@ -219,6 +215,21 @@ function handleTouchEnd(evt) {
     return
   if (!xPt || !yPt)
     return
+
+  const area = document.getElementById("area");
+  console.log(`touchend: area.scrollLeft: ${area.scrollLeft}`)
+
+  if (area.scrollLeft > 800) {
+    const previousImg = document.getElementById("previousImage");
+    area.scrollLeft = parseFloat(previousImg.style.width)
+    console.log(`touchend: previousImg.style.width: ${previousImg.style.width}`)
+    console.log(`touchend: area.scrollLeft: ${area.scrollLeft}`)
+  }
+
+
+  // disabled
+  return
+
   const xDiff = xDown - xPt
   const yDiff = yDown - yPt
 
