@@ -12,6 +12,8 @@ var imageIx = null
 var areaWidth = null
 var areaHeight = null
 
+var workingOnTouchEnd = false
+
 window.addEventListener("DOMContentLoaded", fnDOMContentLoaded)
 window.addEventListener("readystatechange", fnreadystatechange)
 window.addEventListener("load", loadEvent)
@@ -19,7 +21,7 @@ window.addEventListener("load", loadEvent)
 document.addEventListener('touchstart', handleTouchStart, false)
 document.addEventListener('touchmove', handleTouchMove, false)
 document.addEventListener('touchend', handleTouchEnd, false)
-document.addEventListener('touchcancel', handleTouchEnd, false)
+document.addEventListener('touchcancel', handleTouchCancel, false)
 
 function fnDOMContentLoaded() {
   console.log("DOMContentLoaded")
@@ -183,10 +185,6 @@ function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
   return {width, height}
 }
 
-
-// Handle swiping left, right and down using the touch events.
-
-
 // Start touch point.
 var xDown = null
 var yDown = null
@@ -196,6 +194,10 @@ var xPt = null
 var yPt = null
 
 function handleTouchStart(evt) {
+  console.log("handleTouchStart")
+  if (workingOnTouchEnd)
+    console.log("touchstart while processing touchend")
+
   const firstTouch = evt.touches[0]
   xDown = firstTouch.clientX
   yDown = firstTouch.clientY
@@ -206,16 +208,20 @@ function handleTouchMove(evt) {
     return
   xPt = evt.touches[0].clientX
   yPt = evt.touches[0].clientY
-  const xPt2 = xPt.toFixed(2)
-  const yPt2 = yPt.toFixed(2)
-  // console.log(`${xPt2},${yPt2}`)
+}
+
+function handleTouchCancel(evt) {
+  console.log("handleTouchCancel")
+  handleTouchEnd(evt)
 }
 
 function handleTouchEnd(evt) {
+  console.log("handleTouchEnd")
   if (!xDown || !yDown)
     return
   if (!xPt || !yPt)
     return
+  workingOnTouchEnd = true
 
   const xDiff = xDown - xPt
   const yDiff = yDown - yPt
@@ -245,10 +251,12 @@ function handleTouchEnd(evt) {
   yDown = null
   xPt = null
   yPt = null
+  workingOnTouchEnd = false
 }
 
 function swipeImage(swipeType) {
-  // Swipe the image left or right or snap back to the middle image.
+  // Switch to the image left or right image or snap back to the
+  // middle image.
 
   const area = document.getElementById("area");
   console.log(`swipe ${swipeType}, area.scrollLeft: ${area.scrollLeft}`)
@@ -256,19 +264,25 @@ function swipeImage(swipeType) {
   const leftEdge = getLeftEdge()
   console.log(`leftEdge: ${leftEdge}`)
   const img = document.getElementById("image");
-  const imageWidth = parseFloat(img.style.width)
-  const imageMiddle = leftEdge + (imageWidth / 2)
-  console.log(`imageMiddle: ${imageMiddle}`)
+  const halfImage = parseFloat(img.style.width) / 2
 
-  if (swipeType == "left" && area.scrollLeft > imageMiddle) {
-    console.log("next image")
-    nextImage()
+  // If the difference between the current scroll position and the
+  // left edge is more than half the image, switch.
+  let snapBack = true
+  if (Math.abs(area.scrollLeft - leftEdge) > halfImage) {
+    // If less than half of the image is visible, switch to the previous
+    // or next image.
+    if (swipeType == "left") {
+      console.log("next image")
+      nextImage()
+    }
+    else {
+      console.log("previous image")
+      previousImage()
+    }
+    snapBack = false
   }
-  else if (swipeType == "right" && area.scrollLeft < imageMiddle) {
-    console.log("previous image")
-    previousImage()
-  }
-  else {
+  if (snapBack) {
     // Snap back.
     console.log(`snap back: leftEdge: ${leftEdge}`)
     area.scrollLeft = leftEdge
