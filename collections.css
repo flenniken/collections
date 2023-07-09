@@ -8,3 +8,11 @@ body {
   display: flex;
   overflow-x: auto;
 }
+
+#begin {
+  color: blue;
+}
+
+#end {
+  color: blue;
+}

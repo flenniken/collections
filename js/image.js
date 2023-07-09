@@ -98,10 +98,13 @@ function setCurrentImage() {
   configureImage("nextImage", imageIx + 1)
 
   // Scroll the image into view.
-  const previousImg = document.getElementById("previousImage");
-  area.scrollLeft = parseFloat(previousImg.style.width)
-  console.log(`set area.scrollLeft = ${previousImg.style.width}`)
+  area.scrollLeft = getLeftEdge()
   console.log(`area.scrollLeft = ${area.scrollLeft}`)
+}
+
+function getLeftEdge() {
+  const previousImg = document.getElementById("previousImage");
+  return parseFloat(previousImg.style.width)
 }
 
 function configureImage(idName, ix) {
@@ -109,30 +112,28 @@ function configureImage(idName, ix) {
   // image index.
 
   let img = document.getElementById(idName);
-  const area = document.getElementById("area");
 
+  let width, height
   if (ix < 0 || ix >= cJson.images.length) {
-    if (img)
-      area.remove(img)
-    return
-  }
-
-  if (!img) {
-    img = document.createElement("img");
-    img.id = idName
-    if (ix < imageIx)
-      area.prepend(img)
+    width = '100'
+    height = areaHeight
+    if (ix < 0)
+      img.src = "../icons/begin.svg"
     else
-      area.append(img)
+      img.src = "../icons/end.svg"
+    img.style.width = `${width}px`;
+    img.style.height = `${height}px`;
+    console.log(`set ${idName} ${width} X ${height}`)
   }
-
-  const image = cJson.images[ix]
-  const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
-
-  img.src = image.url
-  img.style.width = `${width}px`;
-  img.style.height = `${height}px`;
-  console.log(`set ${idName} ${width} X ${height}`)
+  else {
+    // Set the image width and height scaled to fit the area.
+    const image = cJson.images[ix]
+    const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
+    img.style.width = `${width}px`;
+    img.style.height = `${height}px`;
+    img.src = image.url
+    console.log(`set ${idName} ${width} X ${height}`)
+  }
 }
 
 function previousImage() {
@@ -216,41 +217,60 @@ function handleTouchEnd(evt) {
   if (!xPt || !yPt)
     return
 
-  const area = document.getElementById("area");
-  console.log(`touchend: area.scrollLeft: ${area.scrollLeft}`)
-
-  if (area.scrollLeft > 800) {
-    const previousImg = document.getElementById("previousImage");
-    area.scrollLeft = parseFloat(previousImg.style.width)
-    console.log(`touchend: previousImg.style.width: ${previousImg.style.width}`)
-    console.log(`touchend: area.scrollLeft: ${area.scrollLeft}`)
-  }
-
-
-  // disabled
-  return
-
   const xDiff = xDown - xPt
   const yDiff = yDown - yPt
 
+  // Swipe Right (on the online dating app Tinder) indicates that one
+  // finds someone attractive by moving one's finger to the right across
+  // an image of them on a touchscreen.  "I swiped right, but sadly for
+  // me, she swiped left"
+  let swipeType
   if (Math.abs(xDiff) > Math.abs(yDiff)) {
-    if (xDiff > 0) {
-      console.log(`swipe right: xDiff = ${xDiff}`)
-      nextImage()
-    } else {
-      console.log(`swipe left: xDiff = ${xDiff}`)
-      previousImage()
-    }
-  } else {
-    if (yDiff > 0) {
-      console.log(`swipe up: yDiff = ${yDiff}`)
-    } else {
-      console.log(`swipe down: yDiff = ${yDiff}`)
+    if (xDiff > 0)
+      swipeType = 'left'
+    else
+      swipeType = 'right'
+    swipeImage(swipeType)
+  }
+  else {
+    if (yDiff > 0)
+      swipeType = 'up'
+    else {
+      swipeType = 'down'
       window.location.href = "thumbnails-1.html"
     }
   }
+
   xDown = null
   yDown = null
   xPt = null
   yPt = null
+}
+
+function swipeImage(swipeType) {
+  // Swipe the image left or right or snap back to the middle image.
+
+  const area = document.getElementById("area");
+  console.log(`swipe ${swipeType}, area.scrollLeft: ${area.scrollLeft}`)
+
+  const leftEdge = getLeftEdge()
+  console.log(`leftEdge: ${leftEdge}`)
+  const img = document.getElementById("image");
+  const imageWidth = parseFloat(img.style.width)
+  const imageMiddle = leftEdge + (imageWidth / 2)
+  console.log(`imageMiddle: ${imageMiddle}`)
+
+  if (swipeType == "left" && area.scrollLeft > imageMiddle) {
+    console.log("next image")
+    nextImage()
+  }
+  else if (swipeType == "right" && area.scrollLeft < imageMiddle) {
+    console.log("previous image")
+    previousImage()
+  }
+  else {
+    // Snap back.
+    console.log(`snap back: leftEdge: ${leftEdge}`)
+    area.scrollLeft = leftEdge
+  }
 }
