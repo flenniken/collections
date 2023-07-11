@@ -8,11 +8,12 @@ var cJson = null
 // currently viewing.
 var imageIx = null
 
-// Area of the screen available.
+// The available screen area.
 var areaWidth = null
 var areaHeight = null
 
-var workingOnTouchEnd = false
+// Finger touching the screen.
+var touching = false
 
 window.addEventListener("DOMContentLoaded", fnDOMContentLoaded)
 window.addEventListener("readystatechange", fnreadystatechange)
@@ -31,6 +32,41 @@ function fnreadystatechange() {
   console.log("readystatechange")
 }
 
+// Timeout function.
+var scrollingTimeout
+
+// True when scrolling has paused but the user is still touching.
+var scrollingPaused
+
+// The scroll position when scrolling starts.
+var areaScrollStart = null
+
+function areaScroll() {
+  console.log("areaScroll")
+
+  if (!areaScrollStart) {
+    const area = document.getElementById("area")
+    areaScrollStart = area.scrollLeft
+  }
+
+  window.clearTimeout(scrollingTimeout)
+  scrollingPaused = false
+  scrollingTimeout = setTimeout(function() {
+    if (touching) {
+      console.log('Area scrolling has paused for tenth of a second.')
+      scrollingPaused = true
+    }
+    else {
+      console.log('Area scrolling has stopped.')
+      swipeArea()
+    }
+  }, 100)
+}
+
+function areaScrollEnd() {
+  console.log("---areaScrollEnd")
+}
+
 function loadEvent() {
   // The page finished loading, load json and size things.
 
@@ -44,12 +80,21 @@ function setupPage(json) {
   //
   cJson = json
   console.log(`read collection json, ${cJson.images.length} images`)
-  firstImage()
+  setImageIx()
   sizeImageArea()
   setCurrentImage()
+
+  // Watch the area scroll and scroll end events.
+  const area = document.getElementById("area")
+  area.addEventListener('scroll', areaScroll, false)
+  area.addEventListener('scrollend', areaScrollEnd, false)
+
+  document.onscrollend = event => {
+    console.log("---document.onscrollend")
+  }
 }
 
-function firstImage() {
+function setImageIx() {
   // Set the first image to show based on the query parameter ix.
 
   console.log(`window.location.search = ${window.location.search}`)
@@ -195,8 +240,7 @@ var yPt = null
 
 function handleTouchStart(evt) {
   console.log("handleTouchStart")
-  if (workingOnTouchEnd)
-    console.log("touchstart while processing touchend")
+  touching = true
 
   const firstTouch = evt.touches[0]
   xDown = firstTouch.clientX
@@ -217,74 +261,45 @@ function handleTouchCancel(evt) {
 
 function handleTouchEnd(evt) {
   console.log("handleTouchEnd")
-  if (!xDown || !yDown)
-    return
-  if (!xPt || !yPt)
-    return
-  workingOnTouchEnd = true
-
-  const xDiff = xDown - xPt
-  const yDiff = yDown - yPt
-
-  // Swipe Right (on the online dating app Tinder) indicates that one
-  // finds someone attractive by moving one's finger to the right across
-  // an image of them on a touchscreen.  "I swiped right, but sadly for
-  // me, she swiped left"
-  let swipeType
-  if (Math.abs(xDiff) > Math.abs(yDiff)) {
-    if (xDiff > 0)
-      swipeType = 'left'
-    else
-      swipeType = 'right'
-    swipeImage(swipeType)
-  }
-  else {
-    if (yDiff > 0)
-      swipeType = 'up'
-    else {
-      swipeType = 'down'
-      window.location.href = "thumbnails-1.html"
-    }
-  }
-
+  touching = false
   xDown = null
   yDown = null
   xPt = null
   yPt = null
-  workingOnTouchEnd = false
+  if (scrollingPaused) {
+    console.log("Area scrolling has stopped after pausing.")
+    swipeArea()
+  }
 }
 
-function swipeImage(swipeType) {
+function swipeArea() {
   // Switch to the image left or right image or snap back to the
   // middle image.
 
   const area = document.getElementById("area");
-  console.log(`swipe ${swipeType}, area.scrollLeft: ${area.scrollLeft}`)
+  console.log(`swipe areaScrollStart:${areaScrollStart}, area.scrollLeft: ${area.scrollLeft}`)
 
   const leftEdge = getLeftEdge()
-  console.log(`leftEdge: ${leftEdge}`)
   const img = document.getElementById("image");
   const halfImage = parseFloat(img.style.width) / 2
 
-  // If the difference between the current scroll position and the
-  // left edge is more than half the image, switch.
-  let snapBack = true
+  // If less than half of the image is visible, switch to the previous
+  // or next image.
   if (Math.abs(area.scrollLeft - leftEdge) > halfImage) {
-    // If less than half of the image is visible, switch to the previous
-    // or next image.
-    if (swipeType == "left") {
-      console.log("next image")
+
+    if (area.scrollLeft > areaScrollStart) {
+      console.log(`next image; leftEdge = ${leftEdge}`)
       nextImage()
     }
     else {
-      console.log("previous image")
+      console.log(`previous image; leftEdge = ${leftEdge}`)
       previousImage()
     }
-    snapBack = false
   }
-  if (snapBack) {
+  else {
     // Snap back.
     console.log(`snap back: leftEdge: ${leftEdge}`)
     area.scrollLeft = leftEdge
   }
+  areaScrollStart = null
 }
