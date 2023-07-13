@@ -4,15 +4,15 @@
 const cacheName = 'collections-v1';
 const cacheContent = [
   '/',
-  '/favicon.ico',
-  '/icons/icon-32.png',
-  '/icons/icon-64.png',
-  '/icons/icon-96.png',
-  '/icons/icon-128.png',
-  '/icons/icon-168.png',
-  '/icons/icon-192.png',
-  '/icons/icon-256.png',
-  '/icons/icon-512.png',
+  '/collections/favicon.ico',
+  '/collections/icons/icon-32.png',
+  '/collections/icons/icon-64.png',
+  '/collections/icons/icon-96.png',
+  '/collections/icons/icon-128.png',
+  '/collections/icons/icon-168.png',
+  '/collections/icons/icon-192.png',
+  '/collections/icons/icon-256.png',
+  '/collections/icons/icon-512.png',
 ];
 
 self.addEventListener('install', (e) => {

@@ -19,20 +19,29 @@
 </head>
 <body id="collections-page">
   <h1>Flenniken.net Collections</h1>
+<!--$ block -->
+<!--$ : t.repeat = len(s.collections) -->
+<!--$ : collection = s.collections[t.row] -->
   <div class="collection">
     <div class="picture">
-      <a href="pages/thumbnails-1.html">
-        <img class="thumbnail" src="images/3-t.jpg" alt="Glacier Park">
+      <a href="{collection.url}">
+        <img class="thumbnail" src="{collection.thumbnail}" alt="{collection.title}">
       </a>
     </div>
     <div class="details">
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
+      <p class="title">{collection.title}</p>
+      <a href="{collection.url}">
+        <p class="description">{collection.description}</p>
       </a>
-      <p class="posted">June 2023</p>
+      <p class="posted">{collection.posted}</p>
     </div>
   </div>
+<!--$ endblock -->
+<!--$ # -->
+<!--$ # The following block is for testing. -->
+<!--$ # -->
+<!--$ block repeat = 0 -->
+<!--$ : t.maxLines = 200 -->
   <div class="collection">
     <div class="picture">
       <a href="pages/thumbnails-1.html">
@@ -113,8 +122,10 @@
       <p class="posted">June 2023</p>
     </div>
   </div>
+<!--$ endblock -->
   <div>
-    <p>1 collections</p>
+<!--$ nextline -->
+    <p>{s.numberOfCollections} collections</p>
   </div>
 </body>
 </html>
