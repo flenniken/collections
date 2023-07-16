@@ -289,10 +289,19 @@ function swipeArea() {
 
     if (area.scrollLeft > areaScrollStart) {
       console.log(`next image; leftEdge = ${leftEdge}`)
+
+      const previousImg = document.getElementById("previousImage");
+      let left = parseFloat(previousImg.style.width)
+      const img = document.getElementById("image");
+      left += parseFloat(img.style.width)
+      console.log(`area.scrollLeft: ${left}`)
+      area.scrollLeft = left
       nextImage()
     }
     else {
       console.log(`previous image; leftEdge = ${leftEdge}`)
+      console.log('set scrollLeft 0')
+      area.scrollLeft = 0
       previousImage()
     }
   }
