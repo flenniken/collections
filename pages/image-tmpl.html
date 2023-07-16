@@ -6,16 +6,18 @@
   <title>{s.title}</title>
   <link rel="stylesheet" href="../collections.css">
   <script type="text/javascript" src="../js/image.js"></script>
-  <!-- <script type="text/javascript" src="../pages/collection-1.json"></script> -->
 </head>
 <body id="image-page">
+  <div id="area">
+    <img id="begin-edge" src="../icons/begin.svg">
+<!--$ nextline -->
+<!--$ : t.repeat = len(s.images) -->
+<!--$ : image = s.images[t.row] -->
+    <img src="{image.url}">
+    <img id="end-edge" src="../icons/end.svg">
+  </div>
 <!--$ block -->
 <!--$ : image = s.images[0] -->
-  <div id="area">
-    <img id="previousImage" src="../icons/begin.svg">
-    <img id="image" src="{image.url}">
-    <img id="nextImage" src="../icons/end.svg">
-  </div>
   <div>
     <h3 id="title">{image.title}</h3>
     <p id="description">{image.description}</p>

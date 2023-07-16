@@ -15,6 +15,13 @@ var areaHeight = null
 // Finger touching the screen.
 var touching = false
 
+// The left edges (scroll positions) of the images in the area not
+// including the border beginning and ending images.
+var leftEdges = []
+
+// The scaled width of each image.
+var imageWidths = []
+
 window.addEventListener("DOMContentLoaded", fnDOMContentLoaded)
 window.addEventListener("readystatechange", fnreadystatechange)
 window.addEventListener("load", loadEvent)
@@ -82,16 +89,16 @@ function setupPage(json) {
   console.log(`read collection json, ${cJson.images.length} images`)
   setImageIx()
   sizeImageArea()
-  setCurrentImage()
+  sizeImages()
+
+  // Scroll the current image into view.
+  const area = document.getElementById("area")
+  area.scrollLeft = leftEdges[imageIx]
+  console.log(`area.scrollLeft = ${area.scrollLeft}`)
 
   // Watch the area scroll and scroll end events.
-  const area = document.getElementById("area")
   area.addEventListener('scroll', areaScroll, false)
   area.addEventListener('scrollend', areaScrollEnd, false)
-
-  document.onscrollend = event => {
-    console.log("---document.onscrollend")
-  }
 }
 
 function setImageIx() {
@@ -124,97 +131,39 @@ function sizeImageArea() {
   console.log(`set area: ${areaWidth} X ${areaHeight}`)
 }
 
-function setCurrentImage() {
-  // Set the current image.
+function sizeImages() {
+  // Size all the images to fit the view and create the leftEdges
+  // array.
 
-  if (!cJson) {
-    console.log("no cJson")
-    return
-  }
-  if (imageIx == null) {
-    console.log("no imageIx")
-    return
-  }
-  if (!areaWidth) {
-    console.log("no areaWidth")
-    return
-  }
+  const beginImg = document.getElementById('begin-edge')
+  console.log(`beginImg: ${beginImg}`)
 
-  configureImage("previousImage", imageIx - 1)
-  configureImage("image", imageIx)
-  configureImage("nextImage", imageIx + 1)
+  const beginWidth = 100
+  beginImg.style.width = `${beginWidth}px`
+  beginImg.style.height = `${areaHeight}px`
+  console.log(`set begin image: ${beginWidth} X ${areaHeight}`)
+  let edge = beginWidth
 
-  // Scroll the image into view.
-  area.scrollLeft = getLeftEdge()
-  console.log(`area.scrollLeft = ${area.scrollLeft}`)
-}
-
-function getLeftEdge() {
-  const previousImg = document.getElementById("previousImage");
-  return parseFloat(previousImg.style.width)
-}
-
-function configureImage(idName, ix) {
-  // Configure the image in the image area with the given name and
-  // image index.
-
-  let img = document.getElementById(idName);
-
-  let width, height
-  if (ix < 0 || ix >= cJson.images.length) {
-    width = '100'
-    height = areaHeight
-    if (ix < 0)
-      img.src = "../icons/begin.svg"
-    else
-      img.src = "../icons/end.svg"
-    img.style.width = `${width}px`;
-    img.style.height = `${height}px`;
-    console.log(`set ${idName} ${width} X ${height}`)
-  }
-  else {
+  cJson.images.forEach((image, index) => {
+    leftEdges.push(edge)
     // Set the image width and height scaled to fit the area.
-    const image = cJson.images[ix]
     const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
+
+    const ix = index + 2
+    const img = document.querySelector(`#area :nth-child(${ix})`)
     img.style.width = `${width}px`;
     img.style.height = `${height}px`;
     img.src = image.url
-    console.log(`set ${idName} ${width} X ${height}`)
-  }
-}
+    console.log(`set image ${index}: ${width} X ${height}`)
+    edge += width
+    imageWidths.push(width)
+  })
 
-function previousImage() {
-  // Switch to the previous image in the collection.
-
-  if (!cJson) {
-    console.log("no cJson")
-    return
-  }
-  if (imageIx === null) {
-    console.log("no imageIx")
-    return
-  }
-  if (imageIx > 0)
-    imageIx -= 1
-  console.log(`set imageIx = ${imageIx}`)
-  setCurrentImage()
-}
-
-function nextImage() {
-  // Switch to the next image in the collection.
-
-  if (!cJson) {
-    console.log("no cJson")
-    return
-  }
-  if (imageIx === null) {
-    console.log("no imageIx")
-    return
-  }
-  if (imageIx < cJson.images.length - 1)
-    imageIx += 1
-  console.log(`set imageIx = ${imageIx}`)
-  setCurrentImage()
+  const endWidth = 100
+  const endImg = document.getElementById('end-edge');
+  beginImg.style.width = `${endWidth}px`
+  beginImg.style.height = `${areaHeight}px`
+  console.log(`set end image: ${endWidth} X ${areaHeight}`)
 }
 
 function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
@@ -274,14 +223,13 @@ function handleTouchEnd(evt) {
 
 function swipeArea() {
   // Switch to the image left or right image or snap back to the
-  // middle image.
+  // current image.
 
   const area = document.getElementById("area");
   console.log(`swipe areaScrollStart:${areaScrollStart}, area.scrollLeft: ${area.scrollLeft}`)
 
-  const leftEdge = getLeftEdge()
-  const img = document.getElementById("image");
-  const halfImage = parseFloat(img.style.width) / 2
+  const leftEdge = leftEdges[imageIx]
+  const halfImage = imageWidths[imageIx] / 2
 
   // If less than half of the image is visible, switch to the previous
   // or next image.
@@ -290,19 +238,19 @@ function swipeArea() {
     if (area.scrollLeft > areaScrollStart) {
       console.log(`next image; leftEdge = ${leftEdge}`)
 
-      const previousImg = document.getElementById("previousImage");
-      let left = parseFloat(previousImg.style.width)
-      const img = document.getElementById("image");
-      left += parseFloat(img.style.width)
-      console.log(`area.scrollLeft: ${left}`)
-      area.scrollLeft = left
-      nextImage()
+      if (imageIx < cJson.images.length - 1) {
+        imageIx += 1
+        console.log(`set imageIx = ${imageIx}`)
+        area.scrollLeft = leftEdges[imageIx]
+      }
     }
     else {
       console.log(`previous image; leftEdge = ${leftEdge}`)
-      console.log('set scrollLeft 0')
-      area.scrollLeft = 0
-      previousImage()
+      if (imageIx > 0) {
+        imageIx -= 1
+        console.log(`set imageIx = ${imageIx}`)
+        area.scrollLeft = leftEdges[imageIx]
+      }
     }
   }
   else {
