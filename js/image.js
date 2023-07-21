@@ -94,7 +94,7 @@ function setupPage(json) {
   // Scroll the current image into view.
   const area = document.getElementById("area")
   area.scrollLeft = leftEdges[imageIx]
-  console.log(`area.scrollLeft = ${area.scrollLeft}`)
+  console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
 
   // Watch the area scroll and scroll end events.
   area.addEventListener('scroll', areaScroll, false)
@@ -111,7 +111,7 @@ function setImageIx() {
     imageIx = parseInt(ix);
   else
     imageIx = 0
-  console.log(`first imageIx = ${imageIx}`)
+  console.log(`first imageIx: ${imageIx}`)
 }
 
 function sizeImageArea() {
@@ -141,7 +141,7 @@ function sizeImages() {
   const beginWidth = 100
   beginImg.style.width = `${beginWidth}px`
   beginImg.style.height = `${areaHeight}px`
-  console.log(`set begin image: ${beginWidth} X ${areaHeight}`)
+  console.log(`set begin image: ${beginWidth.toFixed(2)} X ${areaHeight.toFixed(2)}`)
   let edge = beginWidth
 
   cJson.images.forEach((image, index) => {
@@ -154,7 +154,7 @@ function sizeImages() {
     img.style.width = `${width}px`;
     img.style.height = `${height}px`;
     img.src = image.url
-    console.log(`set image ${index}: ${width} X ${height}`)
+    console.log(`set image ${index}: ${width.toFixed(2)} X ${height.toFixed(2)}`)
     edge += width
     imageWidths.push(width)
   })
@@ -163,7 +163,7 @@ function sizeImages() {
   const endImg = document.getElementById('end-edge');
   beginImg.style.width = `${endWidth}px`
   beginImg.style.height = `${areaHeight}px`
-  console.log(`set end image: ${endWidth} X ${areaHeight}`)
+  console.log(`set end image: ${endWidth.toFixed(2)} X ${areaHeight.toFixed(2)}`)
 }
 
 function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
@@ -222,41 +222,33 @@ function handleTouchEnd(evt) {
 }
 
 function swipeArea() {
-  // Switch to the image left or right image or snap back to the
-  // current image.
+  // Switch to the closest image or snap back to the current image.
 
   const area = document.getElementById("area");
-  console.log(`swipe areaScrollStart:${areaScrollStart}, area.scrollLeft: ${area.scrollLeft}`)
+  console.log(`swipe areaScrollStart: ${areaScrollStart.toFixed(2)}, area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
 
-  const leftEdge = leftEdges[imageIx]
-  const halfImage = imageWidths[imageIx] / 2
-
-  // If less than half of the image is visible, switch to the previous
-  // or next image.
-  if (Math.abs(area.scrollLeft - leftEdge) > halfImage) {
-
-    if (area.scrollLeft > areaScrollStart) {
-      console.log(`next image; leftEdge = ${leftEdge}`)
-
-      if (imageIx < cJson.images.length - 1) {
-        imageIx += 1
-        console.log(`set imageIx = ${imageIx}`)
-        area.scrollLeft = leftEdges[imageIx]
-      }
-    }
-    else {
-      console.log(`previous image; leftEdge = ${leftEdge}`)
-      if (imageIx > 0) {
-        imageIx -= 1
-        console.log(`set imageIx = ${imageIx}`)
-        area.scrollLeft = leftEdges[imageIx]
-      }
-    }
-  }
+  let closestIx
+  if (area.scrollLeft < leftEdges[0])
+    closestIx = 0
+  else if (area.scrollLeft > leftEdges[leftEdges.length - 1])
+    closestIx = leftEdges.length - 1
   else {
-    // Snap back.
-    console.log(`snap back: leftEdge: ${leftEdge}`)
-    area.scrollLeft = leftEdge
+    for (let ix = 0; ix < leftEdges.length - 1; ix++) {
+      const left = leftEdges[ix]
+      const right = leftEdges[ix+1]
+      if (area.scrollLeft >= left && area.scrollLeft < right) {
+        if (area.scrollLeft - left < right - area.scrollLeft)
+          closestIx = ix
+        else
+          closestIx = ix + 1
+        break
+      }
+    }
   }
+  imageIx = closestIx
+  area.scrollLeft = leftEdges[closestIx]
+
+  console.log(`imageIx: ${imageIx}`)
+  console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
   areaScrollStart = null
 }
