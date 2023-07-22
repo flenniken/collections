@@ -1,6 +1,9 @@
 // image.js
 "use strict";
 
+// The start time used for startup timing.
+const start = performance.now()
+
 // The collection's json data.
 var cJson = null
 
@@ -31,12 +34,18 @@ document.addEventListener('touchmove', handleTouchMove, false)
 document.addEventListener('touchend', handleTouchEnd, false)
 document.addEventListener('touchcancel', handleTouchCancel, false)
 
+function logStartupTime(message) {
+  let seconds = (performance.now() - start) / 1000.0
+  seconds = seconds.toFixed(3)
+  console.log(`${seconds} s -- ${message}`);
+}
+
 function fnDOMContentLoaded() {
-  console.log("DOMContentLoaded")
+  logStartupTime("DOMContentLoaded")
 }
 
 function fnreadystatechange() {
-  console.log("readystatechange")
+  logStartupTime("readystatechange")
 }
 
 // Timeout function.
@@ -74,43 +83,51 @@ function areaScrollEnd() {
   console.log("---areaScrollEnd")
 }
 
-function loadEvent() {
+async function loadEvent() {
   // The page finished loading, load json and size things.
 
-  // Read the collection's json file.
-  fetch('../pages/collection-1.json')
-    .then(response => response.json())
-    .then(json => setupPage(json))
-}
+  logStartupTime("read json file")
+  const response = await fetch("../pages/collection-1.json");
 
-function setupPage(json) {
-  //
-  cJson = json
-  console.log(`read collection json, ${cJson.images.length} images`)
+  logStartupTime("read and parse json")
+  cJson = await response.json();
+  logStartupTime(`json contains ${cJson.images.length} images`)
+
   setImageIx()
   sizeImageArea()
   sizeImages()
 
   // Scroll the current image into view.
   const area = document.getElementById("area")
+  console.log(`leftEdges[${imageIx}]: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
 
-  // Watch the area scroll and scroll end events.
-  area.addEventListener('scroll', areaScroll, false)
-  area.addEventListener('scrollend', areaScrollEnd, false)
+  // Delay setting smooth scrolling so the initial scroll position is
+  // set quickly.
+  setTimeout(() => {
+    // Watch the area scroll and scroll end events.
+    area.addEventListener('scroll', areaScroll, false)
+    area.addEventListener('scrollend', areaScrollEnd, false)
+    area.style.scrollBehavior = "smooth"
+  }, 500)
+
+  logStartupTime("loadEvent Done")
 }
 
 function setImageIx() {
   // Set the first image to show based on the query parameter ix.
+  logStartupTime("setImageIx")
 
   console.log(`window.location.search = ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search);
   const ix = searchParams.get("ix")
   if (ix && ix >= 0)
     imageIx = parseInt(ix);
-  else
+  else {
     imageIx = 0
+    console.log(`query ix: ${ix}`)
+  }
   console.log(`first imageIx: ${imageIx}`)
 }
 
@@ -119,6 +136,7 @@ function sizeImageArea() {
 
   // Get the screen width and height that we can use and store them in
   // globals.
+  logStartupTime("sizeImageArea")
   areaWidth = window.innerWidth || document.documentElement.clientWidth ||
     document.body.clientWidth
   areaHeight = window.innerHeight || document.documentElement.clientHeight ||
@@ -134,9 +152,9 @@ function sizeImageArea() {
 function sizeImages() {
   // Size all the images to fit the view and create the leftEdges
   // array.
+  logStartupTime("sizeImages")
 
   const beginImg = document.getElementById('begin-edge')
-  console.log(`beginImg: ${beginImg}`)
 
   const beginWidth = 100
   beginImg.style.width = `${beginWidth}px`
@@ -223,6 +241,7 @@ function handleTouchEnd(evt) {
 
 function swipeArea() {
   // Switch to the closest image or snap back to the current image.
+  logStartupTime("swipeArea")
 
   const area = document.getElementById("area");
   console.log(`swipe areaScrollStart: ${areaScrollStart.toFixed(2)}, area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
@@ -251,4 +270,6 @@ function swipeArea() {
   console.log(`imageIx: ${imageIx}`)
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
   areaScrollStart = null
+
+  logStartupTime("swipeArea done")
 }

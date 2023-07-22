@@ -7,5 +7,4 @@ body {
 #area {
   display: flex;
   overflow-x: scroll;
-  scroll-behavior: smooth;
 }
