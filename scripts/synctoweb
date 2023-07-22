@@ -1,6 +1,50 @@
 #!/bin/bash
 
-rsync -vrhpu --exclude '*~' --exclude '#*' --exclude '.git' \
- /Users/steve/code/collections \
- 1and1:flenniken/site/web/
- 
+# Create the copylist file from the embedded lines.
+# Create the list from the find command, then edit it to remove unwanted files.
+# find -type f | cut -c 3- |  grep -v ".git/"
+cat > copylist.txt << EOF
+favicon.ico
+index.html
+images/8-p.jpg
+images/8-t.jpg
+images/2-p.jpg
+images/6-t.jpg
+images/4-t.jpg
+images/4-p.jpg
+images/6-p.jpg
+images/2-t.jpg
+images/1-p.jpg
+images/5-t.jpg
+images/7-t.jpg
+images/3-p.jpg
+images/3-t.jpg
+images/7-p.jpg
+images/5-p.jpg
+images/1-t.jpg
+js/thumbnails.js
+js/image.js
+js/collections.js
+js/sw.js
+collections.css
+icons/end.svg
+icons/icon-256.png
+icons/icon-192.png
+icons/icon-64.png
+icons/icon-168.png
+icons/icon-96.png
+icons/begin.svg
+icons/icon-128.png
+icons/icon-32.png
+icons/icon-512.png
+pages/collection-1.json
+pages/image-1.html
+pages/thumbnails-1.html
+collections.webmanifest
+EOF
+
+rsync --progress -a --files-from copylist.txt \
+ /Users/steve/code/collections/ \
+ 1and1:flenniken/site/web/collections/
+
+rm copylist.txt
