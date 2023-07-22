@@ -11,10 +11,17 @@ body {
   visibility: hidden;
   opacity: 0;
 }
+#area {
+  scroll-snap-type: x mandatory;
+}
+#area .image {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
   </style>
   <script type="text/javascript">
-<!--$ nextline -->
-<!--$ : json = string(s, "json") -->
+//$ nextline
+//$ : json = string(s, "json")
 var cJson = {json}
   </script>
 </head>
@@ -24,7 +31,7 @@ var cJson = {json}
 <!--$ nextline -->
 <!--$ : t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
-    <img src="{image.url}">
+    <img class="image" src="{image.url}">
     <img id="end-edge" src="../icons/end.svg">
   </div>
 <!--$ block -->

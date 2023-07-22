@@ -12,9 +12,6 @@ var imageIx = null
 var areaWidth = null
 var areaHeight = null
 
-// Finger touching the screen.
-var touching = false
-
 // The left edges (scroll positions) of the images in the area not
 // including the border beginning and ending images.
 var leftEdges = []
@@ -22,62 +19,12 @@ var leftEdges = []
 // The scaled width of each image.
 var imageWidths = []
 
-window.addEventListener("DOMContentLoaded", fnDOMContentLoaded)
-window.addEventListener("readystatechange", fnreadystatechange)
 window.addEventListener("load", loadEvent)
-// window.addEventListener("resize", sizeCurrentImage)
-document.addEventListener('touchstart', handleTouchStart, false)
-document.addEventListener('touchmove', handleTouchMove, false)
-document.addEventListener('touchend', handleTouchEnd, false)
-document.addEventListener('touchcancel', handleTouchCancel, false)
 
 function logStartupTime(message) {
   let seconds = (performance.now() - start) / 1000.0
   seconds = seconds.toFixed(3)
   console.log(`${seconds} s -- ${message}`);
-}
-
-function fnDOMContentLoaded() {
-  logStartupTime("DOMContentLoaded")
-}
-
-function fnreadystatechange() {
-  logStartupTime("readystatechange")
-}
-
-// Timeout function.
-var scrollingTimeout
-
-// True when scrolling has paused but the user is still touching.
-var scrollingPaused
-
-// The scroll position when scrolling starts.
-var areaScrollStart = null
-
-function areaScroll() {
-  console.log("areaScroll")
-
-  if (!areaScrollStart) {
-    const area = document.getElementById("area")
-    areaScrollStart = area.scrollLeft
-  }
-
-  window.clearTimeout(scrollingTimeout)
-  scrollingPaused = false
-  scrollingTimeout = setTimeout(function() {
-    if (touching) {
-      console.log('Area scrolling has paused for tenth of a second.')
-      scrollingPaused = true
-    }
-    else {
-      console.log('Area scrolling has stopped.')
-      swipeArea()
-    }
-  }, 100)
-}
-
-function areaScrollEnd() {
-  console.log("---areaScrollEnd")
 }
 
 async function loadEvent() {
@@ -99,15 +46,6 @@ async function loadEvent() {
   console.log(`leftEdges[${imageIx}]: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
-
-  // Delay setting smooth scrolling so the initial scroll position is
-  // set quickly.
-  setTimeout(() => {
-    // Watch the area scroll and scroll end events.
-    area.addEventListener('scroll', areaScroll, false)
-    area.addEventListener('scrollend', areaScrollEnd, false)
-    area.style.scrollBehavior = "smooth"
-  }, 500)
 
   document.body.style.visibility = 'visible';
   document.body.style.opacity = 1;
@@ -195,82 +133,4 @@ function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
   const width = scale * imageWidth
   const height = scale * imageHeight
   return {width, height}
-}
-
-// Start touch point.
-var xDown = null
-var yDown = null
-
-// Current touch point.
-var xPt = null
-var yPt = null
-
-function handleTouchStart(evt) {
-  console.log("handleTouchStart")
-  touching = true
-
-  const firstTouch = evt.touches[0]
-  xDown = firstTouch.clientX
-  yDown = firstTouch.clientY
-}
-
-function handleTouchMove(evt) {
-  if (!xDown || !yDown)
-    return
-  xPt = evt.touches[0].clientX
-  yPt = evt.touches[0].clientY
-}
-
-function handleTouchCancel(evt) {
-  console.log("handleTouchCancel")
-  handleTouchEnd(evt)
-}
-
-function handleTouchEnd(evt) {
-  console.log("handleTouchEnd")
-  touching = false
-  xDown = null
-  yDown = null
-  xPt = null
-  yPt = null
-  if (scrollingPaused) {
-    console.log("Area scrolling has stopped after pausing.")
-    swipeArea()
-  }
-}
-
-function swipeArea() {
-  // Switch to the closest image or snap back to the current image.
-  logStartupTime("swipeArea")
-
-  const area = document.getElementById("area");
-  console.log(`swipe areaScrollStart: ${areaScrollStart.toFixed(2)}, area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
-
-  let closestIx = imageIx
-  if (area.scrollLeft < leftEdges[0])
-    closestIx = 0
-  else if (area.scrollLeft > leftEdges[leftEdges.length - 1])
-    closestIx = leftEdges.length - 1
-  else {
-    // Note: leftEdges includes the two boundry images.
-    for (let ix = 0; ix < leftEdges.length - 1; ix++) {
-      const left = leftEdges[ix]
-      const right = leftEdges[ix+1]
-      if (area.scrollLeft >= left && area.scrollLeft < right) {
-        if (area.scrollLeft - left < right - area.scrollLeft)
-          closestIx = ix
-        else
-          closestIx = ix + 1
-        break
-      }
-    }
-  }
-  imageIx = closestIx
-  area.scrollLeft = leftEdges[closestIx]
-
-  console.log(`imageIx: ${imageIx}`)
-  console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
-  areaScrollStart = null
-
-  logStartupTime("swipeArea done")
 }
