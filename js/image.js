@@ -246,12 +246,13 @@ function swipeArea() {
   const area = document.getElementById("area");
   console.log(`swipe areaScrollStart: ${areaScrollStart.toFixed(2)}, area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
 
-  let closestIx
+  let closestIx = imageIx
   if (area.scrollLeft < leftEdges[0])
     closestIx = 0
   else if (area.scrollLeft > leftEdges[leftEdges.length - 1])
     closestIx = leftEdges.length - 1
   else {
+    // Note: leftEdges includes the two boundry images.
     for (let ix = 0; ix < leftEdges.length - 1; ix++) {
       const left = leftEdges[ix]
       const right = leftEdges[ix+1]
