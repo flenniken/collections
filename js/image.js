@@ -4,9 +4,6 @@
 // The start time used for startup timing.
 const start = performance.now()
 
-// The collection's json data.
-var cJson = null
-
 // The image index into the json collection of the image we are
 // currently viewing.
 var imageIx = null
