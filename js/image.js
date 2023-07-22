@@ -109,6 +109,9 @@ async function loadEvent() {
     area.style.scrollBehavior = "smooth"
   }, 500)
 
+  document.body.style.visibility = 'visible';
+  document.body.style.opacity = 1;
+
   logStartupTime("loadEvent Done")
 }
 
