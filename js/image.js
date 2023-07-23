@@ -16,9 +16,6 @@ var areaHeight = null
 // including the border beginning and ending images.
 var leftEdges = []
 
-// The scaled width of each image.
-var imageWidths = []
-
 window.addEventListener("load", loadEvent)
 
 function logStartupTime(message) {
@@ -92,34 +89,30 @@ function sizeImages() {
   // array.
   logStartupTime("sizeImages")
 
-  const beginImg = document.getElementById('begin-edge')
+  setDimensions("begin-edge", 100, areaHeight)
 
-  const beginWidth = 100
-  beginImg.style.width = `${beginWidth}px`
-  beginImg.style.height = `${areaHeight}px`
-  console.log(`set begin image: ${beginWidth.toFixed(2)} X ${areaHeight.toFixed(2)}`)
-  let edge = beginWidth
-
-  cJson.images.forEach((image, index) => {
+  let edge = 100
+  cJson.images.forEach((image, ix) => {
     leftEdges.push(edge)
     // Set the image width and height scaled to fit the area.
     const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
-
-    const ix = index + 2
-    const img = document.querySelector(`#area :nth-child(${ix})`)
-    img.style.width = `${width}px`;
-    img.style.height = `${height}px`;
-    img.src = image.url
-    console.log(`set image ${index}: ${width.toFixed(2)} X ${height.toFixed(2)}`)
+    const img = document.querySelector(`#area :nth-child(${ix+2})`)
+    setDimensionsImg(img, width, height, ix)
     edge += width
-    imageWidths.push(width)
   })
 
-  const endWidth = 100
-  const endImg = document.getElementById('end-edge');
-  beginImg.style.width = `${endWidth}px`
-  beginImg.style.height = `${areaHeight}px`
-  console.log(`set end image: ${endWidth.toFixed(2)} X ${areaHeight.toFixed(2)}`)
+  setDimensions('end-edge', 100, areaHeight)
+}
+
+function setDimensions(id, width, height, msg) {
+  const img = document.getElementById(id);
+  setDimensionsImg(img, width, height, id)
+}
+
+function setDimensionsImg(img, width, height, msg) {
+  img.style.width = `${width}px`
+  img.style.height = `${height}px`
+  console.log(`set ${msg}: ${width.toFixed(2)} X ${height.toFixed(2)}`)
 }
 
 function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {

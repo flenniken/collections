@@ -43,7 +43,7 @@ pages/thumbnails-1.html
 collections.webmanifest
 EOF
 
-rsync --progress -a --files-from copylist.txt \
+rsync --delete --progress -a --files-from copylist.txt \
  /Users/steve/code/collections/ \
  1and1:flenniken/site/web/collections/
 
