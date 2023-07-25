@@ -4,6 +4,8 @@
 // The start time used for startup timing.
 const start = performance.now()
 
+// cJson is defined in the image html page.
+
 // The image index into the json collection of the image we are
 // currently viewing.
 var imageIx = null
@@ -12,8 +14,7 @@ var imageIx = null
 var areaWidth = null
 var areaHeight = null
 
-// The left edges (scroll positions) of the images in the area not
-// including the border beginning and ending images.
+// The left edges (scroll positions) of the images in the area.
 var leftEdges = []
 
 window.addEventListener("load", loadEvent)
@@ -21,18 +22,13 @@ window.addEventListener("load", loadEvent)
 function logStartupTime(message) {
   let seconds = (performance.now() - start) / 1000.0
   seconds = seconds.toFixed(3)
-  console.log(`${seconds} s -- ${message}`);
+  console.log(`${seconds}s -- ${message}`);
 }
 
 async function loadEvent() {
   // The page finished loading, load json and size things.
 
-  logStartupTime("read json file")
-  const response = await fetch("../pages/collection-1.json");
-
-  logStartupTime("read and parse json")
-  cJson = await response.json();
-  logStartupTime(`json contains ${cJson.images.length} images`)
+  logStartupTime(`loadEvent: json contains ${cJson.images.length} images`)
 
   setImageIx()
   sizeImageArea()
@@ -50,6 +46,17 @@ async function loadEvent() {
   logStartupTime("loadEvent Done")
 }
 
+function int0(str, min, max) {
+  // Parse the number string as an integer and validate it. Return the
+  // value or 0 when the str is not valid.
+  const value = parseInt(str, 10)
+  if (isNaN(value))
+    return 0
+  if (value < min || value > max)
+    return 0
+  return value
+}
+
 function setImageIx() {
   // Set the first image to show based on the query parameter ix.
   logStartupTime("setImageIx")
@@ -57,12 +64,9 @@ function setImageIx() {
   console.log(`window.location.search = ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search);
   const ix = searchParams.get("ix")
-  if (ix && ix >= 0)
-    imageIx = parseInt(ix);
-  else {
-    imageIx = 0
-    console.log(`query ix: ${ix}`)
-  }
+  console.log(`query ix: ${ix}`)
+
+  imageIx = int0(ix, 0, cJson.images.length - 1)
   console.log(`first imageIx: ${imageIx}`)
 }
 
@@ -89,40 +93,31 @@ function sizeImages() {
   // array.
   logStartupTime("sizeImages")
 
-  setDimensions("begin-edge", 100, areaHeight)
-
-  let edge = 100
+  let edge = 0
   cJson.images.forEach((image, ix) => {
     leftEdges.push(edge)
     // Set the image width and height scaled to fit the area.
-    const {width, height} = scaleImage(areaWidth, areaHeight, image.width, image.height)
-    const img = document.querySelector(`#area :nth-child(${ix+2})`)
+    const {width, height} = wScaleImage(areaWidth, areaHeight, image.width, image.height)
+    const img = document.querySelector(`#area :nth-child(${ix+1})`)
     setDimensionsImg(img, width, height, ix)
     edge += width
   })
-
-  setDimensions('end-edge', 100, areaHeight)
-}
-
-function setDimensions(id, width, height, msg) {
-  const img = document.getElementById(id);
-  setDimensionsImg(img, width, height, id)
 }
 
 function setDimensionsImg(img, width, height, msg) {
+  // Set the image width and height and log the message.
   img.style.width = `${width}px`
   img.style.height = `${height}px`
   console.log(`set ${msg}: ${width.toFixed(2)} X ${height.toFixed(2)}`)
 }
 
-function scaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
-  // Fix the image tite inside the area keeping the image aspect ratio
+function wScaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
+  // Fix the image width inside the area keeping the image aspect ratio
   // constant. Return the new image width and height.
 
   console.assert(imageWidth != 0 && imageHeight != 0)
   const hScale = areaWidth / imageWidth
-  const vScale = areaHeight / imageHeight
-  const scale = Math.min(hScale, vScale)
+  const scale = hScale
   const width = scale * imageWidth
   const height = scale * imageHeight
   return {width, height}
