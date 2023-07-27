@@ -43,6 +43,10 @@ async function loadEvent() {
   document.body.style.visibility = 'visible';
   document.body.style.opacity = 1;
 
+  // Watch the area scroll and scroll end events.
+  area.addEventListener('scroll', areaScroll, false)
+  area.addEventListener('scrollend', areaScrollEnd, false)
+
   logStartupTime("loadEvent Done")
 }
 
@@ -121,4 +125,98 @@ function wScaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
   const width = scale * imageWidth
   const height = scale * imageHeight
   return {width, height}
+}
+
+// Timeout function.
+var scrollingTimeout
+
+// True when scrolling has paused but the user is still touching.
+var scrollingPaused
+
+document.addEventListener('touchstart', handleTouchStart, false)
+document.addEventListener('touchmove', handleTouchMove, false)
+document.addEventListener('touchend', handleTouchEnd, false)
+document.addEventListener('touchcancel', handleTouchCancel, false)
+
+function areaScroll() {
+  // console.log("areaScroll")
+
+  window.clearTimeout(scrollingTimeout)
+  scrollingPaused = false
+  scrollingTimeout = setTimeout(function() {
+    if (touching) {
+      console.log('Area scrolling has paused for a tenth of a second.')
+      scrollingPaused = true
+    }
+    else {
+      console.log('Area scrolling has stopped.')
+      handleScrollEnd()
+    }
+  }, 100)
+}
+
+// Start touch point.
+var xDown = null
+var yDown = null
+
+// Current touch point.
+var xPt = null
+var yPt = null
+
+// Finger touching the screen.
+var touching = false
+
+function handleTouchStart(evt) {
+  console.log("handleTouchStart")
+  touching = true
+
+  const firstTouch = evt.touches[0]
+  xDown = firstTouch.clientX
+  yDown = firstTouch.clientY
+}
+
+function handleTouchMove(evt) {
+  if (!xDown || !yDown)
+    return
+  xPt = evt.touches[0].clientX
+  yPt = evt.touches[0].clientY
+}
+
+function handleTouchEnd(evt) {
+  console.log("handleTouchEnd")
+  touching = false
+  xDown = null
+  yDown = null
+  xPt = null
+  yPt = null
+  if (scrollingPaused) {
+    console.log("Area scrolling has stopped after pausing.")
+    handleScrollEnd()
+  }
+}
+
+function handleTouchCancel(evt) {
+  console.log("handleTouchCancel")
+  handleTouchEnd(evt)
+}
+
+function areaScrollEnd() {
+  // Once the scrollend event is supported in the browsers you can
+  // remove the code above.
+  console.log("areaScrollEnd")
+}
+
+function handleScrollEnd() {
+  // Area horizontal scrolling has stopped.  scrollLeft is the ending
+  // position.
+  const area = document.getElementById("area")
+  console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
+  console.log(`leftEdges: ${leftEdges}`)
+  for (let ix = 0; ix < leftEdges.length; ix++) {
+    if (Math.round(area.scrollLeft) == leftEdges[ix]) {
+      imageIx = ix
+      console.log(`imageIx: ${imageIx}`)
+      break
+    }
+  }
 }
