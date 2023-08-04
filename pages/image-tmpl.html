@@ -12,11 +12,19 @@ body {
   opacity: 0;
 }
 #area {
+  display: flex;
+  overflow-x: scroll;
   scroll-snap-type: x mandatory;
 }
-#area .image {
-  scroll-snap-align: start;
-  scroll-snap-stop: always;
+.container {
+    min-width: 100%;
+    overflow: hidden;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+    position: relative;
+}
+.container img {
+    position: absolute;
 }
   </style>
   <script type="text/javascript">
@@ -27,10 +35,13 @@ var cJson = {json}
 </head>
 <body id="image-page">
   <div id="area">
-<!--$ nextline -->
+<!--$ block -->
 <!--$ : t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
-    <img class="image" src="{image.url}">
+    <div class="container" id="c{t.row}">
+      <img id="i{t.row}" src="{image.url}">
+    </div>
+<!--$ endblock -->
   </div>
 <!--$ block -->
 <!--$ : image = s.images[0] -->

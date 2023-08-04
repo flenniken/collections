@@ -40,6 +40,7 @@ async function loadEvent() {
   area.scrollLeft = leftEdges[imageIx]
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
 
+  // Show the page.
   document.body.style.visibility = 'visible';
   document.body.style.opacity = 1;
 
@@ -93,38 +94,35 @@ function sizeImageArea() {
 }
 
 function sizeImages() {
-  // Size all the images to fit the view and create the leftEdges
-  // array.
-  logStartupTime("sizeImages")
+  // Size the image containers and the images.
 
   let edge = 0
   cJson.images.forEach((image, ix) => {
     leftEdges.push(edge)
-    // Set the image width and height scaled to fit the area.
-    const {width, height} = wScaleImage(areaWidth, areaHeight, image.width, image.height)
-    const img = document.querySelector(`#area :nth-child(${ix+1})`)
-    setDimensionsImg(img, width, height, ix)
-    edge += width
+
+    // Size all the containers to the size of the area.
+    const container = document.getElementById(`c${ix}`)
+    container.style.width = `${areaWidth}px`
+    container.style.height = `${areaHeight}px`
+
+    // Fit the images in the container.
+    console.assert(image.width != 0)
+    const scale = areaWidth / image.width
+    const x = 0
+    const y = 0
+
+    const img = document.getElementById(`i${ix}`)
+    img.style.left = `${x}px`
+    img.style.top = `${y}px`
+    const scaledw = image.width * scale
+    const scaledh = image.height * scale
+    img.style.width = `${scaledw}px`
+    img.style.height = `${scaledh}px`
+
+    console.log(`i${ix}: ${image.width} x ${image.height} (${x},${y}) ${scaledw.toFixed(2)} x ${scaledh.toFixed(2)}`)
+
+    edge += areaWidth
   })
-}
-
-function setDimensionsImg(img, width, height, msg) {
-  // Set the image width and height and log the message.
-  img.style.width = `${width}px`
-  img.style.height = `${height}px`
-  console.log(`set ${msg}: ${width.toFixed(2)} X ${height.toFixed(2)}`)
-}
-
-function wScaleImage(areaWidth, areaHeight, imageWidth, imageHeight) {
-  // Fix the image width inside the area keeping the image aspect ratio
-  // constant. Return the new image width and height.
-
-  console.assert(imageWidth != 0 && imageHeight != 0)
-  const hScale = areaWidth / imageWidth
-  const scale = hScale
-  const width = scale * imageWidth
-  const height = scale * imageHeight
-  return {width, height}
 }
 
 // Timeout function.
@@ -212,11 +210,15 @@ function handleScrollEnd() {
   const area = document.getElementById("area")
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
   console.log(`leftEdges: ${leftEdges}`)
+  let foundEdge = false
   for (let ix = 0; ix < leftEdges.length; ix++) {
-    if (Math.round(area.scrollLeft) == leftEdges[ix]) {
+    if (Math.round(area.scrollLeft) <= leftEdges[ix]) {
       imageIx = ix
       console.log(`imageIx: ${imageIx}`)
+      foundEdge = true
       break
     }
   }
+  if (!foundEdge)
+    console.log('edge not found')
 }

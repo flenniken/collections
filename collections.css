@@ -4,7 +4,3 @@ body {
   padding: 0;
 }
 
-#area {
-  display: flex;
-  overflow-x: scroll;
-}
