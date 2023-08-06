@@ -30,13 +30,13 @@ async function loadEvent() {
 
   logStartupTime(`loadEvent: json contains ${cJson.images.length} images`)
 
-  setImageIx()
+  setFirstImage()
   sizeImageArea()
   sizeImages()
 
   // Scroll the current image into view.
   const area = document.getElementById("area")
-  console.log(`leftEdges[${imageIx}]: ${leftEdges[imageIx]}`)
+  console.log(`leftEdge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
 
@@ -62,17 +62,15 @@ function int0(str, min, max) {
   return value
 }
 
-function setImageIx() {
-  // Set the first image to show based on the query parameter ix.
-  logStartupTime("setImageIx")
-
+function setFirstImage() {
+  // Set the first image to show based on the query parameter image.
+  logStartupTime("setFirstImage")
   console.log(`window.location.search = ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search);
-  const ix = searchParams.get("ix")
-  console.log(`query ix: ${ix}`)
-
-  imageIx = int0(ix, 0, cJson.images.length - 1)
-  console.log(`first imageIx: ${imageIx}`)
+  const imageQ = searchParams.get("image")
+  const imageNum = int0(imageQ, 1, cJson.images.length)
+  console.log(`first image: ${imageNum}`)
+  imageIx = imageNum - 1
 }
 
 function sizeImageArea() {
@@ -101,7 +99,7 @@ function sizeImages() {
     leftEdges.push(edge)
 
     // Size all the containers to the size of the area.
-    const container = document.getElementById(`c${ix}`)
+    const container = document.getElementById(`c${ix+1}`)
     container.style.width = `${areaWidth}px`
     container.style.height = `${areaHeight}px`
 
@@ -109,7 +107,7 @@ function sizeImages() {
     console.assert(image.width != 0)
     const fitScale = areaWidth / image.width
 
-    const img = document.getElementById(`i${ix}`)
+    const img = document.getElementById(`i${ix+1}`)
     const scaledw = image.width * fitScale
     const scaledh = image.height * fitScale
     img.style.width = `${scaledw}px`
@@ -138,7 +136,7 @@ function sizeImages() {
           (areaWidth <= areaHeight && width <= height)) {
         img.style.scale = scale
         img.style.translate = `${x}px ${y}px`
-        console.log(`i${ix}: ${image.width} x ${image.height} (${x}, ${y}) scale: ${scale.toFixed(2)}`)
+        console.log(`i${ix+1}: ${image.width} x ${image.height} (${x}, ${y}) scale: ${scale.toFixed(2)}`)
         foundZoomPoint = true
         break
       }
@@ -146,7 +144,7 @@ function sizeImages() {
     if (!foundZoomPoint) {
       console.log("zoom point not found")
       console.log(`image.zoomPoints: ${image.zoomPoints}`)
-      console.log(`i${ix}: ${image.width} x ${image.height} (0, 0) scale: 1`)
+      console.log(`i${ix+1}: ${image.width} x ${image.height} (0, 0) scale: 1`)
     }
 
     edge += areaWidth
@@ -242,7 +240,7 @@ function handleScrollEnd() {
   for (let ix = 0; ix < leftEdges.length; ix++) {
     if (Math.round(area.scrollLeft) <= leftEdges[ix]) {
       imageIx = ix
-      console.log(`imageIx: ${imageIx}`)
+      console.log(`image: ${imageIx+1}`)
       foundEdge = true
       break
     }

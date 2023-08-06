@@ -38,8 +38,9 @@ var cJson = {json}
 <!--$ block -->
 <!--$ : t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
-    <div class="container" id="c{t.row}">
-      <img id="i{t.row}" src="{image.url}">
+<!--$ : id = add(t.row, 1) -->
+    <div class="container" id="c{id}">
+      <img id="i{id}" src="{image.url}">
     </div>
 <!--$ endblock -->
   </div>
