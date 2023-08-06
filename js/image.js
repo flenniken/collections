@@ -90,7 +90,7 @@ function sizeImageArea() {
   const area = document.getElementById("area")
   area.style.width = `${areaWidth}px`
   area.style.height = `${areaHeight}px`
-  console.log(`set area: ${areaWidth} X ${areaHeight}`)
+  console.log(`area size: ${areaWidth} x ${areaHeight}`)
 }
 
 function sizeImages() {
@@ -107,19 +107,47 @@ function sizeImages() {
 
     // Fit the images in the container.
     console.assert(image.width != 0)
-    const scale = areaWidth / image.width
-    const x = 0
-    const y = 0
+    const fitScale = areaWidth / image.width
 
     const img = document.getElementById(`i${ix}`)
-    img.style.left = `${x}px`
-    img.style.top = `${y}px`
-    const scaledw = image.width * scale
-    const scaledh = image.height * scale
+    const scaledw = image.width * fitScale
+    const scaledh = image.height * fitScale
     img.style.width = `${scaledw}px`
     img.style.height = `${scaledh}px`
 
-    console.log(`i${ix}: ${image.width} x ${image.height} (${x},${y}) ${scaledw.toFixed(2)} x ${scaledh.toFixed(2)}`)
+    // Find the zoom point close to the screen size.
+
+    // "zoomPoints": [
+    //   [633, 844, 3, 200.2, 498.9],
+    //   [807, 448, 1, 0, 0]
+    // ]
+
+    let foundZoomPoint = false
+    for (let zix = 0; zix < image.zoomPoints.length; zix++) {
+      const zoomPoint = image.zoomPoints[zix]
+
+      const width = zoomPoint[0]
+      const height = zoomPoint[1]
+      const scale = zoomPoint[2]
+      const x = zoomPoint[3]
+      const y = zoomPoint[4]
+
+      // Only consider zoom points matching the screen orientation, either portrait or
+      // landscape.
+      if ((areaWidth > areaHeight && width > height) ||
+          (areaWidth <= areaHeight && width <= height)) {
+        img.style.scale = scale
+        img.style.translate = `${x}px ${y}px`
+        console.log(`i${ix}: ${image.width} x ${image.height} (${x}, ${y}) scale: ${scale.toFixed(2)}`)
+        foundZoomPoint = true
+        break
+      }
+    }
+    if (!foundZoomPoint) {
+      console.log("zoom point not found")
+      console.log(`image.zoomPoints: ${image.zoomPoints}`)
+      console.log(`i${ix}: ${image.width} x ${image.height} (0, 0) scale: 1`)
+    }
 
     edge += areaWidth
   })

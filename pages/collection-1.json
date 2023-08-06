@@ -12,7 +12,11 @@
     "description": "",
     "keywords": "",
     "width":3024,
-    "height":4032
+    "height":4032,
+    "zoomPoints": [
+      [633, 844, 1.2, 0, 0],
+      [807, 448, 1, 0, -400]
+    ]
   },
   {
     "url":"../images/2-p.jpg",
@@ -21,61 +25,90 @@
     "description": "",
     "keywords": "",
     "width":4032,
-    "height":3024
+    "height":3024,
+    "zoomPoints": [
+      [633, 844, 2.5, 102.2, 67],
+      [807, 448, 1, 0, 67]
+    ]
   },
   {
-     "url":"../images/3-p.jpg",
-     "thumbnail":"../images/3-t.jpg",
-     "title":"Glacier Park 3",
+    "url":"../images/3-p.jpg",
+    "thumbnail":"../images/3-t.jpg",
+    "title":"Glacier Park 3",
     "description": "",
     "keywords": "",
-     "width":4032,
-     "height":3024
+    "width":4032,
+    "height":3024,
+    "zoomPoints": [
+      [633, 844, 2.3, 4.3, 121.3],
+      [807, 448, 1, 0, -79]
+    ]
   },
   {
-     "url":"../images/4-p.jpg",
-     "thumbnail":"../images/4-t.jpg",
-     "title":"Glacier Park 4",
+    "url":"../images/4-p.jpg",
+    "thumbnail":"../images/4-t.jpg",
+    "title":"Glacier Park 4",
     "description": "",
     "keywords": "",
-     "width":4032,
-     "height":3024
+    "width":4032,
+    "height":3024,
+    "zoomPoints": [
+      [633, 844, 3, 200.2, 400],
+      [807, 448, 1, 0, 0]
+    ]
   },
   {
-     "url":"../images/5-p.jpg",
-     "thumbnail":"../images/5-t.jpg",
-     "title":"Glacier Park 5",
+    "url":"../images/5-p.jpg",
+    "thumbnail":"../images/5-t.jpg",
+    "title":"Glacier Park 5",
     "description": "",
     "keywords": "",
-     "width":4032,
-     "height":3024
+    "width":4032,
+    "height":3024,
+    "zoomPoints": [
+      [633, 844, 3, 100, 400],
+      [807, 448, 1, 0, 0]
+    ]
   },
   {
-     "url":"../images/6-p.jpg",
-     "thumbnail":"../images/6-t.jpg",
-     "title":"",
+    "url":"../images/6-p.jpg",
+    "thumbnail":"../images/6-t.jpg",
+    "title":"",
     "description": "",
     "keywords": "",
-     "width":4032,
-     "height":3024
+    "width":4032,
+    "height":3024,
+    "zoomPoints": [
+      [633, 844, 3.5, 400, 500],
+      [807, 448, 1, 0, 0]
+    ]
+
   },
   {
-     "url":"../images/7-p.jpg",
-     "thumbnail":"../images/7-t.jpg",
-     "title":"Glacier Park 7",
+    "url":"../images/7-p.jpg",
+    "thumbnail":"../images/7-t.jpg",
+    "title":"Glacier Park 7",
     "description": "",
     "keywords": "",
-     "width":3024,
-     "height":4032
+    "width":3024,
+    "height":4032,
+    "zoomPoints": [
+      [633, 844, 1.5, 100, 150],
+      [807, 448, 1, 0, 0]
+    ]
   },
   {
-     "url":"../images/8-p.jpg",
-     "thumbnail":"../images/8-t.jpg",
-     "title":"Glacier Park 8",
+    "url":"../images/8-p.jpg",
+    "thumbnail":"../images/8-t.jpg",
+    "title":"Glacier Park 8",
     "description": "",
     "keywords": "",
-     "width":2556,
-     "height":2556
+    "width":2556,
+    "height":2556,
+    "zoomPoints": [
+      [633, 844, 2, 100, 200],
+      [807, 448, 1, 0, 0]
+    ]
   }
 ]
 }
