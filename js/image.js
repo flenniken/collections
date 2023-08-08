@@ -17,6 +17,9 @@ var areaHeight = null
 // The left edges (scroll positions) of the images in the area.
 var leftEdges = []
 
+// Consider zoom point this close.
+const closeDistance = 100
+
 window.addEventListener("load", loadEvent)
 
 function logStartupTime(message) {
@@ -121,36 +124,55 @@ function sizeImages() {
     img.style.height = `${scaledh}px`
 
     // Find the zoom point for the screen size.
+    const [zoomPoint, distance] = getZoomPoint(image)
 
-    let foundZoomPoint = false
-    for (let zix = 0; zix < image.zoomPoints.length; zix++) {
-      const zoomPoint = image.zoomPoints[zix]
+    // Scale the translate the image to the zoom point.
+    const [w,h,s,x,y] = zoomPoint
+    img.style.scale = s
+    img.style.translate = `${x}px ${y}px`
 
-      const width = zoomPoint[0]
-      const height = zoomPoint[1]
-      const scale = zoomPoint[2]
-      const x = zoomPoint[3]
-      const y = zoomPoint[4]
-
-      // Only consider zoom points matching the screen orientation, either portrait or
-      // landscape.
-      if ((areaWidth > areaHeight && width > height) ||
-          (areaWidth <= areaHeight && width <= height)) {
-        img.style.scale = scale
-        img.style.translate = `${x}px ${y}px`
-        console.log(`i${ix+1}: ${image.width} x ${image.height}, ${width} x ${height} (${x}, ${y}) scale: ${scale.toFixed(2)}`)
-        foundZoomPoint = true
-        break
+    if (distance > closeDistance) {
+      console.log(`no good zoom point found for image ${ix+1}, distance: ${distance}`)
+      for (let ix = 0; ix < image.zoomPoints.length; ix++) {
+        console.log(`zoom point ${ix}: ${image.zoomPoints[ix]}`)
       }
     }
-    if (!foundZoomPoint) {
-      console.log("zoom point not found")
-      console.log(`image.zoomPoints: ${image.zoomPoints}`)
-      console.log(`i${ix+1}: ${image.width} x ${image.height} (0, 0) scale: 1`)
-    }
+
+    const part1 = `i${ix+1}: ${image.width} x ${image.height}, `
+    const part2 = `${w} x ${h} (${x}, ${y}) scale: ${s.toFixed(2)} d: ${distance}`
+    console.log(part1 + part2)
 
     edge += areaWidth
   })
+}
+
+function getZoomPoint(image) {
+  // Return the zoom point and distance for the given image.
+
+  let zoomPoint = [areaWidth, areaHeight, 1, 0, 0]
+  let distance = Math.abs(areaWidth - image.width) + Math.abs(areaHeight - image.height)
+  if (distance == 0)
+    return [zoomPoint, distance]
+
+  for (let zix = 0; zix < image.zoomPoints.length; zix++) {
+    const zp = image.zoomPoints[zix]
+    const width = zp[0]
+    const height = zp[1]
+
+    // Only consider zoom points matching the screen orientation, either portrait or
+    // landscape.
+    if ((areaWidth > areaHeight && width > height) ||
+        (areaWidth <= areaHeight && width <= height)) {
+      const dist = Math.abs(areaWidth - width) + Math.abs(areaHeight - height)
+      if (dist < closeDistance && dist < distance) {
+        distance = dist
+        zoomPoint = zp
+        if (distance == 0)
+          break
+      }
+    }
+  }
+  return [zoomPoint, distance]
 }
 
 // Timeout function.
