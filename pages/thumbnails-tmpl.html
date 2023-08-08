@@ -14,7 +14,8 @@
   <div>
 <!--$ nextline t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
-<!--$ : url = format("{s.baseUrl}?ix={t.row}") -->
+<!--$ : id = add(t.row, 1) -->
+<!--$ : url = format("{s.baseUrl}?image={id}") -->
     <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
   </div>
   <div>

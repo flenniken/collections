@@ -99,6 +99,7 @@ function sizeImageArea() {
 
 function sizeImages() {
   // Size the image containers and the images.
+  logStartupTime("sizeImages")
 
   let edge = 0
   cJson.images.forEach((image, ix) => {
@@ -119,12 +120,7 @@ function sizeImages() {
     img.style.width = `${scaledw}px`
     img.style.height = `${scaledh}px`
 
-    // Find the zoom point close to the screen size.
-
-    // "zoomPoints": [
-    //   [633, 844, 3, 200.2, 498.9],
-    //   [807, 448, 1, 0, 0]
-    // ]
+    // Find the zoom point for the screen size.
 
     let foundZoomPoint = false
     for (let zix = 0; zix < image.zoomPoints.length; zix++) {
@@ -142,7 +138,7 @@ function sizeImages() {
           (areaWidth <= areaHeight && width <= height)) {
         img.style.scale = scale
         img.style.translate = `${x}px ${y}px`
-        console.log(`i${ix+1}: ${image.width} x ${image.height} (${x}, ${y}) scale: ${scale.toFixed(2)}`)
+        console.log(`i${ix+1}: ${image.width} x ${image.height}, ${width} x ${height} (${x}, ${y}) scale: ${scale.toFixed(2)}`)
         foundZoomPoint = true
         break
       }
