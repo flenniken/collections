@@ -25,6 +25,10 @@ function logStartupTime(message) {
   console.log(`${seconds}s -- ${message}`);
 }
 
+function get(id) {
+  return document.getElementById(id)
+}
+
 async function loadEvent() {
   // The page finished loading, load json and size things.
 
@@ -35,7 +39,7 @@ async function loadEvent() {
   sizeImages()
 
   // Scroll the current image into view.
-  const area = document.getElementById("area")
+  const area = get("area")
   console.log(`leftEdge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
@@ -85,10 +89,12 @@ function sizeImageArea() {
       document.body.clientHeight
 
   // Size the image area to the screen area.
-  const area = document.getElementById("area")
+  const area = get("area")
   area.style.width = `${areaWidth}px`
   area.style.height = `${areaHeight}px`
-  console.log(`area size: ${areaWidth} x ${areaHeight}`)
+  const dim = `${areaWidth} x ${areaHeight}`
+  console.log(`area size: ${dim}`)
+  get('size').innerHTML = `${dim}`
 }
 
 function sizeImages() {
@@ -99,7 +105,7 @@ function sizeImages() {
     leftEdges.push(edge)
 
     // Size all the containers to the size of the area.
-    const container = document.getElementById(`c${ix+1}`)
+    const container = get(`c${ix+1}`)
     container.style.width = `${areaWidth}px`
     container.style.height = `${areaHeight}px`
 
@@ -107,7 +113,7 @@ function sizeImages() {
     console.assert(image.width != 0)
     const fitScale = areaWidth / image.width
 
-    const img = document.getElementById(`i${ix+1}`)
+    const img = get(`i${ix+1}`)
     const scaledw = image.width * fitScale
     const scaledh = image.height * fitScale
     img.style.width = `${scaledw}px`
@@ -233,7 +239,7 @@ function areaScrollEnd() {
 function handleScrollEnd() {
   // Area horizontal scrolling has stopped.  scrollLeft is the ending
   // position.
-  const area = document.getElementById("area")
+  const area = get("area")
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
   console.log(`leftEdges: ${leftEdges}`)
   let foundEdge = false
@@ -242,9 +248,18 @@ function handleScrollEnd() {
       imageIx = ix
       console.log(`image: ${imageIx+1}`)
       foundEdge = true
+      SetDetails()
       break
     }
   }
   if (!foundEdge)
     console.log('edge not found')
+}
+
+function SetDetails() {
+  const image = cJson.images[imageIx]
+  get('title').innerHTML = image.title
+  get('description').innerHTML = image.description
+  get('keywords').innerHTML = image.keywords
+  get('size').innerHTML = `${areaWidth} x ${areaHeight}`
 }

@@ -4,3 +4,6 @@ body {
   padding: 0;
 }
 
+#details {
+    font-size: 2em;
+}

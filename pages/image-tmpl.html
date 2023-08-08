@@ -46,12 +46,16 @@ var cJson = {json}
   </div>
 <!--$ block -->
 <!--$ : image = s.images[0] -->
-  <div>
+  <div id="details">
     <h3 id="title">{image.title}</h3>
     <p id="description">{image.description}</p>
     <p id="keywords">{image.keywords}</p>
-    <p id="favorite"><input type="checkbox" id="favorite" name="favorite" value="favorite">favorite</p>
   </div>
 <!--$ endblock -->
+  <p id="extra">
+    <button onclick="location.reload(true)">Refresh</button>
+    <span id="size"></span>
+    <a href="../index.html">home</a>
+  </p>
 </body>
 </html>
