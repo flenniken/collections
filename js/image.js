@@ -182,7 +182,6 @@ var scrollingTimeout
 var scrollingPaused
 
 document.addEventListener('touchstart', handleTouchStart, false)
-document.addEventListener('touchmove', handleTouchMove, false)
 document.addEventListener('touchend', handleTouchEnd, false)
 document.addEventListener('touchcancel', handleTouchCancel, false)
 
@@ -203,43 +202,20 @@ function areaScroll() {
   }, 100)
 }
 
-// Start touch point.
-var xDown = null
-var yDown = null
-
-// Current touch point.
-var xPt = null
-var yPt = null
-
 // Finger touching the screen.
 var touching = false
 
 function handleTouchStart(evt) {
   console.log("handleTouchStart")
   touching = true
-
-  const firstTouch = evt.touches[0]
-  xDown = firstTouch.clientX
-  yDown = firstTouch.clientY
-}
-
-function handleTouchMove(evt) {
-  if (!xDown || !yDown)
-    return
-  xPt = evt.touches[0].clientX
-  yPt = evt.touches[0].clientY
 }
 
 function handleTouchEnd(evt) {
   console.log("handleTouchEnd")
   touching = false
-  xDown = null
-  yDown = null
-  xPt = null
-  yPt = null
   if (scrollingPaused) {
-    console.log("Area scrolling has stopped after pausing.")
-    handleScrollEnd()
+    console.log("figure up after pausing the scroll.")
+    areaScroll()
   }
 }
 
@@ -261,12 +237,14 @@ function handleScrollEnd() {
   console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
   console.log(`leftEdges: ${leftEdges}`)
   let foundEdge = false
+  const previousImageIx = imageIx
   for (let ix = 0; ix < leftEdges.length; ix++) {
-    if (Math.round(area.scrollLeft) <= leftEdges[ix]) {
+    if (Math.round(area.scrollLeft) == leftEdges[ix]) {
       imageIx = ix
       console.log(`image: ${imageIx+1}`)
       foundEdge = true
-      SetDetails()
+      if (imageIx != previousImageIx)
+        SetDetails()
       break
     }
   }
