@@ -205,18 +205,51 @@ function areaScroll() {
 // Finger touching the screen.
 var touching = false
 
+// The visual viewport scale at the start before zooming.
+var startViewportScale = null
+var startViewportLeft
+var startViewportTop
+
 function handleTouchStart(evt) {
-  console.log("handleTouchStart")
   touching = true
+
+  const scale = window.visualViewport.scale
+  const offsetLeft = window.visualViewport.offsetLeft
+  const offsetTop = window.visualViewport.offsetTop
+  console.log(`handleTouchStart: viewport (${offsetLeft}, ${offsetTop}) scale: ${scale.toFixed(2)}`)
+
+  if (!startViewportScale && evt.touches.length == 2) {
+    startViewportScale = scale
+    startViewportLeft = offsetLeft
+    startViewportTop = offsetTop
+
+    // Disable scrolling.
+    // const area = get("area")
+    // area.setAttribute("style","overflow-x: clip;")
+
+    console.log("start zooming")
+  }
 }
 
 function handleTouchEnd(evt) {
-  console.log("handleTouchEnd")
   touching = false
   if (scrollingPaused) {
-    console.log("figure up after pausing the scroll.")
+    console.log("handleTouchEnd: finger up after pausing the scroll.")
     areaScroll()
   }
+
+  const scale = window.visualViewport.scale
+  const offsetLeft = window.visualViewport.offsetLeft
+  const offsetTop = window.visualViewport.offsetTop
+
+  if (startViewportScale == scale) {
+    // Enable scrolling.
+    // const area = get("area")
+    // area.setAttribute("style","overflow-x: scroll;")
+    startViewportScale = null
+    console.log("finished zooming")
+  }
+  console.log(`handleTouchEnd: viewport (${offsetLeft}, ${offsetTop}) ${scale.toFixed(2)}`)
 }
 
 function handleTouchCancel(evt) {
