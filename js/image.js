@@ -59,6 +59,9 @@ async function loadEvent() {
     console.log("areaScrollEnd event exists")
   })
 
+  // Disable the default browser zoom and pan behavior.
+  area.setAttribute("touch-action", "none")
+
   logStartupTime("loadEvent Done")
 }
 
@@ -74,7 +77,7 @@ function int0(str, min, max) {
 }
 
 function setFirstImage() {
-  // Set the first image to show based on the query parameter image.
+  // Set the first image to show based on the url query parameter image.
   logStartupTime("setFirstImage")
   console.log(`window.location.search = ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search)
@@ -141,6 +144,7 @@ function sizeImages() {
       }
     }
 
+    // Log the image position information.
     const part1 = `i${ix+1}: ${image.width} x ${image.height}, `
     const part2 = `${w} x ${h} (${x}, ${y}) scale: ${two(s)} d: ${distance}`
     console.log(part1 + part2)
@@ -150,7 +154,8 @@ function sizeImages() {
 }
 
 function getZoomPoint(image) {
-  // Return the zoom point and distance for the given image.
+  // Return the close zoom point and distance away from it for the
+  // given image.
 
   let zoomPoint = [areaWidth, areaHeight, 1, 0, 0]
   let distance = Math.abs(areaWidth - image.width) + Math.abs(areaHeight - image.height)
@@ -185,8 +190,21 @@ var scrollingTimeout
 // True when scrolling has paused but the user is still touching.
 var scrollingPaused
 
+// When scrolling started.
+var scrollStart
+
 function areaScroll() {
   // When scolling stops, call handleScrollEnd.
+
+  // Scrolling stops when no more scroll events happen within .35
+  // seconds and a finger is not down. The .35 comes from
+  // experimenting in safari. If the timeout value is too short, the
+  // edge doesn't match up, but it will match eventually.
+
+  if (scrollStart == null) {
+    scrollStart = performance.now()
+  }
+
   window.clearTimeout(scrollingTimeout)
   scrollingPaused = false
   scrollingTimeout = setTimeout(function() {
@@ -195,22 +213,23 @@ function areaScroll() {
       scrollingPaused = true
     }
     else {
-      console.log('Area scrolling has stopped.')
+      let seconds = (performance.now() - scrollStart) / 1000.0
+      seconds = seconds.toFixed(3)
+      console.log(`Area scrolling has stopped. ${seconds}s`)
+      scrollStart = null
       handleScrollEnd()
     }
-  }, 100)
+  }, 350)
 }
 
 // Finger touching the screen.
 var touching = false
 
 function handleScrollEnd() {
-  // Area horizontal scrolling has stopped.  area.scrollLeft contains
+  // Area horizontal scrolling has stopped. area.scrollLeft contains
   // the ending position.
 
   const area = get("area")
-  console.log(`area.scrollLeft: ${two(area.scrollLeft)}`)
-  console.log(`leftEdges: ${leftEdges}`)
 
   // Update the current image (imageIx) and the page details.
   let foundEdge = false
@@ -218,15 +237,16 @@ function handleScrollEnd() {
   for (let ix = 0; ix < leftEdges.length; ix++) {
     if (Math.round(area.scrollLeft) == leftEdges[ix]) {
       imageIx = ix
-      console.log(`image: ${imageIx+1}`)
+      console.log(`Scrolled to ${imageIx+1}`)
       foundEdge = true
       if (imageIx != previousImageIx)
         SetDetails()
       break
     }
   }
-  if (!foundEdge)
-    console.log('edge not found')
+  if (!foundEdge) {
+    console.log(`Edge not found: area.scrollLeft: ${two(area.scrollLeft)}, leftEdges: ${leftEdges}`)
+  }
 }
 
 function SetDetails() {
@@ -292,7 +312,6 @@ window.addEventListener('touchstart', (event) => {
   // Disable the default browser zoom and pan behavior.
   event.preventDefault()
   const area = get("area")
-  area.setAttribute("touch-action", "none")
   // area.setAttribute("overflow-x", "clip")
 
   // Get the point centered between the two fingers.
@@ -368,8 +387,8 @@ function handleTouchend(event) {
   if (zooming) {
     // todo: wait until double click to zoom is back to normal before
     // turning on touch actions.
-    const area = get("area")
-    area.removeAttribute("touch-action")
+    // const area = get("area")
+    // area.removeAttribute("touch-action")
 
     console.log(`touchend: finger center: (${zoom.x}, ${zoom.y}) distance apart: ${two(zoom.distance)}`)
     console.log(`touchend: i${imageIx+1} translation: (${zoom.translateX}, ${zoom.translateY}) scale: ${two(zoom.scale)}`)
