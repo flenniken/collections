@@ -245,11 +245,21 @@ function twoFingerDistance(event) {
                     event.touches[0].pageY - event.touches[1].pageY)
 }
 
-function getTranslateXY(element) {
-  // Return the translate x and y values of an element as [x, y].
-  const str = element.style.translate
-  // todo: split the string then convert the two parts to x and y numbers
-  return [0, 0]
+function parseTranslate(translate) {
+  // Parse the translate string and return x and y numbers.  This
+  // assumes translate uses px units and 2d space. Returns [0, 0] on
+  // error.
+
+  // example: 0px -76px
+
+  let x = 0
+  let y = 0
+  const parts = translate.split(" ")
+  if (parts.length > 0)
+    x = parseFloat(parts[0], 10)
+  if (parts.length > 1)
+    y = parseFloat(parts[1], 10)
+  return [x, y]
 }
 
 function two(num) {
@@ -297,10 +307,10 @@ window.addEventListener('touchstart', (event) => {
   // Get the initial translate x and y values of the current image.
   const imageId = `i${imageIx+1}`
   const img = get(imageId)
-  const [x, y] = getTranslateXY(img)
+  const [x, y] = parseTranslate(img.style.translate)
   startZoom.translateX = x
   startZoom.translateY = y
-  startZoom.scale = parseInt(img.style.scale, 10)
+  startZoom.scale = parseFloat(img.style.scale, 10)
 
   console.log(`touchstart: ${imageId} translation: (${x}, ${y}) scale: ${two(startZoom.scale)}`)
 })
@@ -323,11 +333,11 @@ window.addEventListener('touchmove', (event) => {
   // console.log(`touchmove: distance: ${zoom.distance} ratio: ${ratio}`)
 
   // Calculate the image's translation point from how much the fingers
-  // have moved on the X and Y axis, times 2 for accelerated movement.
+  // have moved on the X and Y axis.
   zoom.x = (event.touches[0].pageX + event.touches[1].pageX) / 2
   zoom.y = (event.touches[0].pageY + event.touches[1].pageY) / 2
-  const deltaX = (zoom.x - startZoom.x) * 2
-  const deltaY = (zoom.y - startZoom.y) * 2
+  const deltaX = (zoom.x - startZoom.x)
+  const deltaY = (zoom.y - startZoom.y)
 
   // todo: limit the translation point.
   zoom.translateX = startZoom.translateX + deltaX
