@@ -2,7 +2,7 @@
 "use strict";
 
 // The start time used for startup timing.
-const start = performance.now()
+const startTime = performance.now()
 
 // cJson is defined in the image html page.
 
@@ -23,9 +23,9 @@ const closeDistance = 100
 window.addEventListener("load", loadEvent)
 
 function logStartupTime(message) {
-  let seconds = (performance.now() - start) / 1000.0
+  let seconds = (performance.now() - startTime) / 1000.0
   seconds = seconds.toFixed(3)
-  console.log(`${seconds}s -- ${message}`);
+  console.log(`${seconds}s -- ${message}`)
 }
 
 function get(id) {
@@ -45,15 +45,19 @@ async function loadEvent() {
   const area = get("area")
   console.log(`leftEdge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
-  console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
+  console.log(`area.scrollLeft: ${two(area.scrollLeft)}`)
 
   // Show the page.
-  document.body.style.visibility = 'visible';
-  document.body.style.opacity = 1;
+  document.body.style.visibility = 'visible'
+  document.body.style.opacity = 1
 
   // Watch the area scroll and scroll end events.
   area.addEventListener('scroll', areaScroll, false)
-  area.addEventListener('scrollend', areaScrollEnd, false)
+  area.addEventListener('scrollend', () => {
+    // Once the scrollend event is supported in the browsers you can
+    // replace the code that figures out when scrolling ends.
+    console.log("areaScrollEnd event exists")
+  })
 
   logStartupTime("loadEvent Done")
 }
@@ -73,7 +77,7 @@ function setFirstImage() {
   // Set the first image to show based on the query parameter image.
   logStartupTime("setFirstImage")
   console.log(`window.location.search = ${window.location.search}`)
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = new URLSearchParams(window.location.search)
   const imageQ = searchParams.get("image")
   const imageNum = int0(imageQ, 1, cJson.images.length)
   console.log(`first image: ${imageNum}`)
@@ -116,7 +120,6 @@ function sizeImages() {
     // Fit the images in the container.
     console.assert(image.width != 0)
     const fitScale = areaWidth / image.width
-
     const img = get(`i${ix+1}`)
     const scaledw = image.width * fitScale
     const scaledh = image.height * fitScale
@@ -126,7 +129,7 @@ function sizeImages() {
     // Find the zoom point for the screen size.
     const [zoomPoint, distance] = getZoomPoint(image)
 
-    // Scale the translate the image to the zoom point.
+    // Scale and translate the image to the zoom point.
     const [w,h,s,x,y] = zoomPoint
     img.style.scale = s
     img.style.translate = `${x}px ${y}px`
@@ -139,7 +142,7 @@ function sizeImages() {
     }
 
     const part1 = `i${ix+1}: ${image.width} x ${image.height}, `
-    const part2 = `${w} x ${h} (${x}, ${y}) scale: ${s.toFixed(2)} d: ${distance}`
+    const part2 = `${w} x ${h} (${x}, ${y}) scale: ${two(s)} d: ${distance}`
     console.log(part1 + part2)
 
     edge += areaWidth
@@ -159,6 +162,7 @@ function getZoomPoint(image) {
     const width = zp[0]
     const height = zp[1]
 
+    // todo: don't need to test orientation, it's built into the distance check.
     // Only consider zoom points matching the screen orientation, either portrait or
     // landscape.
     if ((areaWidth > areaHeight && width > height) ||
@@ -175,19 +179,14 @@ function getZoomPoint(image) {
   return [zoomPoint, distance]
 }
 
-// Timeout function.
+// Timeout function used to determine when scrolling stops.
 var scrollingTimeout
 
 // True when scrolling has paused but the user is still touching.
 var scrollingPaused
 
-document.addEventListener('touchstart', handleTouchStart, false)
-document.addEventListener('touchend', handleTouchEnd, false)
-document.addEventListener('touchcancel', handleTouchCancel, false)
-
 function areaScroll() {
-  // console.log("areaScroll")
-
+  // When scolling stops, call handleScrollEnd.
   window.clearTimeout(scrollingTimeout)
   scrollingPaused = false
   scrollingTimeout = setTimeout(function() {
@@ -205,70 +204,15 @@ function areaScroll() {
 // Finger touching the screen.
 var touching = false
 
-// The visual viewport scale at the start before zooming.
-var startViewportScale = null
-var startViewportLeft
-var startViewportTop
-
-function handleTouchStart(evt) {
-  touching = true
-
-  const scale = window.visualViewport.scale
-  const offsetLeft = window.visualViewport.offsetLeft
-  const offsetTop = window.visualViewport.offsetTop
-  console.log(`handleTouchStart: viewport (${offsetLeft}, ${offsetTop}) scale: ${scale.toFixed(2)}`)
-
-  if (!startViewportScale && evt.touches.length == 2) {
-    startViewportScale = scale
-    startViewportLeft = offsetLeft
-    startViewportTop = offsetTop
-
-    // Disable scrolling.
-    // const area = get("area")
-    // area.setAttribute("style","overflow-x: clip;")
-
-    console.log("start zooming")
-  }
-}
-
-function handleTouchEnd(evt) {
-  touching = false
-  if (scrollingPaused) {
-    console.log("handleTouchEnd: finger up after pausing the scroll.")
-    areaScroll()
-  }
-
-  const scale = window.visualViewport.scale
-  const offsetLeft = window.visualViewport.offsetLeft
-  const offsetTop = window.visualViewport.offsetTop
-
-  if (startViewportScale == scale) {
-    // Enable scrolling.
-    // const area = get("area")
-    // area.setAttribute("style","overflow-x: scroll;")
-    startViewportScale = null
-    console.log("finished zooming")
-  }
-  console.log(`handleTouchEnd: viewport (${offsetLeft}, ${offsetTop}) ${scale.toFixed(2)}`)
-}
-
-function handleTouchCancel(evt) {
-  console.log("handleTouchCancel")
-  handleTouchEnd(evt)
-}
-
-function areaScrollEnd() {
-  // Once the scrollend event is supported in the browsers you can
-  // remove the code above.
-  console.log("areaScrollEnd")
-}
-
 function handleScrollEnd() {
-  // Area horizontal scrolling has stopped.  scrollLeft is the ending
-  // position.
+  // Area horizontal scrolling has stopped.  area.scrollLeft contains
+  // the ending position.
+
   const area = get("area")
-  console.log(`area.scrollLeft: ${area.scrollLeft.toFixed(2)}`)
+  console.log(`area.scrollLeft: ${two(area.scrollLeft)}`)
   console.log(`leftEdges: ${leftEdges}`)
+
+  // Update the current image (imageIx) and the page details.
   let foundEdge = false
   const previousImageIx = imageIx
   for (let ix = 0; ix < leftEdges.length; ix++) {
@@ -286,9 +230,140 @@ function handleScrollEnd() {
 }
 
 function SetDetails() {
+  // Update the page details for the current image.
+
   const image = cJson.images[imageIx]
   get('title').innerHTML = image.title
   get('description').innerHTML = image.description
   get('keywords').innerHTML = image.keywords
   get('size').innerHTML = `${areaWidth} x ${areaHeight}`
+}
+
+function twoFingerDistance(event) {
+  // Calculate distance between two fingers.
+  return Math.hypot(event.touches[0].pageX - event.touches[1].pageX,
+                    event.touches[0].pageY - event.touches[1].pageY)
+}
+
+function getTranslateXY(element) {
+  // Return the translate x and y values of an element as [x, y].
+  const str = element.style.translate
+  // todo: split the string then convert the two parts to x and y numbers
+  return [0, 0]
+}
+
+function two(num) {
+  // Return the number rounded to two decimal places.
+  return num.toFixed(2)
+}
+
+// The startZoom object contains the zoom information when two fingers
+// touch. The zoom object contains the zoom information as the fingers
+// move around. Each contains the center point between the two fingers
+// (x, y), the distance between them (distance), the scale of the
+// image (scale) and the translation point of the image (translateX,
+// translateY).
+
+let startZoom = {}
+let zoom = {}
+
+// Whether we are zooming an image or not.
+let zooming = false
+
+window.addEventListener('touchstart', (event) => {
+
+  touching = true
+
+  if (event.touches.length != 2)
+    return
+
+  zooming = true
+
+  // Disable the default browser zoom and pan behavior.
+  event.preventDefault()
+  const area = get("area")
+  area.setAttribute("touch-action", "none")
+  // area.setAttribute("overflow-x", "clip")
+
+  // Get the point centered between the two fingers.
+  startZoom.x = (event.touches[0].pageX + event.touches[1].pageX) / 2
+  startZoom.y = (event.touches[0].pageY + event.touches[1].pageY) / 2
+
+  // Get the distance between the two fingers.
+  startZoom.distance = twoFingerDistance(event)
+
+  console.log(`touchstart: finger center: (${startZoom.x}, ${startZoom.y}) distance apart: ${two(startZoom.distance)}`)
+
+  // Get the initial translate x and y values of the current image.
+  const imageId = `i${imageIx+1}`
+  const img = get(imageId)
+  const [x, y] = getTranslateXY(img)
+  startZoom.translateX = x
+  startZoom.translateY = y
+  startZoom.scale = parseInt(img.style.scale, 10)
+
+  console.log(`touchstart: ${imageId} translation: (${x}, ${y}) scale: ${two(startZoom.scale)}`)
+})
+
+window.addEventListener('touchmove', (event) => {
+  if (event.touches.length != 2)
+    return
+
+  if (!zooming)
+    return
+
+  // todo: is this needed?
+  event.preventDefault()
+
+  // Calculate the new image scale from the amount the fingers moved apart.
+  // Limit the scale between .2 and 4.
+  zoom.distance = twoFingerDistance(event)
+  const scale = (zoom.distance / startZoom.distance) * startZoom.scale
+  zoom.scale = Math.min(Math.max(.2, scale), 4)
+  // console.log(`touchmove: distance: ${zoom.distance} ratio: ${ratio}`)
+
+  // Calculate the image's translation point from how much the fingers
+  // have moved on the X and Y axis, times 2 for accelerated movement.
+  zoom.x = (event.touches[0].pageX + event.touches[1].pageX) / 2
+  zoom.y = (event.touches[0].pageY + event.touches[1].pageY) / 2
+  const deltaX = (zoom.x - startZoom.x) * 2
+  const deltaY = (zoom.y - startZoom.y) * 2
+
+  // todo: limit the translation point.
+  zoom.translateX = startZoom.translateX + deltaX
+  zoom.translateY = startZoom.translateY + deltaY
+  // console.log(`touchmove: delta (${deltaX}, ${deltaY}) ${two(scale)}`)
+
+  const img = get(`i${imageIx+1}`)
+  img.style.scale = scale
+  img.style.translate = `${zoom.translateX}px ${zoom.translateY}px`
+}, {passive: false})
+
+document.addEventListener('touchend', handleTouchend, false)
+document.addEventListener('touchcancel', handleTouchend, false)
+
+function handleTouchcancel(event) {
+  console.log("touchcancel")
+  handleTouchend(event)
+}
+
+function handleTouchend(event) {
+
+  touching = false
+  if (scrollingPaused) {
+    console.log("touchend: finger up after pausing the scroll.")
+    areaScroll()
+  }
+
+  if (zooming) {
+    // todo: wait until double click to zoom is back to normal before
+    // turning on touch actions.
+    const area = get("area")
+    area.removeAttribute("touch-action")
+
+    console.log(`touchend: finger center: (${zoom.x}, ${zoom.y}) distance apart: ${two(zoom.distance)}`)
+    console.log(`touchend: i${imageIx+1} translation: (${zoom.translateX}, ${zoom.translateY}) scale: ${two(zoom.scale)}`)
+
+    zooming = false
+  }
 }
