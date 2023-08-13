@@ -138,9 +138,9 @@ function sizeImages() {
     img.style.translate = `${x}px ${y}px`
 
     if (distance > closeDistance) {
-      console.log(`no good zoom point found for image ${ix+1}, distance: ${distance}`)
+      console.log(`No good zoom point found for image ${ix+1}, distance: ${distance}`)
       for (let ix = 0; ix < image.zoomPoints.length; ix++) {
-        console.log(`zoom point ${ix}: ${image.zoomPoints[ix]}`)
+        console.log(`zoom point: ${image.zoomPoints[ix]}`)
       }
     }
 
@@ -393,6 +393,20 @@ function handleTouchend(event) {
     console.log(`touchend: finger center: (${zoom.x}, ${zoom.y}) distance apart: ${two(zoom.distance)}`)
     console.log(`touchend: i${imageIx+1} translation: (${zoom.translateX}, ${zoom.translateY}) scale: ${two(zoom.scale)}`)
 
+    // Log zoom point.
+    // [1290, 2796, 3, 200.2, 700],
+    const message1 = `zoom point for i${imageIx+1}: `
+    const message2 = `[${areaWidth}, ${areaHeight}, ${two(zoom.scale)}, ${zoom.translateX}, ${zoom.translateY}]`
+    console.log(message1 + message2)
+
     zooming = false
   }
 }
+
+screen.orientation.addEventListener("change", (event) => {
+  const type = event.target.type;
+  const angle = event.target.angle;
+  console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
+  sizeImageArea()
+  sizeImages()
+})
