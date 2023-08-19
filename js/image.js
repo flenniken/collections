@@ -15,7 +15,7 @@ var areaWidth = null
 var areaHeight = null
 
 // The left edges (scroll positions) of the images in the area.
-var leftEdges = []
+var leftEdges = null
 
 // Consider zoom point this close.
 const closeDistance = 100
@@ -29,6 +29,7 @@ function logStartupTime(message) {
 }
 
 function get(id) {
+  // Get the dom element with the given id.
   return document.getElementById(id)
 }
 
@@ -56,7 +57,7 @@ async function loadEvent() {
   area.addEventListener('scrollend', () => {
     // Once the scrollend event is supported in the browsers you can
     // replace the code that figures out when scrolling ends.
-    console.log("areaScrollEnd event exists")
+    console.log("areaScrollEnd event exists!")
   })
 
   // Disable the default browser zoom and pan behavior.
@@ -77,7 +78,8 @@ function int0(str, min, max) {
 }
 
 function setFirstImage() {
-  // Set the first image to show based on the url query parameter image.
+  // Set the first image to show based on the url image query
+  // parameter.
   logStartupTime("setFirstImage")
   console.log(`window.location.search = ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search)
@@ -112,6 +114,7 @@ function sizeImages() {
   logStartupTime("sizeImages")
 
   let edge = 0
+  leftEdges = []
   cJson.images.forEach((image, ix) => {
     leftEdges.push(edge)
 
@@ -121,6 +124,7 @@ function sizeImages() {
     container.style.height = `${areaHeight}px`
 
     // Fit the images in the container.
+    // todo: account for the case where the height doesn't fit.
     console.assert(image.width != 0)
     const fitScale = areaWidth / image.width
     const img = get(`i${ix+1}`)
@@ -138,17 +142,16 @@ function sizeImages() {
 
     // Log the image position information.
     const part1 = `i${ix+1}: ${image.width} x ${image.height}, `
-    const part2 = `${zoomPoint.w} x ${zoomPoint.h} (${zoomPoint.x}, ${zoomPoint.y}) `
-    const part3 = `scale: ${two(zoomPoint.scale)} d: ${xDistance}, ${xDistance}`
-    console.log(part1 + part2 + part3)
+    const part2 = `zp: ${zpStr(zoomPoint)} d: ${xDistance}, ${xDistance}`
+    console.log(part1 + part2)
 
     edge += areaWidth
   })
 }
 
 function getZoomPoint(image) {
-  // Return the closest close zoom point and distance away.  If no
-  // close zoom point, return the default 1, 0, 0.
+  // Return the closest close zoom point and (x, y) distance away.  If
+  // no close zoom point, return the default 1, 0, 0.
 
   let zoomPoint = {"w": areaWidth, "h": areaHeight, "scale": 1, "x": 0, "y": 0}
 
@@ -215,7 +218,8 @@ var touching = false
 
 function handleScrollEnd() {
   // Area horizontal scrolling has stopped. area.scrollLeft contains
-  // the ending position.
+  // the ending position. Update the current image and the page
+  // details.
 
   const area = get("area")
 
@@ -247,15 +251,15 @@ function SetDetails() {
 }
 
 function twoFingerDistance(event) {
-  // Calculate distance between two fingers.
+  // Calculate distance between two touching fingers.
   return Math.hypot(event.touches[0].pageX - event.touches[1].pageX,
                     event.touches[0].pageY - event.touches[1].pageY)
 }
 
 function parseTranslate(translate) {
-  // Parse the translate string and return x and y numbers.  This
-  // assumes translate uses px units and 2d space. Returns [0, 0] on
-  // error.
+  // Parse the translate style string and return x and y numbers.
+  // This assumes translate uses px units and 2d space. Returns [0, 0]
+  // on error.
 
   // example: 0px -76px
 
@@ -291,6 +295,7 @@ window.addEventListener('touchstart', (event) => {
 
   touching = true
 
+  // When not two fingers touching, return.
   if (event.touches.length != 2)
     return
 
@@ -333,6 +338,8 @@ window.addEventListener('touchmove', (event) => {
 
   // Calculate the new image scale from the amount the fingers moved apart.
   // Limit the scale between .2 and 4.
+  // todo: limit the max scale to not exceed the image resolution.
+  // todo: limit the min scale to not go below 100 pixel width.
   zoom.distance = twoFingerDistance(event)
   const scale = (zoom.distance / startZoom.distance) * startZoom.scale
   zoom.scale = Math.min(Math.max(.2, scale), 4)
@@ -345,7 +352,7 @@ window.addEventListener('touchmove', (event) => {
   const deltaX = (zoom.x - startZoom.x)
   const deltaY = (zoom.y - startZoom.y)
 
-  // todo: limit the translation point.
+  // todo: limit the translation point to keep the image visible on the screen.
   zoom.translateX = startZoom.translateX + deltaX
   zoom.translateY = startZoom.translateY + deltaY
   // console.log(`touchmove: delta (${deltaX}, ${deltaY}) ${two(scale)}`)
@@ -373,6 +380,7 @@ function handleTouchend(event) {
 
   if (zooming) {
     // todo: wait until double click to zoom is back to normal before
+    // todo: leave it off?
     // turning on touch actions.
     // const area = get("area")
     // area.removeAttribute("touch-action")
@@ -380,17 +388,15 @@ function handleTouchend(event) {
     console.log(`touchend: finger center: (${zoom.x}, ${zoom.y}) distance apart: ${two(zoom.distance)}`)
     console.log(`touchend: i${imageIx+1} translation: (${zoom.translateX}, ${zoom.translateY}) scale: ${two(zoom.scale)}`)
 
-    // Log zoom point.
-    // [1290, 2796, 3, 200.2, 700],
-    const message1 = `zoom point for i${imageIx+1}: `
-    const message2 = `[${areaWidth}, ${areaHeight}, ${two(zoom.scale)}, ${zoom.translateX}, ${zoom.translateY}]`
-    console.log(message1 + message2)
+    console.log(`zoom point for i${imageIx+1}: ${zpStr(zoom)}`)
 
     zooming = false
   }
 }
 
 screen.orientation.addEventListener("change", (event) => {
+  // When the phone orientation changes, update the image area and
+  // size the images.
   const type = event.target.type;
   const angle = event.target.angle;
   console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
@@ -399,23 +405,24 @@ screen.orientation.addEventListener("change", (event) => {
 })
 
 function different(a, b, delta) {
-  console.assert(!isNaN(a))
-  console.assert(!isNaN(b))
-  return Math.abs(a - b) > delta
+  return !same(a, b, delta)
 }
 
 function same(a, b, delta) {
+  // Return true when a is close to b.
   console.assert(!isNaN(a))
   console.assert(!isNaN(b))
   return Math.abs(a - b) < delta
 }
 
 function zpStr(zp) {
-  return `${zp.w} x ${zp.h}, (${zp.x}, ${zp.y}), scale: ${two(zp.scale)}`
+  // Return a string representation of a zoom point.
+  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.x}, ${zp.y})`
 }
 
 function saveZoomPoints() {
-  // Log the json data with the UI zoom point in it.
+  // Log the json data with the UI zoom points in it.
+
   console.log("saveZoomPoints");
 
   // Get each image's UI zoom point from the UI.
@@ -430,17 +437,17 @@ function saveZoomPoints() {
     // console.log(`uiZp ${ix+1}: ${zpStr(uiZp)}`)
   }
 
-
-
-  // Merge in the UI zoom points to the existing json data.  If the ui
-  // zoom point is not the default, add it to the zoom points.
-  // Replace the existing zoom point when the width and height are the
-  // same.
+  // Merge in the UI zoom points into a copy of the existing json
+  // data.  If the ui zoom point is not the default, add it to the
+  // zoom points.  Replace the existing zoom point when the width and
+  // height are the same. Tell when the json changes or not.
   const data = structuredClone(cJson);
   let changed = false
   for (let ix = 0; ix < data.images.length; ix++) {
-    // Skip default zoom points values.
+    // Get the image UI zoom point.
     const uiZp = uiZoomPoints[ix]
+
+    // Skip default zoom points values.
     if (uiZp.x == 0 && uiZp.y == 0 && uiZp.scale == 1)
       continue
 
@@ -449,9 +456,7 @@ function saveZoomPoints() {
     // as the UI zoom point, use the UI zoom point replacing that
     // image zoom point.
     let newZoomPoints = []
-    let zpIx
     let foundSameDim = false
-
     const imageZoomPoints = data.images[ix].zoomPoints
     for (let zpIx = 0; zpIx < imageZoomPoints.length; zpIx++) {
       let zp = imageZoomPoints[zpIx]
@@ -499,6 +504,7 @@ function saveZoomPoints() {
   }
 
   if (changed) {
+    // Log the json data.
     console.log("the json was changed")
     console.log(JSON.stringify(data, null, 2))
   }
