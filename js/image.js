@@ -130,58 +130,46 @@ function sizeImages() {
     img.style.height = `${scaledh}px`
 
     // Find the zoom point for the screen size.
-    const [zoomPoint, distance] = getZoomPoint(image)
+    const [zoomPoint, xDistance, yDistance] = getZoomPoint(image)
 
     // Scale and translate the image to the zoom point.
-    const [w,h,s,x,y] = zoomPoint
-    img.style.scale = s
-    img.style.translate = `${x}px ${y}px`
-
-    if (distance > closeDistance) {
-      console.log(`No good zoom point found for image ${ix+1}, distance: ${distance}`)
-      for (let ix = 0; ix < image.zoomPoints.length; ix++) {
-        console.log(`zoom point: ${image.zoomPoints[ix]}`)
-      }
-    }
+    img.style.scale = zoomPoint.scale
+    img.style.translate = `${zoomPoint.x}px ${zoomPoint.y}px`
 
     // Log the image position information.
     const part1 = `i${ix+1}: ${image.width} x ${image.height}, `
-    const part2 = `${w} x ${h} (${x}, ${y}) scale: ${two(s)} d: ${distance}`
-    console.log(part1 + part2)
+    const part2 = `${zoomPoint.w} x ${zoomPoint.h} (${zoomPoint.x}, ${zoomPoint.y}) `
+    const part3 = `scale: ${two(zoomPoint.scale)} d: ${xDistance}, ${xDistance}`
+    console.log(part1 + part2 + part3)
 
     edge += areaWidth
   })
 }
 
 function getZoomPoint(image) {
-  // Return the close zoom point and distance away from it for the
-  // given image.
+  // Return the closest close zoom point and distance away.  If no
+  // close zoom point, return the default 1, 0, 0.
 
-  let zoomPoint = [areaWidth, areaHeight, 1, 0, 0]
-  let distance = Math.abs(areaWidth - image.width) + Math.abs(areaHeight - image.height)
-  if (distance == 0)
-    return [zoomPoint, distance]
+  let zoomPoint = {"w": areaWidth, "h": areaHeight, "scale": 1, "x": 0, "y": 0}
 
-  for (let zix = 0; zix < image.zoomPoints.length; zix++) {
-    const zp = image.zoomPoints[zix]
-    const width = zp[0]
-    const height = zp[1]
+  let xDistance = closeDistance+1
+  let yDistance = closeDistance+1
+  for (let zp of image.zoomPoints) {
+    const xDist = Math.abs(areaWidth - zp.w)
+    const yDist = Math.abs(areaHeight - zp.h)
 
-    // todo: don't need to test orientation, it's built into the distance check.
-    // Only consider zoom points matching the screen orientation, either portrait or
-    // landscape.
-    if ((areaWidth > areaHeight && width > height) ||
-        (areaWidth <= areaHeight && width <= height)) {
-      const dist = Math.abs(areaWidth - width) + Math.abs(areaHeight - height)
-      if (dist < closeDistance && dist < distance) {
-        distance = dist
+    if (xDist < closeDistance && yDist < closeDistance) {
+      let combined = xDist + yDist
+      if (combined < xDistance + yDistance) {
+        xDistance = xDist
+        yDistance = yDist
         zoomPoint = zp
-        if (distance == 0)
+        if (combined == 0)
           break
       }
     }
   }
-  return [zoomPoint, distance]
+  return [zoomPoint, xDistance, yDistance]
 }
 
 // Timeout function used to determine when scrolling stops.
@@ -255,7 +243,6 @@ function SetDetails() {
   const image = cJson.images[imageIx]
   get('title').innerHTML = image.title
   get('description').innerHTML = image.description
-  get('keywords').innerHTML = image.keywords
   get('size').innerHTML = `${areaWidth} x ${areaHeight}`
 }
 
@@ -410,3 +397,111 @@ screen.orientation.addEventListener("change", (event) => {
   sizeImageArea()
   sizeImages()
 })
+
+function different(a, b, delta) {
+  console.assert(!isNaN(a))
+  console.assert(!isNaN(b))
+  return Math.abs(a - b) > delta
+}
+
+function same(a, b, delta) {
+  console.assert(!isNaN(a))
+  console.assert(!isNaN(b))
+  return Math.abs(a - b) < delta
+}
+
+function zpStr(zp) {
+  return `${zp.w} x ${zp.h}, (${zp.x}, ${zp.y}), scale: ${two(zp.scale)}`
+}
+
+function saveZoomPoints() {
+  // Log the json data with the UI zoom point in it.
+  console.log("saveZoomPoints");
+
+  // Get each image's UI zoom point from the UI.
+  let uiZoomPoints = []
+  // console.log("ui zoom points:")
+  for (let ix = 0; ix < cJson.images.length; ix++) {
+    let img = get(`i${ix+1}`)
+    let scale = parseFloat(img.style.scale, 10)
+    let [x, y] = parseTranslate(img.style.translate)
+    let uiZp = {"w": areaWidth, "h": areaHeight, "scale": scale, "x": x, "y": y}
+    uiZoomPoints.push(uiZp)
+    // console.log(`uiZp ${ix+1}: ${zpStr(uiZp)}`)
+  }
+
+
+
+  // Merge in the UI zoom points to the existing json data.  If the ui
+  // zoom point is not the default, add it to the zoom points.
+  // Replace the existing zoom point when the width and height are the
+  // same.
+  const data = structuredClone(cJson);
+  let changed = false
+  for (let ix = 0; ix < data.images.length; ix++) {
+    // Skip default zoom points values.
+    const uiZp = uiZoomPoints[ix]
+    if (uiZp.x == 0 && uiZp.y == 0 && uiZp.scale == 1)
+      continue
+
+    // Loop over the image zoom points and build a new list of
+    // them. If one of image zoom points has the same width and height
+    // as the UI zoom point, use the UI zoom point replacing that
+    // image zoom point.
+    let newZoomPoints = []
+    let zpIx
+    let foundSameDim = false
+
+    const imageZoomPoints = data.images[ix].zoomPoints
+    for (let zpIx = 0; zpIx < imageZoomPoints.length; zpIx++) {
+      let zp = imageZoomPoints[zpIx]
+
+      // console.log("")
+      // console.log(`image ${ix+1},  zp ${zpIx+1}: ${zpStr(zp)}`)
+      // console.log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
+
+      // When the dimensions are the same, use the UI zoom point if it is different.
+      let sameDim = (same(zp.w, uiZp.w, .01) && same(zp.h, uiZp.h, .01))
+      if (sameDim) {
+        let differentZoom = (different(zp.x, uiZp.x, .01) ||
+            different(zp.y, uiZp.y, .01) ||
+            different(zp.scale, uiZp.scale, .01))
+
+        foundSameDim = true
+        if (differentZoom) {
+          newZoomPoints.push(uiZp)
+          console.log("use UI zoom point:")
+          console.log(`image ${ix+1},  zp ${zpIx+1}: ${zpStr(zp)}`)
+          console.log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
+          console.log("")
+          changed = true
+        }
+        else {
+          // console.log("use image zoom point")
+          newZoomPoints.push(zp)
+        }
+      }
+      else {
+        // console.log("use image zoom point")
+        newZoomPoints.push(zp)
+      }
+    }
+    // When the ui dimensions didn't match any of the image zoom
+    // points, add it to the image list.
+    if (!foundSameDim){
+      console.log("add new ui zoom point:")
+      console.log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
+      console.log("")
+      newZoomPoints.push(uiZp)
+      changed = true
+    }
+    data.images[ix].zoomPoints = newZoomPoints
+  }
+
+  if (changed) {
+    console.log("the json was changed")
+    console.log(JSON.stringify(data, null, 2))
+  }
+  else
+    console.log("json unchanged")
+}
