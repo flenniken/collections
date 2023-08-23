@@ -42,12 +42,6 @@ async function loadEvent() {
   sizeImageArea()
   sizeImages()
 
-  // Scroll the current image into view.
-  const area = get("area")
-  console.log(`leftEdge: ${leftEdges[imageIx]}`)
-  area.scrollLeft = leftEdges[imageIx]
-  console.log(`area.scrollLeft: ${two(area.scrollLeft)}`)
-
   // Show the page.
   document.body.style.visibility = 'visible'
   document.body.style.opacity = 1
@@ -95,10 +89,17 @@ function sizeImageArea() {
   // Get the screen width and height that we can use and store them in
   // globals.
   logStartupTime("sizeImageArea")
-  areaWidth = window.innerWidth || document.documentElement.clientWidth ||
-    document.body.clientWidth
-  areaHeight = window.innerHeight || document.documentElement.clientHeight ||
-      document.body.clientHeight
+  console.log(`window.innerWidth: ${window.innerWidth}`)
+  console.log(`window.innerHeight: ${window.innerHeight}`)
+
+  console.log(`document.documentElement.clientWidth: ${document.documentElement.clientWidth}`)
+  console.log(`document.documentElement.clientHeight: ${document.documentElement.clientHeight}`)
+
+  console.log(`document.body.clientWidth: ${document.body.clientWidth}`)
+  console.log(`document.body.clientHeight: ${document.body.clientHeight}`)
+
+  areaWidth = document.documentElement.clientWidth
+  areaHeight = document.documentElement.clientHeight
 
   // Size the image area to the screen area.
   const area = get("area")
@@ -147,6 +148,12 @@ function sizeImages() {
 
     edge += areaWidth
   })
+
+  // Scroll the current image into view.
+  const area = get("area")
+  console.log(`leftEdge: ${leftEdges[imageIx]}`)
+  area.scrollLeft = leftEdges[imageIx]
+  console.log(`area.scrollLeft: ${two(area.scrollLeft)}`)
 }
 
 function getZoomPoint(image) {
