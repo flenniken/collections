@@ -139,7 +139,7 @@ function sizeImages() {
 
     // Scale and translate the image to the zoom point.
     img.style.scale = zoomPoint.scale
-    img.style.translate = `${zoomPoint.x}px ${zoomPoint.y}px`
+    img.style.translate = `${zoomPoint.translateX}px ${zoomPoint.translateY}px`
 
     // Log the image position information.
     const part1 = `i${ix+1}: ${image.width} x ${image.height}, `
@@ -160,20 +160,34 @@ function getZoomPoint(image) {
   // Return the closest close zoom point and (x, y) distance away.  If
   // no close zoom point, return the default 1, 0, 0.
 
-  let zoomPoint = {"w": areaWidth, "h": areaHeight, "scale": 1, "x": 0, "y": 0}
+  let zoomPoint = {
+    "w": areaWidth,
+    "h": areaHeight,
+    "scale": 1,
+    "translateX": 0,
+    "translateY": 0,
+    "centerX": 0,
+    "centerY": 0,
+    "distance": 0,
+  }
 
   let xDistance = closeDistance+1
   let yDistance = closeDistance+1
-  for (let zp of image.zoomPoints) {
-    const xDist = Math.abs(areaWidth - zp.w)
-    const yDist = Math.abs(areaHeight - zp.h)
+  for (let zpt of image.zoomPoints) {
+    const xDist = Math.abs(areaWidth - zpt.w)
+    const yDist = Math.abs(areaHeight - zpt.h)
 
     if (xDist < closeDistance && yDist < closeDistance) {
       let combined = xDist + yDist
       if (combined < xDistance + yDistance) {
         xDistance = xDist
         yDistance = yDist
-        zoomPoint = zp
+
+        zoomPoint = zpt
+        zoomPoint.centerX = 0
+        zoomPoint.centerY = 0
+        zoomPoint.distance = 0
+
         if (combined == 0)
           break
       }
@@ -287,13 +301,17 @@ function two(num) {
 
 // The startZoom object contains the zoom information when two fingers
 // touch. The zoom object contains the zoom information as the fingers
-// move around. Each contains the center point between the two fingers
-// (x, y), the distance between them (distance), the scale of the
-// image (scale) and the translation point of the image (translateX,
-// translateY).
+// move around.
+//
+// w -- width of the screen
+// h -- height of the screen
+// scale -- scale of the image
+// (translateX, translateY) -- translation point
+// (centerX, centerY) - center point
+// distance -- distance between the two touch points
 
 let startZoom = {}
-let zoom = {}
+let endZoom = {}
 
 // Whether we are zooming an image or not.
 let zooming = false
@@ -313,14 +331,17 @@ window.addEventListener('touchstart', (event) => {
   const area = get("area")
   // area.setAttribute("overflow-x", "clip")
 
+  endZoom.w = startZoom.w = areaWidth
+  endZoom.h = startZoom.h = areaHeight
+
   // Get the point centered between the two fingers.
-  startZoom.x = (event.touches[0].pageX + event.touches[1].pageX) / 2
-  startZoom.y = (event.touches[0].pageY + event.touches[1].pageY) / 2
+  startZoom.centerX = (event.touches[0].pageX + event.touches[1].pageX) / 2
+  startZoom.centerY = (event.touches[0].pageY + event.touches[1].pageY) / 2
 
   // Get the distance between the two fingers.
   startZoom.distance = twoFingerDistance(event)
 
-  console.log(`touchstart: finger center: (${startZoom.x}, ${startZoom.y}) distance apart: ${two(startZoom.distance)}`)
+  console.log(`touchstart: finger center: (${startZoom.centerX}, ${startZoom.centerY}) distance apart: ${two(startZoom.distance)}`)
 
   // Get the initial translate x and y values of the current image.
   const imageId = `i${imageIx+1}`
@@ -330,7 +351,7 @@ window.addEventListener('touchstart', (event) => {
   startZoom.translateY = y
   startZoom.scale = parseFloat(img.style.scale, 10)
 
-  console.log(`touchstart: ${imageId} translation: (${x}, ${y}) scale: ${two(startZoom.scale)}`)
+  console.log(`touchstart: i${imageIx+1} startZoom: ${zpStr(startZoom)}`)
 })
 
 window.addEventListener('touchmove', (event) => {
@@ -347,26 +368,26 @@ window.addEventListener('touchmove', (event) => {
   // Limit the scale between .2 and 4.
   // todo: limit the max scale to not exceed the image resolution.
   // todo: limit the min scale to not go below 100 pixel width.
-  zoom.distance = twoFingerDistance(event)
-  const scale = (zoom.distance / startZoom.distance) * startZoom.scale
-  zoom.scale = Math.min(Math.max(.2, scale), 4)
-  // console.log(`touchmove: distance: ${zoom.distance} ratio: ${ratio}`)
+  endZoom.distance = twoFingerDistance(event)
+  const scale = (endZoom.distance / startZoom.distance) * startZoom.scale
+  endZoom.scale = Math.min(Math.max(.2, scale), 4)
+  // console.log(`touchmove: distance: ${endZoom.distance} ratio: ${ratio}`)
 
   // Calculate the image's translation point from how much the fingers
   // have moved on the X and Y axis.
-  zoom.x = (event.touches[0].pageX + event.touches[1].pageX) / 2
-  zoom.y = (event.touches[0].pageY + event.touches[1].pageY) / 2
-  const deltaX = (zoom.x - startZoom.x)
-  const deltaY = (zoom.y - startZoom.y)
+  endZoom.centerX = (event.touches[0].pageX + event.touches[1].pageX) / 2
+  endZoom.centerY = (event.touches[0].pageY + event.touches[1].pageY) / 2
+  const deltaX = (endZoom.centerX - startZoom.centerX)
+  const deltaY = (endZoom.centerY - startZoom.centerY)
 
   // todo: limit the translation point to keep the image visible on the screen.
-  zoom.translateX = startZoom.translateX + deltaX
-  zoom.translateY = startZoom.translateY + deltaY
+  endZoom.translateX = startZoom.translateX + deltaX
+  endZoom.translateY = startZoom.translateY + deltaY
   // console.log(`touchmove: delta (${deltaX}, ${deltaY}) ${two(scale)}`)
 
   const img = get(`i${imageIx+1}`)
   img.style.scale = scale
-  img.style.translate = `${zoom.translateX}px ${zoom.translateY}px`
+  img.style.translate = `${endZoom.translateX}px ${endZoom.translateY}px`
 }, {passive: false})
 
 document.addEventListener('touchend', handleTouchend, false)
@@ -392,11 +413,8 @@ function handleTouchend(event) {
     // const area = get("area")
     // area.removeAttribute("touch-action")
 
-    console.log(`touchend: finger center: (${zoom.x}, ${zoom.y}) distance apart: ${two(zoom.distance)}`)
-    console.log(`touchend: i${imageIx+1} translation: (${zoom.translateX}, ${zoom.translateY}) scale: ${two(zoom.scale)}`)
-
-    console.log(`zoom point for i${imageIx+1}: ${zpStr(zoom)}`)
-
+    console.log(`touchend: finger center: (${endZoom.centerX}, ${endZoom.centerY}) distance apart: ${two(endZoom.distance)}`)
+    console.log(`touchend: i${imageIx+1} endZoom: ${zpStr(endZoom)}`)
     zooming = false
   }
 }
@@ -424,7 +442,9 @@ function same(a, b, delta) {
 
 function zpStr(zp) {
   // Return a string representation of a zoom point.
-  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.x}, ${zp.y})`
+  // not shown: center and distance.
+
+  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.translateX} x ${zp.translateY})`
 }
 
 function saveZoomPoints() {
@@ -439,7 +459,16 @@ function saveZoomPoints() {
     let img = get(`i${ix+1}`)
     let scale = parseFloat(img.style.scale, 10)
     let [x, y] = parseTranslate(img.style.translate)
-    let uiZp = {"w": areaWidth, "h": areaHeight, "scale": scale, "x": x, "y": y}
+    let uiZp = {
+      "w": areaWidth,
+      "h": areaHeight,
+      "scale": scale,
+      "translateX": x,
+      "translateY": y,
+      "centerX": 0,
+      "centerY": 0,
+      "distance": 0,
+    }
     uiZoomPoints.push(uiZp)
     // console.log(`uiZp ${ix+1}: ${zpStr(uiZp)}`)
   }
@@ -455,7 +484,7 @@ function saveZoomPoints() {
     const uiZp = uiZoomPoints[ix]
 
     // Skip default zoom points values.
-    if (uiZp.x == 0 && uiZp.y == 0 && uiZp.scale == 1)
+    if (uiZp.translateX == 0 && uiZp.translateY == 0 && uiZp.scale == 1)
       continue
 
     // Loop over the image zoom points and build a new list of
@@ -466,17 +495,19 @@ function saveZoomPoints() {
     let foundSameDim = false
     const imageZoomPoints = data.images[ix].zoomPoints
     for (let zpIx = 0; zpIx < imageZoomPoints.length; zpIx++) {
-      let zp = imageZoomPoints[zpIx]
+      let zpt = imageZoomPoints[zpIx]
 
-      // console.log("")
-      // console.log(`image ${ix+1},  zp ${zpIx+1}: ${zpStr(zp)}`)
-      // console.log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
+      let zp = {}
+      zp = zpt
+      zp.centerX = 0
+      zp.centerY = 0
+      zp.distance = 0
 
       // When the dimensions are the same, use the UI zoom point if it is different.
       let sameDim = (same(zp.w, uiZp.w, .01) && same(zp.h, uiZp.h, .01))
       if (sameDim) {
-        let differentZoom = (different(zp.x, uiZp.x, .01) ||
-            different(zp.y, uiZp.y, .01) ||
+        let differentZoom = (different(zp.translateX, uiZp.translateX, .01) ||
+            different(zp.translateY, uiZp.translateY, .01) ||
             different(zp.scale, uiZp.scale, .01))
 
         foundSameDim = true
