@@ -1,9 +1,6 @@
 // image.js
 "use strict";
 
-// The start time used for startup timing.
-const startTime = performance.now()
-
 // cJson is defined in the image html page.
 
 // The image index into the json collection of the image we are
@@ -22,6 +19,9 @@ const closeDistance = 100
 
 window.addEventListener("load", loadEvent)
 
+// The start time used for startup timing.
+const startTime = performance.now()
+
 function logStartupTime(message) {
   let seconds = (performance.now() - startTime) / 1000.0
   seconds = seconds.toFixed(3)
@@ -35,11 +35,14 @@ function get(id) {
 
 async function loadEvent() {
   // The page finished loading, load json and size things.
-
   logStartupTime(`loadEvent: json contains ${cJson.images.length} images`)
 
   setFirstImage()
+
+  logStartupTime("sizeImageArea")
   sizeImageArea()
+
+  logStartupTime("sizeImages")
   sizeImages()
 
   // Show the page.
@@ -60,25 +63,24 @@ async function loadEvent() {
   logStartupTime("loadEvent Done")
 }
 
-function int0(str, min, max) {
+function intDef(str, min, max, def) {
   // Parse the number string as an integer and validate it. Return the
-  // value or 0 when the str is not valid.
+  // value. When the str is not valid, return the default value.
   const value = parseInt(str, 10)
   if (isNaN(value))
-    return 0
+    return def
   if (value < min || value > max)
-    return 0
+    return def
   return value
 }
 
 function setFirstImage() {
   // Set the first image to show based on the url image query
   // parameter.
-  logStartupTime("setFirstImage")
   console.log(`window.location.search = ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search)
   const imageQ = searchParams.get("image")
-  const imageNum = int0(imageQ, 1, cJson.images.length)
+  const imageNum = intDef(imageQ, 1, cJson.images.length, 0)
   console.log(`first image: ${imageNum}`)
   imageIx = imageNum - 1
 }
@@ -88,7 +90,6 @@ function sizeImageArea() {
 
   // Get the screen width and height that we can use and store them in
   // globals.
-  logStartupTime("sizeImageArea")
   console.log(`window.innerWidth: ${window.innerWidth}`)
   console.log(`window.innerHeight: ${window.innerHeight}`)
 
@@ -112,7 +113,6 @@ function sizeImageArea() {
 
 function sizeImages() {
   // Size the image containers and the images.
-  logStartupTime("sizeImages")
 
   let edge = 0
   leftEdges = []
@@ -160,16 +160,7 @@ function getZoomPoint(image) {
   // Return the closest close zoom point and (x, y) distance away.  If
   // no close zoom point, return the default 1, 0, 0.
 
-  let zoomPoint = {
-    "w": areaWidth,
-    "h": areaHeight,
-    "scale": 1,
-    "translateX": 0,
-    "translateY": 0,
-    "centerX": 0,
-    "centerY": 0,
-    "distance": 0,
-  }
+  let zoomPoint =  newZp(areaWidth, areaHeight, 1, 0, 0, 0, 0, 0)
 
   let xDistance = closeDistance+1
   let yDistance = closeDistance+1
@@ -313,6 +304,29 @@ function two(num) {
 let startZoom = {}
 let endZoom = {}
 
+// todo: center and distance are temporary and shouldn't be stored in
+// the JSON data zoom points.
+function newZp(w, h, scale, translateX, translateY, centerX, centerY, distance) {
+  // Return a new zoom point.
+  return  {
+    "w": w,
+    "h": h,
+    "scale": scale,
+    "translateX": translateX,
+    "translateY": translateY,
+    "centerX": centerX,
+    "centerY": centerY,
+    "distance": distance,
+  }
+}
+
+function zpStr(zp) {
+  // Return a string representation of a zoom point.
+  // not shown: center and distance.
+
+  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.translateX} x ${zp.translateY})`
+}
+
 // Whether we are zooming an image or not.
 let zooming = false
 
@@ -440,13 +454,6 @@ function same(a, b, delta) {
   return Math.abs(a - b) < delta
 }
 
-function zpStr(zp) {
-  // Return a string representation of a zoom point.
-  // not shown: center and distance.
-
-  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.translateX} x ${zp.translateY})`
-}
-
 function saveZoomPoints() {
   // Log the json data with the UI zoom points in it.
 
@@ -459,16 +466,7 @@ function saveZoomPoints() {
     let img = get(`i${ix+1}`)
     let scale = parseFloat(img.style.scale, 10)
     let [x, y] = parseTranslate(img.style.translate)
-    let uiZp = {
-      "w": areaWidth,
-      "h": areaHeight,
-      "scale": scale,
-      "translateX": x,
-      "translateY": y,
-      "centerX": 0,
-      "centerY": 0,
-      "distance": 0,
-    }
+    let uiZp = newZp(areaWidth, areaHeight, scale, x, y, 0, 0, 0)
     uiZoomPoints.push(uiZp)
     // console.log(`uiZp ${ix+1}: ${zpStr(uiZp)}`)
   }
