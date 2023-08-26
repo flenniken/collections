@@ -330,6 +330,10 @@ function zpStr(zp) {
 // Whether we are zooming an image or not.
 let zooming = false
 
+// Minimum and maximum values to scale the image.
+let minScale
+let maxScale
+
 window.addEventListener('touchstart', (event) => {
 
   touching = true
@@ -365,7 +369,19 @@ window.addEventListener('touchstart', (event) => {
   startZoom.translateY = y
   startZoom.scale = parseFloat(img.style.scale, 10)
 
-  console.log(`touchstart: i${imageIx+1} startZoom: ${zpStr(startZoom)}`)
+  // todo: Scale around the two finger center point.
+  // img.setAttribute("style", `transform-origin: ${startZoom.centerX}px ${startZoom.centerY}px;`)
+  // img.setAttribute("style", `transform-origin: left top;`)
+
+
+  // Calculate the minimum and maximum scales.
+
+  // Limit the min scale to not go below 3/4 the area width.
+  // areaWidth * .75 = minScale * areaWidth
+  minScale = .75
+  // todo: limit the max scale to not exceed the image resolution.
+  maxScale = 4
+  console.log(`touchstart: i${imageIx+1} startZoom: ${zpStr(startZoom)} minScale: ${minScale}`)
 })
 
 window.addEventListener('touchmove', (event) => {
@@ -380,11 +396,9 @@ window.addEventListener('touchmove', (event) => {
 
   // Calculate the new image scale from the amount the fingers moved apart.
   // Limit the scale between .2 and 4.
-  // todo: limit the max scale to not exceed the image resolution.
-  // todo: limit the min scale to not go below 100 pixel width.
   endZoom.distance = twoFingerDistance(event)
   const scale = (endZoom.distance / startZoom.distance) * startZoom.scale
-  endZoom.scale = Math.min(Math.max(.2, scale), 4)
+  endZoom.scale = Math.min(Math.max(minScale, scale), maxScale)
   // console.log(`touchmove: distance: ${endZoom.distance} ratio: ${ratio}`)
 
   // Calculate the image's translation point from how much the fingers
@@ -400,7 +414,7 @@ window.addEventListener('touchmove', (event) => {
   // console.log(`touchmove: delta (${deltaX}, ${deltaY}) ${two(scale)}`)
 
   const img = get(`i${imageIx+1}`)
-  img.style.scale = scale
+  img.style.scale = endZoom.scale
   img.style.translate = `${endZoom.translateX}px ${endZoom.translateY}px`
 }, {passive: false})
 
@@ -429,6 +443,11 @@ function handleTouchend(event) {
 
     console.log(`touchend: finger center: (${endZoom.centerX}, ${endZoom.centerY}) distance apart: ${two(endZoom.distance)}`)
     console.log(`touchend: i${imageIx+1} endZoom: ${zpStr(endZoom)}`)
+
+    // const imageWidth = cJson.images[imageIx].width
+    // const scaledWidth = endZoom.scale * imageWidth
+    // console.log(`touchend: imageWidth: ${imageWidth}, scaledWidth: ${scaledWidth}, areaWidth: ${areaWidth}`)
+
     zooming = false
   }
 }
