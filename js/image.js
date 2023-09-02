@@ -160,7 +160,7 @@ function getZoomPoint(image) {
   // Return the closest close zoom point and (x, y) distance away.  If
   // no close zoom point, return the default 1, 0, 0.
 
-  let zoomPoint =  newZp(areaWidth, areaHeight, 1, 0, 0, 0, 0, 0)
+  let zoomPoint =  newZoom(areaWidth, areaHeight, 1, 0, 0)
 
   let xDistance = closeDistance+1
   let yDistance = closeDistance+1
@@ -175,10 +175,6 @@ function getZoomPoint(image) {
         yDistance = yDist
 
         zoomPoint = zpt
-        zoomPoint.centerX = 0
-        zoomPoint.centerY = 0
-        zoomPoint.distance = 0
-
         if (combined == 0)
           break
       }
@@ -298,15 +294,9 @@ function two(num) {
 // h -- height of the screen
 // scale -- scale of the image
 // (translateX, translateY) -- translation point
-// (centerX, centerY) - center point
-// distance -- distance between the two touch points
-
 let startZoom = {}
-let endZoom = {}
 
-// todo: center and distance are temporary and shouldn't be stored in
-// the JSON data zoom points.
-function newZp(w, h, scale, translateX, translateY, centerX, centerY, distance) {
+function newZoom(w, h, scale, translateX, translateY) {
   // Return a new zoom point.
   return  {
     "w": w,
@@ -314,25 +304,69 @@ function newZp(w, h, scale, translateX, translateY, centerX, centerY, distance) 
     "scale": scale,
     "translateX": translateX,
     "translateY": translateY,
+  }
+}
+
+function zpStr(zp) {
+  // Return a string representation of a zoom point.
+
+  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.translateX} x ${zp.translateY})`
+}
+
+// The startTouch object contains the two touch points center and
+// distance between them, as centerX, centerY and distance.
+let startTouch = {}
+
+function newTouch(centerX, centerY, distance) {
+  // Return a new touch.
+  return  {
     "centerX": centerX,
     "centerY": centerY,
     "distance": distance,
   }
 }
 
-function zpStr(zp) {
-  // Return a string representation of a zoom point.
-  // not shown: center and distance.
+function touchStr(touch) {
+  // Return a string representation of a touch.
 
-  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.translateX} x ${zp.translateY})`
+  return `(${touch.centerX}, ${touch.centerY}), distance: ${two(touch.distance)}`
 }
 
 // Whether we are zooming an image or not.
 let zooming = false
 
-// Minimum and maximum values to scale the image.
-let minScale
-let maxScale
+// The touch points define a center point between them that is used
+// for panning.  The change in distance along the x axis is added to
+// the translation x component and the change along the y axis is
+// added to the y translation component.
+//
+// The change in distance between the touch points define the new
+// scale value.
+//
+// The new translation point and scale are constrained by the image
+// and area sizes.
+
+// When the image width is bigger than the area width, the image
+// left and right edges must not go inside the area.  Similar for
+// the height.  The scale must not go above 1.
+//
+// When the image width is less than the area, the image left and
+// right edges must not go outside the area.  Similar for the
+// height. The scale must not go below 1.
+
+// The x and y scale are the same to keep a constant image aspect
+// ratio. If one of the image dimensions is smaller than the area
+// and the other dimension is bigger, the scale remains at 1.
+
+function getImageZoom() {
+  // Get the initial translate x and y values and the scale of the
+  // current image.
+  const imageId = `i${imageIx+1}`
+  const img = get(imageId)
+  const [x, y] = parseTranslate(img.style.translate)
+  const scale = parseFloat(img.style.scale, 10)
+  return newZoom(areaWidth, areaHeight, scale, x, y)
+}
 
 window.addEventListener('touchstart', (event) => {
 
@@ -349,40 +383,35 @@ window.addEventListener('touchstart', (event) => {
   const area = get("area")
   // area.setAttribute("overflow-x", "clip")
 
-  endZoom.w = startZoom.w = areaWidth
-  endZoom.h = startZoom.h = areaHeight
+  // Get the point centered between the two fingers and the distance between them.
+  startTouch = newTouch(
+    event.touches[0].pageX + event.touches[1].pageX / 2,
+    event.touches[0].pageY + event.touches[1].pageY / 2,
+    twoFingerDistance(event)
+  )
+  console.log(`startTouch: ${touchStr(startTouch)}`)
 
-  // Get the point centered between the two fingers.
-  startZoom.centerX = (event.touches[0].pageX + event.touches[1].pageX) / 2
-  startZoom.centerY = (event.touches[0].pageY + event.touches[1].pageY) / 2
-
-  // Get the distance between the two fingers.
-  startZoom.distance = twoFingerDistance(event)
-
-  console.log(`touchstart: finger center: (${startZoom.centerX}, ${startZoom.centerY}) distance apart: ${two(startZoom.distance)}`)
-
-  // Get the initial translate x and y values of the current image.
-  const imageId = `i${imageIx+1}`
-  const img = get(imageId)
-  const [x, y] = parseTranslate(img.style.translate)
-  startZoom.translateX = x
-  startZoom.translateY = y
-  startZoom.scale = parseFloat(img.style.scale, 10)
+  // Get the start zoom for the current image.
+  startZoom = getImageZoom()
+  console.log(`image ${imageIx+1},  startZoom: ${zpStr(startZoom)}`)
 
   // todo: Scale around the two finger center point.
-  // img.setAttribute("style", `transform-origin: ${startZoom.centerX}px ${startZoom.centerY}px;`)
+  // img.setAttribute("style", `transform-origin: ${startTouch.centerX}px ${startTouch.centerY}px;`)
   // img.setAttribute("style", `transform-origin: left top;`)
-
-
-  // Calculate the minimum and maximum scales.
-
-  // Limit the min scale to not go below 3/4 the area width.
-  // areaWidth * .75 = minScale * areaWidth
-  minScale = .75
-  // todo: limit the max scale to not exceed the image resolution.
-  maxScale = 4
-  console.log(`touchstart: i${imageIx+1} startZoom: ${zpStr(startZoom)} minScale: ${minScale}`)
 })
+
+function zoomAndPan(areaWidth, areaHeight, imageWidth, imageHeight, startTouch, startZoomScale, endTouch) {
+  // Return the new translate point and scale. Constrain the values so
+  // the image stays in the area.
+
+  const deltaX = (endTouch.centerX - startTouch.centerX)
+  const deltaY = (endTouch.centerY - startTouch.centerY)
+  const translateX = startZoom.translateX + deltaX
+  const translateY = startZoom.translateY + deltaY
+  const scale = (endTouch.distance / startTouch.distance) * startZoomScale
+  return [translateX, translateY, scale]
+}
+
 
 window.addEventListener('touchmove', (event) => {
   if (event.touches.length != 2)
@@ -394,28 +423,26 @@ window.addEventListener('touchmove', (event) => {
   // todo: is this needed?
   event.preventDefault()
 
-  // Calculate the new image scale from the amount the fingers moved apart.
-  // Limit the scale between .2 and 4.
-  endZoom.distance = twoFingerDistance(event)
-  const scale = (endZoom.distance / startZoom.distance) * startZoom.scale
-  endZoom.scale = Math.min(Math.max(minScale, scale), maxScale)
-  // console.log(`touchmove: distance: ${endZoom.distance} ratio: ${ratio}`)
+  // Get the point centered between the two fingers and the distance between them.
+  const endTouch = newTouch(
+    event.touches[0].pageX + event.touches[1].pageX / 2,
+    event.touches[0].pageY + event.touches[1].pageY / 2,
+    twoFingerDistance(event)
+  )
+  // console.log(`touchstart: ${touchStr(startTouch)}`)
 
-  // Calculate the image's translation point from how much the fingers
-  // have moved on the X and Y axis.
-  endZoom.centerX = (event.touches[0].pageX + event.touches[1].pageX) / 2
-  endZoom.centerY = (event.touches[0].pageY + event.touches[1].pageY) / 2
-  const deltaX = (endZoom.centerX - startZoom.centerX)
-  const deltaY = (endZoom.centerY - startZoom.centerY)
+  // Return the new scale and translate values.
+  const image = cJson.images[imageIx]
+  const [translateX, translateY, scale] = zoomAndPan(
+    areaWidth, areaHeight,
+    image.width, image.height,
+    startTouch, startZoom.scale,
+    endTouch)
 
-  // todo: limit the translation point to keep the image visible on the screen.
-  endZoom.translateX = startZoom.translateX + deltaX
-  endZoom.translateY = startZoom.translateY + deltaY
-  // console.log(`touchmove: delta (${deltaX}, ${deltaY}) ${two(scale)}`)
-
+  // Translate and scale the image.
   const img = get(`i${imageIx+1}`)
-  img.style.scale = endZoom.scale
-  img.style.translate = `${endZoom.translateX}px ${endZoom.translateY}px`
+  img.style.translate = `${translateX}px ${translateY}px`
+  img.style.scale = scale
 }, {passive: false})
 
 document.addEventListener('touchend', handleTouchend, false)
@@ -441,12 +468,9 @@ function handleTouchend(event) {
     // const area = get("area")
     // area.removeAttribute("touch-action")
 
-    console.log(`touchend: finger center: (${endZoom.centerX}, ${endZoom.centerY}) distance apart: ${two(endZoom.distance)}`)
-    console.log(`touchend: i${imageIx+1} endZoom: ${zpStr(endZoom)}`)
-
-    // const imageWidth = cJson.images[imageIx].width
-    // const scaledWidth = endZoom.scale * imageWidth
-    // console.log(`touchend: imageWidth: ${imageWidth}, scaledWidth: ${scaledWidth}, areaWidth: ${areaWidth}`)
+    // Get the end zoom for the current image.
+    const endZoom = getImageZoom()
+    console.log(`image ${imageIx+1},  endZoom: ${zpStr(endZoom)}`)
 
     zooming = false
   }
@@ -485,7 +509,7 @@ function saveZoomPoints() {
     let img = get(`i${ix+1}`)
     let scale = parseFloat(img.style.scale, 10)
     let [x, y] = parseTranslate(img.style.translate)
-    let uiZp = newZp(areaWidth, areaHeight, scale, x, y, 0, 0, 0)
+    let uiZp = newZoom(areaWidth, areaHeight, scale, x, y)
     uiZoomPoints.push(uiZp)
     // console.log(`uiZp ${ix+1}: ${zpStr(uiZp)}`)
   }
@@ -516,9 +540,6 @@ function saveZoomPoints() {
 
       let zp = {}
       zp = zpt
-      zp.centerX = 0
-      zp.centerY = 0
-      zp.distance = 0
 
       // When the dimensions are the same, use the UI zoom point if it is different.
       let sameDim = (same(zp.w, uiZp.w, .01) && same(zp.h, uiZp.h, .01))
