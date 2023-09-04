@@ -135,7 +135,6 @@ function sizeImages() {
 
     // Scale and translate the image to the zoom point, zooming around
     // the center.
-    // img.style.transformOrigin = "0 0"
     img.style.translate = `${zoomPoint.translateX}px ${zoomPoint.translateY}px`
     img.style.scale = zoomPoint.scale
 
@@ -281,8 +280,8 @@ function SetDetails() {
 
 function twoFingerDistance(event) {
   // Calculate distance between two touching fingers.
-  return Math.hypot(event.touches[0].pageX - event.touches[1].pageX,
-                    event.touches[0].pageY - event.touches[1].pageY)
+  return Math.hypot(event.touches[0].clientX - event.touches[1].clientX,
+                    event.touches[0].clientY - event.touches[1].clientY)
 }
 
 function parseTranslate(translate) {
@@ -350,7 +349,7 @@ function newTouch(centerX, centerY, distance) {
 function touchStr(touch) {
   // Return a string representation of a touch.
 
-  return `(${touch.centerX}, ${touch.centerY}), distance: ${two(touch.distance)}`
+  return `center: (${touch.centerX}, ${touch.centerY}), distance: ${two(touch.distance)}`
 }
 
 // Whether we are zooming an image or not.
@@ -405,21 +404,31 @@ window.addEventListener('touchstart', (event) => {
   const area = get("area")
   // area.setAttribute("overflow-x", "clip")
 
-  // Get the point centered between the two fingers and the distance between them.
-  startTouch = newTouch(
-    event.touches[0].pageX + event.touches[1].pageX / 2,
-    event.touches[0].pageY + event.touches[1].pageY / 2,
-    twoFingerDistance(event)
-  )
-  console.log(`startTouch: ${touchStr(startTouch)}`)
+  const clientX0 = event.touches[0].clientX
+  const clientX1 = event.touches[1].clientX
+  const clientY0 = event.touches[0].clientY
+  const clientY1 = event.touches[1].clientY
+  console.log(`touchstart: clientX/Y: ${clientX0}, ${clientY0} and ${clientX1}, ${clientY1}`)
+
+  const pageX0 = event.touches[0].pageX
+  const pageX1 = event.touches[1].pageX
+  const pageY0 = event.touches[0].pageY
+  const pageY1 = event.touches[1].pageY
+  console.log(`touchstart: pageX/Y: ${pageX0}, ${pageY0} and ${pageX1}, ${pageY1}`)
+
+  // Get the point centered between the two fingers and the distance
+  // between them.
+  startTouch = newTouch(clientX0 + clientX1 / 2,
+    clientY0 + clientY1 / 2, twoFingerDistance(event))
+  console.log(`touchstart: ${touchStr(startTouch)}`)
 
   // Log the start zoom for the current image.
   startZoom = getImageZoom()
-  console.log(`image ${imageIx+1}, startZoom: ${zpStr(startZoom)}`)
+  console.log(`touchstart: image ${imageIx+1}, startZoom: ${zpStr(startZoom)}`)
 
   // Scale around the two finger center point.
-  // const img = get(`i${imageIx+1}`)
-  // img.style.transformOrigin = "${startTouch.centerX}px ${startTouch.centerY}px"
+  const img = get(`i${imageIx+1}`)
+  // img.style.transformOrigin = `${startTouch.centerX}px ${startTouch.centerY}px`
 })
 
 function zoomAndPan(areaWidth, areaHeight, imageWidth, imageHeight, startTouch, startZoomScale, endTouch) {
@@ -447,8 +456,8 @@ window.addEventListener('touchmove', (event) => {
   // Get the point centered between the two fingers and the distance
   // between them.
   const endTouch = newTouch(
-    event.touches[0].pageX + event.touches[1].pageX / 2,
-    event.touches[0].pageY + event.touches[1].pageY / 2,
+    event.touches[0].clientX + event.touches[1].clientX / 2,
+    event.touches[0].clientY + event.touches[1].clientY / 2,
     twoFingerDistance(event)
   )
 
@@ -491,7 +500,7 @@ function handleTouchend(event) {
 
     // Get the end zoom for the current image.
     const endZoom = getImageZoom()
-    console.log(`image ${imageIx+1},  endZoom: ${zpStr(endZoom)}`)
+    console.log(`touchend: image ${imageIx+1}, endZoom: ${zpStr(endZoom)}`)
 
     zooming = false
   }
