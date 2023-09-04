@@ -134,8 +134,8 @@ function sizeImages() {
     const [zoomPoint, xDistance, yDistance] = getZoomPoint(image)
 
     // Scale and translate the image to the zoom point, zooming around
-    // the upper left corner.
-    img.style.transformOrigin = "0 0"
+    // the center.
+    // img.style.transformOrigin = "0 0"
     img.style.translate = `${zoomPoint.translateX}px ${zoomPoint.translateY}px`
     img.style.scale = zoomPoint.scale
 
@@ -193,8 +193,12 @@ function getZoomPoint(image) {
     // todo: account for the case where the height doesn't fit.
     console.assert(image.width != 0)
     const fitScale = areaWidth / image.width
+
+    const dx = (image.width / 2) - (areaWidth / 2)
+    const dy = (image.height / 2) - (areaHeight / 2)
+
     // todo: rename newZoom to newZoomPoint
-    zoomPoint = newZoom(areaWidth, areaHeight, fitScale, 0, 0)
+    zoomPoint = newZoom(areaWidth, areaHeight, fitScale, -dx, -dy)
   }
 
   return [zoomPoint, xDistance, yDistance]
@@ -414,10 +418,8 @@ window.addEventListener('touchstart', (event) => {
   console.log(`image ${imageIx+1}, startZoom: ${zpStr(startZoom)}`)
 
   // Scale around the two finger center point.
-  const img = get(`i${imageIx+1}`)
+  // const img = get(`i${imageIx+1}`)
   // img.style.transformOrigin = "${startTouch.centerX}px ${startTouch.centerY}px"
-  // transform-origin
-  // img.style.transformOrigin = "center"
 })
 
 function zoomAndPan(areaWidth, areaHeight, imageWidth, imageHeight, startTouch, startZoomScale, endTouch) {
