@@ -14,15 +14,16 @@ var areaHeight = null
 // The left edges (scroll positions) of the images in the area.
 var leftEdges = null
 
-// Consider zoom point this close.
+// Consider a zoom point this close.
 const closeDistance = 100
 
 window.addEventListener("load", loadEvent)
 
-// The start time used for startup timing.
+// The start time used for timing.
 const startTime = performance.now()
 
 function logStartupTime(message) {
+  // Log the elasped time since the startTime.
   let seconds = (performance.now() - startTime) / 1000.0
   seconds = seconds.toFixed(3)
   console.log(`${seconds}s -- ${message}`)
@@ -34,7 +35,7 @@ function get(id) {
 }
 
 async function loadEvent() {
-  // The page finished loading, load json and size things.
+  // The page finished loading, setup and size things.
   logStartupTime(`loadEvent: json contains ${cJson.images.length} images`)
 
   setFirstImage()
@@ -90,14 +91,15 @@ function sizeImageArea() {
 
   // Get the screen width and height that we can use and store them in
   // globals.
-  console.log(`window.innerWidth: ${window.innerWidth}`)
-  console.log(`window.innerHeight: ${window.innerHeight}`)
+  console.log(`window.innerWidth, height: (${window.innerWidth}, ${window.innerHeight})`)
 
-  console.log(`document.documentElement.clientWidth: ${document.documentElement.clientWidth}`)
-  console.log(`document.documentElement.clientHeight: ${document.documentElement.clientHeight}`)
+  let w = document.documentElement.clientWidth
+  let h = document.documentElement.clientHeight
+  console.log(`document.documentElement.clientWidth, height: (${w}, ${h})`)
 
-  console.log(`document.body.clientWidth: ${document.body.clientWidth}`)
-  console.log(`document.body.clientHeight: ${document.body.clientHeight}`)
+  w = document.body.clientWidth
+  h = document.body.clientHeight
+  console.log(`document.body.clientWidth, height: (${w}, ${h})`)
 
   areaWidth = document.documentElement.clientWidth
   areaHeight = document.documentElement.clientHeight
@@ -124,26 +126,23 @@ function sizeImages() {
     container.style.width = `${areaWidth}px`
     container.style.height = `${areaHeight}px`
 
-    // Fit the images in the container.
-    // todo: account for the case where the height doesn't fit.
-    console.assert(image.width != 0)
-    const fitScale = areaWidth / image.width
     const img = get(`i${ix+1}`)
-    const scaledw = image.width * fitScale
-    const scaledh = image.height * fitScale
-    img.style.width = `${scaledw}px`
-    img.style.height = `${scaledh}px`
+    img.style.width = `${image.width}px`
+    img.style.height = `${image.height}px`
 
     // Find the zoom point for the screen size.
     const [zoomPoint, xDistance, yDistance] = getZoomPoint(image)
 
-    // Scale and translate the image to the zoom point.
-    img.style.scale = zoomPoint.scale
+    // Scale and translate the image to the zoom point, zooming around
+    // the upper left corner.
+    img.style.transformOrigin = "0 0"
     img.style.translate = `${zoomPoint.translateX}px ${zoomPoint.translateY}px`
+    img.style.scale = zoomPoint.scale
 
-    // Log the image position information.
+    // Log the image size and position information.
+    const distance = (xDistance == 101) ? "not found" : `d: ${xDistance}, ${yDistance}`
     const part1 = `i${ix+1}: ${image.width} x ${image.height}, `
-    const part2 = `zp: ${zpStr(zoomPoint)} d: ${xDistance}, ${xDistance}`
+    const part2 = `zp: ${zpStr(zoomPoint)} ${distance}`
     console.log(part1 + part2)
 
     edge += areaWidth
@@ -158,12 +157,18 @@ function sizeImages() {
 
 function getZoomPoint(image) {
   // Return the closest close zoom point and (x, y) distance away.  If
-  // no close zoom point, return the default 1, 0, 0.
+  // no close zoom point return one that fits the image to the area.
 
-  let zoomPoint =  newZoom(areaWidth, areaHeight, 1, 0, 0)
+  // todo: when no close zoom point is found, and one or more zoom
+  // points exist, generate a new zoom point based on the closest one
+  // found.
 
+  let found = false
+  let zoomPoint = null
   let xDistance = closeDistance+1
   let yDistance = closeDistance+1
+
+  // Loop though the zoom points looking for a close one.
   for (let zpt of image.zoomPoints) {
     const xDist = Math.abs(areaWidth - zpt.w)
     const yDist = Math.abs(areaHeight - zpt.h)
@@ -171,15 +176,27 @@ function getZoomPoint(image) {
     if (xDist < closeDistance && yDist < closeDistance) {
       let combined = xDist + yDist
       if (combined < xDistance + yDistance) {
+        found = true
+        zoomPoint = zpt
         xDistance = xDist
         yDistance = yDist
-
-        zoomPoint = zpt
-        if (combined == 0)
+        if (combined == 0) {
           break
+        }
       }
     }
   }
+
+  // When no zoom point found, fit the image to the area.
+  if (!found) {
+    // Fit the image in the container.
+    // todo: account for the case where the height doesn't fit.
+    console.assert(image.width != 0)
+    const fitScale = areaWidth / image.width
+    // todo: rename newZoom to newZoomPoint
+    zoomPoint = newZoom(areaWidth, areaHeight, fitScale, 0, 0)
+  }
+
   return [zoomPoint, xDistance, yDistance]
 }
 
@@ -310,7 +327,7 @@ function newZoom(w, h, scale, translateX, translateY) {
 function zpStr(zp) {
   // Return a string representation of a zoom point.
 
-  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.translateX} x ${zp.translateY})`
+  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, (${zp.translateX}, ${zp.translateY})`
 }
 
 // The startTouch object contains the two touch points center and
@@ -379,6 +396,7 @@ window.addEventListener('touchstart', (event) => {
   zooming = true
 
   // Disable the default browser zoom and pan behavior.
+  // todo: disable the whole page instead.
   event.preventDefault()
   const area = get("area")
   // area.setAttribute("overflow-x", "clip")
@@ -391,13 +409,15 @@ window.addEventListener('touchstart', (event) => {
   )
   console.log(`startTouch: ${touchStr(startTouch)}`)
 
-  // Get the start zoom for the current image.
+  // Log the start zoom for the current image.
   startZoom = getImageZoom()
-  console.log(`image ${imageIx+1},  startZoom: ${zpStr(startZoom)}`)
+  console.log(`image ${imageIx+1}, startZoom: ${zpStr(startZoom)}`)
 
-  // todo: Scale around the two finger center point.
-  // img.setAttribute("style", `transform-origin: ${startTouch.centerX}px ${startTouch.centerY}px;`)
-  // img.setAttribute("style", `transform-origin: left top;`)
+  // Scale around the two finger center point.
+  const img = get(`i${imageIx+1}`)
+  // img.style.transformOrigin = "${startTouch.centerX}px ${startTouch.centerY}px"
+  // transform-origin
+  // img.style.transformOrigin = "center"
 })
 
 function zoomAndPan(areaWidth, areaHeight, imageWidth, imageHeight, startTouch, startZoomScale, endTouch) {
@@ -412,7 +432,6 @@ function zoomAndPan(areaWidth, areaHeight, imageWidth, imageHeight, startTouch, 
   return [translateX, translateY, scale]
 }
 
-
 window.addEventListener('touchmove', (event) => {
   if (event.touches.length != 2)
     return
@@ -423,13 +442,13 @@ window.addEventListener('touchmove', (event) => {
   // todo: is this needed?
   event.preventDefault()
 
-  // Get the point centered between the two fingers and the distance between them.
+  // Get the point centered between the two fingers and the distance
+  // between them.
   const endTouch = newTouch(
     event.touches[0].pageX + event.touches[1].pageX / 2,
     event.touches[0].pageY + event.touches[1].pageY / 2,
     twoFingerDistance(event)
   )
-  // console.log(`touchstart: ${touchStr(startTouch)}`)
 
   // Return the new scale and translate values.
   const image = cJson.images[imageIx]
