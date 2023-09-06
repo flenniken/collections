@@ -360,24 +360,9 @@ let zooming = false
 // the translation x component and the change along the y axis is
 // added to the y translation component.
 //
-// The change in distance between the touch points define the new
-// scale value.
+// The change in distance (hypotenuse) between the touch points define
+// the new scale value.
 //
-// The new translation point and scale are constrained by the image
-// and area sizes.
-
-// When the image width is bigger than the area width, the image
-// left and right edges must not go inside the area.  Similar for
-// the height.  The scale must not go above 1.
-//
-// When the image width is less than the area, the image left and
-// right edges must not go outside the area.  Similar for the
-// height. The scale must not go below 1.
-
-// The x and y scale are the same to keep a constant image aspect
-// ratio. If one of the image dimensions is smaller than the area
-// and the other dimension is bigger, the scale remains at 1.
-
 function getImageZoom() {
   // Get the initial translate x and y values and the scale of the
   // current image.
@@ -418,8 +403,8 @@ window.addEventListener('touchstart', (event) => {
 
   // Get the point centered between the two fingers and the distance
   // between them.
-  startTouch = newTouch(clientX0 + clientX1 / 2,
-    clientY0 + clientY1 / 2, twoFingerDistance(event))
+  startTouch = newTouch((clientX0 + clientX1) / 2,
+                        (clientY0 + clientY1) / 2, twoFingerDistance(event))
   console.log(`touchstart: ${touchStr(startTouch)}`)
 
   // Log the start zoom for the current image.
@@ -427,7 +412,10 @@ window.addEventListener('touchstart', (event) => {
   console.log(`touchstart: image ${imageIx+1}, startZoom: ${zpStr(startZoom)}`)
 
   // Scale around the two finger center point.
-  const img = get(`i${imageIx+1}`)
+
+  // The translate values are relative to the transform origin.
+
+  // const img = get(`i${imageIx+1}`)
   // img.style.transformOrigin = `${startTouch.centerX}px ${startTouch.centerY}px`
 })
 
@@ -435,11 +423,53 @@ function zoomAndPan(areaWidth, areaHeight, imageWidth, imageHeight, startTouch, 
   // Return the new translate point and scale. Constrain the values so
   // the image stays in the area.
 
+  // The new translation point and scale are constrained by the image
+  // and area sizes.
+
+  // The x and y scale are the same to keep a constant image aspect
+  // ratio. If one of the image dimensions is smaller than the area
+  // and the other dimension is bigger, the scale remains at 1.
+
   const deltaX = (endTouch.centerX - startTouch.centerX)
   const deltaY = (endTouch.centerY - startTouch.centerY)
-  const translateX = startZoom.translateX + deltaX
-  const translateY = startZoom.translateY + deltaY
-  const scale = (endTouch.distance / startTouch.distance) * startZoomScale
+  let translateX = startZoom.translateX + deltaX
+  let translateY = startZoom.translateY + deltaY
+  let scale = (endTouch.distance / startTouch.distance) * startZoomScale
+
+  // When the image width is bigger than the area width, the image
+  // left and right edges must not go inside the area.  Similar for
+  // the height.  The scale must not go above 1.
+  if (imageWidth > areaWidth) {
+
+    // if (translateX > 0) {
+    //   translateX = 0
+    // }
+    // if (translateX > -imageWidth / 2) {
+    //   translateX = -imageWidth / 2
+    // }
+    // if (translateY > -imageHeight / 2) {
+    //   translateY = -imageHeight / 2
+    // }
+
+
+    // if (translateX < (areaWidth - imageWidth)) {
+    //   translateX = areaWidth - imageWidth
+    // }
+    // if (translateY < (areaHeight - imageHeight)) {
+    //   translateY = areaHeight - imageHeight
+    // }
+    if (scale > 1) {
+      scale = 1
+    }
+  } else {
+    // When the image width is less than the area, the image left and
+    // right edges must not go outside the area.  Similar for the
+    // height. The scale must not go below 1.
+    if (scale < 1) {
+      scale = 1
+    }
+  }
+
   return [translateX, translateY, scale]
 }
 
