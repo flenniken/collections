@@ -351,6 +351,8 @@ let zooming = false
 // The position when we started zooming.
 let start = {}
 
+// The current touchmove position for zooming and panning.
+let current = {}
 
 window.addEventListener('touchstart', (event) => {
 
@@ -371,7 +373,7 @@ window.addEventListener('touchstart', (event) => {
   const clientX1 = event.touches[1].clientX
   const clientY0 = event.touches[0].clientY
   const clientY1 = event.touches[1].clientY
-  console.log(`touchstart: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
+  // console.log(`touchstart: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
 
@@ -386,7 +388,7 @@ window.addEventListener('touchstart', (event) => {
 
   console.log(`i${imageIx+1}: touchstart: c: (${two(start.cx)}, ${two(start.cy)}) ` +
               `d: ${two(start.distance)}, scale: ${two(start.scale)}, ` +
-              `t: ${two(start.tx)}, ${two(start.ty)}`)
+              `t: (${two(start.tx)}, ${two(start.ty)})`)
 })
 
 window.addEventListener('touchmove', (event) => {
@@ -407,24 +409,25 @@ window.addEventListener('touchmove', (event) => {
   // console.log(`touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
-  const endDistance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
-  const newScale = (endDistance / start.distance) * start.scale
-  // console.log(`newScale: ${newScale}`)
-  // console.log(`endDistance: ${endDistance}`)
+
+  current.cx = (clientX0 + clientX1) / 2
+  current.cy = (clientY0 + clientY1) / 2
+  current.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+  current.scale = (current.distance / start.distance) * start.scale
 
   let movedCt = {};
-  movedCt.cx = ((start.cx - start.tx) * newScale) / start.scale + start.tx;
+  movedCt.cx = ((start.cx - start.tx) * current.scale) / start.scale + start.tx
   // console.log(`start.cx: ${start.cx}, start.tx: ${start.tx}, start.scale: ${start.scale}`)
-  movedCt.cy = ((start.cy - start.ty) * newScale) / start.scale + start.ty;
-  const tx = start.tx - (movedCt.cx - start.cx);
-  const ty = start.ty - (movedCt.cy - start.cy);
-  const newIw = image.width * newScale;
-  const newIh = image.height * newScale;
+  movedCt.cy = ((start.cy - start.ty) * current.scale) / start.scale + start.ty
+  const tx = start.tx - (movedCt.cx - start.cx) + (current.cx - start.cx)
+  const ty = start.ty - (movedCt.cy - start.cy) + (current.cy - start.cy)
+  const newIw = image.width * current.scale
+  const newIh = image.height * current.scale
 
-  const newOk = newPosOK(newScale, tx, ty, newIw, newIh);
+  const newOk = newPosOK(current.scale, tx, ty, newIw, newIh);
 
   if (newOk) {
-    image.scale = newScale;
+    image.scale = current.scale;
     image.tx = tx;
     image.ty = ty;
 
@@ -506,7 +509,10 @@ function handleTouchend(event) {
     zooming = false
 
     const image = cJson.images[imageIx]
-    console.log(`i${imageIx+1}: touchend: s: ${two(image.scale)}, t: ${two(image.tx)}, ${two(image.ty)}`)
+    console.log(`i${imageIx+1}: touchend: c: (${two(current.cx)}, ${two(current.cy)}) ` +
+              `d: ${two(current.distance)}, scale: ${two(image.scale)}, ` +
+              `t: (${two(image.tx)}, ${two(image.ty)})`)
+
   }
 }
 
