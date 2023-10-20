@@ -8,3 +8,7 @@ body {
   margin: 50px;
   font-size: 2em;
 }
+
+.container {
+    background-color: gray;
+}

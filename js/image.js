@@ -140,8 +140,11 @@ function sizeImages() {
     }
 
     // Center the image in the container.
-    image.tx = areaWidth / 2 - (image.scale * image.width) / 2
-    image.ty = areaHeight / 2 - (image.scale * image.height) / 2
+    // image.tx = areaWidth / 2 - (image.scale * image.width) / 2
+    // image.ty = areaHeight / 2 - (image.scale * image.height) / 2
+
+    image.tx = 0
+    image.ty = 0
 
     // Position the image with the data calculated above.
     const img = get(`i${ix+1}`)
@@ -153,7 +156,7 @@ function sizeImages() {
 
     // Log the image information.
     console.log(`i${ix+1}: ${image.width} x ${image.height}, ` +
-                `${areaWidth} x ${areaHeight}, scale: ${two(image.scale)}, ` +
+                `scale: ${two(image.scale)}, ` +
                 `t: (${two(image.tx)}, ${two(image.ty)})`)
 
     edge += areaWidth
@@ -345,12 +348,9 @@ function zpStr(zp) {
 // Whether we are zooming an image or not.
 let zooming = false
 
-let startCx
-let startCy
-let startDistance
-let startScale
-let startTx
-let startTy
+// The position when we started zooming.
+let start = {}
+
 
 window.addEventListener('touchstart', (event) => {
 
@@ -377,76 +377,17 @@ window.addEventListener('touchstart', (event) => {
 
   // Save the point centered between the two fingers, the distance
   // between them, the current translation and the current scale.
-  startCx = (clientX0 + clientX1) / 2
-  startCy = (clientY0 + clientY1) / 2
-  startDistance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+  start.cx = (clientX0 + clientX1) / 2
+  start.cy = (clientY0 + clientY1) / 2
+  start.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+  start.scale = image.scale
+  start.tx = image.tx
+  start.ty = image.ty
 
-  startScale = image.scale
-  startTx = image.tx
-  startTy = image.ty
-  console.log(`touchstart: c: (${two(startCx)}, ${two(startCy)}) d: ${two(startDistance)}, scale: ${two(startScale)}, t: ${two(startTx)}, ${two(startTy)}`)
+  console.log(`i${imageIx+1}: touchstart: c: (${two(start.cx)}, ${two(start.cy)}) ` +
+              `d: ${two(start.distance)}, scale: ${two(start.scale)}, ` +
+              `t: ${two(start.tx)}, ${two(start.ty)}`)
 })
-
-
-  // const img = get(`i${imageIx+1}`)
-
-  // const image = cJson.images[imageIx]
-  // console.log(`touchstart: image: ${two(image.width)}, ${two(image.height)}`)
-
-  // const shiftx = 0 //image.width / 4
-  // const shifty = 0 //image.height / 4
-  // console.log(`touchstart: shift: ${two(shiftx)}, ${two(shifty)}`)
-
-  // const cx = (image.width / 2) + shiftx
-  // const cy = (image.height / 2) + shifty
-  // console.log(`touchstart: c: ${two(cx)}, ${two(cy)}`)
-
-  // const tx = -cx + (areaWidth / 2)
-  // const ty = -cy + (areaHeight / 2)
-  // console.log(`touchstart: t: ${two(tx)}, ${two(ty)}`)
-
-  // const img = get(`i${imageIx+1}`)
-  // img.style.transformOrigin = `${cx}px ${cy}px`
-  // img.style.translate = `${tx}px ${ty}px`
-
-
-
-//   // Save the point centered between the two fingers, the distance
-//   // between them and the current scale.
-//   startCx = (clientX0 + clientX1) / 2
-//   startCy = (clientY0 + clientY1) / 2
-//   startDistance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
-//   const img = get(`i${imageIx+1}`)
-//   startScale = parseFloat(img.style.scale, 10)
-//   let [cx, cy] = parseXYPos(img.style.transformOrigin)
-//   console.assert(cx != -1 && cy != -1)
-//   console.log(`touchstart: c: ${two(cx)}, ${two(cy)}`)
-
-//   const image = cJson.images[imageIx]
-//   const ncx = startCx * (image.width / areaWidth) + (areaWidth / 2)
-//   const ncy = startCy * (image.height / areaHeight) + (areaHeight / 2)
-//   console.log(`touchstart: nc: ${two(ncx)}, ${two(ncy)}`)
-
-//   const deltax = ncx - cx
-//   const deltay = ncy - cy
-//   console.log(`touchstart: delta: ${two(deltax)}, ${two(deltay)}`)
-
-//   // const ictx = -cx + (areaWidth / 2)
-//   // const icty = -cy + (areaHeight / 2)
-
-//   // const ncx = icx + deltax
-//   // const ncy = icy + deltay
-//   const tx = -(ncx + deltax)
-//   const ty = -(ncy + deltay)
-
-//   // console.log(`touchstart: delta: ${deltax}, ${deltay}`)
-
-//   img.style.transformOrigin = `${ncx}px ${ncy}px`
-//   img.style.translate = `${tx}px ${ty}px`
-
-//   // console.log(`touchstart: ca: (${startCx}, ${startCy}), c: (${two(cx)}, ${two(cy)}), ` +
-//   //   `d: ${two(startDistance)}  t: (${two(tx)}, ${two(ty)}), s: ${two(startScale)}`)
-// })
 
 window.addEventListener('touchmove', (event) => {
 
@@ -466,26 +407,78 @@ window.addEventListener('touchmove', (event) => {
   // console.log(`touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
-
-  const endCx = (clientX0 + clientX1) / 2
-  const endCy = (clientY0 + clientY1) / 2
   const endDistance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
-  const endScale = (endDistance / startDistance) * startScale
+  const newScale = (endDistance / start.distance) * start.scale
+  // console.log(`newScale: ${newScale}`)
+  // console.log(`endDistance: ${endDistance}`)
 
-  const endTx = startTx + (endCx - startCx)
-  const endTy = startTy + (endCy - startCy)
-  // console.log(`touchmove: c: (${two(endCx)}, ${two(endCy)}), d: ${two(endDistance)}, s: ${two(endScale)}, ` +
-  //             `t: ${two(endTx)}, ${two(endTy)}`)
+  let movedCt = {};
+  movedCt.cx = ((start.cx - start.tx) * newScale) / start.scale + start.tx;
+  // console.log(`start.cx: ${start.cx}, start.tx: ${start.tx}, start.scale: ${start.scale}`)
+  movedCt.cy = ((start.cy - start.ty) * newScale) / start.scale + start.ty;
+  const tx = start.tx - (movedCt.cx - start.cx);
+  const ty = start.ty - (movedCt.cy - start.cy);
+  const newIw = image.width * newScale;
+  const newIh = image.height * newScale;
 
-  const img = get(`i${imageIx+1}`)
-  img.style.transform  = `translate(${endTx}px, ${endTy}px) ` +
-    `scale(${endScale})`
+  const newOk = newPosOK(newScale, tx, ty, newIw, newIh);
 
-  image.scale = endScale
-  image.tx = endTx
-  image.ty = endTy
+  if (newOk) {
+    image.scale = newScale;
+    image.tx = tx;
+    image.ty = ty;
+
+    const img = get(`i${imageIx+1}`)
+    // Note: translate runs from right to left.
+    img.style.transform = `translate(${image.tx}px, ${image.ty}px) scale(${image.scale})`;
+    // console.log(
+    //   `scale: ${two(image.scale)} ` +
+    //     `tx: ${two(image.tx)}, ty: ${two(image.ty)}`
+    // );
+  }
 
 }, {passive: false})
+
+function newPosOK(newScale, tx, ty, newIw, newIh) {
+  return true
+
+  let newOk = true;
+  let msg = "";
+  if (newScale > 1) {
+    console.log(`newScale (${two(newScale)}) > 1`);
+    newOk = false;
+  }
+
+  if (
+    image.width - areaWidth > image.height - areaHeight &&
+    image.width > areaWidth
+  ) {
+    if (tx > 0) {
+      console.log(`tx (${two(tx)}) > 0`);
+      newOk = false;
+    }
+    const rightEdge = tx + newIw;
+    if (two(rightEdge) < two(areaWidth)) {
+      console.log(`tx: ${two(tx)} newIw: ${two(newIw)}`);
+      console.log(`rightEdge (${two(rightEdge)}) < areaWidth (${areaWidth})`);
+      newOk = false;
+    }
+  } else {
+    if (ty > 0) {
+      console.log(`ty (${two(ty)}) > 0`);
+      newOk = false;
+    }
+    const bottomEdge = ty + newIh;
+    if (two(bottomEdge) < two(areaHeight)) {
+      console.log(`tx: ${two(ty)} newIh: ${two(newIh)}`);
+      console.log(
+        `bottomEdge (${two(bottomEdge)}) < areaHeight (${areaHeight})`
+      );
+      newOk = false;
+    }
+  }
+  return newOk;
+}
 
 document.addEventListener('touchend', handleTouchend, false)
 document.addEventListener('touchcancel', handleTouchend, false)
@@ -513,7 +506,7 @@ function handleTouchend(event) {
     zooming = false
 
     const image = cJson.images[imageIx]
-    console.log(`touchend: s: ${two(image.scale)}, t: ${two(image.tx)}, ${two(image.ty)}`)
+    console.log(`i${imageIx+1}: touchend: s: ${two(image.scale)}, t: ${two(image.tx)}, ${two(image.ty)}`)
   }
 }
 
