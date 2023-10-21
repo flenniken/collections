@@ -443,44 +443,36 @@ window.addEventListener('touchmove', (event) => {
 }, {passive: false})
 
 function newPosOK(newScale, tx, ty, newIw, newIh) {
-  return true
 
-  let newOk = true;
-  let msg = "";
+  const image = cJson.images[imageIx]
   if (newScale > 1) {
-    console.log(`newScale (${two(newScale)}) > 1`);
-    newOk = false;
+    console.log(`out of range: scale > 1`)
+    return false
   }
-
-  if (
-    image.width - areaWidth > image.height - areaHeight &&
-    image.width > areaWidth
-  ) {
-    if (tx > 0) {
-      console.log(`tx (${two(tx)}) > 0`);
-      newOk = false;
-    }
-    const rightEdge = tx + newIw;
-    if (two(rightEdge) < two(areaWidth)) {
-      console.log(`tx: ${two(tx)} newIw: ${two(newIw)}`);
-      console.log(`rightEdge (${two(rightEdge)}) < areaWidth (${areaWidth})`);
-      newOk = false;
-    }
-  } else {
-    if (ty > 0) {
-      console.log(`ty (${two(ty)}) > 0`);
-      newOk = false;
-    }
-    const bottomEdge = ty + newIh;
-    if (two(bottomEdge) < two(areaHeight)) {
-      console.log(`tx: ${two(ty)} newIh: ${two(newIh)}`);
-      console.log(
-        `bottomEdge (${two(bottomEdge)}) < areaHeight (${areaHeight})`
-      );
-      newOk = false;
-    }
+  if (newIw < areaWidth / 2) {
+    console.log(`out of range: image size < half area width`)
+    return false
   }
-  return newOk;
+  if (tx > areaWidth / 2) {
+    console.log(`out of range: image left edge > area center`)
+    return false
+  }
+  const rightEdge = tx + newIw
+  if (rightEdge < areaWidth / 2) {
+    console.log(`out of range: image right edge < area center`)
+    return false
+  }
+  if (ty > areaHeight / 2) {
+    console.log(`out of range: image top edge > area center`)
+    return false
+  }
+  const bottomEdge = ty + newIh
+  if (bottomEdge < areaHeight / 2) {
+    console.log(`out of range: image bottom edge < area center`)
+    return false
+  }
+  // The position is good.
+  return true
 }
 
 document.addEventListener('touchend', handleTouchend, false)
