@@ -27,12 +27,20 @@ function logStartupTime(message) {
   // Log the elasped time since the startTime.
   let seconds = (performance.now() - startTime) / 1000.0
   seconds = seconds.toFixed(3)
-  console.log(`${seconds}s -- ${message}`)
+  log(`${seconds}s -- ${message}`)
 }
 
 function get(id) {
   // Get the dom element with the given id.
   return document.getElementById(id)
+}
+
+function log(message) {
+    console.log(message)
+}
+
+function logError(message) {
+    console.error(message)
 }
 
 async function loadEvent() {
@@ -56,7 +64,7 @@ async function loadEvent() {
   area.addEventListener('scrollend', () => {
     // Once the scrollend event is supported in the browsers you can
     // replace the code that figures out when scrolling ends.
-    console.log("areaScrollEnd event exists!")
+    log("areaScrollEnd event exists!")
   })
 
   // Disable the default browser zoom and pan behavior.
@@ -79,11 +87,11 @@ function intDef(str, min, max, def) {
 function setFirstImage() {
   // Set the first image to show based on the url image query
   // parameter.
-  console.log(`window.location.search = ${window.location.search}`)
+  log(`window.location.search = ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search)
   const imageQ = searchParams.get("image")
   const imageNum = intDef(imageQ, 1, cJson.images.length, 0)
-  console.log(`first image: ${imageNum}`)
+  log(`first image: ${imageNum}`)
   imageIx = imageNum - 1
 }
 
@@ -92,15 +100,15 @@ function sizeImageArea() {
 
   // Get the screen width and height that we can use and store them in
   // globals.
-  console.log(`window.innerWidth, height: (${window.innerWidth}, ${window.innerHeight})`)
+  log(`window.innerWidth, height: (${window.innerWidth}, ${window.innerHeight})`)
 
   let w = document.documentElement.clientWidth
   let h = document.documentElement.clientHeight
-  console.log(`document.documentElement.clientWidth, height: (${w}, ${h})`)
+  log(`document.documentElement.clientWidth, height: (${w}, ${h})`)
 
   w = document.body.clientWidth
   h = document.body.clientHeight
-  console.log(`document.body.clientWidth, height: (${w}, ${h})`)
+  log(`document.body.clientWidth, height: (${w}, ${h})`)
 
   areaWidth = document.documentElement.clientWidth
   areaHeight = document.documentElement.clientHeight
@@ -110,7 +118,7 @@ function sizeImageArea() {
   area.style.width = `${areaWidth}px`
   area.style.height = `${areaHeight}px`
   const dim = `${areaWidth} x ${areaHeight}`
-  console.log(`area size: ${dim}`)
+  log(`area size: ${dim}`)
   get('size').innerHTML = `${dim}`
 }
 
@@ -129,7 +137,7 @@ function sizeImages() {
 
 
     if (image.width < areaWidth || image.height < areaHeight) {
-      console.log("small images are not supported")
+      logError("small images are not supported")
     }
 
     // Fit the long side to the container.
@@ -155,7 +163,7 @@ function sizeImages() {
     img.style.transform = `translate(${image.tx}px, ${image.ty}px) scale(${image.scale})`;
 
     // Log the image information.
-    console.log(`i${ix+1}: ${image.width} x ${image.height}, ` +
+    log(`i${ix+1}: ${image.width} x ${image.height}, ` +
                 `scale: ${two(image.scale)}, ` +
                 `t: (${two(image.tx)}, ${two(image.ty)})`)
 
@@ -164,9 +172,9 @@ function sizeImages() {
 
   // Scroll the current image into view.
   const area = get("area")
-  console.log(`leftEdge: ${leftEdges[imageIx]}`)
+  log(`leftEdge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
-  console.log(`area.scrollLeft: ${two(area.scrollLeft)}`)
+  log(`area.scrollLeft: ${two(area.scrollLeft)}`)
 }
 
 function getZoomPoint(image) {
@@ -248,13 +256,13 @@ function areaScroll() {
   scrollingPaused = false
   scrollingTimeout = setTimeout(function() {
     if (touching) {
-      console.log('Area scrolling has paused for a tenth of a second.')
+      log('Area scrolling has paused for a tenth of a second.')
       scrollingPaused = true
     }
     else {
       let seconds = (performance.now() - scrollStart) / 1000.0
       seconds = seconds.toFixed(3)
-      console.log(`Area scrolling has stopped. ${seconds}s`)
+      log(`Area scrolling has stopped. ${seconds}s`)
       scrollStart = null
       handleScrollEnd()
     }
@@ -277,7 +285,7 @@ function handleScrollEnd() {
   for (let ix = 0; ix < leftEdges.length; ix++) {
     if (Math.round(area.scrollLeft) == leftEdges[ix]) {
       imageIx = ix
-      console.log(`Scrolled to ${imageIx+1}`)
+      log(`Scrolled to ${imageIx+1}`)
       foundEdge = true
       if (imageIx != previousImageIx)
         SetDetails()
@@ -285,7 +293,7 @@ function handleScrollEnd() {
     }
   }
   if (!foundEdge) {
-    console.log(`Edge not found: area.scrollLeft: ${two(area.scrollLeft)}, leftEdges: ${leftEdges}`)
+    log(`Edge not found: area.scrollLeft: ${two(area.scrollLeft)}, leftEdges: ${leftEdges}`)
   }
 }
 
@@ -373,7 +381,7 @@ window.addEventListener('touchstart', (event) => {
   const clientX1 = event.touches[1].clientX
   const clientY0 = event.touches[0].clientY
   const clientY1 = event.touches[1].clientY
-  // console.log(`touchstart: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
+  // log(`touchstart: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
 
@@ -386,7 +394,7 @@ window.addEventListener('touchstart', (event) => {
   start.tx = image.tx
   start.ty = image.ty
 
-  console.log(`i${imageIx+1}: touchstart: c: (${two(start.cx)}, ${two(start.cy)}) ` +
+  log(`i${imageIx+1}: touchstart: c: (${two(start.cx)}, ${two(start.cy)}) ` +
               `d: ${two(start.distance)}, scale: ${two(start.scale)}, ` +
               `t: (${two(start.tx)}, ${two(start.ty)})`)
 })
@@ -406,7 +414,7 @@ window.addEventListener('touchmove', (event) => {
   const clientX1 = event.touches[1].clientX
   const clientY0 = event.touches[0].clientY
   const clientY1 = event.touches[1].clientY
-  // console.log(`touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
+  // log(`touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
 
@@ -417,7 +425,7 @@ window.addEventListener('touchmove', (event) => {
 
   let movedCt = {};
   movedCt.cx = ((start.cx - start.tx) * current.scale) / start.scale + start.tx
-  // console.log(`start.cx: ${start.cx}, start.tx: ${start.tx}, start.scale: ${start.scale}`)
+  // log(`start.cx: ${start.cx}, start.tx: ${start.tx}, start.scale: ${start.scale}`)
   movedCt.cy = ((start.cy - start.ty) * current.scale) / start.scale + start.ty
   const tx = start.tx - (movedCt.cx - start.cx) + (current.cx - start.cx)
   const ty = start.ty - (movedCt.cy - start.cy) + (current.cy - start.cy)
@@ -434,7 +442,7 @@ window.addEventListener('touchmove', (event) => {
     const img = get(`i${imageIx+1}`)
     // Note: translate runs from right to left.
     img.style.transform = `translate(${image.tx}px, ${image.ty}px) scale(${image.scale})`;
-    // console.log(
+    // log(
     //   `scale: ${two(image.scale)} ` +
     //     `tx: ${two(image.tx)}, ty: ${two(image.ty)}`
     // );
@@ -446,29 +454,29 @@ function newPosOK(newScale, tx, ty, newIw, newIh) {
 
   const image = cJson.images[imageIx]
   if (newScale > 1) {
-    console.log(`out of range: scale > 1`)
+    log(`out of range: scale > 1`)
     return false
   }
   if (newIw < areaWidth / 2) {
-    console.log(`out of range: image size < half area width`)
+    log(`out of range: image size < half area width`)
     return false
   }
   if (tx > areaWidth / 2) {
-    console.log(`out of range: image left edge > area center`)
+    log(`out of range: image left edge > area center`)
     return false
   }
   const rightEdge = tx + newIw
   if (rightEdge < areaWidth / 2) {
-    console.log(`out of range: image right edge < area center`)
+    log(`out of range: image right edge < area center`)
     return false
   }
   if (ty > areaHeight / 2) {
-    console.log(`out of range: image top edge > area center`)
+    log(`out of range: image top edge > area center`)
     return false
   }
   const bottomEdge = ty + newIh
   if (bottomEdge < areaHeight / 2) {
-    console.log(`out of range: image bottom edge < area center`)
+    log(`out of range: image bottom edge < area center`)
     return false
   }
   // The position is good.
@@ -479,7 +487,7 @@ document.addEventListener('touchend', handleTouchend, false)
 document.addEventListener('touchcancel', handleTouchend, false)
 
 function handleTouchcancel(event) {
-  console.log("touchcancel")
+  log("touchcancel")
   handleTouchend(event)
 }
 
@@ -487,7 +495,7 @@ function handleTouchend(event) {
 
   touching = false
   if (scrollingPaused) {
-    console.log("touchend: finger up after pausing the scroll.")
+    log("touchend: finger up after pausing the scroll.")
     areaScroll()
   }
 
@@ -501,7 +509,7 @@ function handleTouchend(event) {
     zooming = false
 
     const image = cJson.images[imageIx]
-    console.log(`i${imageIx+1}: touchend: c: (${two(current.cx)}, ${two(current.cy)}) ` +
+    log(`i${imageIx+1}: touchend: c: (${two(current.cx)}, ${two(current.cy)}) ` +
               `d: ${two(current.distance)}, scale: ${two(image.scale)}, ` +
               `t: (${two(image.tx)}, ${two(image.ty)})`)
 
@@ -513,7 +521,7 @@ screen.orientation.addEventListener("change", (event) => {
   // size the images.
   const type = event.target.type;
   const angle = event.target.angle;
-  console.log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
+  log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
   sizeImageArea()
   sizeImages()
 })
@@ -532,7 +540,7 @@ function same(a, b, delta) {
 function saveZoomPoints() {
   // Log the json data with the UI zoom points in it.
 
-  console.log("saveZoomPoints");
+  log("saveZoomPoints");
 
   // Get each image's zoom point from the UI.
   let uiZoomPoints = []
@@ -585,28 +593,28 @@ function saveZoomPoints() {
         if (differentZoom) {
           newZoomPoints.push(uiZp)
 
-          console.log("use UI zoom point:")
-          console.log(`image ${ix+1},  zp ${zpIx+1}: ${zpStr(zp)}`)
-          console.log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
-          console.log("")
+          log("use UI zoom point:")
+          log(`image ${ix+1},  zp ${zpIx+1}: ${zpStr(zp)}`)
+          log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
+          log("")
           changed = true
         }
         else {
-          // console.log("use image zoom point")
+          // log("use image zoom point")
           newZoomPoints.push(zp)
         }
       }
       else {
-        // console.log("use image zoom point")
+        // log("use image zoom point")
         newZoomPoints.push(zp)
       }
     }
     // When the ui dimensions didn't match any of the image zoom
     // points, add it to the image list.
     if (!foundSameDim){
-      console.log("add new ui zoom point:")
-      console.log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
-      console.log("")
+      log("add new ui zoom point:")
+      log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
+      log("")
       newZoomPoints.push(uiZp)
       changed = true
     }
@@ -615,9 +623,9 @@ function saveZoomPoints() {
 
   if (changed) {
     // Log the json data.
-    console.log("the json was changed")
-    console.log(JSON.stringify(data, null, 2))
+    log("the json was changed")
+    log(JSON.stringify(data, null, 2))
   }
   else
-    console.log("json unchanged")
+    log("json unchanged")
 }
