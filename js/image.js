@@ -4,8 +4,7 @@
 
 // cJson is defined in the image html page.
 
-// The image index into the json collection of the image we are
-// currently viewing.
+// The current image index into the json list of images.
 var imageIx = null
 
 // The available screen area.
@@ -36,11 +35,13 @@ function get(id) {
 }
 
 function log(message) {
-    console.log(message)
+  // Log the message to the console.
+  console.log(message)
 }
 
 function logError(message) {
-    console.error(message)
+  // Log an error message to the console.
+  console.error(message)
 }
 
 async function loadEvent() {
@@ -75,7 +76,9 @@ async function loadEvent() {
 
 function intDef(str, min, max, def) {
   // Parse the number string as an integer and validate it. Return the
-  // value. When the str is not valid, return the default value.
+  // value. If the value is less than the min or greater than the max,
+  // return the default value.  When the str is not valid, return the
+  // default value.
   const value = parseInt(str, 10)
   if (isNaN(value))
     return def
@@ -98,14 +101,14 @@ function setFirstImage() {
 function sizeImageArea() {
   // Size the image area to the size of the usable screen.
 
-  // Get the screen width and height that we can use and store them in
-  // globals.
+  // Get the available screen width and height and store them in
+  // globals, areaWidth and areaHeight.
+
   log(`window.innerWidth, height: (${window.innerWidth}, ${window.innerHeight})`)
 
   let w = document.documentElement.clientWidth
   let h = document.documentElement.clientHeight
   log(`document.documentElement.clientWidth, height: (${w}, ${h})`)
-
   w = document.body.clientWidth
   h = document.body.clientHeight
   log(`document.body.clientWidth, height: (${w}, ${h})`)
@@ -113,7 +116,7 @@ function sizeImageArea() {
   areaWidth = document.documentElement.clientWidth
   areaHeight = document.documentElement.clientHeight
 
-  // Size the image area to the screen area.
+  // Size the image area to the available screen area.
   const area = get("area")
   area.style.width = `${areaWidth}px`
   area.style.height = `${areaHeight}px`
@@ -135,7 +138,6 @@ function sizeImages() {
     container.style.width = `${areaWidth}px`
     container.style.height = `${areaHeight}px`
 
-
     if (image.width < areaWidth || image.height < areaHeight) {
       logError("small images are not supported")
     }
@@ -147,14 +149,10 @@ function sizeImages() {
       image.scale = areaHeight / image.height
     }
 
-    // Center the image in the container.
-    // image.tx = areaWidth / 2 - (image.scale * image.width) / 2
-    // image.ty = areaHeight / 2 - (image.scale * image.height) / 2
-
     image.tx = 0
     image.ty = 0
 
-    // Position the image with the data calculated above.
+    // Position the image with the values calculated above.
     const img = get(`i${ix+1}`)
     img.style.width = `${image.width}px`
     img.style.height = `${image.height}px`
@@ -356,7 +354,7 @@ function zpStr(zp) {
 // Whether we are zooming an image or not.
 let zooming = false
 
-// The position when we started zooming.
+// The position when we started zooming and panning.
 let start = {}
 
 // The current touchmove position for zooming and panning.
@@ -364,6 +362,7 @@ let current = {}
 
 window.addEventListener('touchstart', (event) => {
 
+  // Touching is true when a finger is down.
   touching = true
 
   // When not two fingers touching, return.
@@ -400,6 +399,7 @@ window.addEventListener('touchstart', (event) => {
 })
 
 window.addEventListener('touchmove', (event) => {
+  // Zoom and pan the image.
 
   if (event.touches.length != 2)
     return
@@ -407,7 +407,6 @@ window.addEventListener('touchmove', (event) => {
   if (!zooming)
     return
 
-  // todo: is this needed?
   event.preventDefault()
 
   const clientX0 = event.touches[0].clientX
@@ -423,6 +422,9 @@ window.addEventListener('touchmove', (event) => {
   current.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
   current.scale = (current.distance / start.distance) * start.scale
 
+  // Calculate the new image scale and upper left hand corner based on
+  // the center point between the two fingers and how far apart they
+  // are compared to when zooming started.
   let movedCt = {};
   movedCt.cx = ((start.cx - start.tx) * current.scale) / start.scale + start.tx
   // log(`start.cx: ${start.cx}, start.tx: ${start.tx}, start.scale: ${start.scale}`)
@@ -432,8 +434,9 @@ window.addEventListener('touchmove', (event) => {
   const newIw = image.width * current.scale
   const newIh = image.height * current.scale
 
+  // If the new scale and position are within the screen constraints,
+  // use them, else ignore them.
   const newOk = newPosOK(current.scale, tx, ty, newIw, newIh);
-
   if (newOk) {
     image.scale = current.scale;
     image.tx = tx;
@@ -451,16 +454,23 @@ window.addEventListener('touchmove', (event) => {
 }, {passive: false})
 
 function newPosOK(newScale, tx, ty, newIw, newIh) {
+  // Return true when the image size and position are good.
 
   const image = cJson.images[imageIx]
+
+  // Scale up to 100%.
   if (newScale > 1) {
     log(`out of range: scale > 1`)
     return false
   }
+
+  // Scale down to half the area width.
   if (newIw < areaWidth / 2) {
     log(`out of range: image size < half area width`)
     return false
   }
+
+  // Allow the image edges to go to the center of the area.
   if (tx > areaWidth / 2) {
     log(`out of range: image left edge > area center`)
     return false
@@ -479,6 +489,7 @@ function newPosOK(newScale, tx, ty, newIw, newIh) {
     log(`out of range: image bottom edge < area center`)
     return false
   }
+
   // The position is good.
   return true
 }
@@ -493,7 +504,11 @@ function handleTouchcancel(event) {
 
 function handleTouchend(event) {
 
-  touching = false
+  if (event.touches.length == 0)
+    log("all fingers up")
+    touching = false
+    return
+
   if (scrollingPaused) {
     log("touchend: finger up after pausing the scroll.")
     areaScroll()
