@@ -48,6 +48,9 @@ async function loadEvent() {
   // The page finished loading, setup and size things.
   logStartupTime(`loadEvent: json contains ${cJson.images.length} images`)
 
+  // Disable the default browser zoom and pan behavior.
+  get("image-page").setAttribute("touch-action", "none")
+
   setFirstImage()
 
   logStartupTime("sizeImageArea")
@@ -67,9 +70,6 @@ async function loadEvent() {
     // replace the code that figures out when scrolling ends.
     log("areaScrollEnd event exists!")
   })
-
-  // Disable the default browser zoom and pan behavior.
-  area.setAttribute("touch-action", "none")
 
   logStartupTime("loadEvent Done")
 }
@@ -267,7 +267,7 @@ function areaScroll() {
   }, 350)
 }
 
-// Finger touching the screen.
+// Finger touching the screen. Used with one finger scrolling.
 var touching = false
 
 function handleScrollEnd() {
@@ -371,8 +371,8 @@ window.addEventListener('touchstart', (event) => {
 
   zooming = true
 
-  // Disable the default browser zoom and pan behavior.
-  // todo: disable the whole page instead.
+  // Disable the default browser zoom and pan behavior when two
+  // fingers are down.
   event.preventDefault()
 
   // Log the client x and y values.
@@ -404,10 +404,12 @@ window.addEventListener('touchmove', (event) => {
   if (event.touches.length != 2)
     return
 
+  // Disable the default browser zoom and pan behavior when two
+  // fingers are down.
+  event.preventDefault()
+
   if (!zooming)
     return
-
-  event.preventDefault()
 
   const clientX0 = event.touches[0].clientX
   const clientX1 = event.touches[1].clientX
@@ -504,10 +506,7 @@ function handleTouchcancel(event) {
 
 function handleTouchend(event) {
 
-  if (event.touches.length == 0)
-    log("all fingers up")
-    touching = false
-    return
+  touching = false
 
   if (scrollingPaused) {
     log("touchend: finger up after pausing the scroll.")
@@ -515,12 +514,6 @@ function handleTouchend(event) {
   }
 
   if (zooming) {
-    // todo: wait until double click to zoom is back to normal before
-    // todo: leave it off?
-    // turning on touch actions.
-    // const area = get("area")
-    // area.removeAttribute("touch-action")
-
     zooming = false
 
     const image = cJson.images[imageIx]

@@ -6,7 +6,6 @@
 cat > copylist.txt << EOF
 favicon.ico
 index.html
-images/small.jpg
 images/8-p.jpg
 images/8-t.jpg
 images/2-p.jpg
