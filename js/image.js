@@ -11,6 +11,10 @@ var imageIx = null
 var areaWidth = null
 var areaHeight = null
 
+// The minimum amount of image to keep visible when zooming and
+// panning.
+var minVisible = null
+
 // The left edges (scroll positions) of the images in the area.
 var leftEdges = null
 
@@ -115,6 +119,7 @@ function sizeImageArea() {
 
   areaWidth = document.documentElement.clientWidth
   areaHeight = document.documentElement.clientHeight
+  minVisible = areaWidth / 4
 
   // Size the image area to the available screen area.
   const area = get("area")
@@ -472,23 +477,23 @@ function newPosOK(newScale, tx, ty, newIw, newIh) {
     return false
   }
 
-  // Allow the image edges to go to the center of the area.
-  if (tx > areaWidth / 2) {
-    log(`out of range: image left edge > area center`)
-    return false
-  }
+  // Allow the image to move but keep some of it visible.
   const rightEdge = tx + newIw
-  if (rightEdge < areaWidth / 2) {
-    log(`out of range: image right edge < area center`)
+  if (tx > areaWidth - minVisible) {
+    log(`out of range: tx > areaWidth - minVisible`)
     return false
   }
-  if (ty > areaHeight / 2) {
-    log(`out of range: image top edge > area center`)
+  if (rightEdge < minVisible) {
+    log(`out of range: rightEdge < minVisible`)
     return false
   }
   const bottomEdge = ty + newIh
-  if (bottomEdge < areaHeight / 2) {
-    log(`out of range: image bottom edge < area center`)
+  if (ty > areaHeight - minVisible) {
+    log(`out of range: ty > areaHeight - minVisible`)
+    return false
+  }
+  if (bottomEdge < minVisible) {
+    log(`out of range: image bottomEdge < minVisible`)
     return false
   }
 
@@ -520,7 +525,6 @@ function handleTouchend(event) {
     log(`i${imageIx+1}: touchend: c: (${two(current.cx)}, ${two(current.cy)}) ` +
               `d: ${two(current.distance)}, scale: ${two(image.scale)}, ` +
               `t: (${two(image.tx)}, ${two(image.ty)})`)
-
   }
 }
 
