@@ -109,6 +109,7 @@ function sizeImageArea() {
   // globals, areaWidth and areaHeight.
 
   log(`window.innerWidth, height: (${window.innerWidth}, ${window.innerHeight})`)
+  log(`window.screen.availHeight: ${window.screen.availHeight}`)
 
   let w = document.documentElement.clientWidth
   let h = document.documentElement.clientHeight
@@ -117,8 +118,10 @@ function sizeImageArea() {
   h = document.body.clientHeight
   log(`document.body.clientWidth, height: (${w}, ${h})`)
 
+
   areaWidth = document.documentElement.clientWidth
-  areaHeight = document.documentElement.clientHeight
+  // Add 60 to account for the top toolbar height.
+  areaHeight = document.documentElement.clientHeight + 60
   minVisible = areaWidth / 4
 
   // Size the image area to the available screen area.
