@@ -12,9 +12,7 @@
       "description": "",
       "width": 3024,
       "height": 4032,
-      "favorite": false,
-      "zoomPoints": [
-      ]
+      "favorite": false
     },
     {
       "url": "../images/2-p.jpg",
@@ -23,9 +21,7 @@
       "description": "",
       "width": 4032,
       "height": 3024,
-      "favorite": false,
-      "zoomPoints": [
-      ]
+      "favorite": false
     },
     {
       "url": "../images/3-p.jpg",
@@ -34,9 +30,7 @@
       "description": "",
       "width": 4032,
       "height": 3024,
-      "favorite": false,
-      "zoomPoints": [
-      ]
+      "favorite": false
     },
     {
       "url": "../images/4-p.jpg",
@@ -46,8 +40,7 @@
       "width": 4032,
       "height": 3024,
       "favorite": false,
-      "zoomPoints": [
-      ]
+      "zoomPoints": []
     },
     {
       "url": "../images/5-p.jpg",
@@ -56,9 +49,7 @@
       "description": "",
       "width": 4032,
       "height": 3024,
-      "favorite": true,
-      "zoomPoints": [
-      ]
+      "favorite": true
     },
     {
       "url": "../images/6-p.jpg",
@@ -67,9 +58,7 @@
       "description": "",
       "width": 4032,
       "height": 3024,
-      "favorite": false,
-      "zoomPoints": [
-      ]
+      "favorite": false
     },
     {
       "url": "../images/7-p.jpg",
@@ -78,9 +67,7 @@
       "description": "",
       "width": 3024,
       "height": 4032,
-      "favorite": false,
-      "zoomPoints": [
-      ]
+      "favorite": false
     },
     {
       "url": "../images/8-p.jpg",
@@ -89,9 +76,51 @@
       "description": "",
       "width": 2556,
       "height": 2556,
-      "favorite": false,
-      "zoomPoints": [
-      ]
+      "favorite": false
     }
-  ]
+  ],
+  "zoomPoints": {
+    "430x784": [
+      {
+        "scale": 0.2202372849004514,
+        "tx": -100.1213612749488,
+        "ty": -29.59528638129183
+      },
+      {
+        "scale": 0.2728646101857766,
+        "tx": -255.2517882490325,
+        "ty": -18.64824236687576
+      },
+      {
+        "scale": 0.3239996481227943,
+        "tx": -466.0606260044923,
+        "ty": -182.305165600588
+      },
+      {
+        "scale": 0.28444672819398864,
+        "tx": -233.4030089072018,
+        "ty": -55.50139599417332
+      },
+      {
+        "scale": 0.340256092457484,
+        "tx": -464.0829774471142,
+        "ty": -107.9100966678164
+      },
+      {
+        "scale": 0.2844758934026454,
+        "tx": -162.9535672891137,
+        "ty": -30.96899204001971
+      },
+      {
+        "scale": 0.27412970420929944,
+        "tx": -2.143957308609316,
+        "ty": -47.869397903417735
+      },
+      {
+        "scale": 0.3822152258621865,
+        "tx": -200.314225963603,
+        "ty": -98.15000800419665
+      }
+    ]
+  }
 }

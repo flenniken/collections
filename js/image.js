@@ -48,6 +48,11 @@ function logError(message) {
   console.error(message)
 }
 
+function two(num) {
+  // Return the number rounded to two decimal places.
+  return num.toFixed(2)
+}
+
 async function loadEvent() {
   // The page finished loading, setup and size things.
   logStartupTime(`loadEvent: json contains ${cJson.images.length} images`)
@@ -108,20 +113,26 @@ function sizeImageArea() {
   // Get the available screen width and height and store them in
   // globals, areaWidth and areaHeight.
 
-  log(`window.innerWidth, height: (${window.innerWidth}, ${window.innerHeight})`)
-  log(`window.screen.availHeight: ${window.screen.availHeight}`)
-
-  let w = document.documentElement.clientWidth
-  let h = document.documentElement.clientHeight
-  log(`document.documentElement.clientWidth, height: (${w}, ${h})`)
-  w = document.body.clientWidth
-  h = document.body.clientHeight
-  log(`document.body.clientWidth, height: (${w}, ${h})`)
-
+  const sizes = [
+    [window.innerWidth, window.innerHeight, 'window.innerWidth x ...innerHeight'],
+    [window.screen.availWidth, window.screen.availHeight, 'window.screen.availWidth x ...availHeight'],
+    [document.documentElement.clientWidth, document.documentElement.clientHeight,
+      'document.documentElement.clientWidth x ...clientHeight'],
+    [document.body.clientWidth, document.body.clientHeight, 'document.body.clientWidth x ...clientHeight'],
+  ]
+  sizes.forEach((size, ix) => {
+    const [w, h, msg] = size
+    log(`${w} x ${h}: ${msg}`)
+  })
 
   areaWidth = document.documentElement.clientWidth
-  // Add 60 to account for the top toolbar height.
-  areaHeight = document.documentElement.clientHeight + 60
+  areaHeight = document.documentElement.clientHeight
+  // Add 60 to account for the top toolbar height when PWA without top bar.
+  if (true) {
+    areaHeight += 60
+    log("add 60 to height for top bar")
+  }
+
   minVisible = areaWidth / 4
 
   // Size the image area to the available screen area.
@@ -133,12 +144,38 @@ function sizeImageArea() {
   get('size').innerHTML = `${dim}`
 }
 
+function getZoomPoint(imageIx) {
+  // Return the zoom point for the given image index.
+  const zoom_w_h = `${areaWidth}x${areaHeight}`
+  const zoomPoints = cJson.zoomPoints[zoom_w_h]
+  return zoomPoints[imageIx]
+}
+
 function sizeImages() {
-  // Size the image containers and the images.
+  // Size the image containers and the images and create zoom points
+  // when missing.
 
   let edge = 0
   leftEdges = []
+  const zoom_w_h = `${areaWidth}x${areaHeight}`
+
+  let zoomPoints
+  const needZoomPoints = zoom_w_h in cJson.zoomPoints ? false : true
+  if (needZoomPoints) {
+    log("creating zoom points")
+    zoomPoints = []
+    cJson.zoomPoints[zoom_w_h] = zoomPoints
+  }
+  else {
+    zoomPoints = cJson.zoomPoints[zoom_w_h]
+  }
+
   cJson.images.forEach((image, ix) => {
+    if (image.width < areaWidth || image.height < areaHeight) {
+      logError("small images are not supported")
+    }
+
+    // Save the position of the left edge of all the images.
     leftEdges.push(edge)
 
     // Size all the containers to the size of the area.
@@ -146,32 +183,37 @@ function sizeImages() {
     container.style.width = `${areaWidth}px`
     container.style.height = `${areaHeight}px`
 
-    if (image.width < areaWidth || image.height < areaHeight) {
-      logError("small images are not supported")
+    // Create or fetch the zoom point for the image.
+    let zoomPoint
+    if (needZoomPoints) {
+      // Create a zoom point where the image fits the screen.
+      zoomPoint = {}
+      // Fit the long side to the container.
+      if (image.width - areaWidth > image.height - areaHeight) {
+        zoomPoint.scale = areaWidth / image.width
+      } else {
+        zoomPoint.scale = areaHeight / image.height
+      }
+      zoomPoint.tx = 0
+      zoomPoint.ty = 0
+      zoomPoints.push(zoomPoint)
+    }
+    else {
+      zoomPoint = zoomPoints[ix]
     }
 
-    // Fit the long side to the container.
-    if (image.width - areaWidth > image.height - areaHeight) {
-      image.scale = areaWidth / image.width
-    } else {
-      image.scale = areaHeight / image.height
-    }
-
-    image.tx = 0
-    image.ty = 0
-
-    // Position the image with the values calculated above.
+    // Set the image to its zoom point.
     const img = get(`i${ix+1}`)
-    img.style.width = `${image.width}px`
-    img.style.height = `${image.height}px`
+    img.style.width = `${zoomPoint.width}px`
+    img.style.height = `${zoomPoint.height}px`
     img.style.transformOrigin = "0px 0px"
     // Note: translate runs from right to left.
-    img.style.transform = `translate(${image.tx}px, ${image.ty}px) scale(${image.scale})`;
+    img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
 
-    // Log the image information.
-    log(`i${ix+1}: ${image.width} x ${image.height}, ` +
-                `scale: ${two(image.scale)}, ` +
-                `t: (${two(image.tx)}, ${two(image.ty)})`)
+    // Log the zoom point.
+    log(`i${ix+1}: ${areaWidth} x ${areaHeight}, ` +
+                `scale: ${two(zoomPoint.scale)}, ` +
+                `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
 
     edge += areaWidth
   })
@@ -181,60 +223,6 @@ function sizeImages() {
   log(`leftEdge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   log(`area.scrollLeft: ${two(area.scrollLeft)}`)
-}
-
-function getZoomPoint(image) {
-  // Return the closest close zoom point and a message telling how
-  // close it is.  If no close zoom point return one that fits the
-  // image to the area.
-
-  // todo: when no close zoom point is found, and one or more zoom
-  // points exist, generate a new zoom point based on the closest one
-  // found.
-
-  let found = false
-  let zoomPoint = null
-  let xDistance = closeDistance+1
-  let yDistance = closeDistance+1
-
-  // Loop though the zoom points looking for a close one.
-  for (let zpt of image.zoomPoints) {
-    const xDist = Math.abs(areaWidth - zpt.w)
-    const yDist = Math.abs(areaHeight - zpt.h)
-
-    if (xDist < closeDistance && yDist < closeDistance) {
-      let combined = xDist + yDist
-      if (combined < xDistance + yDistance) {
-        found = true
-        zoomPoint = zpt
-        xDistance = xDist
-        yDistance = yDist
-        if (combined == 0) {
-          break
-        }
-      }
-    }
-  }
-
-  // When no zoom point found, fit the image to the area.
-  if (!found) {
-    // Fix the image in the image area then center it.
-    console.assert(image.width != 0)
-
-    // todo: account for the case where the height doesn't fit.
-    const fitScale = areaWidth / image.width
-
-    // The upper left corner of the image in image space.
-    const tx = 0
-    const ty = ((areaHeight / fitScale) - image.height) / 2
-
-    zoomPoint = newZoomPoint(areaWidth, areaHeight, fitScale, tx, ty, true)
-  }
-
-  // Return a message with the zoom point.
-  const message = (xDistance == 101) ? "not found" : `d: ${two(xDistance)}, ${yDistance}`
-
-  return [zoomPoint, message]
 }
 
 // Timeout function used to determine when scrolling stops.
@@ -275,7 +263,7 @@ function areaScroll() {
   }, 350)
 }
 
-// Finger touching the screen. Used with one finger scrolling.
+// Finger touching the screen. Used with one finger horizontal scrolling.
 var touching = false
 
 function handleScrollEnd() {
@@ -312,53 +300,6 @@ function SetDetails() {
   get('size').innerHTML = `${areaWidth} x ${areaHeight}`
 }
 
-function parseXYPos(xypos) {
-  // Parse the transform origin style string or the translate style
-  // string and return cx and cy numbers.  This assumes it uses px
-  // units and 2d space. Returns [null, null] on error.
-
-  // example: 10px 76px
-
-  let x = null
-  let y = null
-  const parts = xypos.split(" ")
-  if (parts.length > 0)
-    x = parseFloat(parts[0], 10)
-  if (parts.length > 1)
-    y = parseFloat(parts[1], 10)
-  return [x, y]
-}
-
-function two(num) {
-  // Return the number rounded to two decimal places.
-  return num.toFixed(2)
-}
-
-function newZoomPoint(w, h, scale, tx, ty, def) {
-  // Return a new zoom point.
-
-  // w -- width of the area
-  // h -- height of the area
-  // scale -- scale of the image
-  // tx, ty -- The position of the upper left corner of the image in area space.
-  // def -- true for default
-
-  return  {
-    "w": w,
-    "h": h,
-    "scale": scale,
-    "tx": tx,
-    "ty": ty,
-    "def": def,
-  }
-}
-
-function zpStr(zp) {
-  // Return a string representation of a zoom point.
-
-  return `${zp.w} x ${zp.h}, scale: ${two(zp.scale)}, t: (${two(zp.tx)}, ${two(zp.ty)})`
-}
-
 // Whether we are zooming an image or not.
 let zooming = false
 
@@ -391,15 +332,17 @@ window.addEventListener('touchstart', (event) => {
   // log(`touchstart: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
+  const zoomPoint = getZoomPoint(imageIx)
+  log(`zoomPoint: ${zoomPoint}`)
 
   // Save the point centered between the two fingers, the distance
   // between them, the current translation and the current scale.
   start.cx = (clientX0 + clientX1) / 2
   start.cy = (clientY0 + clientY1) / 2
   start.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
-  start.scale = image.scale
-  start.tx = image.tx
-  start.ty = image.ty
+  start.scale = zoomPoint.scale
+  start.tx = zoomPoint.tx
+  start.ty = zoomPoint.ty
 
   log(`i${imageIx+1}: touchstart: c: (${two(start.cx)}, ${two(start.cy)}) ` +
               `d: ${two(start.distance)}, scale: ${two(start.scale)}, ` +
@@ -426,6 +369,7 @@ window.addEventListener('touchmove', (event) => {
   // log(`touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
+  const zoomPoint = getZoomPoint(imageIx)
 
   current.cx = (clientX0 + clientX1) / 2
   current.cy = (clientY0 + clientY1) / 2
@@ -448,17 +392,13 @@ window.addEventListener('touchmove', (event) => {
   // use them, else ignore them.
   const newOk = newPosOK(current.scale, tx, ty, newIw, newIh);
   if (newOk) {
-    image.scale = current.scale;
-    image.tx = tx;
-    image.ty = ty;
+    zoomPoint.scale = current.scale;
+    zoomPoint.tx = tx;
+    zoomPoint.ty = ty;
 
     const img = get(`i${imageIx+1}`)
     // Note: translate runs from right to left.
-    img.style.transform = `translate(${image.tx}px, ${image.ty}px) scale(${image.scale})`;
-    // log(
-    //   `scale: ${two(image.scale)} ` +
-    //     `tx: ${two(image.tx)}, ty: ${two(image.ty)}`
-    // );
+    img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
   }
 
 }, {passive: false})
@@ -525,9 +465,10 @@ function handleTouchend(event) {
     zooming = false
 
     const image = cJson.images[imageIx]
+    const zoomPoint = getZoomPoint(imageIx)
     log(`i${imageIx+1}: touchend: c: (${two(current.cx)}, ${two(current.cy)}) ` +
-              `d: ${two(current.distance)}, scale: ${two(image.scale)}, ` +
-              `t: (${two(image.tx)}, ${two(image.ty)})`)
+              `d: ${two(current.distance)}, scale: ${two(zoomPoint.scale)}, ` +
+              `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   }
 }
 
@@ -541,106 +482,7 @@ screen.orientation.addEventListener("change", (event) => {
   sizeImages()
 })
 
-function different(a, b, delta) {
-  return !same(a, b, delta)
-}
-
-function same(a, b, delta) {
-  // Return true when a is close to b.
-  console.assert(!isNaN(a))
-  console.assert(!isNaN(b))
-  return Math.abs(a - b) < delta
-}
-
 function saveZoomPoints() {
-  // Log the json data with the UI zoom points in it.
-
   log("saveZoomPoints");
-
-  // Get each image's zoom point from the UI.
-  let uiZoomPoints = []
-  for (let ix = 0; ix < cJson.images.length; ix++) {
-    let img = get(`i${ix+1}`)
-    let scale = parseFloat(img.style.scale, 10)
-    let [tx, ty] = parseXYPos(img.style.translation)
-    console.assert(tx != null && ty != null)
-    let uiZp = newZoomPoint(areaWidth, areaHeight, scale, tx, ty, false)
-    uiZoomPoints.push(uiZp)
-  }
-
-  // Merge in the UI zoom points into a copy of the existing json
-  // data.  If the ui zoom point is not the default, add it to the
-  // zoom points.  Replace the existing zoom point when the width and
-  // height are the same. Tell when the json changes or not.
-  const data = structuredClone(cJson);
-  let changed = false
-  for (let ix = 0; ix < data.images.length; ix++) {
-    // Get the image's UI zoom point.
-    const uiZp = uiZoomPoints[ix]
-
-    // Skip default zoom points values.
-    if (uiZp.def)
-      continue
-
-    // Loop over the image zoom points and build a new list of
-    // them. If one of image zoom points has the same width and height
-    // as the UI zoom point, use the UI zoom point replacing that
-    // image zoom point, otherwize use the existing zoom point.
-    let newZoomPoints = []
-    let foundSameDim = false
-    const imageZoomPoints = data.images[ix].zoomPoints
-    for (let zpIx = 0; zpIx < imageZoomPoints.length; zpIx++) {
-      let zpt = imageZoomPoints[zpIx]
-
-      let zp = {}
-      zp = zpt
-
-      // When the dimensions are the same, use the UI zoom point if it
-      // is different than the image zoom point.
-      let sameDim = (same(zp.w, uiZp.w, .01) && same(zp.h, uiZp.h, .01))
-      if (sameDim) {
-        foundSameDim = true
-
-        let differentZoom = (different(zp.tx, uiZp.tx, .01) ||
-            different(zp.ty, uiZp.ty, .01) ||
-            different(zp.scale, uiZp.scale, .01))
-
-        if (differentZoom) {
-          newZoomPoints.push(uiZp)
-
-          log("use UI zoom point:")
-          log(`image ${ix+1},  zp ${zpIx+1}: ${zpStr(zp)}`)
-          log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
-          log("")
-          changed = true
-        }
-        else {
-          // log("use image zoom point")
-          newZoomPoints.push(zp)
-        }
-      }
-      else {
-        // log("use image zoom point")
-        newZoomPoints.push(zp)
-      }
-    }
-    // When the ui dimensions didn't match any of the image zoom
-    // points, add it to the image list.
-    if (!foundSameDim){
-      log("add new ui zoom point:")
-      log(`image ${ix+1}, UI zp: ${zpStr(uiZp)}`)
-      log("")
-      newZoomPoints.push(uiZp)
-      changed = true
-    }
-    data.images[ix].zoomPoints = newZoomPoints
-  }
-
-  if (changed) {
-    // Log the json data.
-    log("the json was changed")
-    log(JSON.stringify(data, null, 2))
-  }
-  else
-    log("json unchanged")
+  log(JSON.stringify(cJson, null, 2))
 }
