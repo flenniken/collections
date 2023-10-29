@@ -482,7 +482,9 @@ screen.orientation.addEventListener("change", (event) => {
   sizeImages()
 })
 
-function saveZoomPoints() {
-  log("saveZoomPoints");
-  log(JSON.stringify(cJson, null, 2))
+function copyJson() {
+  // Copy the json data to the clipboard.
+  log("copy json to the clipboard");
+  const msg = JSON.stringify(cJson, null, 2)
+  navigator.clipboard.writeText(msg);
 }
