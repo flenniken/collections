@@ -144,10 +144,10 @@ function sizeImageArea() {
   get('size').innerHTML = `${dim}`
 }
 
-function getZoomPoint(imageIx) {
+function getZoomPoint(cjson=cJson) {
   // Return the zoom point for the given image index.
   const zoom_w_h = `${areaWidth}x${areaHeight}`
-  const zoomPoints = cJson.zoomPoints[zoom_w_h]
+  const zoomPoints = cjson.zoomPoints[zoom_w_h]
   return zoomPoints[imageIx]
 }
 
@@ -308,11 +308,28 @@ let start = {}
 
 // The current touchmove position for zooming and panning.
 let current = {}
+let doubleClick = null
 
 window.addEventListener('touchstart', (event) => {
 
   // Touching is true when a finger is down.
   touching = true
+
+  // Start timer on first click. If second click comes before .5
+  // seconds, it’s a double click. Only consider one finger cases.
+  if (event.touches.length == 1) {
+    if (doubleClick !== null) {
+      let seconds = (performance.now() - doubleClick) / 1000.0
+      if (seconds < .5) {
+        restoreImageSize()
+        doubleClick = null
+        return
+      }
+    }
+    doubleClick = performance.now()
+  } else {
+    doubleClick = null
+  }
 
   // When not two fingers touching, return.
   if (event.touches.length != 2)
@@ -332,8 +349,7 @@ window.addEventListener('touchstart', (event) => {
   // log(`touchstart: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
-  const zoomPoint = getZoomPoint(imageIx)
-  log(`zoomPoint: ${zoomPoint}`)
+  const zoomPoint = getZoomPoint()
 
   // Save the point centered between the two fingers, the distance
   // between them, the current translation and the current scale.
@@ -348,6 +364,26 @@ window.addEventListener('touchstart', (event) => {
               `d: ${two(start.distance)}, scale: ${two(start.scale)}, ` +
               `t: (${two(start.tx)}, ${two(start.ty)})`)
 })
+
+function restoreImageSize() {
+  log("restore image size")
+
+  // Get the original zoom point.
+  const image = cJson.images[imageIx]
+  const origZP = getZoomPoint(cJsonOriginal)
+  log(`original zoom point: (${two(origZP.tx)}, ${two(origZP.ty)}), scale: ${two(origZP.scale)}`)
+
+  // Restore the current zoom point.
+  let zoomPoint = getZoomPoint(cJson)
+  zoomPoint.scale = origZP.scale;
+  zoomPoint.tx = origZP.tx;
+  zoomPoint.ty = origZP.ty;
+
+  // Set the image scale and position to the original zoom point.
+  const img = get(`i${imageIx+1}`)
+  // Note: translate runs from right to left.
+  img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+}
 
 window.addEventListener('touchmove', (event) => {
   // Zoom and pan the image.
@@ -369,7 +405,7 @@ window.addEventListener('touchmove', (event) => {
   // log(`touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
-  const zoomPoint = getZoomPoint(imageIx)
+  const zoomPoint = getZoomPoint()
 
   current.cx = (clientX0 + clientX1) / 2
   current.cy = (clientY0 + clientY1) / 2
@@ -465,7 +501,7 @@ function handleTouchend(event) {
     zooming = false
 
     const image = cJson.images[imageIx]
-    const zoomPoint = getZoomPoint(imageIx)
+    const zoomPoint = getZoomPoint()
     log(`i${imageIx+1}: touchend: c: (${two(current.cx)}, ${two(current.cy)}) ` +
               `d: ${two(current.distance)}, scale: ${two(zoomPoint.scale)}, ` +
               `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
