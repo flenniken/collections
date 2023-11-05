@@ -4,6 +4,7 @@
   "width": 480,
   "height": 480,
   "baseUrl": "../pages/image-1.html",
+  "thumbnailsUrl": "../pages/thumbnails-1.html",
   "images": [
     {
       "url": "../images/1-p.jpg",

@@ -56,11 +56,14 @@ body {
   <div id="details">
     <h3 id="title">{image.title}</h3>
     <p id="description">{image.description}</p>
+    <ul>
+      <li><a href="../index.html">Home</a></li>
+      <li><a href="{s.thumbnailsUrl}">Thumbnails</a></li>
+      <li><a href="#" onclick="location.reload(true)">Refresh</a></li>
+      <li><a href="#" onclick="copyJson()">Copy Json</a></li>
+    </ul>
     <p id="extra">
       <span id="size"></span>
-      <a href="../index.html">home</a>
-      <a href="#" onclick="location.reload(true)">Refresh</a>
-      <a href="#" onclick="copyJson()">Copy Json</a>
     </p>
   </div>
 <!--$ endblock -->
