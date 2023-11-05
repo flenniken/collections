@@ -103,7 +103,7 @@ function setFirstImage() {
   const searchParams = new URLSearchParams(window.location.search)
   const imageQ = searchParams.get("image")
   const imageNum = intDef(imageQ, 1, cJson.images.length, 0)
-  log(`first image: ${imageNum}`)
+  log(`First image: ${imageNum}`)
   imageIx = imageNum - 1
 }
 
@@ -127,10 +127,14 @@ function sizeImageArea() {
 
   areaWidth = document.documentElement.clientWidth
   areaHeight = document.documentElement.clientHeight
-  // Add 60 to account for the top toolbar height when PWA without top bar.
-  if (true) {
+
+  // On a PWA the apple-mobile-web-app-status-bar-style setting allows
+  // the toolbar area to be used, however, the area width and height
+  // doesn't see this extra space. On a pwa, add the extra area.
+  // todo: how do you determine the toolbar height? replace the 60.
+  if (window.matchMedia('(display-mode: standalone)').matches) {
     areaHeight += 60
-    log("add 60 to height for top bar")
+    log("Add 60 to height for top bar")
   }
 
   minVisible = areaWidth / 4
@@ -140,7 +144,7 @@ function sizeImageArea() {
   area.style.width = `${areaWidth}px`
   area.style.height = `${areaHeight}px`
   const dim = `${areaWidth} x ${areaHeight}`
-  log(`area size: ${dim}`)
+  log(`Area size: ${dim}`)
   get('size').innerHTML = `${dim}`
 }
 
@@ -162,7 +166,7 @@ function sizeImages() {
   let zoomPoints
   const needZoomPoints = zoom_w_h in cJson.zoomPoints ? false : true
   if (needZoomPoints) {
-    log("creating zoom points")
+    log("Creating zoom points")
     zoomPoints = []
     cJson.zoomPoints[zoom_w_h] = zoomPoints
   }
@@ -220,7 +224,7 @@ function sizeImages() {
 
   // Scroll the current image into view.
   const area = get("area")
-  log(`leftEdge: ${leftEdges[imageIx]}`)
+  log(`Leftedge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   log(`area.scrollLeft: ${two(area.scrollLeft)}`)
 }
@@ -375,8 +379,8 @@ window.addEventListener('restoreimage', (event) => {
   const image = cJson.images[imageIx]
   let zoomPoint = getZoomPoint(cJson)
   const origZP = getZoomPoint(cJsonOriginal)
-  log(`zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
-  log(`original zoom point: (${two(origZP.tx)}, ${two(origZP.ty)}), scale: ${two(origZP.scale)}`)
+  log(`Zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
+  log(`Original zoom point: (${two(origZP.tx)}, ${two(origZP.ty)}), scale: ${two(origZP.scale)}`)
 
   // Animate the image to its original zoom point.
   const img = get(`i${imageIx+1}`)
@@ -460,33 +464,33 @@ function newPosOK(newScale, tx, ty, newIw, newIh) {
 
   // Scale up to 100%.
   if (newScale > 1) {
-    log(`out of range: scale > 1`)
+    log(`Out of range: scale > 1`)
     return false
   }
 
   // Scale down to half the area width.
   if (newIw < areaWidth / 2) {
-    log(`out of range: image size < half area width`)
+    log(`Out of range: image size < half area width`)
     return false
   }
 
   // Allow the image to move but keep some of it visible.
   const rightEdge = tx + newIw
   if (tx > areaWidth - minVisible) {
-    log(`out of range: tx > areaWidth - minVisible`)
+    log(`Out of range: tx > areaWidth - minVisible`)
     return false
   }
   if (rightEdge < minVisible) {
-    log(`out of range: rightEdge < minVisible`)
+    log(`Out of range: rightEdge < minVisible`)
     return false
   }
   const bottomEdge = ty + newIh
   if (ty > areaHeight - minVisible) {
-    log(`out of range: ty > areaHeight - minVisible`)
+    log(`Out of range: ty > areaHeight - minVisible`)
     return false
   }
   if (bottomEdge < minVisible) {
-    log(`out of range: image bottomEdge < minVisible`)
+    log(`Out of range: image bottomEdge < minVisible`)
     return false
   }
 
@@ -498,7 +502,7 @@ document.addEventListener('touchend', handleTouchend, false)
 document.addEventListener('touchcancel', handleTouchend, false)
 
 function handleTouchcancel(event) {
-  log("touchcancel")
+  log("Touchcancel")
   handleTouchend(event)
 }
 
@@ -507,7 +511,7 @@ function handleTouchend(event) {
   touching = false
 
   if (scrollingPaused) {
-    log("touchend: finger up after pausing the scroll.")
+    log("Touchend: finger up after pausing the scroll.")
     areaScroll()
   }
 
@@ -534,7 +538,7 @@ screen.orientation.addEventListener("change", (event) => {
 
 function copyJson() {
   // Copy the json data to the clipboard.
-  log("copy json to the clipboard");
+  log("Copy json to the clipboard");
   const msg = JSON.stringify(cJson, null, 2)
   navigator.clipboard.writeText(msg);
 }
