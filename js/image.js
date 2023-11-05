@@ -315,13 +315,16 @@ window.addEventListener('touchstart', (event) => {
   // Touching is true when a finger is down.
   touching = true
 
+  event.preventDefault()
+
   // Start timer on first click. If second click comes before .5
   // seconds, it’s a double click. Only consider one finger cases.
   if (event.touches.length == 1) {
     if (doubleClick !== null) {
       let seconds = (performance.now() - doubleClick) / 1000.0
       if (seconds < .5) {
-        restoreImageSize()
+        const event = new Event("restoreimage");
+        window.dispatchEvent(event);
         doubleClick = null
         return
       }
@@ -365,25 +368,36 @@ window.addEventListener('touchstart', (event) => {
               `t: (${two(start.tx)}, ${two(start.ty)})`)
 })
 
-function restoreImageSize() {
-  log("restore image size")
+window.addEventListener('restoreimage', (event) => {
+  log("Restore image size")
 
   // Get the original zoom point.
   const image = cJson.images[imageIx]
+  let zoomPoint = getZoomPoint(cJson)
   const origZP = getZoomPoint(cJsonOriginal)
+  log(`zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
   log(`original zoom point: (${two(origZP.tx)}, ${two(origZP.ty)}), scale: ${two(origZP.scale)}`)
 
-  // Restore the current zoom point.
-  let zoomPoint = getZoomPoint(cJson)
-  zoomPoint.scale = origZP.scale;
-  zoomPoint.tx = origZP.tx;
-  zoomPoint.ty = origZP.ty;
-
-  // Set the image scale and position to the original zoom point.
+  // Animate the image to its original zoom point.
   const img = get(`i${imageIx+1}`)
-  // Note: translate runs from right to left.
-  img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
-}
+  const animation = img.animate([
+    { transform: `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`},
+    { transform: `translate(${origZP.tx}px, ${origZP.ty}px) scale(${origZP.scale})`},
+  ],
+  {
+    duration: 300,
+    iterations: 1,
+  })
+  animation.onfinish = (event) => {
+    // Restore the current zoom point and set the finish size and
+    // position.
+    log("Restore image finished")
+    zoomPoint.scale = origZP.scale;
+    zoomPoint.tx = origZP.tx;
+    zoomPoint.ty = origZP.ty;
+    img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+  };
+}, false)
 
 window.addEventListener('touchmove', (event) => {
   // Zoom and pan the image.
