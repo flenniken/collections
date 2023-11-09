@@ -430,73 +430,53 @@ window.addEventListener('touchmove', (event) => {
   current.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
   current.scale = (current.distance / start.distance) * start.scale
 
-  // Calculate the new image scale and upper left hand corner based on
-  // the center point between the two fingers and how far apart they
-  // are compared to when zooming started.
+  // Limit the scale to a maximum of 1 and a minimum that results in a
+  // image not less than half the area width.
+  if (current.scale > 1.0)
+    current.scale = 1.0
+  let newIw = image.width * current.scale
+  let newIh = image.height * current.scale
+  if (newIw < areaWidth / 2) {
+    current.scale = (areaWidth / 2) / image.width
+    newIw = image.width * current.scale
+    newIh = image.height * current.scale
+  }
+
+  // Calculate the new image upper left hand corner based on the
+  // center point between the two fingers and how far apart they are
+  // compared to when zooming started.
   let movedCt = {};
   movedCt.cx = ((start.cx - start.tx) * current.scale) / start.scale + start.tx
   // log(`start.cx: ${start.cx}, start.tx: ${start.tx}, start.scale: ${start.scale}`)
   movedCt.cy = ((start.cy - start.ty) * current.scale) / start.scale + start.ty
-  const tx = start.tx - (movedCt.cx - start.cx) + (current.cx - start.cx)
-  const ty = start.ty - (movedCt.cy - start.cy) + (current.cy - start.cy)
-  const newIw = image.width * current.scale
-  const newIh = image.height * current.scale
+  let tx = start.tx - (movedCt.cx - start.cx) + (current.cx - start.cx)
+  let ty = start.ty - (movedCt.cy - start.cy) + (current.cy - start.cy)
 
-  // If the new scale and position are within the screen constraints,
-  // use them, else ignore them.
-  const newOk = newPosOK(current.scale, tx, ty, newIw, newIh);
-  if (newOk) {
-    zoomPoint.scale = current.scale;
-    zoomPoint.tx = tx;
-    zoomPoint.ty = ty;
-
-    const img = get(`i${imageIx+1}`)
-    // Note: translate runs from right to left.
-    img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
-  }
-
-}, {passive: false})
-
-function newPosOK(newScale, tx, ty, newIw, newIh) {
-  // Return true when the image size and position are good.
-
-  const image = cJson.images[imageIx]
-
-  // Scale up to 100%.
-  if (newScale > 1) {
-    log(`Out of range: scale > 1`)
-    return false
-  }
-
-  // Scale down to half the area width.
-  if (newIw < areaWidth / 2) {
-    log(`Out of range: image size < half area width`)
-    return false
-  }
-
-  // Allow the image to move but keep some of it visible.
-  const rightEdge = tx + newIw
+  // Keep some of the image visible.
   if (tx > areaWidth - minVisible) {
-    log(`Out of range: tx > areaWidth - minVisible`)
-    return false
+    tx = areaWidth - minVisible
   }
+  if (ty > areaHeight - minVisible) {
+    ty = areaHeight - minVisible
+  }
+  const rightEdge = tx + newIw
   if (rightEdge < minVisible) {
-    log(`Out of range: rightEdge < minVisible`)
-    return false
+    tx = minVisible - newIw
   }
   const bottomEdge = ty + newIh
-  if (ty > areaHeight - minVisible) {
-    log(`Out of range: ty > areaHeight - minVisible`)
-    return false
-  }
   if (bottomEdge < minVisible) {
-    log(`Out of range: image bottomEdge < minVisible`)
-    return false
+    ty = minVisible - newIh
   }
 
-  // The position is good.
-  return true
-}
+  zoomPoint.scale = current.scale;
+  zoomPoint.tx = tx;
+  zoomPoint.ty = ty;
+
+  const img = get(`i${imageIx+1}`)
+  // Note: translate runs from right to left.
+  img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+
+}, {passive: false})
 
 document.addEventListener('touchend', handleTouchend, false)
 document.addEventListener('touchcancel', handleTouchend, false)
