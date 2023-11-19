@@ -18,13 +18,10 @@ var minVisible = null
 // The left edges (scroll positions) of the images in the area.
 var leftEdges = null
 
-// Consider a zoom point this close.
-const closeDistance = 100
-
-window.addEventListener("load", loadEvent)
-
 // The start time used for timing.
 const startTime = performance.now()
+
+window.addEventListener("load", loadEvent)
 
 function logStartupTime(message) {
   // Log the elasped time since the startTime.
@@ -71,14 +68,6 @@ async function loadEvent() {
   // Show the page.
   document.body.style.visibility = 'visible'
   document.body.style.opacity = 1
-
-  // Watch the area scroll and scroll end events.
-  area.addEventListener('scroll', areaScroll, false)
-  area.addEventListener('scrollend', () => {
-    // Once the scrollend event is supported in the browsers you can
-    // replace the code that figures out when scrolling ends.
-    log("areaScrollEnd event exists!")
-  })
 
   logStartupTime("loadEvent Done")
 }
@@ -229,72 +218,6 @@ function sizeImages() {
   log(`area.scrollLeft: ${two(area.scrollLeft)}`)
 }
 
-// Timeout function used to determine when scrolling stops.
-var scrollingTimeout
-
-// True when scrolling has paused but the user is still touching.
-var scrollingPaused
-
-// When scrolling started.
-var scrollStart
-
-function areaScroll() {
-  // When scolling stops, call handleScrollEnd.
-
-  // Scrolling stops when no more scroll events happen within .35
-  // seconds and a finger is not down. The .35 comes from
-  // experimenting in safari. If the timeout value is too short, the
-  // edge doesn't match up, but it will match eventually.
-
-  if (scrollStart == null) {
-    scrollStart = performance.now()
-  }
-
-  window.clearTimeout(scrollingTimeout)
-  scrollingPaused = false
-  scrollingTimeout = setTimeout(function() {
-    if (touching) {
-      log('Area scrolling has paused for a tenth of a second.')
-      scrollingPaused = true
-    }
-    else {
-      let seconds = (performance.now() - scrollStart) / 1000.0
-      seconds = seconds.toFixed(3)
-      log(`Area scrolling has stopped. ${seconds}s`)
-      scrollStart = null
-      handleScrollEnd()
-    }
-  }, 350)
-}
-
-// Finger touching the screen. Used with one finger horizontal scrolling.
-var touching = false
-
-function handleScrollEnd() {
-  // Area horizontal scrolling has stopped. area.scrollLeft contains
-  // the ending position. Update the current image and the page
-  // details.
-
-  const area = get("area")
-
-  // Update the current image (imageIx) and the page details.
-  let foundEdge = false
-  const previousImageIx = imageIx
-  for (let ix = 0; ix < leftEdges.length; ix++) {
-    if (Math.round(area.scrollLeft) == leftEdges[ix]) {
-      imageIx = ix
-      log(`Scrolled to ${imageIx+1}`)
-      foundEdge = true
-      if (imageIx != previousImageIx)
-        SetDetails()
-      break
-    }
-  }
-  if (!foundEdge) {
-    log(`Edge not found: area.scrollLeft: ${two(area.scrollLeft)}, leftEdges: ${leftEdges}`)
-  }
-}
-
 function SetDetails() {
   // Update the page details for the current image.
 
@@ -314,12 +237,22 @@ let start = {}
 let current = {}
 let doubleClick = null
 
+// Horizontal scrolling variables.
+let horizontalScrolling = false;
+let startScrollLeft;
+let startScrollX;
+let startScrollY;
+let currentScrollLeft = 0;
+
 window.addEventListener('touchstart', (event) => {
 
-  // Touching is true when a finger is down.
-  touching = true
-
-  event.preventDefault()
+  // Remember the position incase we are starting to horizontal scroll.
+  if (!horizontalScrolling) {
+    startScrollLeft = area.scrollLeft;
+    startScrollX = event.touches[0].clientX;
+    startScrollY = event.touches[0].clientY;
+    log(`touchstart: start scrolling ${imageIx+1}: startScrollLeft: ${startScrollLeft}, startScrollX: ${two(startScrollX)}`)
+  }
 
   // Start timer on first click. If second click comes before .5
   // seconds, it’s a double click. Only consider one finger cases.
@@ -373,7 +306,8 @@ window.addEventListener('touchstart', (event) => {
 })
 
 window.addEventListener('restoreimage', (event) => {
-  log("Restore image size")
+  // Restore an image position and scale to its zoom point.
+  log("Restore image to its zoom point.")
 
   // Get the original zoom point.
   const image = cJson.images[imageIx]
@@ -404,7 +338,19 @@ window.addEventListener('restoreimage', (event) => {
 }, false)
 
 window.addEventListener('touchmove', (event) => {
-  // Zoom and pan the image.
+  // Zoom, pan and scroll the image.
+  if (horizontalScrolling) {
+    horizontalScrollMove(event)
+    return
+  }
+  // Determine whether horizontal scrolling is starting.
+  const dx = Math.abs(startScrollX - event.touches[0].clientX)
+  const dy = Math.abs(startScrollY - event.touches[0].clientY)
+  if (dx > dy) {
+    horizontalScrolling = true;
+    horizontalScrollMove(event)
+    return
+  }
 
   if (event.touches.length != 2)
     return
@@ -487,12 +433,9 @@ function handleTouchcancel(event) {
 }
 
 function handleTouchend(event) {
-
-  touching = false
-
-  if (scrollingPaused) {
-    log("Touchend: finger up after pausing the scroll.")
-    areaScroll()
+  if (horizontalScrolling) {
+    horizontalScrollUp(event)
+    return
   }
 
   if (zooming) {
@@ -521,4 +464,111 @@ function copyJson() {
   log("Copy json to the clipboard");
   const msg = JSON.stringify(cJson, null, 2)
   navigator.clipboard.writeText(msg);
+}
+
+function horizontalScrollMove(event) {
+  event.preventDefault();
+  const currentScrollX = event.touches[0].clientX;
+  currentScrollLeft = startScrollLeft + startScrollX - currentScrollX
+
+  // // Limit movement to one page.
+  const before = startScrollLeft - areaWidth
+  const after = startScrollLeft + areaWidth
+  if (currentScrollLeft < before)
+    currentScrollLeft = before;
+  else if (currentScrollLeft > after)
+    currentScrollLeft = after;
+
+  if (currentScrollLeft <= 0) {
+    currentScrollLeft = 0;
+  }
+
+  const area = get("area")
+  area.scrollLeft = currentScrollLeft;
+}
+
+function horizontalScrollUp(event) {
+  const area = get("area")
+
+  // Scroll to the left edge of the next, previous or current page.
+  let addition;
+  if (currentScrollLeft > startScrollLeft + areaWidth / 2) {
+    imageIx += 1
+    addition = areaWidth;
+  } else if (currentScrollLeft < startScrollLeft - areaWidth / 2) {
+    imageIx -= 1
+    addition = -areaWidth;
+  } else {
+    addition = 0;
+  }
+  log(`ScrollUp: currentScrollLeft: ${two(currentScrollLeft)}, addition: ${addition}`);
+
+  const startLeft = currentScrollLeft;
+  const finishLeft = startScrollLeft + addition;
+  log(`ScrollUp: animate from ${two(startLeft)} to ${finishLeft}`);
+
+  if (area.scrollLeft == finishLeft) {
+    log(`ScrollUp: done, area.scrollLeft: ${area.scrollLeft}, image ${imageIx+1}`);
+    horizontalScrolling = false;
+    return
+  }
+
+  // The maximum time for the animation.
+  const maxDuration = 1.5;
+
+  // The frame rate as frames per second.
+  const framesPerSec = 30;
+
+  // The maximum distance is half the screen width.  If you scroll
+  // past the middle, you go to the next image and less than half you
+  // go back.
+  const maxDistance = areaWidth / 2;
+  const maxFrames = maxDuration * framesPerSec;
+  // log(`ScrollUp: maxDuration: ${maxDuration}, framesPerSec: ${framesPerSec}, ` +
+  //     `maxDistance: ${maxDistance}, maxFrames: ${maxFrames}`);
+
+  // Scroll at the same rate no matter the distance. Use the ratio of
+  // max frames to max distance equal to the ratio of the frames to
+  // the distance.
+  const distance = Math.abs(finishLeft - startLeft)
+  const frames = (distance * maxFrames) / maxDistance;
+  // log(`ScrollUp: distance: ${two(distance)}, frames: ${two(frames)}`);
+
+  // Get the distances to animate.
+  let distancesIndex = 0;
+  const frameDistances = distanceList(startLeft, finishLeft, frames);
+  // log(`frameDistances: ${frameDistances}`);
+
+  // Determine the duration of the animation in seconds.
+  const duration = frames / framesPerSec;
+  log(`ScrollUp: number of frames: ${frameDistances.length}, duration: ${two(duration)}`);
+
+  const annimationId = setInterval(animateScrollLeft, duration / 1000);
+
+  function animateScrollLeft() {
+    if (distancesIndex >= frameDistances.length) {
+      clearInterval(annimationId);
+      log(`ScrollUp: animate done, area.scrollLeft: ${area.scrollLeft}, image: ${imageIx+1}`);
+      horizontalScrolling = false;
+      SetDetails()
+    } else {
+      area.scrollLeft = frameDistances[distancesIndex];
+      distancesIndex += 1;
+    }
+  }
+}
+
+function distanceList(start, finish, numberSteps) {
+  // Evenly Divide the start to finish range into the given number of
+  // steps. Don't include the start and always include the finish.
+  let steps = [];
+  const range = finish - start;
+  if (numberSteps > 1 && Math.abs(range) > 1) {
+    let step = range / numberSteps;
+    for (let ix = 1; ix < numberSteps - 1; ix++) {
+      steps.push(Math.round(start + step * ix));
+    }
+  }
+  steps.push(finish);
+  return steps;
 }
