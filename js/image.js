@@ -16,7 +16,7 @@ var areaHeight = null
 var minVisible = null
 
 // The left edges (scroll positions) of the images in the area.
-var leftEdges = null
+var leftEdges = []
 
 // The start time used for timing.
 const startTime = performance.now()
@@ -251,7 +251,8 @@ window.addEventListener('touchstart', (event) => {
     startScrollLeft = area.scrollLeft;
     startScrollX = event.touches[0].clientX;
     startScrollY = event.touches[0].clientY;
-    log(`touchstart: start scrolling ${imageIx+1}: startScrollLeft: ${startScrollLeft}, startScrollX: ${two(startScrollX)}`)
+    log(`touchstart: start scrolling ${imageIx+1}, startScrollLeft: ${startScrollLeft}`)
+    // log(`touchstart: startScrollX: ${two(startScrollX)}`)
   }
 
   // Start timer on first click. If second click comes before .5
@@ -434,7 +435,7 @@ function handleTouchcancel(event) {
 
 function handleTouchend(event) {
   if (horizontalScrolling) {
-    horizontalScrollUp(event)
+    horizontalScrollEnd(event)
     return
   }
 
@@ -487,31 +488,30 @@ function horizontalScrollMove(event) {
   area.scrollLeft = currentScrollLeft;
 }
 
-function horizontalScrollUp(event) {
+function horizontalScrollEnd(event) {
   const area = get("area")
+  log(`ScrollEnd: currentScrollLeft: ${two(currentScrollLeft)}`);
 
   // Scroll to the left edge of the next, previous or current page.
   let addition;
   if (currentScrollLeft > startScrollLeft + areaWidth / 2) {
-    imageIx += 1
     addition = areaWidth;
   } else if (currentScrollLeft < startScrollLeft - areaWidth / 2) {
-    imageIx -= 1
     addition = -areaWidth;
   } else {
     addition = 0;
   }
-  log(`ScrollUp: currentScrollLeft: ${two(currentScrollLeft)}, addition: ${addition}`);
+  // log(`ScrollEnd: addition: ${addition}`);
 
   const startLeft = currentScrollLeft;
   const finishLeft = startScrollLeft + addition;
-  log(`ScrollUp: animate from ${two(startLeft)} to ${finishLeft}`);
 
   if (area.scrollLeft == finishLeft) {
-    log(`ScrollUp: done, area.scrollLeft: ${area.scrollLeft}, image ${imageIx+1}`);
-    horizontalScrolling = false;
+    scrollDone()
     return
   }
+
+  log(`ScrollEnd: animate from ${two(startLeft)} to ${finishLeft}`);
 
   // The maximum time for the animation.
   const maxDuration = 1.5;
@@ -524,7 +524,7 @@ function horizontalScrollUp(event) {
   // go back.
   const maxDistance = areaWidth / 2;
   const maxFrames = maxDuration * framesPerSec;
-  // log(`ScrollUp: maxDuration: ${maxDuration}, framesPerSec: ${framesPerSec}, ` +
+  // log(`ScrollEnd: maxDuration: ${maxDuration}, framesPerSec: ${framesPerSec}, ` +
   //     `maxDistance: ${maxDistance}, maxFrames: ${maxFrames}`);
 
   // Scroll at the same rate no matter the distance. Use the ratio of
@@ -532,7 +532,7 @@ function horizontalScrollUp(event) {
   // the distance.
   const distance = Math.abs(finishLeft - startLeft)
   const frames = (distance * maxFrames) / maxDistance;
-  // log(`ScrollUp: distance: ${two(distance)}, frames: ${two(frames)}`);
+  // log(`ScrollEnd: distance: ${two(distance)}, frames: ${two(frames)}`);
 
   // Get the distances to animate.
   let distancesIndex = 0;
@@ -541,20 +541,40 @@ function horizontalScrollUp(event) {
 
   // Determine the duration of the animation in seconds.
   const duration = frames / framesPerSec;
-  log(`ScrollUp: number of frames: ${frameDistances.length}, duration: ${two(duration)}`);
+  log(`ScrollEnd: number of frames: ${frameDistances.length}, duration: ${two(duration)} seconds`);
 
+  // Animate to the new scroll position.
   const annimationId = setInterval(animateScrollLeft, duration / 1000);
-
   function animateScrollLeft() {
+    // Set the area scroll position and stop scrolling after the last
+    // frame.
     if (distancesIndex >= frameDistances.length) {
       clearInterval(annimationId);
-      log(`ScrollUp: animate done, area.scrollLeft: ${area.scrollLeft}, image: ${imageIx+1}`);
-      horizontalScrolling = false;
-      SetDetails()
+      scrollDone()
     } else {
       area.scrollLeft = frameDistances[distancesIndex];
       distancesIndex += 1;
     }
+  }
+
+  function scrollDone() {
+    // Scrolling has finished.  Update the image index and the page details.
+
+    // Set the image index to the image we scrolled to.
+    const ix = leftEdges.indexOf(area.scrollLeft)
+    if (ix == -1)
+      logError(`area.scrollLeft ${area.scrollLeft} was not found.`)
+    else {
+      if (imageIx == ix) {
+        log(`ScrollEnd: scrolled back to the original item ${imageIx+1}.`)
+      }
+      else {
+        imageIx = ix
+        log(`ScrollEnd: scroll done: area.scrollLeft: ${area.scrollLeft}, image: ${imageIx+1}`);
+        SetDetails()
+      }
+    }
+    horizontalScrolling = false;
   }
 }
 
