@@ -277,7 +277,7 @@ window.addEventListener('touchstart', (event) => {
   // seconds, it’s a double click. Only consider one finger cases.
   if (event.touches.length == 1) {
     if (doubleClick !== null) {
-      let seconds = (performance.now() - doubleClick) / 1000.0
+      let seconds = doubleClick.seconds()
       if (seconds < .5) {
         const event = new Event("restoreimage");
         window.dispatchEvent(event);
@@ -285,7 +285,7 @@ window.addEventListener('touchstart', (event) => {
         return
       }
     }
-    doubleClick = performance.now()
+    doubleClick = new Timer()
   } else {
     doubleClick = null
   }
