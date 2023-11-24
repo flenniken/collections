@@ -23,9 +23,9 @@ const startTime = performance.now()
 
 window.addEventListener("load", loadEvent)
 
-function logStartupTime(message) {
-  // Log the elasped time since the startTime.
-  let seconds = (performance.now() - startTime) / 1000.0
+function logStartupTime(message, start) {
+  // Log the elasped time since the start time.
+  let seconds = (performance.now() - start) / 1000.0
   seconds = seconds.toFixed(3)
   log(`${seconds}s -- ${message}`)
 }
@@ -52,24 +52,24 @@ function two(num) {
 
 async function loadEvent() {
   // The page finished loading, setup and size things.
-  logStartupTime(`loadEvent: json contains ${cJson.images.length} images`)
+  logStartupTime(`loadEvent: json contains ${cJson.images.length} images`, startTime)
 
   // Disable the default browser zoom and pan behavior.
   get("image-page").setAttribute("touch-action", "none")
 
   setFirstImage()
 
-  logStartupTime("sizeImageArea")
+  logStartupTime("sizeImageArea", startTime)
   sizeImageArea()
 
-  logStartupTime("sizeImages")
+  logStartupTime("sizeImages", startTime)
   sizeImages()
 
   // Show the page.
   document.body.style.visibility = 'visible'
   document.body.style.opacity = 1
 
-  logStartupTime("loadEvent Done")
+  logStartupTime("loadEvent Done", startTime)
 }
 
 function intDef(str, min, max, def) {
@@ -102,17 +102,18 @@ function sizeImageArea() {
   // Get the available screen width and height and store them in
   // globals, areaWidth and areaHeight.
 
-  const sizes = [
-    [window.innerWidth, window.innerHeight, 'window.innerWidth x ...innerHeight'],
-    [window.screen.availWidth, window.screen.availHeight, 'window.screen.availWidth x ...availHeight'],
-    [document.documentElement.clientWidth, document.documentElement.clientHeight,
-      'document.documentElement.clientWidth x ...clientHeight'],
-    [document.body.clientWidth, document.body.clientHeight, 'document.body.clientWidth x ...clientHeight'],
-  ]
-  sizes.forEach((size, ix) => {
-    const [w, h, msg] = size
-    log(`${w} x ${h}: ${msg}`)
-  })
+  // // Log some interesting sizes.
+  // const sizes = [
+  //   [window.innerWidth, window.innerHeight, 'window.innerWidth x ...innerHeight'],
+  //   [window.screen.availWidth, window.screen.availHeight, 'window.screen.availWidth x ...availHeight'],
+  //   [document.documentElement.clientWidth, document.documentElement.clientHeight,
+  //     'document.documentElement.clientWidth x ...clientHeight'],
+  //   [document.body.clientWidth, document.body.clientHeight, 'document.body.clientWidth x ...clientHeight'],
+  // ]
+  // sizes.forEach((size, ix) => {
+  //   const [w, h, msg] = size
+  //   log(`${w} x ${h}: ${msg}`)
+  // })
 
   areaWidth = document.documentElement.clientWidth
   areaHeight = document.documentElement.clientHeight
@@ -132,9 +133,7 @@ function sizeImageArea() {
   const area = get("area")
   area.style.width = `${areaWidth}px`
   area.style.height = `${areaHeight}px`
-  const dim = `${areaWidth} x ${areaHeight}`
-  log(`Area size: ${dim}`)
-  get('size').innerHTML = `${dim}`
+  log(`Area size: ${areaWidth} x ${areaHeight}`)
 }
 
 function getZoomPoint(cjson=cJson) {
@@ -453,11 +452,14 @@ function handleTouchend(event) {
 screen.orientation.addEventListener("change", (event) => {
   // When the phone orientation changes, update the image area and
   // size the images.
+  const start = performance.now()
   const type = event.target.type;
   const angle = event.target.angle;
-  log(`ScreenOrientation change: ${type}, ${angle} degrees.`);
+  logStartupTime(`ScreenOrientation change: ${type}, ${angle} degrees.`, start);
   sizeImageArea()
+  logStartupTime("sizeImages", start)
   sizeImages()
+  logStartupTime("ScreenOrientation done", start)
 })
 
 function copyJson() {
