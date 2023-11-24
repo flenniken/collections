@@ -18,19 +18,27 @@ let minVisible = null
 // The left edges (scroll positions) of the images in the area.
 let leftEdges = []
 
-// The start time used for timing.
-const startTime = performance.now()
 
 let area = null
 
 window.addEventListener("load", loadEvent)
 
-function logStartupTime(message, start) {
-  // Log the elasped time since the start time.
-  let seconds = (performance.now() - start) / 1000.0
-  seconds = seconds.toFixed(3)
-  log(`${seconds}s ----- ${message}`)
+class Timer {
+  // Time how many seconds code takes to run.
+  constructor() {
+    this.start = performance.now()
+  }
+  seconds() {
+    return (performance.now() - this.start) / 1000.0
+  }
+  log(message) {
+    const sec3 = this.seconds().toFixed(3)
+    log(`${sec3}s ----- ${message}`)
+  }
 }
+
+// The start time used for timing.
+const startTimer = new Timer()
 
 function get(id) {
   // Get the dom element with the given id.
@@ -54,7 +62,7 @@ function two(num) {
 
 async function loadEvent() {
   // The page finished loading, setup and size things.
-  logStartupTime(`loadEvent: the collection contains ${cJson.images.length} images`, startTime)
+  startTimer.log(`loadEvent: the collection contains ${cJson.images.length} images`)
 
   area = get("area")
 
@@ -63,17 +71,17 @@ async function loadEvent() {
 
   setFirstImage()
 
-  logStartupTime("sizeImageArea", startTime)
+  startTimer.log("sizeImageArea")
   sizeImageArea()
 
-  logStartupTime("sizeImages", startTime)
+  startTimer.log("sizeImages")
   sizeImages()
 
   // Show the page.
   document.body.style.visibility = 'visible'
   document.body.style.opacity = 1
 
-  logStartupTime("loadEvent Done", startTime)
+  startTimer.log("loadEvent Done")
 }
 
 function intDef(str, min, max, def) {
@@ -444,6 +452,7 @@ function handleTouchcancel(event) {
 }
 
 function handleTouchend(event) {
+  log("touchend")
   if (horizontalScrolling) {
     horizontalScrollEnd(event)
     return
@@ -463,14 +472,14 @@ function handleTouchend(event) {
 screen.orientation.addEventListener("change", (event) => {
   // When the phone orientation changes, update the image area and
   // size the images.
-  const start = performance.now()
+  const start = new Timer()
   const type = event.target.type;
   const angle = event.target.angle;
-  logStartupTime(`ScreenOrientation change: ${type}, ${angle} degrees.`, start);
+  start.log(`ScreenOrientation change: ${type}, ${angle} degrees.`)
   sizeImageArea()
-  logStartupTime("sizeImages", start)
+  start.log("sizeImages")
   sizeImages()
-  logStartupTime("ScreenOrientation done", start)
+  start.log("ScreenOrientation done")
 })
 
 function copyJson() {
