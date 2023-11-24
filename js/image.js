@@ -11,17 +11,16 @@ let imageIx = null
 let areaWidth = null
 let areaHeight = null
 
-// The minimum amount of image to keep visible when zooming and
-// panning.
-let minVisible = null
-
-// The left edges (scroll positions) of the images in the area.
-let leftEdges = []
-
-
+// The area element.
 let area = null
 
-window.addEventListener("load", loadEvent)
+window.addEventListener("load", handleLoad)
+window.addEventListener('touchstart', handleTouchStart)
+window.addEventListener('restoreimage', handleRestoreImage, false)
+window.addEventListener('touchmove', handleTouchMove, {passive: false})
+document.addEventListener('touchend', handleTouchEnd, false)
+document.addEventListener('touchcancel', handleTouchCancel, false)
+screen.orientation.addEventListener("change", handleChange)
 
 class Timer {
   // Time how many seconds code takes to run.
@@ -60,9 +59,9 @@ function two(num) {
   return num.toFixed(2)
 }
 
-async function loadEvent() {
+async function handleLoad() {
   // The page finished loading, setup and size things.
-  startTimer.log(`loadEvent: the collection contains ${cJson.images.length} images`)
+  startTimer.log(`load: the collection contains ${cJson.images.length} images`)
 
   area = get("area")
 
@@ -81,20 +80,7 @@ async function loadEvent() {
   document.body.style.visibility = 'visible'
   document.body.style.opacity = 1
 
-  startTimer.log("loadEvent Done")
-}
-
-function intDef(str, min, max, def) {
-  // Parse the number string as an integer and validate it. Return the
-  // value. If the value is less than the min or greater than the max,
-  // return the default value.  When the str is not valid, return the
-  // default value.
-  const value = parseInt(str, 10)
-  if (isNaN(value))
-    return def
-  if (value < min || value > max)
-    return def
-  return value
+  startTimer.log("load Done")
 }
 
 function setFirstImage() {
@@ -147,7 +133,7 @@ function sizeImageArea() {
     log("Add 60 to height for top bar")
   }
 
-  minVisible = areaWidth / 4
+  zpan.minVisible = areaWidth / 4
 
   // Size the image area to the available screen area.
   area.style.width = `${areaWidth}px`
@@ -167,7 +153,6 @@ function sizeImages() {
   // when missing.
 
   let edge = 0
-  leftEdges = []
   const zoom_w_h = `${areaWidth}x${areaHeight}`
 
   let zoomPoints
@@ -181,6 +166,7 @@ function sizeImages() {
     zoomPoints = cJson.zoomPoints[zoom_w_h]
   }
 
+  hscroll.leftEdges.length = 0
   log("Image zoom points:")
   cJson.images.forEach((image, ix) => {
     if (image.width < areaWidth || image.height < areaHeight) {
@@ -188,7 +174,7 @@ function sizeImages() {
     }
 
     // Save the position of the left edge of all the images.
-    leftEdges.push(edge)
+    hscroll.leftEdges.push(edge)
 
     // Size all the containers to the size of the area.
     const container = get(`c${ix+1}`)
@@ -231,9 +217,10 @@ function sizeImages() {
   })
 
   // Scroll the current image into view.
-  log(`Current image left edge: ${leftEdges[imageIx]}`)
-  area.scrollLeft = leftEdges[imageIx]
+  log(`Current image left edge: ${hscroll.leftEdges[imageIx]}`)
+  area.scrollLeft = hscroll.leftEdges[imageIx]
   log(`area.scrollLeft: ${two(area.scrollLeft)}`)
+  log(`hscroll.leftEdges: ${hscroll.leftEdges}`)
 }
 
 function SetDetails() {
@@ -245,32 +232,44 @@ function SetDetails() {
   get('size').innerHTML = `${areaWidth} x ${areaHeight}`
 }
 
-// Whether we are zooming an image or not.
-let zooming = false
+// Zoom and pan variables.
+let zpan = {
+  // The minimum amount of image to keep visible when zooming and
+  // panning.
+  "minVisible": null,
 
-// The position when we started zooming and panning.
-let start = {}
+  // Whether we are zooming an image or not.
+  "zooming": false,
+  // The position when we started zooming and panning.
+  start: {},
+  // The current touchmove position.
+  current: {},
+}
 
-// The current touchmove position for zooming and panning.
-let current = {}
+// A timer to detect a double touch.
 let doubleClick = null
 
 // Horizontal scrolling variables.
-let horizontalScrolling = false;
-let startScrollLeft;
-let startScrollX;
-let startScrollY;
-let currentScrollLeft = 0;
+let hscroll = {
+  // The left edges (x scroll positions) of the images in the area.
+  "leftEdges": [],
+  "scrolling": false,
+  "startScrollLeft": null,
+  "startX": null,
+  "startY": null,
+  "currentScrollLeft": 0,
+}
 
-window.addEventListener('touchstart', (event) => {
+function handleTouchStart(event) {
+  // Handle the touchstart event.
 
   // Remember the position incase we are starting to horizontal scroll.
-  if (!horizontalScrolling) {
-    startScrollLeft = area.scrollLeft;
-    startScrollX = event.touches[0].clientX;
-    startScrollY = event.touches[0].clientY;
-    log(`touchstart: scroll image: ${imageIx+1}, startScrollLeft: ${startScrollLeft}`)
-    // log(`touchstart: startScrollX: ${two(startScrollX)}`)
+  if (!hscroll.scrolling) {
+    hscroll.startScrollLeft = area.scrollLeft;
+    hscroll.startX = event.touches[0].clientX;
+    hscroll.startY = event.touches[0].clientY;
+    log(`touchstart: scroll image: ${imageIx+1}, hscroll.startScrollLeft: ${hscroll.startScrollLeft}`)
+    // log(`touchstart: hscroll.startX: ${two(hscroll.startX)}`)
   }
 
   // Start timer on first click. If second click comes before .5
@@ -294,7 +293,7 @@ window.addEventListener('touchstart', (event) => {
   if (event.touches.length != 2)
     return
 
-  zooming = true
+  zpan.zooming = true
 
   // Disable the default browser zoom and pan behavior when two
   // fingers are down.
@@ -312,19 +311,19 @@ window.addEventListener('touchstart', (event) => {
 
   // Save the point centered between the two fingers, the distance
   // between them, the current translation and the current scale.
-  start.cx = (clientX0 + clientX1) / 2
-  start.cy = (clientY0 + clientY1) / 2
-  start.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
-  start.scale = zoomPoint.scale
-  start.tx = zoomPoint.tx
-  start.ty = zoomPoint.ty
+  zpan.start.cx = (clientX0 + clientX1) / 2
+  zpan.start.cy = (clientY0 + clientY1) / 2
+  zpan.start.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+  zpan.start.scale = zoomPoint.scale
+  zpan.start.tx = zoomPoint.tx
+  zpan.start.ty = zoomPoint.ty
 
-  log(`i${imageIx+1}: touchstart: c: (${two(start.cx)}, ${two(start.cy)}) ` +
-              `d: ${two(start.distance)}, scale: ${two(start.scale)}, ` +
-              `t: (${two(start.tx)}, ${two(start.ty)})`)
-})
+  log(`i${imageIx+1}: touchstart: c: (${two(zpan.start.cx)}, ${two(zpan.start.cy)}) ` +
+              `d: ${two(zpan.start.distance)}, scale: ${two(zpan.start.scale)}, ` +
+              `t: (${two(zpan.start.tx)}, ${two(zpan.start.ty)})`)
+}
 
-window.addEventListener('restoreimage', (event) => {
+function handleRestoreImage(event) {
   // Restore an image position and scale to its zoom point.
   log("Restore image to its zoom point.")
 
@@ -353,20 +352,20 @@ window.addEventListener('restoreimage', (event) => {
     zoomPoint.tx = origZP.tx;
     zoomPoint.ty = origZP.ty;
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
-  };
-}, false)
+  }
+}
 
-window.addEventListener('touchmove', (event) => {
+function handleTouchMove(event) {
   // Zoom, pan and scroll the image.
-  if (horizontalScrolling) {
+  if (hscroll.scrolling) {
     horizontalScrollMove(event)
     return
   }
   // Determine whether horizontal scrolling is starting.
-  const dx = Math.abs(startScrollX - event.touches[0].clientX)
-  const dy = Math.abs(startScrollY - event.touches[0].clientY)
+  const dx = Math.abs(hscroll.startX - event.touches[0].clientX)
+  const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
   if (dx > dy) {
-    horizontalScrolling = true;
+    hscroll.scrolling = true;
     horizontalScrollMove(event)
     return
   }
@@ -378,7 +377,7 @@ window.addEventListener('touchmove', (event) => {
   // fingers are down.
   event.preventDefault()
 
-  if (!zooming)
+  if (!zpan.zooming)
     return
 
   const clientX0 = event.touches[0].clientX
@@ -390,50 +389,50 @@ window.addEventListener('touchmove', (event) => {
   const image = cJson.images[imageIx]
   const zoomPoint = getZoomPoint()
 
-  current.cx = (clientX0 + clientX1) / 2
-  current.cy = (clientY0 + clientY1) / 2
-  current.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
-  current.scale = (current.distance / start.distance) * start.scale
+  zpan.current.cx = (clientX0 + clientX1) / 2
+  zpan.current.cy = (clientY0 + clientY1) / 2
+  zpan.current.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+  zpan.current.scale = (zpan.current.distance / zpan.start.distance) * zpan.start.scale
 
   // Limit the scale to a maximum of 1 and a minimum that results in a
   // image not less than half the area width.
-  if (current.scale > 1.0)
-    current.scale = 1.0
-  let newIw = image.width * current.scale
-  let newIh = image.height * current.scale
+  if (zpan.current.scale > 1.0)
+    zpan.current.scale = 1.0
+  let newIw = image.width * zpan.current.scale
+  let newIh = image.height * zpan.current.scale
   if (newIw < areaWidth / 2) {
-    current.scale = (areaWidth / 2) / image.width
-    newIw = image.width * current.scale
-    newIh = image.height * current.scale
+    zpan.current.scale = (areaWidth / 2) / image.width
+    newIw = image.width * zpan.current.scale
+    newIh = image.height * zpan.current.scale
   }
 
   // Calculate the new image upper left hand corner based on the
   // center point between the two fingers and how far apart they are
   // compared to when zooming started.
   let movedCt = {};
-  movedCt.cx = ((start.cx - start.tx) * current.scale) / start.scale + start.tx
-  // log(`start.cx: ${start.cx}, start.tx: ${start.tx}, start.scale: ${start.scale}`)
-  movedCt.cy = ((start.cy - start.ty) * current.scale) / start.scale + start.ty
-  let tx = start.tx - (movedCt.cx - start.cx) + (current.cx - start.cx)
-  let ty = start.ty - (movedCt.cy - start.cy) + (current.cy - start.cy)
+  movedCt.cx = ((zpan.start.cx - zpan.start.tx) * zpan.current.scale) / zpan.start.scale + zpan.start.tx
+  // log(`zpan.start.cx: ${zpan.start.cx}, zpan.start.tx: ${zpan.start.tx}, zpan.start.scale: ${zpan.start.scale}`)
+  movedCt.cy = ((zpan.start.cy - zpan.start.ty) * zpan.current.scale) / zpan.start.scale + zpan.start.ty
+  let tx = zpan.start.tx - (movedCt.cx - zpan.start.cx) + (zpan.current.cx - zpan.start.cx)
+  let ty = zpan.start.ty - (movedCt.cy - zpan.start.cy) + (zpan.current.cy - zpan.start.cy)
 
   // Keep some of the image visible.
-  if (tx > areaWidth - minVisible) {
-    tx = areaWidth - minVisible
+  if (tx > areaWidth - zpan.minVisible) {
+    tx = areaWidth - zpan.minVisible
   }
-  if (ty > areaHeight - minVisible) {
-    ty = areaHeight - minVisible
+  if (ty > areaHeight - zpan.minVisible) {
+    ty = areaHeight - zpan.minVisible
   }
   const rightEdge = tx + newIw
-  if (rightEdge < minVisible) {
-    tx = minVisible - newIw
+  if (rightEdge < zpan.minVisible) {
+    tx = zpan.minVisible - newIw
   }
   const bottomEdge = ty + newIh
-  if (bottomEdge < minVisible) {
-    ty = minVisible - newIh
+  if (bottomEdge < zpan.minVisible) {
+    ty = zpan.minVisible - newIh
   }
 
-  zoomPoint.scale = current.scale;
+  zoomPoint.scale = zpan.current.scale;
   zoomPoint.tx = tx;
   zoomPoint.ty = ty;
 
@@ -441,35 +440,32 @@ window.addEventListener('touchmove', (event) => {
   // Note: translate runs from right to left.
   img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
 
-}, {passive: false})
-
-document.addEventListener('touchend', handleTouchend, false)
-document.addEventListener('touchcancel', handleTouchend, false)
-
-function handleTouchcancel(event) {
-  log("Touchcancel")
-  handleTouchend(event)
 }
 
-function handleTouchend(event) {
+function handleTouchCancel(event) {
+  log("touchcancel")
+  handleTouchEnd(event)
+}
+
+function handleTouchEnd(event) {
   log("touchend")
-  if (horizontalScrolling) {
+  if (hscroll.scrolling) {
     horizontalScrollEnd(event)
     return
   }
 
-  if (zooming) {
-    zooming = false
+  if (zpan.zooming) {
+    zpan.zooming = false
 
     const image = cJson.images[imageIx]
     const zoomPoint = getZoomPoint()
-    log(`i${imageIx+1}: touchend: c: (${two(current.cx)}, ${two(current.cy)}) ` +
-              `d: ${two(current.distance)}, scale: ${two(zoomPoint.scale)}, ` +
+    log(`i${imageIx+1}: touchend: c: (${two(zpan.current.cx)}, ${two(zpan.current.cy)}) ` +
+              `d: ${two(zpan.current.distance)}, scale: ${two(zoomPoint.scale)}, ` +
               `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   }
 }
 
-screen.orientation.addEventListener("change", (event) => {
+function handleChange(event) {
   // When the phone orientation changes, update the image area and
   // size the images.
   const start = new Timer()
@@ -480,7 +476,7 @@ screen.orientation.addEventListener("change", (event) => {
   start.log("sizeImages")
   sizeImages()
   start.log("ScreenOrientation done")
-})
+}
 
 function copyJson() {
   // Copy the json data to the clipboard.
@@ -492,39 +488,39 @@ function copyJson() {
 function horizontalScrollMove(event) {
   event.preventDefault();
   const currentScrollX = event.touches[0].clientX;
-  currentScrollLeft = startScrollLeft + startScrollX - currentScrollX
+  hscroll.currentScrollLeft = hscroll.startScrollLeft + hscroll.startX - currentScrollX
 
   // // Limit movement to one page.
-  const before = startScrollLeft - areaWidth
-  const after = startScrollLeft + areaWidth
-  if (currentScrollLeft < before)
-    currentScrollLeft = before;
-  else if (currentScrollLeft > after)
-    currentScrollLeft = after;
+  const before = hscroll.startScrollLeft - areaWidth
+  const after = hscroll.startScrollLeft + areaWidth
+  if (hscroll.currentScrollLeft < before)
+    hscroll.currentScrollLeft = before;
+  else if (hscroll.currentScrollLeft > after)
+    hscroll.currentScrollLeft = after;
 
-  if (currentScrollLeft <= 0) {
-    currentScrollLeft = 0;
+  if (hscroll.currentScrollLeft <= 0) {
+    hscroll.currentScrollLeft = 0;
   }
 
-  area.scrollLeft = currentScrollLeft;
+  area.scrollLeft = hscroll.currentScrollLeft;
 }
 
 function horizontalScrollEnd(event) {
-  log(`ScrollEnd: currentScrollLeft: ${two(currentScrollLeft)}`);
+  log(`ScrollEnd: hscroll.currentScrollLeft: ${two(hscroll.currentScrollLeft)}`);
 
   // Scroll to the left edge of the next, previous or current page.
   let addition;
-  if (currentScrollLeft > startScrollLeft + areaWidth / 2) {
+  if (hscroll.currentScrollLeft > hscroll.startScrollLeft + areaWidth / 2) {
     addition = areaWidth;
-  } else if (currentScrollLeft < startScrollLeft - areaWidth / 2) {
+  } else if (hscroll.currentScrollLeft < hscroll.startScrollLeft - areaWidth / 2) {
     addition = -areaWidth;
   } else {
     addition = 0;
   }
   // log(`ScrollEnd: addition: ${addition}`);
 
-  const startLeft = currentScrollLeft;
-  const finishLeft = startScrollLeft + addition;
+  const startLeft = hscroll.currentScrollLeft;
+  const finishLeft = hscroll.startScrollLeft + addition;
 
   if (area.scrollLeft == finishLeft) {
     scrollDone()
@@ -581,7 +577,7 @@ function horizontalScrollEnd(event) {
     // Scrolling has finished.  Update the image index and the page details.
 
     // Set the image index to the image we scrolled to.
-    const ix = leftEdges.indexOf(area.scrollLeft)
+    const ix = hscroll.leftEdges.indexOf(area.scrollLeft)
     if (ix == -1)
       logError(`area.scrollLeft ${area.scrollLeft} was not found.`)
     else {
@@ -594,7 +590,7 @@ function horizontalScrollEnd(event) {
         SetDetails()
       }
     }
-    horizontalScrolling = false;
+    hscroll.scrolling = false;
   }
 }
 
