@@ -29,7 +29,7 @@ function logStartupTime(message, start) {
   // Log the elasped time since the start time.
   let seconds = (performance.now() - start) / 1000.0
   seconds = seconds.toFixed(3)
-  log(`${seconds}s -- ${message}`)
+  log(`${seconds}s ----- ${message}`)
 }
 
 function get(id) {
@@ -54,7 +54,7 @@ function two(num) {
 
 async function loadEvent() {
   // The page finished loading, setup and size things.
-  logStartupTime(`loadEvent: json contains ${cJson.images.length} images`, startTime)
+  logStartupTime(`loadEvent: the collection contains ${cJson.images.length} images`, startTime)
 
   area = get("area")
 
@@ -92,12 +92,20 @@ function intDef(str, min, max, def) {
 function setFirstImage() {
   // Set the first image to show based on the url image query
   // parameter.
-  log(`window.location.search = ${window.location.search}`)
+
+  // Get the image query string.
+  log(`window.location.search: ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search)
-  const imageQ = searchParams.get("image")
-  const imageNum = intDef(imageQ, 1, cJson.images.length, 0)
-  log(`First image: ${imageNum}`)
-  imageIx = imageNum - 1
+  const queryStr = searchParams.get("image")
+  log(`Image query string: ${queryStr}`)
+
+  // Set the first image index.
+  const imageNum = parseInt(queryStr, 10)
+  if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length)
+    imageIx = imageNum - 1
+  else
+    imageIx = 0
+  log(`First image: ${imageIx + 1}`)
 }
 
 function sizeImageArea() {
@@ -165,6 +173,7 @@ function sizeImages() {
     zoomPoints = cJson.zoomPoints[zoom_w_h]
   }
 
+  log("Image zoom points:")
   cJson.images.forEach((image, ix) => {
     if (image.width < areaWidth || image.height < areaHeight) {
       logError("small images are not supported")
@@ -214,7 +223,7 @@ function sizeImages() {
   })
 
   // Scroll the current image into view.
-  log(`Leftedge: ${leftEdges[imageIx]}`)
+  log(`Current image left edge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   log(`area.scrollLeft: ${two(area.scrollLeft)}`)
 }
@@ -252,7 +261,7 @@ window.addEventListener('touchstart', (event) => {
     startScrollLeft = area.scrollLeft;
     startScrollX = event.touches[0].clientX;
     startScrollY = event.touches[0].clientY;
-    log(`touchstart: start scrolling ${imageIx+1}, startScrollLeft: ${startScrollLeft}`)
+    log(`touchstart: scroll image: ${imageIx+1}, startScrollLeft: ${startScrollLeft}`)
     // log(`touchstart: startScrollX: ${two(startScrollX)}`)
   }
 
