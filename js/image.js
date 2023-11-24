@@ -2,24 +2,26 @@
 
 // Javascript for the image page.
 
-// cJson is defined in the image html page.
+// cJson and cJsonOriginal are defined in the image html page.
 
 // The current image index into the json list of images.
-var imageIx = null
+let imageIx = null
 
 // The available screen area.
-var areaWidth = null
-var areaHeight = null
+let areaWidth = null
+let areaHeight = null
 
 // The minimum amount of image to keep visible when zooming and
 // panning.
-var minVisible = null
+let minVisible = null
 
 // The left edges (scroll positions) of the images in the area.
-var leftEdges = []
+let leftEdges = []
 
 // The start time used for timing.
 const startTime = performance.now()
+
+let area = null
 
 window.addEventListener("load", loadEvent)
 
@@ -53,6 +55,8 @@ function two(num) {
 async function loadEvent() {
   // The page finished loading, setup and size things.
   logStartupTime(`loadEvent: json contains ${cJson.images.length} images`, startTime)
+
+  area = get("area")
 
   // Disable the default browser zoom and pan behavior.
   get("image-page").setAttribute("touch-action", "none")
@@ -130,14 +134,13 @@ function sizeImageArea() {
   minVisible = areaWidth / 4
 
   // Size the image area to the available screen area.
-  const area = get("area")
   area.style.width = `${areaWidth}px`
   area.style.height = `${areaHeight}px`
   log(`Area size: ${areaWidth} x ${areaHeight}`)
 }
 
 function getZoomPoint(cjson=cJson) {
-  // Return the zoom point for the given image index.
+  // Return the zoom point for the current image index.
   const zoom_w_h = `${areaWidth}x${areaHeight}`
   const zoomPoints = cjson.zoomPoints[zoom_w_h]
   return zoomPoints[imageIx]
@@ -194,7 +197,7 @@ function sizeImages() {
       zoomPoint = zoomPoints[ix]
     }
 
-    // Set the image to its zoom point.
+    // Size the image to its zoom point.
     const img = get(`i${ix+1}`)
     img.style.width = `${zoomPoint.width}px`
     img.style.height = `${zoomPoint.height}px`
@@ -211,7 +214,6 @@ function sizeImages() {
   })
 
   // Scroll the current image into view.
-  const area = get("area")
   log(`Leftedge: ${leftEdges[imageIx]}`)
   area.scrollLeft = leftEdges[imageIx]
   log(`area.scrollLeft: ${two(area.scrollLeft)}`)
@@ -486,12 +488,10 @@ function horizontalScrollMove(event) {
     currentScrollLeft = 0;
   }
 
-  const area = get("area")
   area.scrollLeft = currentScrollLeft;
 }
 
 function horizontalScrollEnd(event) {
-  const area = get("area")
   log(`ScrollEnd: currentScrollLeft: ${two(currentScrollLeft)}`);
 
   // Scroll to the left edge of the next, previous or current page.
@@ -515,10 +515,10 @@ function horizontalScrollEnd(event) {
 
   log(`ScrollEnd: animate from ${two(startLeft)} to ${finishLeft}`);
 
-  // The maximum time for the animation.
+  // The maximum number of seconds for the animation.
   const maxDuration = 1.5;
 
-  // The frame rate as frames per second.
+  // The animation frames per second.
   const framesPerSec = 30;
 
   // The maximum distance is half the screen width.  If you scroll
@@ -581,7 +581,7 @@ function horizontalScrollEnd(event) {
 }
 
 function distanceList(start, finish, numberSteps) {
-  // Evenly Divide the start to finish range into the given number of
+  // Evenly divide the start to finish range into the given number of
   // steps. Don't include the start and always include the finish.
   let steps = [];
   const range = finish - start;
