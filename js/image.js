@@ -129,7 +129,8 @@ function sizeImageArea() {
   // the toolbar area to be used, however, the area width and height
   // doesn't see this extra space. On a pwa, add the extra area.
   // todo: how do you determine the toolbar height? replace the 60.
-  if (window.matchMedia('(display-mode: standalone)').matches) {
+  if (areaHeight > areaWidth && window.matchMedia(
+      '(display-mode: standalone)').matches) {
     areaHeight += 60
     log("Add 60 to height for top bar")
   }
