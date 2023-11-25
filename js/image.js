@@ -18,6 +18,7 @@ window.addEventListener("load", handleLoad)
 window.addEventListener('touchstart', handleTouchStart)
 window.addEventListener('restoreimage', handleRestoreImage, false)
 window.addEventListener('touchmove', handleTouchMove, {passive: false})
+window.addEventListener("resize", handleResize);
 document.addEventListener('touchend', handleTouchEnd, false)
 document.addEventListener('touchcancel', handleTouchCancel, false)
 screen.orientation.addEventListener("change", handleChange)
@@ -465,19 +466,6 @@ function handleTouchEnd(event) {
   }
 }
 
-function handleChange(event) {
-  // When the phone orientation changes, update the image area and
-  // size the images.
-  const start = new Timer()
-  const type = event.target.type;
-  const angle = event.target.angle;
-  start.log(`ScreenOrientation change: ${type}, ${angle} degrees.`)
-  sizeImageArea()
-  start.log("sizeImages")
-  sizeImages()
-  start.log("ScreenOrientation done")
-}
-
 function copyJson() {
   // Copy the json data to the clipboard.
   log("Copy json to the clipboard");
@@ -607,4 +595,22 @@ function distanceList(start, finish, numberSteps) {
   }
   steps.push(finish);
   return steps;
+}
+
+function handleChange(event) {
+  const type = event.target.type;
+  const angle = event.target.angle;
+  log(`change: ${type}, ${angle} degrees.`)
+}
+
+function handleResize() {
+  // When the phone orientation changes, update the image area and
+  // size the images.
+  const start = new Timer()
+  start.log("resize")
+
+  sizeImageArea()
+  start.log("sizeImages")
+  sizeImages()
+  start.log("resize  done")
 }
