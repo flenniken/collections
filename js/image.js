@@ -231,7 +231,6 @@ function SetDetails() {
   const image = cJson.images[imageIx]
   get('title').innerHTML = image.title
   get('description').innerHTML = image.description
-  get('size').innerHTML = `${areaWidth} x ${areaHeight}`
 }
 
 // Zoom and pan variables.
