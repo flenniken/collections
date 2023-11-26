@@ -257,8 +257,13 @@ let hscroll = {
 function handleTouchStart(event) {
   // Handle the touchstart event.
 
-  // Remember the position incase we are starting to horizontal scroll.
-  if (!hscroll.scrolling) {
+  if (hscroll.scrolling) {
+    // When scrolling and two fingers go down, continue scrolling.
+    if (event.touches.length != 1) {
+      return
+    }
+  } else {
+    // Remember the position incase we are starting to horizontal scroll.
     hscroll.startScrollLeft = area.scrollLeft;
     hscroll.startX = event.touches[0].clientX;
     hscroll.startY = event.touches[0].clientY;
@@ -354,14 +359,15 @@ function handleTouchMove(event) {
   if (hscroll.scrolling) {
     horizontalScrollMove(event)
     return
-  }
-  // Determine whether horizontal scrolling is starting.
-  const dx = Math.abs(hscroll.startX - event.touches[0].clientX)
-  const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
-  if (dx > dy) {
-    hscroll.scrolling = true;
-    horizontalScrollMove(event)
-    return
+  } else if (!zpan.zooming) {
+    // Determine whether horizontal scrolling is starting.
+    const dx = Math.abs(hscroll.startX - event.touches[0].clientX)
+    const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
+    if (dx > dy) {
+      hscroll.scrolling = true;
+      horizontalScrollMove(event)
+      return
+    }
   }
 
   if (event.touches.length != 2)
@@ -444,7 +450,7 @@ function handleTouchCancel(event) {
 function handleTouchEnd(event) {
   log("touchend")
   if (hscroll.scrolling) {
-    horizontalScrollEnd(event)
+    horizontalScrollEnd()
     return
   }
 
@@ -459,11 +465,13 @@ function handleTouchEnd(event) {
   }
 }
 
-function copyJson() {
-  // Copy the json data to the clipboard.
-  log("Copy json to the clipboard");
+function logJson() {
+  // Log the current json.
   const msg = JSON.stringify(cJson, null, 2)
-  navigator.clipboard.writeText(msg);
+  log(msg)
+
+  // log("Copy json to the clipboard");
+  // navigator.clipboard.writeText(msg);
 }
 
 function horizontalScrollMove(event) {
@@ -486,7 +494,7 @@ function horizontalScrollMove(event) {
   area.scrollLeft = hscroll.currentScrollLeft;
 }
 
-function horizontalScrollEnd(event) {
+function horizontalScrollEnd() {
   log(`ScrollEnd: hscroll.currentScrollLeft: ${two(hscroll.currentScrollLeft)}`);
 
   // Scroll to the left edge of the next, previous or current page.
