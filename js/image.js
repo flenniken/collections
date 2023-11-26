@@ -449,7 +449,7 @@ function handleTouchCancel(event) {
 
 function handleTouchEnd(event) {
   log("touchend")
-  if (hscroll.scrolling) {
+  if (event.touches.length == 0 && hscroll.scrolling) {
     horizontalScrollEnd()
     return
   }
