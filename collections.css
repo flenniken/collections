@@ -4,7 +4,7 @@ body {
   padding: 0;
 }
 
-#details {
+.details {
   margin: 50px;
   font-size: 2em;
 }
@@ -12,3 +12,19 @@ body {
 .container {
     background-color: gray;
 }
+
+.title {
+  font-size: 2em;
+  text-align: center;
+}
+
+.description {
+  margin: 0 1em 1em 1em;
+  font-size: 1.5em;
+}
+
+#menu {
+  margin: 0 1em 1em 1em;
+  font-size: 2em;
+}
+

@@ -21,12 +21,15 @@ body {
   display: flex;
   overflow-x: hidden;
 }
-.container {
+.colbox {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
     min-width: 100%;
-    overflow: hidden;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+}
+.container {
     position: relative;
+    overflow: hidden;
 }
 .container img {
     position: absolute;
@@ -46,16 +49,16 @@ body {
 <!--$ : t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
-    <div class="container" id="c{id}">
-      <img id="i{id}" src="{image.url}">
+    <div class="colbox" id="cb{id}">
+      <div class="container" id="c{id}">
+        <img id="i{id}" src="{image.url}">
+      </div>
+      <h3 class="title">{image.title}</h3>
+      <p class="description">{image.description}</p>
     </div>
 <!--$ endblock -->
   </div>
-<!--$ block -->
-<!--$ : image = s.images[0] -->
-  <div id="details">
-    <h3 id="title">{image.title}</h3>
-    <p id="description">{image.description}</p>
+  <div id="menu">
     <ul>
       <li><a href="../index.html">Home</a></li>
       <li><a href="{s.thumbnailsUrl}">Thumbnails</a></li>
@@ -63,6 +66,5 @@ body {
       <li><a href="#" onclick="copyJson()">Copy Json</a></li>
     </ul>
   </div>
-<!--$ endblock -->
 </body>
 </html>

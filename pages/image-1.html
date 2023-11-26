@@ -20,12 +20,15 @@ body {
   display: flex;
   overflow-x: hidden;
 }
-.container {
+.colbox {
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
     min-width: 100%;
-    overflow: hidden;
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+}
+.container {
     position: relative;
+    overflow: hidden;
 }
 .container img {
     position: absolute;
@@ -38,37 +41,67 @@ body {
 </head>
 <body id="image-page">
   <div id="area">
-    <div class="container" id="c1">
-      <img id="i1" src="../images/1-p.jpg">
+    <div class="colbox" id="cb1">
+      <div class="container" id="c1">
+        <img id="i1" src="../images/1-p.jpg">
+      </div>
+      <h3 class="title">Many Glaciers Fireplace</h3>
+      <p class="description">I was amazed how well the fireplace hood worked. The one we made for the cabin smoked like crazy. We cut it up and turned it into a planter.</p>
     </div>
-    <div class="container" id="c2">
-      <img id="i2" src="../images/2-p.jpg">
+    <div class="colbox" id="cb2">
+      <div class="container" id="c2">
+        <img id="i2" src="../images/2-p.jpg">
+      </div>
+      <h3 class="title">Swiftcurrent Lake</h3>
+      <p class="description">A mountain view south from Many Glaciers Logde over Swiftcurrent Lake.</p>
     </div>
-    <div class="container" id="c3">
-      <img id="i3" src="../images/3-p.jpg">
+    <div class="colbox" id="cb3">
+      <div class="container" id="c3">
+        <img id="i3" src="../images/3-p.jpg">
+      </div>
+      <h3 class="title">Many Glaciers Lodge</h3>
+      <p class="description">This is the south wing of the lodge.  We stayed in the room one from the end with a deck looking at the camera. We didn't have a view of the lake, instead we had a great view of the mountains.</p>
     </div>
-    <div class="container" id="c4">
-      <img id="i4" src="../images/4-p.jpg">
+    <div class="colbox" id="cb4">
+      <div class="container" id="c4">
+        <img id="i4" src="../images/4-p.jpg">
+      </div>
+      <h3 class="title">Mount Grinnell</h3>
+      <p class="description">Mount Grinnel is right across the lake from the lodge.</p>
     </div>
-    <div class="container" id="c5">
-      <img id="i5" src="../images/5-p.jpg">
+    <div class="colbox" id="cb5">
+      <div class="container" id="c5">
+        <img id="i5" src="../images/5-p.jpg">
+      </div>
+      <h3 class="title">Mount Henkel</h3>
+      <p class="description">We walked around Swiftcurrent Lake and Lake Josephine. They are connected with a slow moving river. That is where this picture was taken.</p>
     </div>
-    <div class="container" id="c6">
-      <img id="i6" src="../images/6-p.jpg">
+    <div class="colbox" id="cb6">
+      <div class="container" id="c6">
+        <img id="i6" src="../images/6-p.jpg">
+      </div>
+      <h3 class="title">Moose Land</h3>
+      <p class="description">We saw a moose on the far side of the lake and Kathleen filmed it.</p>
     </div>
-    <div class="container" id="c7">
-      <img id="i7" src="../images/7-p.jpg">
+    <div class="colbox" id="cb7">
+      <div class="container" id="c7">
+        <img id="i7" src="../images/7-p.jpg">
+      </div>
+      <h3 class="title">Lake Trail</h3>
+      <p class="description">This is a trail around the lakes near the Many Glaciers Lodge.</p>
     </div>
-    <div class="container" id="c8">
-      <img id="i8" src="../images/8-p.jpg">
+    <div class="colbox" id="cb8">
+      <div class="container" id="c8">
+        <img id="i8" src="../images/8-p.jpg">
+      </div>
+      <h3 class="title">Two Red Rocks</h3>
+      <p class="description">The two red rocks are having a great time playing and sliding down the hill into the river. They’re living at a time scale that’s hard for us to imagine. We saw two other red rocks swimming in the lake but I didn’t get a picture of that.</p>
     </div>
   </div>
-  <div id="details">
-    <h3 id="title">Many Glaciers Fireplace</h3>
-    <p id="description">I was amazed how well the fireplace hood worked. The one we made for the cabin smoked like crazy. We cut it up and turned it into a planter.</p>
+  <div id="menu">
     <ul>
       <li><a href="../index.html">Home</a></li>
-      <li><a href="../pages/thumbnails-1.html">Thumbnails</a></li>
+      <li><a href="{s.thumbnailsUrl}">Thumbnails</a></li>
       <li><a href="#" onclick="location.reload(true)">Refresh</a></li>
       <li><a href="#" onclick="copyJson()">Copy Json</a></li>
     </ul>

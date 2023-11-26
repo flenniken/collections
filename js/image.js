@@ -8,8 +8,8 @@
 let imageIx = null
 
 // The available screen area.
-let areaWidth = null
-let areaHeight = null
+let availWidth = null
+let availHeight = null
 
 // The area element.
 let area = null
@@ -71,8 +71,8 @@ async function handleLoad() {
 
   setFirstImage()
 
-  startTimer.log("sizeImageArea")
-  sizeImageArea()
+  startTimer.log("setAvailableArea")
+  setAvailableArea()
 
   startTimer.log("sizeImages")
   sizeImages()
@@ -103,49 +103,46 @@ function setFirstImage() {
   log(`First image: ${imageIx + 1}`)
 }
 
-function sizeImageArea() {
-  // Size the image area to the size of the usable screen.
+function setAvailableArea() {
+  // Size the image area to the size of the usable screen. Return
+  // false when the size did not change.
 
   // Get the available screen width and height and store them in
-  // globals, areaWidth and areaHeight.
-
-  // // Log some interesting sizes.
-  // const sizes = [
-  //   [window.innerWidth, window.innerHeight, 'window.innerWidth x ...innerHeight'],
-  //   [window.screen.availWidth, window.screen.availHeight, 'window.screen.availWidth x ...availHeight'],
-  //   [document.documentElement.clientWidth, document.documentElement.clientHeight,
-  //     'document.documentElement.clientWidth x ...clientHeight'],
-  //   [document.body.clientWidth, document.body.clientHeight, 'document.body.clientWidth x ...clientHeight'],
-  // ]
-  // sizes.forEach((size, ix) => {
-  //   const [w, h, msg] = size
-  //   log(`${w} x ${h}: ${msg}`)
-  // })
-
-  areaWidth = document.documentElement.clientWidth
-  areaHeight = document.documentElement.clientHeight
+  // globals, availWidth and availHeight.
+  const availW = document.documentElement.clientWidth
+  let availH = document.documentElement.clientHeight
 
   // On a PWA the apple-mobile-web-app-status-bar-style setting allows
   // the toolbar area to be used, however, the area width and height
   // doesn't see this extra space. On a pwa, add the extra area.
   // todo: how do you determine the toolbar height? replace the 60.
-  if (areaHeight > areaWidth && window.matchMedia(
+  if (availH > availW && window.matchMedia(
       '(display-mode: standalone)').matches) {
-    areaHeight += 60
+    availH += 60
     log("Add 60 to height for top bar")
   }
 
-  zpan.minVisible = areaWidth / 4
+  // Check whether the size changed.
+  if (availW == availWidth && availH == availHeight) {
+    log(`Available size is the same: ${availWidth} x ${availHeight}`)
+    return false
+  }
+
+  availWidth = availW
+  availHeight = availH
+
+  zpan.minVisible = availWidth / 4
 
   // Size the image area to the available screen area.
-  area.style.width = `${areaWidth}px`
-  area.style.height = `${areaHeight}px`
-  log(`Area size: ${areaWidth} x ${areaHeight}`)
+  area.style.width = `${availWidth}px`
+  // area.style.height = `${availHeight}px`
+  log(`Available screen size: ${availWidth} x ${availHeight}`)
+  return true
 }
 
 function getZoomPoint(cjson=cJson) {
   // Return the zoom point for the current image index.
-  const zoom_w_h = `${areaWidth}x${areaHeight}`
+  const zoom_w_h = `${availWidth}x${availHeight}`
   const zoomPoints = cjson.zoomPoints[zoom_w_h]
   return zoomPoints[imageIx]
 }
@@ -155,12 +152,13 @@ function sizeImages() {
   // when missing.
 
   let edge = 0
-  const zoom_w_h = `${areaWidth}x${areaHeight}`
+  const zoom_w_h = `${availWidth}x${availHeight}`
 
   let zoomPoints
   const needZoomPoints = zoom_w_h in cJson.zoomPoints ? false : true
   if (needZoomPoints) {
-    log("Creating zoom points")
+    log("No zoom points for this size, create new zoom points.")
+    log(`Existing zoom points: ${Object.keys(cJson.zoomPoints)}`)
     zoomPoints = []
     cJson.zoomPoints[zoom_w_h] = zoomPoints
   }
@@ -171,17 +169,20 @@ function sizeImages() {
   hscroll.leftEdges.length = 0
   log("Image zoom points:")
   cJson.images.forEach((image, ix) => {
-    if (image.width < areaWidth || image.height < areaHeight) {
+    if (image.width < availWidth || image.height < availHeight) {
       logError("small images are not supported")
     }
 
     // Save the position of the left edge of all the images.
     hscroll.leftEdges.push(edge)
 
+    const colbox = get(`cb${ix+1}`)
+    colbox.style.width = `${availWidth}px`
+
     // Size all the containers to the size of the area.
     const container = get(`c${ix+1}`)
-    container.style.width = `${areaWidth}px`
-    container.style.height = `${areaHeight}px`
+    container.style.width = `${availWidth}px`
+    container.style.height = `${availHeight}px`
 
     // Create or fetch the zoom point for the image.
     let zoomPoint
@@ -189,10 +190,10 @@ function sizeImages() {
       // Create a zoom point where the image fits the screen.
       zoomPoint = {}
       // Fit the long side to the container.
-      if (image.width - areaWidth > image.height - areaHeight) {
-        zoomPoint.scale = areaWidth / image.width
+      if (image.width - availWidth > image.height - availHeight) {
+        zoomPoint.scale = availWidth / image.width
       } else {
-        zoomPoint.scale = areaHeight / image.height
+        zoomPoint.scale = availHeight / image.height
       }
       zoomPoint.tx = 0
       zoomPoint.ty = 0
@@ -211,11 +212,11 @@ function sizeImages() {
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
 
     // Log the zoom point.
-    log(`i${ix+1}: ${areaWidth} x ${areaHeight}, ` +
+    log(`i${ix+1}: ${availWidth} x ${availHeight}, ` +
                 `scale: ${two(zoomPoint.scale)}, ` +
                 `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
 
-    edge += areaWidth
+    edge += availWidth
   })
 
   // Scroll the current image into view.
@@ -223,14 +224,6 @@ function sizeImages() {
   area.scrollLeft = hscroll.leftEdges[imageIx]
   log(`area.scrollLeft: ${two(area.scrollLeft)}`)
   log(`hscroll.leftEdges: ${hscroll.leftEdges}`)
-}
-
-function SetDetails() {
-  // Update the page details for the current image.
-
-  const image = cJson.images[imageIx]
-  get('title').innerHTML = image.title
-  get('description').innerHTML = image.description
 }
 
 // Zoom and pan variables.
@@ -401,8 +394,8 @@ function handleTouchMove(event) {
     zpan.current.scale = 1.0
   let newIw = image.width * zpan.current.scale
   let newIh = image.height * zpan.current.scale
-  if (newIw < areaWidth / 2) {
-    zpan.current.scale = (areaWidth / 2) / image.width
+  if (newIw < availWidth / 2) {
+    zpan.current.scale = (availWidth / 2) / image.width
     newIw = image.width * zpan.current.scale
     newIh = image.height * zpan.current.scale
   }
@@ -418,11 +411,11 @@ function handleTouchMove(event) {
   let ty = zpan.start.ty - (movedCt.cy - zpan.start.cy) + (zpan.current.cy - zpan.start.cy)
 
   // Keep some of the image visible.
-  if (tx > areaWidth - zpan.minVisible) {
-    tx = areaWidth - zpan.minVisible
+  if (tx > availWidth - zpan.minVisible) {
+    tx = availWidth - zpan.minVisible
   }
-  if (ty > areaHeight - zpan.minVisible) {
-    ty = areaHeight - zpan.minVisible
+  if (ty > availHeight - zpan.minVisible) {
+    ty = availHeight - zpan.minVisible
   }
   const rightEdge = tx + newIw
   if (rightEdge < zpan.minVisible) {
@@ -479,8 +472,8 @@ function horizontalScrollMove(event) {
   hscroll.currentScrollLeft = hscroll.startScrollLeft + hscroll.startX - currentScrollX
 
   // // Limit movement to one page.
-  const before = hscroll.startScrollLeft - areaWidth
-  const after = hscroll.startScrollLeft + areaWidth
+  const before = hscroll.startScrollLeft - availWidth
+  const after = hscroll.startScrollLeft + availWidth
   if (hscroll.currentScrollLeft < before)
     hscroll.currentScrollLeft = before;
   else if (hscroll.currentScrollLeft > after)
@@ -498,10 +491,10 @@ function horizontalScrollEnd(event) {
 
   // Scroll to the left edge of the next, previous or current page.
   let addition;
-  if (hscroll.currentScrollLeft > hscroll.startScrollLeft + areaWidth / 2) {
-    addition = areaWidth;
-  } else if (hscroll.currentScrollLeft < hscroll.startScrollLeft - areaWidth / 2) {
-    addition = -areaWidth;
+  if (hscroll.currentScrollLeft > hscroll.startScrollLeft + availWidth / 2) {
+    addition = availWidth;
+  } else if (hscroll.currentScrollLeft < hscroll.startScrollLeft - availWidth / 2) {
+    addition = -availWidth;
   } else {
     addition = 0;
   }
@@ -526,7 +519,7 @@ function horizontalScrollEnd(event) {
   // The maximum distance is half the screen width.  If you scroll
   // past the middle, you go to the next image and less than half you
   // go back.
-  const maxDistance = areaWidth / 2;
+  const maxDistance = availWidth / 2;
   const maxFrames = maxDuration * framesPerSec;
   // log(`ScrollEnd: maxDuration: ${maxDuration}, framesPerSec: ${framesPerSec}, ` +
   //     `maxDistance: ${maxDistance}, maxFrames: ${maxFrames}`);
@@ -575,7 +568,6 @@ function horizontalScrollEnd(event) {
       else {
         imageIx = ix
         log(`ScrollEnd: scroll done: area.scrollLeft: ${area.scrollLeft}, image: ${imageIx+1}`);
-        SetDetails()
       }
     }
     hscroll.scrolling = false;
@@ -609,8 +601,10 @@ function handleResize() {
   const start = new Timer()
   start.log("resize")
 
-  sizeImageArea()
-  start.log("sizeImages")
-  sizeImages()
+  const changed = setAvailableArea()
+  if (changed) {
+    start.log("sizeImages")
+    sizeImages()
+  }
   start.log("resize  done")
 }
