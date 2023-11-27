@@ -497,23 +497,7 @@ function horizontalScrollMove(event) {
   hscroll.currentX = event.touches[0].clientX;
   hscroll.currentScrollLeft = hscroll.startScrollLeft + hscroll.startX - hscroll.currentX
 
-  // scrollLeft cannot go past the ends.
-  // Limit movement to one page plus a little at the ends.
-  // const before = hscroll.startScrollLeft - availWidth
-  // const after = hscroll.startScrollLeft + availWidth
-  // const firstImageEdge = 0
-  // const lastImageEdge = hscroll.leftEdges[cJson.images.length - 1]
-  // const beforeExtra = firstImageEdge - hscroll.extra
-  // const afterExtra = lastImageEdge + availWidth + hscroll.extra
-  // if (hscroll.startScrollLeft == firstImageEdge && hscroll.currentScrollLeft < beforeExtra)
-  //   hscroll.currentScrollLeft = beforeExtra;
-  // else if (hscroll.startScrollLeft == lastImageEdge && hscroll.currentScrollLeft > afterExtra)
-  //   hscroll.currentScrollLeft = afterExtra;
-  // else if (hscroll.currentScrollLeft < before)
-  //   hscroll.currentScrollLeft = before;
-  // else if (hscroll.currentScrollLeft > after)
-  //   hscroll.currentScrollLeft = after;
-
+  // scrollLeft cannot go past the ends so no need to adjust it.
   area.scrollLeft = hscroll.currentScrollLeft;
 }
 
