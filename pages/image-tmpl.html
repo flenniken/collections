@@ -1,3 +1,4 @@
+<!--$ replace t.content = o.header -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +9,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style"
       content="black-translucent">
-<!--$ nextline -->
   <title>{s.title}</title>
+<!--$ endblock -->
   <link rel="stylesheet" href="../collections.css">
   <script type="text/javascript" src="../js/image.js"></script>
   <style>
@@ -61,6 +62,7 @@ body {
   <div id="menu">
     <ul>
       <li><a href="../index.html">Home</a></li>
+<!--$ nextline -->
       <li><a href="{s.thumbnailsUrl}">Thumbnails</a></li>
       <li><a href="#" onclick="location.reload(true)">Refresh</a></li>
       <li><a href="#" onclick="logJson()">Log Json</a></li>

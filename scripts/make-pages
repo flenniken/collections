@@ -1,13 +1,20 @@
 #!/bin/bash
 
 # Create the main index page.
-statictea -t index-tmpl.html -s collections.json -r index.html
+statictea -t index-tmpl.html \
+  -s collections.json \
+  -o header.tea \
+  -r index.html
 
 # Create the thumbnails page.
-statictea -t pages/thumbnails-tmpl.html -s pages/collection-1.json -r pages/thumbnails-1.html
+statictea -t pages/thumbnails-tmpl.html \
+  -s pages/collection-1.json \
+  -o header.tea \
+  -r pages/thumbnails-1.html
 
 # Create the image page.
 statictea -t pages/image-tmpl.html \
   -s pages/collection-1.json \
+  -o header.tea \
   -r pages/image-1.html
 
