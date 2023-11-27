@@ -24,7 +24,9 @@ document.addEventListener('touchcancel', handleTouchCancel, false)
 screen.orientation.addEventListener("change", handleChange)
 
 class Timer {
-  // Time how many seconds code takes to run.
+  // Time how long code takes to run, accurate to about thousands of a
+  // second.  Note: use date() instead of performance() for
+  // microseconds accuracy.
   constructor() {
     this.start = performance.now()
   }
@@ -32,7 +34,7 @@ class Timer {
     return (performance.now() - this.start) / 1000.0
   }
   log(message) {
-    const sec3 = this.seconds().toFixed(3)
+    const sec3 = three(this.seconds())
     log(`${sec3}s ----- ${message}`)
   }
 }
@@ -60,9 +62,14 @@ function two(num) {
   return num.toFixed(2)
 }
 
+function three(num) {
+  // Return the number rounded to three decimal places.
+  return num.toFixed(3)
+}
+
 async function handleLoad() {
   // The page finished loading, setup and size things.
-  startTimer.log(`load: the collection contains ${cJson.images.length} images`)
+  startTimer.log(`load event; the collection contains ${cJson.images.length} images`)
 
   area = get("area")
 
@@ -119,7 +126,7 @@ function setAvailableArea() {
   if (availH > availW && window.matchMedia(
       '(display-mode: standalone)').matches) {
     availH += 60
-    log("Add 60 to height for top bar")
+    log("Add 60 to height for the top bar.")
   }
 
   // Check whether the size changed.
@@ -220,9 +227,8 @@ function sizeImages() {
   })
 
   // Scroll the current image into view.
-  log(`Current image left edge: ${hscroll.leftEdges[imageIx]}`)
   area.scrollLeft = hscroll.leftEdges[imageIx]
-  log(`area.scrollLeft: ${two(area.scrollLeft)}`)
+  log(`area.scrollLeft: ${area.scrollLeft}`)
   log(`hscroll.leftEdges: ${hscroll.leftEdges}`)
 }
 
@@ -245,31 +251,42 @@ let doubleClick = null
 
 // Horizontal scrolling variables.
 let hscroll = {
+  // Flick the image when the scrolling speed is above this pixels per millisecond.
+  "minFlick": 1.0,
+  // The animation frames per second.
+  "framesPerSec": 30,
+  // The maximum number of seconds for the animation.
+  "maxDuration": 1.5,
+
+
+  "scrolling": false,
   // The left edges (x scroll positions) of the images in the area.
   "leftEdges": [],
-  "scrolling": false,
-  "startScrollLeft": null,
+  // The touch position when scrolling starts and ends.
   "startX": null,
   "startY": null,
+  "currentX": null,
+  // The touch times when scrolling starts and ends.
+  "startXTime": null,
+  "currentXTime": null,
+  // The horizontal scroll positions when scrolling starts and ends.
+  "startScrollLeft": null,
   "currentScrollLeft": 0,
 }
 
 function handleTouchStart(event) {
   // Handle the touchstart event.
 
-  if (hscroll.scrolling) {
-    // When scrolling and two fingers go down, continue scrolling.
-    if (event.touches.length != 1) {
-      return
-    }
-  } else {
-    // Remember the position incase we are starting to horizontal scroll.
-    hscroll.startScrollLeft = area.scrollLeft;
-    hscroll.startX = event.touches[0].clientX;
-    hscroll.startY = event.touches[0].clientY;
-    log(`touchstart: scroll image: ${imageIx+1}, hscroll.startScrollLeft: ${hscroll.startScrollLeft}`)
-    // log(`touchstart: hscroll.startX: ${two(hscroll.startX)}`)
-  }
+  if (hscroll.scrolling)
+    return
+
+  // Remember the horizontal scroll position incase we are starting to
+  // scroll.
+  hscroll.startScrollLeft = area.scrollLeft;
+  hscroll.currentX = hscroll.startX = event.touches[0].clientX;
+  hscroll.currentXTime = hscroll.startXTime = performance.now()
+  hscroll.startY = event.touches[0].clientY;
+  log(`touchstart: scroll image: ${imageIx+1}, hscroll.startScrollLeft: ${hscroll.startScrollLeft}`)
 
   // Start timer on first click. If second click comes before .5
   // seconds, it’s a double click. Only consider one finger cases.
@@ -298,25 +315,21 @@ function handleTouchStart(event) {
   // fingers are down.
   event.preventDefault()
 
-  // Log the client x and y values.
+  // Save the point centered between the two fingers, the distance
+  // between them, the current translation and the current scale.
   const clientX0 = event.touches[0].clientX
   const clientX1 = event.touches[1].clientX
   const clientY0 = event.touches[0].clientY
   const clientY1 = event.touches[1].clientY
-  // log(`touchstart: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
-
-  const image = cJson.images[imageIx]
-  const zoomPoint = getZoomPoint()
-
-  // Save the point centered between the two fingers, the distance
-  // between them, the current translation and the current scale.
   zpan.start.cx = (clientX0 + clientX1) / 2
   zpan.start.cy = (clientY0 + clientY1) / 2
   zpan.start.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+  const zoomPoint = getZoomPoint()
   zpan.start.scale = zoomPoint.scale
   zpan.start.tx = zoomPoint.tx
   zpan.start.ty = zoomPoint.ty
 
+  const image = cJson.images[imageIx]
   log(`i${imageIx+1}: touchstart: c: (${two(zpan.start.cx)}, ${two(zpan.start.cy)}) ` +
               `d: ${two(zpan.start.distance)}, scale: ${two(zpan.start.scale)}, ` +
               `t: (${two(zpan.start.tx)}, ${two(zpan.start.ty)})`)
@@ -365,6 +378,7 @@ function handleTouchMove(event) {
     const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
     if (dx > dy) {
       hscroll.scrolling = true;
+      doubleClick = null
       horizontalScrollMove(event)
       return
     }
@@ -476,8 +490,10 @@ function logJson() {
 
 function horizontalScrollMove(event) {
   event.preventDefault();
-  const currentScrollX = event.touches[0].clientX;
-  hscroll.currentScrollLeft = hscroll.startScrollLeft + hscroll.startX - currentScrollX
+
+  hscroll.currentXTime = performance.now()
+  hscroll.currentX = event.touches[0].clientX;
+  hscroll.currentScrollLeft = hscroll.startScrollLeft + hscroll.startX - hscroll.currentX
 
   // // Limit movement to one page.
   const before = hscroll.startScrollLeft - availWidth
@@ -495,11 +511,24 @@ function horizontalScrollMove(event) {
 }
 
 function horizontalScrollEnd() {
+  // If the last move was big and fast, flick the image to the next
+  // one.
+  const hDuration = hscroll.currentXTime  - hscroll.startXTime
+  const dx = hscroll.currentX - hscroll.startX
+  const pps = dx / hDuration
+  log(`ScrollEnd: pps: ${two(pps)}, dx: ${dx}, hDuration: ${three(hDuration/1000)}s`)
   log(`ScrollEnd: hscroll.currentScrollLeft: ${two(hscroll.currentScrollLeft)}`);
+  log(`ScrollEnd: hscroll.currentX: ${hscroll.currentX}, hscroll.startX: ${hscroll.startX},  ` +
+      `hscroll.currentXTime: ${Math.floor(hscroll.currentXTime)}, ` +
+      `hscroll.startXTime: ${Math.floor(hscroll.startXTime)}`)
+  const flick = (Math.abs(pps) > hscroll.minFlick)
 
   // Scroll to the left edge of the next, previous or current page.
   let addition;
-  if (hscroll.currentScrollLeft > hscroll.startScrollLeft + availWidth / 2) {
+  if (flick) {
+    log("Flick the image.")
+    addition = (dx > 0) ? -availWidth : availWidth
+  } else if (hscroll.currentScrollLeft > hscroll.startScrollLeft + availWidth / 2) {
     addition = availWidth;
   } else if (hscroll.currentScrollLeft < hscroll.startScrollLeft - availWidth / 2) {
     addition = -availWidth;
@@ -518,19 +547,11 @@ function horizontalScrollEnd() {
 
   log(`ScrollEnd: animate from ${two(startLeft)} to ${finishLeft}`);
 
-  // The maximum number of seconds for the animation.
-  const maxDuration = 1.5;
-
-  // The animation frames per second.
-  const framesPerSec = 30;
-
   // The maximum distance is half the screen width.  If you scroll
   // past the middle, you go to the next image and less than half you
   // go back.
   const maxDistance = availWidth / 2;
-  const maxFrames = maxDuration * framesPerSec;
-  // log(`ScrollEnd: maxDuration: ${maxDuration}, framesPerSec: ${framesPerSec}, ` +
-  //     `maxDistance: ${maxDistance}, maxFrames: ${maxFrames}`);
+  const maxFrames = hscroll.maxDuration * hscroll.framesPerSec;
 
   // Scroll at the same rate no matter the distance. Use the ratio of
   // max frames to max distance equal to the ratio of the frames to
@@ -545,7 +566,7 @@ function horizontalScrollEnd() {
   // log(`frameDistances: ${frameDistances}`);
 
   // Determine the duration of the animation in seconds.
-  const duration = frames / framesPerSec;
+  const duration = frames / hscroll.framesPerSec;
   log(`ScrollEnd: number of frames: ${frameDistances.length}, duration: ${two(duration)} seconds`);
 
   // Animate to the new scroll position.
