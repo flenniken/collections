@@ -74,7 +74,7 @@ async function handleLoad() {
   area = get("area")
 
   // Disable the default browser zoom and pan behavior.
-  get("image-page").setAttribute("touch-action", "none")
+  get("images").setAttribute("touch-action", "none")
 
   setFirstImage()
 

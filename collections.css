@@ -1,29 +1,52 @@
-body {
+#collections {
+  display: flex;
+  flex-direction: column;
+}
+
+#collections #site-title {
+  margin-top: 60px;
+}
+
+#collections .picture {
+  text-aligh: center;
+}
+
+#collections .thumbnail {
+  width: 100%;
+}
+
+#collections .title {
+  font-size: 1.5em;
+}
+
+#collections .description {
   font-size: 1em;
+}
+
+#collections .posted {
+  font-size: .8em;
+}
+
+#images {
   margin: 0;
   padding: 0;
 }
 
-.details {
-  margin: 50px;
-  font-size: 2em;
+#images .container {
+  background-color: gray;
 }
 
-.container {
-    background-color: gray;
-}
-
-.title {
+#images .title {
   font-size: 2em;
   text-align: center;
 }
 
-.description {
+#images .description {
   margin: 0 1em 1em 1em;
   font-size: 1.5em;
 }
 
-#menu {
+#images #menu {
   margin: 0 1em 1em 1em;
   font-size: 2em;
 }

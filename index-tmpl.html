@@ -20,12 +20,9 @@
   <link rel="stylesheet" href="collections.css">
   <link rel="manifest" href="collections.webmanifest">
   <script src="js/collections.js" defer></script>
-  <style>
-    .thumbnail {width: 300px; height: 300px;}
-  </style>
 </head>
-<body id="collections-page">
-  <h1>Flenniken.net Collections</h1>
+<body id="collections">
+  <h1 id="site-title">Flenniken.net Collections</h1>
 <!--$ block -->
 <!--$ : t.repeat = len(s.collections) -->
 <!--$ : collection = s.collections[t.row] -->
@@ -35,105 +32,10 @@
         <img class="thumbnail" src="{collection.thumbnail}" alt="{collection.title}">
       </a>
     </div>
-    <div class="details">
-      <p class="title">{collection.title}</p>
-      <a href="{collection.url}">
-        <p class="description">{collection.description}</p>
-      </a>
-      <p class="posted">{collection.posted}</p>
-    </div>
+    <p class="title">{collection.title}</p>
+    <p class="description">{collection.description}</p>
+    <p class="posted">{collection.posted}</p>
   </div>
 <!--$ endblock -->
-<!--$ # -->
-<!--$ # The next block is for testing. -->
-<!--$ # -->
-<!--$ block -->
-<!--$ : t.maxLines = 200 -->
-<!--$ : t.repeat = 0 -->
-  <div class="collection">
-    <div class="picture">
-      <a href="pages/thumbnails-1.html">
-      <img class="thumbnail" src="images/4-t.jpg" alt="Glacier Park">
-      </a>
-    </div>
-    <div class="details">
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
-      </a>
-      <p class="posted">June 2023</p>
-    </div>
-  </div>
-  <div class="collection">
-    <div class="picture">
-      <a href="pages/thumbnails-1.html">
-      <img class="thumbnail" src="images/5-t.jpg" alt="Glacier Park">
-      </a>
-    </div>
-    <div class="details">
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
-      </a>
-      <p class="posted">June 2023</p>
-    </div>
-  </div>
-    <div class="picture">
-      <a href="pages/thumbnails-1.html">
-      <img class="thumbnail" src="images/6-t.jpg" alt="Glacier Park">
-      </a>
-    </div>
-    <div class="details">
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
-      </a>
-      <p class="posted">June 2023</p>
-    </div>
-  </div>
-    <div class="picture">
-      <a href="pages/thumbnails-1.html">
-      <img class="thumbnail" src="images/6-t.jpg" alt="Glacier Park">
-      </a>
-    </div>
-    <div class="details">
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
-      </a>
-      <p class="posted">June 2023</p>
-    </div>
-  </div>
-    <div class="picture">
-      <a href="pages/thumbnails-1.html">
-      <img class="thumbnail" src="images/6-t.jpg" alt="Glacier Park">
-      </a>
-    </div>
-    <div class="details">
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
-      </a>
-      <p class="posted">June 2023</p>
-    </div>
-  </div>
-    <div class="picture">
-      <a href="pages/thumbnails-1.html">
-      <img class="thumbnail" src="images/6-t.jpg" alt="Glacier Park">
-      </a>
-    </div>
-    <div class="details">
-      <p class="title">Glacier Park</p>
-      <a href="pages/thumbnails-1.html">
-        <p class="description">Photos from Glacier National Park near the Many Glaciers lodge where we stayed for two nights as part of our road trip to Montana in June.</p>
-      </a>
-      <p class="posted">June 2023</p>
-    </div>
-  </div>
-<!--$ endblock -->
-  <div>
-<!--$ nextline -->
-    <p>{s.numberOfCollections} collections</p>
-  </div>
 </body>
 </html>
