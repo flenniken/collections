@@ -8,7 +8,12 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('js/sw.js');
 }
 
-const relatedApps = await navigator.getInstalledRelatedApps();
+const availW = document.documentElement.clientWidth
+let availH = document.documentElement.clientHeight
 
-// Dump all the returned related apps into a table in the console
-console.table(relatedApps);
+if (availH > availW && window.matchMedia(
+    '(display-mode: standalone)').matches) {
+  console.log("running from pwa icon")
+} else {
+  console.log("running from the browser directly")
+}
