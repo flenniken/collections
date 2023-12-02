@@ -1,6 +1,17 @@
 // collections.js
 "use strict";
 
+window.addEventListener("load", handleLoad)
+
+function get(id) {
+  // Get the dom element with the given id.
+  return document.getElementById(id)
+}
+
+function log(message) {
+  // Log the message to the console.
+  console.log(message)
+}
 
 // Register the Service Worker if it is supported.
 if ('serviceWorker' in navigator) {
@@ -8,12 +19,12 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('js/sw.js');
 }
 
-const availW = document.documentElement.clientWidth
-let availH = document.documentElement.clientHeight
+let runningFromIcon = false
 
-if (availH > availW && window.matchMedia(
-    '(display-mode: standalone)').matches) {
-  console.log("running from pwa icon")
-} else {
-  console.log("running from the browser directly")
+function handleLoad() {
+  log("load called")
+  if (window.matchMedia('(display-mode: standalone)').matches) {
+    runningFromIcon = true
+    log("Running from the desktop icon.")
+  }
 }
