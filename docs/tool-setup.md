@@ -79,12 +79,20 @@ CLI version: 2.3.0
 Local version: 4.0.2
 ```
 
-# Uglify
-
-Install the uglify gulp package.
+Install all the modules used in the gulpfile.js file.
 
 ```
-npm install gulp-uglify
+npm install -g npm-install-all
+npm-install-all gulpfile.js
+
+INSTALLING THE FOLLOWING MODULES:
+├──  gulp
+├──  gulp-uglify
+├──  fancy-log
+├──  child_process
+└──  gulp-rsync
+
+MODULES INSTALLED AND SAVED INTO package.json...
 ```
 
 # Build Tasks
