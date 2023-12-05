@@ -8,6 +8,10 @@ gulp.task('showDate', function (cb) {
   return child_process.spawn('date', {stdio: 'inherit'});
 })
 
+gulp.task('clean', function(){
+     return del('dist/**', {force:true});
+});
+
 gulp.task('js', function (cb) {
   return gulp.src(['js/*.js'])
     .pipe(uglify())
@@ -75,18 +79,18 @@ gulp.task('templates', gulp.parallel("index", "thumbnails", "image"));
 
 gulp.task('icons', function() {
   // Copy the icons to dist.
-  return gulp.src('./icons/*.png')
-    .pipe(gulp.dest('./dist/icons'));
+  return gulp.src('icons/*.png')
+    .pipe(gulp.dest('dist/icons'));
 });
 
 gulp.task('images', function() {
   // Copy the images to dist.
-  return gulp.src('./images/*.jpg')
-    .pipe(gulp.dest('./dist/images'));
+  return gulp.src('images/*.jpg')
+    .pipe(gulp.dest('dist/images'));
 });
 
 gulp.task('rsync', function(cb) {
-
+  // Rsync the dest folder to flenniken.net.
   const parameters = [
     "--delete",
     "--progress",
@@ -97,12 +101,27 @@ gulp.task('rsync', function(cb) {
   return child_process.spawn("rsync", parameters, {stdio: 'inherit'});
 });
 
-gulp.task('watch', function (cb) {
-    gulp.watch('js/*.js', js);
-    gulp.watch('images/**', images);
-    cb();
+function onChange(pattern, task) {
+  gulp.watch(pattern).on('change', function(file) {
+    log(`Compiling: ${file}`)
+    gulp.series([task]);
+    log("Done")
+  })
+}
+
+gulp.task('watch', function(cb) {
+  // When a source file changes, compile it into the dest folder.
+
+  onChange('js/*.js', 'js')
+  onChange('collections.css', "css");
+  onChange('index-tmpl.html', "index");
+  onChange('pages/thumbnails-tmpl.html', "thumbnails");
+  onChange('pages/image-tmpl.html', "image");
+  onChange('images/*.jpg', "images");
+  onChange('icons/*.png', "icons");
+
+  cb();
 });
 
-gulp.task('all', gulp.parallel(['js', 'images', 'templates', 'icons']));
+gulp.task('all', gulp.series([gulp.parallel(['js', 'images', 'templates', 'icons']), 'rsync']));
 
-gulp.task('default', gulp.parallel('js'));
