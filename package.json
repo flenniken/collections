@@ -26,6 +26,7 @@
     "fancy-log": "^2.0.0",
     "gulp-rsync": "^0.1.0",
     "gulp-uglify": "^3.0.2",
+    "gulp-using": "^0.1.1",
     "npm-install-all": "^1.1.21"
   }
 }
