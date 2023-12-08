@@ -29,7 +29,7 @@ gulp.task("js", function (cb) {
 
 help.push("* css -- minimize the css files.")
 gulp.task("css", function (cb) {
-  return gulp.src(["collections.css"])
+  return gulp.src(["pages/collections.css"])
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
     .pipe(cleanCSS({compatibility: "ie8"}))
     .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
@@ -41,16 +41,17 @@ gulp.task("index", function (cb) {
   // Create the main index page.
 
 /*
-statictea -t index-tmpl.html \
-  -s collections.json \
-  -o header.tea \
-  -r index.html
+statictea
+  -t pages/index-tmpl.html \
+  -s pages/collections.json \
+  -o pages/header.tea \
+  -r dist/index.html
 */
   log("Compiling index template.")
   const parameters = [
-    "-t", "index-tmpl.html",
-    "-s", "collections.json",
-    "-o", "header.tea",
+    "-t", "pages/index-tmpl.html",
+    "-s", "pages/collections.json",
+    "-o", "pages/header.tea",
     "-r", "dist/index.html",
   ]
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
@@ -61,17 +62,18 @@ gulp.task("thumbnails", function (cb) {
   // Create the thumbnails page.
 
 /*
-statictea -t pages/thumbnails-tmpl.html \
+statictea \
+  -t pages/thumbnails-tmpl.html \
   -s pages/collection-1.json \
-  -o header.tea \
-  -r pages/thumbnails-1.html
+  -o pages/header.tea \
+  -r dist/pages/thumbnails-1.html
 */
 
   log("Compiling thumbnails template.")
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
     "-s", "pages/collection-1.json",
-    "-o", "header.tea",
+    "-o", "pages/header.tea",
     "-r", "dist/pages/thumbnails-1.html",
   ]
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
@@ -82,17 +84,18 @@ gulp.task("image", function (cb) {
   // Create the image page.
 
 /*
-statictea -t pages/image-tmpl.html \
+statictea
+  -t pages/image-tmpl.html \
   -s pages/collection-1.json \
-  -o header.tea \
-  -r pages/image-1.html
+  -o pages/header.tea \
+  -r dist/pages/image-1.html
 */
 
   log("Compiling image template.")
   const parameters = [
     "-t", "pages/image-tmpl.html",
     "-s", "pages/collection-1.json",
-    "-o", "header.tea",
+    "-o", "pages/header.tea",
     "-r", "dist/pages/image-1.html",
   ]
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
@@ -100,22 +103,6 @@ statictea -t pages/image-tmpl.html \
 
 help.push("* pages -- create the index, thumbnails and image pages.")
 gulp.task("pages", gulp.parallel("index", "thumbnails", "image"));
-
-help.push("* icons -- copy the icons to dist.")
-gulp.task("icons", function() {
-  // Copy the icons to dist.
-  return gulp.src("icons/*.png")
-    .pipe(using({prefix:'Copy', filesize: true}))
-    .pipe(gulp.dest("dist/icons"));
-});
-
-help.push("* images -- copy the jpg images to dist.")
-gulp.task("images", function() {
-  // Copy the images to dist.
-  return gulp.src("images/*.jpg")
-    .pipe(using({prefix:'Copy', filesize: true}))
-    .pipe(gulp.dest("dist/images"));
-});
 
 help.push("* rsync -- rsync the dist folder to flenniken.net/collections/.")
 gulp.task("rsync", function(cb) {
@@ -149,16 +136,17 @@ help.push("* watch -- watch file changes and call the appropriate task.")
 gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dest folder.
 
+  const hr = "pages/header.tea"
+  const json1 = "pages/collections-1.json"
+
   onChange("js/*.js", "js")
-  onChange("collections.css", "css");
-  onChange(["index-tmpl.html", "collections.json", "header.tea"], "index");
-  onChange(["pages/thumbnails-1-tmpl.html", "collections-1.json", "header.tea"], "thumbnails");
-  onChange(["pages/image-1-tmpl.html", "collections-1.json", "header.tea"], "image");
-  onChange("images/*.jpg", "images");
-  onChange("icons/*.png", "icons");
+  onChange("pages/collections.css", "css");
+  onChange(["pages/index-tmpl.html", "pages/collections.json", hr], "index");
+  onChange(["pages/thumbnails-1-tmpl.html", json1, hr], "thumbnails");
+  onChange(["pages/image-1-tmpl.html", json1, hr], "image");
 
   cb();
 });
 
-help.push("* all -- run the js, images, pages, and icon task in parallel then rsync the results")
-gulp.task("all", gulp.series([gulp.parallel(["js", "images", "pages", "icons"]), "rsync"]));
+help.push("* all -- run the js, pages, and icon task in parallel then rsync the results")
+gulp.task("all", gulp.series([gulp.parallel(["js", "pages"]), "rsync"]));
