@@ -40,11 +40,12 @@ help.push("* index -- create the main index page.")
 gulp.task("index", function (cb) {
   // Create the main index page.
 
-  // statictea -t index-tmpl.html \
-  //   -s collections.json \
-  //   -o header.tea \
-  //   -r index.html
-
+/*
+statictea -t index-tmpl.html \
+  -s collections.json \
+  -o header.tea \
+  -r index.html
+*/
   log("Compiling index template.")
   const parameters = [
     "-t", "index-tmpl.html",
@@ -59,10 +60,12 @@ help.push("* thumbnails -- create the thumbnails page.")
 gulp.task("thumbnails", function (cb) {
   // Create the thumbnails page.
 
-  // statictea -t pages/thumbnails-tmpl.html \
-  //   -s pages/collection-1.json \
-  //   -o header.tea \
-  //   -r pages/thumbnails-1.html
+/*
+statictea -t pages/thumbnails-tmpl.html \
+  -s pages/collection-1.json \
+  -o header.tea \
+  -r pages/thumbnails-1.html
+*/
 
   log("Compiling thumbnails template.")
   const parameters = [
@@ -77,10 +80,13 @@ gulp.task("thumbnails", function (cb) {
 help.push("* image -- create the image page.")
 gulp.task("image", function (cb) {
   // Create the image page.
-  // statictea -t pages/image-tmpl.html \
-  //   -s pages/collection-1.json \
-  //   -o header.tea \
-  //   -r pages/image-1.html
+
+/*
+statictea -t pages/image-tmpl.html \
+  -s pages/collection-1.json \
+  -o header.tea \
+  -r pages/image-1.html
+*/
 
   log("Compiling image template.")
   const parameters = [
@@ -138,9 +144,9 @@ gulp.task("watch", function(cb) {
 
   onChange("js/*.js", "js")
   onChange("collections.css", "css");
-  onChange("index-tmpl.html", "index");
-  onChange("pages/thumbnails-tmpl.html", "thumbnails");
-  onChange("pages/image-tmpl.html", "image");
+  onChange(["index-tmpl.html", "collections.json", "header.tea"], "index");
+  onChange(["pages/thumbnails-1-tmpl.html", "collections-1.json", "header.tea"], "thumbnails");
+  onChange(["pages/image-1-tmpl.html", "collections-1.json", "header.tea"], "image");
   onChange("images/*.jpg", "images");
   onChange("icons/*.png", "icons");
 
@@ -149,4 +155,3 @@ gulp.task("watch", function(cb) {
 
 help.push("* all -- run the js, images, pages, and icon task in parallel then rsync the results")
 gulp.task("all", gulp.series([gulp.parallel(["js", "images", "pages", "icons"]), "rsync"]));
-
