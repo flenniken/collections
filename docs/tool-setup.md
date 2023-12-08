@@ -58,7 +58,7 @@ CLI version: 2.3.0
 Local version: Unknown
 ```
 
-Switch to the collections directory and initialize it with npm.
+Switch to the collections directory and initialize the project with npm.
 
 ```
 cd ~/code/collections
@@ -97,15 +97,22 @@ MODULES INSTALLED AND SAVED INTO package.json...
 
 # Build Tasks
 
-List the gulp tasks:
+List the gulp tasks with messages by running gulp with no arguments.
 
 ```
-gulp --tasks
+gulp
 
-[15:20:16] Tasks for ~/code/collections/gulpfile.js
-[15:20:16] ├── date
-[15:20:16] ├── list
-[15:20:16] ├── js
-[15:20:16] ├── watchJs
-[15:20:16] └── default
+gulp tasks:
+
+* js -- minimize the js files.
+* css -- minimize the css files.
+* index -- create the main index page.
+* thumbnails -- create the thumbnails page.
+* image -- create the image page.
+* pages -- create the index, thumbnails and image pages.
+* icons -- copy the icons to dist.
+* images -- copy the jpg images to dist.
+* rsync -- rsync the dist folder to flenniken.net/collections/.
+* watch -- watch file changes and call the appropriate task.
+* all -- run the js, images, pages, and icon task in parallel then rsync the results
 ```

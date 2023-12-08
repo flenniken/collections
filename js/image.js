@@ -575,7 +575,7 @@ function horizontalScrollEnd() {
   }
 
   function scrollDone() {
-    // Scrolling has finished.  Update the image index and the page details.
+    // Scrolling has finished.  Update the image index.
 
     // Set the image index to the image we scrolled to.
     const ix = hscroll.leftEdges.indexOf(area.scrollLeft)
