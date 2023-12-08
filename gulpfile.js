@@ -120,6 +120,13 @@ gulp.task("images", function() {
 help.push("* rsync -- rsync the dist folder to flenniken.net/collections/.")
 gulp.task("rsync", function(cb) {
   // Rsync the dest folder to flenniken.net.
+
+/*
+rsync -a --delete --progress \
+  /Users/steve/code/collections/dist/ \
+  1and1:flenniken/site/web/collections/
+*/
+
   log("Rsync dist to flenniken.net/collections/")
   const parameters = [
     "--delete",

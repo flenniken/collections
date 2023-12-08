@@ -1,0 +1,1 @@
+"use strict";function showPageSize(){var e=window.innerWidth||document.documentElement.clientWidth||document.body.clientWidth,t=window.innerHeight||document.documentElement.clientHeight||document.body.clientHeight;document.getElementById("width").innerHTML=e.toString(),document.getElementById("height").innerHTML=t.toString()}window.addEventListener("load",showPageSize);
