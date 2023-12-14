@@ -3,12 +3,12 @@
 
 window.addEventListener("load", handleLoad)
 
-function get(id) {
+function get(id: string) {
   // Get the dom element with the given id.
   return document.getElementById(id)
 }
 
-function log(message) {
+function log(message: string) {
   // Log the message to the console.
   console.log(message)
 }

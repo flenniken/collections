@@ -15,9 +15,9 @@ const cacheContent = [
   '/collections/icons/icon-512.png',
 ];
 
-self.addEventListener('install', (e) => {
+self.addEventListener('install', (event: ExtendableEvent) => {
   console.log('service worker install event');
-  e.waitUntil((async () => {
+  event.waitUntil((async () => {
     const cache = await caches.open(cacheName);
 
     console.log('cache all files');
@@ -25,9 +25,9 @@ self.addEventListener('install', (e) => {
   })());
 });
 
-self.addEventListener('fetch', (e) => {
+self.addEventListener('fetch', (event: FetchEvent) => {
   // Get the url to fetch.
-  const url = e.request.url
+  const url = event.request.url
 
   console.log(`service worker fetch event for ${url}`);
 
@@ -38,17 +38,17 @@ self.addEventListener('fetch', (e) => {
     return
   }
 
-  e.respondWith((async () => {
+  event.respondWith((async () => {
 
     // Look for the file on the net.
-    var response = await fetch(e.request);
+    var response = await fetch(event.request);
     if (response) {
       console.log(`found on net: ${url}`);
 
       // Add the file to the cache.
       console.log(`add to cache: ${url}`);
       const cache = await caches.open(cacheName);
-      cache.put(e.request, response.clone());
+      cache.put(event.request, response.clone());
 
       return response;
     }
@@ -57,14 +57,14 @@ self.addEventListener('fetch', (e) => {
     // We're probably offline.
 
     // Look for the file in the cache.
-    const cacheReponse = await caches.match(e.request);
+    const cacheReponse = await caches.match(event.request);
     if (cacheReponse) {
       console.log(`found in cache: ${url}`);
       return cacheReponse;
     } else {
       console.log(`not found: ${url}`);
     }
-    return await fetch(e.request);
+    return await fetch(event.request);
 
   })());
 });

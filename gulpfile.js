@@ -1,9 +1,10 @@
-var gulp = require("gulp");
-var uglify = require("gulp-uglify");
-var log = require("fancy-log");
+const gulp = require("gulp");
+const uglify = require("gulp-uglify");
+const log = require("fancy-log");
 const child_process = require("child_process");
 const cleanCSS = require("gulp-clean-css");
-var using = require('gulp-using');
+const using = require('gulp-using');
+const ts = require('gulp-typescript');
 
 let help = []
 
@@ -18,14 +19,48 @@ gulp.task("default", function(cb){
   cb()
 });
 
-help.push("* js -- minimize the js files.")
-gulp.task("js", function (cb) {
-  return gulp.src(["js/*.js"])
+function ts2js(src, dest, options=null) {
+  if (options === null) {
+    options = {
+      noImplicitAny: true,
+      target: "es6",
+    }
+  }
+  return gulp.src(src)
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
+    .pipe(ts(options))
     .pipe(uglify())
     .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
-    .pipe(gulp.dest("dist/js/"))
-})
+    .pipe(gulp.dest(dest));
+}
+
+help.push("* tsimage -- compile image.ts to dist/js/image.js.")
+gulp.task('tsimage', function () {
+  return ts2js('ts/image.ts', 'dist/js/', null)
+});
+
+help.push("* tsthumbnails -- compile image.ts to dist/js/thumbnails.js.")
+gulp.task('tsthumbnails', function () {
+  return ts2js('ts/thumbnails.ts', 'dist/js/', null)
+});
+
+help.push("* tscollections -- compile collections.ts to dist/js/collections.js.")
+gulp.task('tscollections', function () {
+  return ts2js('ts/collections.ts', 'dist/js', null)
+});
+
+help.push("* tssw -- compile sw.ts to dist/sw.js.")
+gulp.task('tssw', function () {
+  options = {
+    noImplicitAny: true,
+    target: "es6",
+    lib: ["esnext", "webworker"],
+  }
+  return ts2js('ts/sw.ts', 'dist/', options)
+});
+
+help.push("* js -- compile all ts files to js.")
+gulp.task("js", gulp.parallel(["tsimage", "tsthumbnails", "tscollections", "tssw"]))
 
 help.push("* css -- minimize the css files.")
 gulp.task("css", function (cb) {
@@ -101,7 +136,7 @@ statictea
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
 })
 
-help.push("* pages -- create the index, thumbnails and image pages.")
+help.push("* pages -- create all the pages.")
 gulp.task("pages", gulp.parallel("index", "thumbnails", "image"));
 
 help.push("* rsync -- rsync the dist folder to flenniken.net/collections/.")
@@ -139,7 +174,7 @@ gulp.task("watch", function(cb) {
   const hr = "pages/header.tea"
   const json1 = "pages/collections-1.json"
 
-  onChange("js/*.js", "js")
+  onChange("ts/*.ts", "ts")
   onChange("pages/collections.css", "css");
   onChange(["pages/index-tmpl.html", "pages/collections.json", hr], "index");
   onChange(["pages/thumbnails-1-tmpl.html", json1, hr], "thumbnails");
