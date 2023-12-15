@@ -104,15 +104,17 @@ gulp
 
 gulp tasks:
 
-* js -- minimize the js files.
+* tsimage -- compile image.ts to dist/js/image.js.
+* tsthumbnails -- compile image.ts to dist/js/thumbnails.js.
+* tsindex -- compile index.ts to dist/js/collections.js.
+* tssw -- compile sw.ts to dist/sw.js.
+* ts -- compile and minimize ts files.
 * css -- minimize the css files.
 * index -- create the main index page.
 * thumbnails -- create the thumbnails page.
 * image -- create the image page.
-* pages -- create the index, thumbnails and image pages.
-* icons -- copy the icons to dist.
-* images -- copy the jpg images to dist.
+* pages -- create all the pages.
 * rsync -- rsync the dist folder to flenniken.net/collections/.
 * watch -- watch file changes and call the appropriate task.
-* all -- run the js, images, pages, and icon task in parallel then rsync the results
+* all -- run the js, pages, and icon task in parallel then rsync the results
 ```

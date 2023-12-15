@@ -59,8 +59,8 @@ gulp.task('tssw', function () {
   return ts2js('ts/sw.ts', 'dist/', options)
 });
 
-help.push("* js -- compile all ts files to js.")
-gulp.task("js", gulp.parallel(["tsimage", "tsthumbnails", "tsindex", "tssw"]))
+help.push("* ts -- compile and minimize ts files.")
+gulp.task("ts", gulp.parallel(["tsimage", "tsthumbnails", "tsindex", "tssw"]))
 
 help.push("* css -- minimize the css files.")
 gulp.task("css", function (cb) {
@@ -184,4 +184,4 @@ gulp.task("watch", function(cb) {
 });
 
 help.push("* all -- run the js, pages, and icon task in parallel then rsync the results")
-gulp.task("all", gulp.series([gulp.parallel(["js", "pages"]), "rsync"]));
+gulp.task("all", gulp.series([gulp.parallel(["ts", "pages"]), "rsync"]));
