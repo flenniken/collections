@@ -44,9 +44,9 @@ gulp.task('tsthumbnails', function () {
   return ts2js('ts/thumbnails.ts', 'dist/js/', null)
 });
 
-help.push("* tscollections -- compile collections.ts to dist/js/collections.js.")
-gulp.task('tscollections', function () {
-  return ts2js('ts/collections.ts', 'dist/js', null)
+help.push("* tsindex -- compile index.ts to dist/js/collections.js.")
+gulp.task('tsindex', function () {
+  return ts2js('ts/index.ts', 'dist/js', null)
 });
 
 help.push("* tssw -- compile sw.ts to dist/sw.js.")
@@ -60,7 +60,7 @@ gulp.task('tssw', function () {
 });
 
 help.push("* js -- compile all ts files to js.")
-gulp.task("js", gulp.parallel(["tsimage", "tsthumbnails", "tscollections", "tssw"]))
+gulp.task("js", gulp.parallel(["tsimage", "tsthumbnails", "tsindex", "tssw"]))
 
 help.push("* css -- minimize the css files.")
 gulp.task("css", function (cb) {
@@ -78,14 +78,14 @@ gulp.task("index", function (cb) {
 /*
 statictea
   -t pages/index-tmpl.html \
-  -s pages/collections.json \
+  -s pages/index.json \
   -o pages/header.tea \
   -r dist/index.html
 */
   log("Compiling index template.")
   const parameters = [
     "-t", "pages/index-tmpl.html",
-    "-s", "pages/collections.json",
+    "-s", "pages/index.json",
     "-o", "pages/header.tea",
     "-r", "dist/index.html",
   ]
@@ -172,11 +172,11 @@ gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dest folder.
 
   const hr = "pages/header.tea"
-  const json1 = "pages/collections-1.json"
+  const json1 = "pages/collection-1.json"
 
   onChange("ts/*.ts", "ts")
   onChange("pages/collections.css", "css");
-  onChange(["pages/index-tmpl.html", "pages/collections.json", hr], "index");
+  onChange(["pages/index-tmpl.html", "pages/index.json", hr], "index");
   onChange(["pages/thumbnails-1-tmpl.html", json1, hr], "thumbnails");
   onChange(["pages/image-1-tmpl.html", json1, hr], "image");
 
