@@ -160,25 +160,24 @@ rsync -a --delete --progress \
   return child_process.spawn("rsync", parameters, {stdio: "inherit"});
 });
 
-function onChange(pattern, task) {
-  gulp.watch(pattern).on("change", function(file) {
-    log(`Compiling changed: ${file}`)
-    gulp.series([task]);
-  })
-}
-
 help.push("* watch -- watch file changes and call the appropriate task.")
 gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dest folder.
 
+  const gs = gulp.series
+
+  gulp.watch("ts/image.ts", gs(["tsimage"]));
+  gulp.watch("ts/thumbnails.ts", gs(["tsthumbnails"]));
+  gulp.watch("ts/index.ts", gs(["tsindex"]));
+  gulp.watch("ts/sw.ts", gs(["tssw"]));
+
+  gulp.watch("pages/collections.css", gs(["css"]));
+
   const hr = "pages/header.tea"
   const json1 = "pages/collection-1.json"
-
-  onChange("ts/*.ts", "ts")
-  onChange("pages/collections.css", "css");
-  onChange(["pages/index-tmpl.html", "pages/index.json", hr], "index");
-  onChange(["pages/thumbnails-1-tmpl.html", json1, hr], "thumbnails");
-  onChange(["pages/image-1-tmpl.html", json1, hr], "image");
+  gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs("index"))
+  gulp.watch(["pages/thumbnails-1-tmpl.html", json1, hr], gs("thumbnails"))
+  gulp.watch(["pages/image-1-tmpl.html", json1, hr], gs("image"))
 
   cb();
 });

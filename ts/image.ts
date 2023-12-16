@@ -464,8 +464,10 @@ function handleTouchMove(event: TouchEvent) {
     }
   }
 
-  if (event.touches.length != 2)
+  if (event.touches.length != 2) {
+    // log(`scrollTop: ${area.scrollTop}`)
     return
+  }
 
   // Disable the default browser zoom and pan behavior when two
   // fingers are down.
@@ -533,7 +535,6 @@ function handleTouchMove(event: TouchEvent) {
   const img = get(`i${imageIx+1}`)
   // Note: translate runs from right to left.
   img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
-
 }
 
 function handleTouchCancel(event: TouchEvent) {
