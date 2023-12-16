@@ -176,8 +176,8 @@ gulp.task("watch", function(cb) {
   const hr = "pages/header.tea"
   const json1 = "pages/collection-1.json"
   gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs("index"))
-  gulp.watch(["pages/thumbnails-1-tmpl.html", json1, hr], gs("thumbnails"))
-  gulp.watch(["pages/image-1-tmpl.html", json1, hr], gs("image"))
+  gulp.watch(["pages/thumbnails-tmpl.html", json1, hr], gs("thumbnails"))
+  gulp.watch(["pages/image-tmpl.html", json1, hr], gs("image"))
 
   cb();
 });

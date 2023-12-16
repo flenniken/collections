@@ -465,7 +465,12 @@ function handleTouchMove(event: TouchEvent) {
   }
 
   if (event.touches.length != 2) {
-    // log(`scrollTop: ${area.scrollTop}`)
+    const yMovement = event.touches[0].clientY - hscroll.startY;
+
+    if (yMovement > 0 && window.scrollY === 0) {
+      // get("pull-to-thumbnails").visibility = "visible"
+      event.preventDefault();
+    }
     return
   }
 
@@ -700,7 +705,7 @@ function handleResize() {
   if (area === null) {
     return
   }
-  
+
   const start = new Timer()
   start.log("resize")
 

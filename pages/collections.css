@@ -37,6 +37,12 @@
   padding: 0;
 }
 
+#images #pull-to-thumbnails {
+  visibility: hidden;
+  height: 6em;
+  background-color: green;
+}
+
 #images .container {
   background-color: gray;
 }

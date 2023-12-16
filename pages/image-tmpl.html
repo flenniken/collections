@@ -43,9 +43,13 @@ body {
     var cJson = {json}
     var cJsonOriginal = {json}
 //$ endblock
-  </script>
+</script>
 </head>
 <body id="images">
+<!--$ block t.repeat = 0-->
+  <div id="pull-to-thumbnails">
+  </div>
+<!--$ endblock -->
   <div id="area">
 <!--$ block -->
 <!--$ : t.repeat = len(s.images) -->
