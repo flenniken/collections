@@ -160,6 +160,22 @@ rsync -a --delete --progress \
   return child_process.spawn("rsync", parameters, {stdio: "inherit"});
 });
 
+help.push("* run-server -- Run the python server on the dist folder.")
+gulp.task("run-server", function(cb) {
+
+/*
+cd dist
+python3 -m http.server
+*/
+
+  log("Run python server on the dist folder.")
+  const parameters = [
+    "-m",
+    "http.server",
+  ]
+  return child_process.spawn("python3", parameters, {stdio: "inherit", cwd: "dist"});
+})
+
 help.push("* watch -- watch file changes and call the appropriate task.")
 gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dest folder.

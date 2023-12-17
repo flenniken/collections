@@ -357,9 +357,11 @@ let hscroll: HScroll = {
 function handleTouchStart(event: TouchEvent) {
   // Handle the touchstart event.
 
-  if (hscroll.scrolling)
+  if (hscroll.scrolling) {
+    event.preventDefault();
     return
-
+  }
+  
   // Remember the horizontal scroll position incase we are starting to
   // scroll.
   hscroll.startScrollLeft = area.scrollLeft;
@@ -468,7 +470,10 @@ function handleTouchMove(event: TouchEvent) {
     const yMovement = event.touches[0].clientY - hscroll.startY;
 
     if (yMovement > 0 && window.scrollY === 0) {
-      // get("pull-to-thumbnails").visibility = "visible"
+      // Set the to-thumbnail height to the amount of overscroll
+      // limited to a maximum.
+      const toThumbnailsHeight = 50
+      get("to-thumbnails").style.height = `${toThumbnailsHeight}px`
       event.preventDefault();
     }
     return
@@ -549,6 +554,24 @@ function handleTouchCancel(event: TouchEvent) {
 
 function handleTouchEnd(event: TouchEvent) {
   // log("touchend")
+
+  // Animate the overscroll position to 0.
+  const overscrollPositions = [40, 25, 15, 10, 5, 0]
+  const tot = get("to-thumbnails")
+  const overscrollDuration = .15 // seconds
+  const delay = overscrollDuration / overscrollPositions.length
+  const overscrollId = setInterval(animateOverscroll, delay * 1000);
+  let overscrollIx = 0
+  function animateOverscroll() {
+    if (overscrollIx >= overscrollPositions.length) {
+      clearInterval(overscrollId);
+      log("overscrolled back to 0")
+    } else {
+      tot.style.height = `${overscrollPositions[overscrollIx]}px`
+      overscrollIx += 1;
+    }
+  }
+
   if (event.touches.length == 0 && hscroll.scrolling) {
     horizontalScrollEnd()
     return
