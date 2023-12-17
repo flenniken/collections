@@ -53,6 +53,9 @@ let availHeight = 0
 // The area element.
 let area: HTMLElement | null = null
 
+// Whether we are pulling down the page past the top.
+let vOverScrolling = false
+
 window.addEventListener("load", handleLoad)
 window.addEventListener('touchstart', handleTouchStart)
 window.addEventListener('restoreimage', handleRestoreImage, false)
@@ -453,7 +456,7 @@ function handleTouchMove(event: TouchEvent) {
   if (hscroll.scrolling) {
     horizontalScrollMove(event)
     return
-  } else if (!zpan.zooming) {
+  } else if (!zpan.zooming && !vOverScrolling) {
     // Determine whether horizontal scrolling is starting.
     const dx = Math.abs(hscroll.startX - event.touches[0].clientX)
     const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
@@ -465,15 +468,16 @@ function handleTouchMove(event: TouchEvent) {
     }
   }
 
-  if (event.touches.length != 2) {
+  // Handle vertical over scroll.
+  if (!hscroll.scrolling && event.touches.length == 1) {
     const yMovement = event.touches[0].clientY - hscroll.startY;
 
     if (yMovement > 0 && window.scrollY === 0) {
-      // Set the to-thumbnail height to the amount of overscroll
-      // limited to a maximum.
-      const toThumbnailsHeight = 50
-      get("to-thumbnails").style.height = `${toThumbnailsHeight}px`
-      event.preventDefault();
+      if (!vOverScrolling) {
+        vOverScrolling = true
+        log(`vOverScrolling started: hscroll.startY: ${hscroll.startY}`)
+      }
+      get("to-thumbnails").style.height = `${yMovement}px`
     }
     return
   }
@@ -554,13 +558,20 @@ function handleTouchCancel(event: TouchEvent) {
 function handleTouchEnd(event: TouchEvent) {
   // log("touchend")
 
-  if (!hscroll.scrolling && !zpan.zooming) {
-    const start = 50
+  const tot = get("to-thumbnails")
+  if (vOverScrolling) {
+    const start = parseInt(tot.style.height, 10)
     const maxDistance = start
-    const tot = get("to-thumbnails")
 
-    animatePosition(start, 0, hscroll.framesPerSec, maxDistance,
-      hscroll.maxDuration, null, (position) => {
+    function overScrollingDone() {
+      log(`overScrolling done: tot.style.height: ${tot.style.height}`)
+      vOverScrolling = false
+    }
+    animatePosition(
+      start, 0,
+      hscroll.framesPerSec, maxDistance,
+      hscroll.maxDuration,
+      overScrollingDone, (position) => {
         tot.style.height = `${position}px`
     })
   }
