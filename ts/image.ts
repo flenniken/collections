@@ -554,21 +554,15 @@ function handleTouchCancel(event: TouchEvent) {
 function handleTouchEnd(event: TouchEvent) {
   // log("touchend")
 
-  // Animate the overscroll position to 0.
-  const overscrollPositions = [40, 25, 15, 10, 5, 0]
-  const tot = get("to-thumbnails")
-  const overscrollDuration = .15 // seconds
-  const delay = overscrollDuration / overscrollPositions.length
-  const overscrollId = setInterval(animateOverscroll, delay * 1000);
-  let overscrollIx = 0
-  function animateOverscroll() {
-    if (overscrollIx >= overscrollPositions.length) {
-      clearInterval(overscrollId);
-      log("overscrolled back to 0")
-    } else {
-      tot.style.height = `${overscrollPositions[overscrollIx]}px`
-      overscrollIx += 1;
-    }
+  if (!hscroll.scrolling && !zpan.zooming) {
+    const start = 50
+    const maxDistance = start
+    const tot = get("to-thumbnails")
+
+    animatePosition(start, 0, hscroll.framesPerSec, maxDistance,
+      hscroll.maxDuration, null, (position) => {
+        tot.style.height = `${position}px`
+    })
   }
 
   if (event.touches.length == 0 && hscroll.scrolling) {
@@ -671,44 +665,54 @@ function horizontalScrollEnd() {
     return
   }
 
-  log(`ScrollEnd: animate from ${two(startLeft)} to ${finishLeft}`);
-
   // The maximum distance is half the screen width.  If you scroll
   // past the middle, you go to the next image and less than half you
   // go back.
   const maxDistance = availWidth / 2;
+
+  log(`ScrollEnd: animate from ${two(startLeft)} to ${finishLeft}`);
+  animatePosition(startLeft, finishLeft, hscroll.framesPerSec,
+    maxDistance, hscroll.maxDuration, scrollDone, (position) => {
+        area.scrollLeft = position
+  })
+}
+
+function animatePosition(startLeft: number, finishLeft: number, framesPerSec: number,
+    maxDistance: number, maxDuration: number,
+    allDone: () => void,
+    posFunction: (position: number) => void) {
+  // Animate the position from start to finish. Call the posFunction
+  // callback for each position and call allDone when finished.
+
   const maxFrames = hscroll.maxDuration * hscroll.framesPerSec;
 
-  // Scroll at the same rate no matter the distance. Use the ratio of
+  // Move at the same rate no matter the distance. Use the ratio of
   // max frames to max distance equal to the ratio of the frames to
   // the distance.
   const distance = Math.abs(finishLeft - startLeft)
   const frames = (distance * maxFrames) / maxDistance;
-  // log(`ScrollEnd: distance: ${two(distance)}, frames: ${two(frames)}`);
 
-  // Get the distances to animate.
+  // Get the positions to animate.
   let distancesIndex = 0;
   const frameDistances = distanceList(startLeft, finishLeft, frames);
-  // log(`frameDistances: ${frameDistances}`);
 
-  // Determine the duration of the animation in seconds.
-  const duration = frames / hscroll.framesPerSec;
-  log(`ScrollEnd: number of frames: ${frameDistances.length}, duration: ${two(duration)} seconds`);
+  // Determine the delay between each of the animations in seconds.
+  const delay = frames / hscroll.framesPerSec;
 
-  // Animate to the new scroll position.
-  const annimationId = setInterval(animateScrollLeft, duration / 1000);
-  function animateScrollLeft() {
-    // Set the area scroll position and stop scrolling after the last
-    // frame.
+  // Animate to the new position.
+  const annimationId = setInterval(animateInterval, delay / 1000);
+  function animateInterval() {
     if (distancesIndex >= frameDistances.length) {
+      // Stop animating.
       clearInterval(annimationId);
-      scrollDone()
+      if (allDone !== null)
+        allDone()
     } else {
-      area.scrollLeft = frameDistances[distancesIndex];
+      // Set the new position.
+      posFunction(frameDistances[distancesIndex])
       distancesIndex += 1;
     }
   }
-
 }
 
 function distanceList(start: number, finish: number, numberSteps: number) {
