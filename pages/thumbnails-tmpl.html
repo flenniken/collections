@@ -22,7 +22,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ nextline t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
-<!--$ : url = format("{s.baseUrl}?image={id}") -->
+<!--$ : url = format("{s.imagePageUrl}?image={id}") -->
     <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
   </div>
   <div id="details">

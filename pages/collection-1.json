@@ -3,8 +3,8 @@
   "collection": 1,
   "width": 480,
   "height": 480,
-  "baseUrl": "../pages/image-1.html",
-  "thumbnailsUrl": "../pages/thumbnails-1.html",
+  "imagePageUrl": "../pages/image-1.html",
+  "thumbnailsPageUrl": "../pages/thumbnails-1.html",
   "images": [
     {
       "url": "../images/1-p.jpg",
@@ -13,7 +13,6 @@
       "description": "I was amazed how well the fireplace hood worked. The one we made for the cabin smoked like crazy. We cut it up and turned it into a planter.",
       "width": 3024,
       "height": 4032,
-      "favorite": false
     },
     {
       "url": "../images/2-p.jpg",
@@ -22,7 +21,6 @@
       "description": "A mountain view south from Many Glaciers Logde over Swiftcurrent Lake.",
       "width": 4032,
       "height": 3024,
-      "favorite": false
     },
     {
       "url": "../images/3-p.jpg",
@@ -31,7 +29,6 @@
       "description": "This is the south wing of the lodge.  We stayed in the room one from the end with a deck looking at the camera. We didn't have a view of the lake, instead we had a great view of the mountains.",
       "width": 4032,
       "height": 3024,
-      "favorite": false
     },
     {
       "url": "../images/4-p.jpg",
@@ -40,7 +37,6 @@
       "description": "Mount Grinnel is right across the lake from the lodge.",
       "width": 4032,
       "height": 3024,
-      "favorite": false,
       "zoomPoints": []
     },
     {
@@ -50,7 +46,6 @@
       "description": "We walked around Swiftcurrent Lake and Lake Josephine. They are connected with a slow moving river. That is where this picture was taken.",
       "width": 4032,
       "height": 3024,
-      "favorite": true
     },
     {
       "url": "../images/6-p.jpg",
@@ -59,7 +54,6 @@
       "description": "We saw a moose on the far side of the lake and Kathleen filmed it.",
       "width": 4032,
       "height": 3024,
-      "favorite": false
     },
     {
       "url": "../images/7-p.jpg",
@@ -68,7 +62,6 @@
       "description": "This is a trail around the lakes near the Many Glaciers Lodge.",
       "width": 3024,
       "height": 4032,
-      "favorite": false
     },
     {
       "url": "../images/8-p.jpg",
@@ -77,7 +70,6 @@
       "description": "The two red rocks are having a great time playing and sliding down the hill into the river. They’re living at a time scale that’s hard for us to imagine. We saw two other red rocks swimming in the lake but I didn’t get a picture of that.",
       "width": 2556,
       "height": 2556,
-      "favorite": false
     }
   ],
   "zoomPoints": {
