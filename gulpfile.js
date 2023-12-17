@@ -76,7 +76,7 @@ gulp.task("index", function (cb) {
   // Create the main index page.
 
 /*
-statictea
+statictea \
   -t pages/index-tmpl.html \
   -s pages/index.json \
   -o pages/header.tea \
@@ -119,7 +119,7 @@ gulp.task("image", function (cb) {
   // Create the image page.
 
 /*
-statictea
+statictea \
   -t pages/image-tmpl.html \
   -s pages/collection-1.json \
   -o pages/header.tea \
@@ -136,7 +136,27 @@ statictea
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
 })
 
-help.push("* pages -- create all the pages.")
+help.push("* syncronize -- Syncronize the template's replace blocks with header.tea.")
+gulp.task("syncronize", function (cb) {
+  // Syncronize index template's replace blocks with header.tea.
+/*
+statictea -u -o pages/header.tea -t pages/index-tmpl.html
+statictea -u -o pages/header.tea -t pages/image-tmpl.html
+statictea -u -o pages/header.tea -t pages/thumbnails-tmpl.html
+*/
+  log("Syncronize all templates with header.tea.")
+  const commands = [
+    ["-u", "-o", "pages/header.tea", "-t", "pages/index-tmpl.html"],
+    ["-u", "-o", "pages/header.tea", "-t", "pages/image-tmpl.html"],
+    ["-u", "-o", "pages/header.tea", "-t", "pages/thumbnails-tmpl.html"],
+  ]
+  commands.forEach((parameters, ix) => {
+    child_process.spawn("statictea", parameters, {stdio: "inherit"});
+  })
+  cb()
+})
+
+help.push("* pages -- create all the pages from templates.")
 gulp.task("pages", gulp.parallel("index", "thumbnails", "image"));
 
 help.push("* rsync -- rsync the dist folder to flenniken.net/collections/.")
@@ -191,6 +211,9 @@ gulp.task("watch", function(cb) {
 
   const hr = "pages/header.tea"
   const json1 = "pages/collection-1.json"
+
+  gulp.watch([hr], gs("syncronize"))
+
   gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs("index"))
   gulp.watch(["pages/thumbnails-tmpl.html", json1, hr], gs("thumbnails"))
   gulp.watch(["pages/image-tmpl.html", json1, hr], gs("image"))
