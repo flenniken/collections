@@ -361,7 +361,7 @@ function handleTouchStart(event: TouchEvent) {
     event.preventDefault();
     return
   }
-  
+
   // Remember the horizontal scroll position incase we are starting to
   // scroll.
   hscroll.startScrollLeft = area.scrollLeft;
@@ -589,8 +589,16 @@ function handleTouchEnd(event: TouchEvent) {
 }
 
 function logJson() {
+  function replacer(key: string, value: any) {
+    if (["scale", "tx", "ty"].includes(key)) {
+      return two(value)
+    }
+    else
+      return value
+  }
+
   // Log the current json.
-  const msg = JSON.stringify(cJson, null, 2)
+  const msg = JSON.stringify(cJson, replacer, 2)
   log(msg)
 
   // log("Copy json to the clipboard");

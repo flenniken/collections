@@ -23,6 +23,7 @@ function ts2js(src, dest, options=null) {
   if (options === null) {
     options = {
       noImplicitAny: true,
+      lib: ["es7", "dom"],
       target: "es6",
     }
   }
