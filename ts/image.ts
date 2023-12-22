@@ -405,13 +405,16 @@ function handleTouchStart(event: TouchEvent) {
   const clientX1 = event.touches[1].clientX
   const clientY0 = event.touches[0].clientY
   const clientY1 = event.touches[1].clientY
-  zpan.start.cx = (clientX0 + clientX1) / 2
-  zpan.start.cy = (clientY0 + clientY1) / 2
-  zpan.start.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+
   const zoomPoint = getZoomPoint()
-  zpan.start.scale = zoomPoint.scale
-  zpan.start.tx = zoomPoint.tx
-  zpan.start.ty = zoomPoint.ty
+  zpan.start = {
+    "cx": (clientX0 + clientX1) / 2,
+    "cy": (clientY0 + clientY1) / 2,
+    "distance": Math.hypot(clientX0 - clientX1, clientY0 - clientY1),
+    "scale": zoomPoint.scale,
+    "tx": zoomPoint.tx,
+    "ty": zoomPoint.ty,
+  }
 
   const image = cJson.images[imageIx]
   log(`i${imageIx+1}: touchstart: c: (${two(zpan.start.cx)}, ${two(zpan.start.cy)}) ` +
@@ -498,10 +501,15 @@ function handleTouchMove(event: TouchEvent) {
   const image = cJson.images[imageIx]
   const zoomPoint = getZoomPoint()
 
-  zpan.current.cx = (clientX0 + clientX1) / 2
-  zpan.current.cy = (clientY0 + clientY1) / 2
-  zpan.current.distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
-  zpan.current.scale = (zpan.current.distance / zpan.start.distance) * zpan.start.scale
+  const distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
+  zpan.current = {
+    cx: (clientX0 + clientX1) / 2,
+    cy: (clientY0 + clientY1) / 2,
+    distance: distance,
+    scale: (distance / zpan.start.distance) * zpan.start.scale,
+    tx: 0,
+    ty: 0,
+  }
 
   // Limit the scale to a maximum of 1 and a minimum that results in a
   // image not less than half the area width.
