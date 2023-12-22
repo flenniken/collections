@@ -53,9 +53,6 @@ let availHeight = 0
 // The area element.
 let area: HTMLElement | null = null
 
-// Whether we are pulling down the page past the top.
-let vOverScrolling = false
-
 window.addEventListener("load", handleLoad)
 window.addEventListener('touchstart', handleTouchStart)
 window.addEventListener('restoreimage', handleRestoreImage, false)
@@ -459,7 +456,7 @@ function handleTouchMove(event: TouchEvent) {
   if (hscroll.scrolling) {
     horizontalScrollMove(event)
     return
-  } else if (!zpan.zooming && !vOverScrolling) {
+  } else if (!zpan.zooming) {
     // Determine whether horizontal scrolling is starting.
     const dx = Math.abs(hscroll.startX - event.touches[0].clientX)
     const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
@@ -471,26 +468,12 @@ function handleTouchMove(event: TouchEvent) {
     }
   }
 
-  // Handle vertical over scroll.
-  if (!hscroll.scrolling && event.touches.length == 1) {
-    const yMovement = event.touches[0].clientY - hscroll.startY;
-
-    if (yMovement > 0 && window.scrollY === 0) {
-      if (!vOverScrolling) {
-        vOverScrolling = true
-        log(`vOverScrolling started: hscroll.startY: ${hscroll.startY}`)
-      }
-      get("to-thumbnails").style.height = `${yMovement}px`
-    }
+  if (!zpan.zooming)
     return
-  }
 
   // Disable the default browser zoom and pan behavior when two
   // fingers are down.
   event.preventDefault()
-
-  if (!zpan.zooming)
-    return
 
   const clientX0 = event.touches[0].clientX
   const clientX1 = event.touches[1].clientX
@@ -565,24 +548,6 @@ function handleTouchCancel(event: TouchEvent) {
 
 function handleTouchEnd(event: TouchEvent) {
   // log("touchend")
-
-  const tot = get("to-thumbnails")
-  if (vOverScrolling) {
-    const start = parseInt(tot.style.height, 10)
-    const maxDistance = start
-
-    function overScrollingDone() {
-      log(`overScrolling done: tot.style.height: ${tot.style.height}`)
-      vOverScrolling = false
-    }
-    animatePosition(
-      start, 0,
-      hscroll.framesPerSec, maxDistance,
-      hscroll.maxDuration,
-      overScrollingDone, (position) => {
-        tot.style.height = `${position}px`
-    })
-  }
 
   if (event.touches.length == 0 && hscroll.scrolling) {
     horizontalScrollEnd()
