@@ -54,10 +54,11 @@ let availHeight = 0
 let area: HTMLElement | null = null
 
 window.addEventListener("load", handleLoad)
-window.addEventListener('touchstart', handleTouchStart)
+window.addEventListener('touchstart', handleTouchStart, {passive: false})
 window.addEventListener('restoreimage', handleRestoreImage, false)
 window.addEventListener('touchmove', handleTouchMove, {passive: false})
 window.addEventListener("resize", handleResize);
+window.addEventListener("scroll", handleScroll);
 document.addEventListener('touchend', handleTouchEnd, false)
 document.addEventListener('touchcancel', handleTouchCancel, false)
 
@@ -337,7 +338,7 @@ let hscroll: HScroll = {
   // The animation frames per second.
   "framesPerSec": 30,
   // The maximum number of seconds for the animation.
-  "maxDuration": 1.5,
+  "maxDuration": .15,
   "scrolling": false,
   // The left edges (x scroll positions) of the images in the area.
   "leftEdges": [],
@@ -451,12 +452,14 @@ function handleRestoreImage(event: Event) {
   }
 }
 
+let vScrolling = false
+
 function handleTouchMove(event: TouchEvent) {
   // Zoom, pan and scroll the image.
   if (hscroll.scrolling) {
     horizontalScrollMove(event)
     return
-  } else if (!zpan.zooming) {
+  } else if (!zpan.zooming && !vScrolling) {
     // Determine whether horizontal scrolling is starting.
     const dx = Math.abs(hscroll.startX - event.touches[0].clientX)
     const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
@@ -465,6 +468,10 @@ function handleTouchMove(event: TouchEvent) {
       doubleClick = null
       horizontalScrollMove(event)
       return
+    } else {
+      // When we are vertically scrolling we don't want to start
+      // horizontally scrolling until the finger goes up.
+      vScrolling = true
     }
   }
 
@@ -546,12 +553,41 @@ function handleTouchCancel(event: TouchEvent) {
   handleTouchEnd(event)
 }
 
+function snapBack() {
+  // When the vertical scroll position is under 100, snap back to 100.
+
+  function vScrollDone() {
+    vScrolling = false
+    log(`done scrolling vertically, pageYOffset: ${pageYOffset}`)
+  }
+
+  const vscroll = pageYOffset
+  log(`scroll ending: vscroll: ${vscroll}`)
+  // Snap back if overscrolled.
+  // todo: define a css variable for 100.
+  if (vscroll < 100) {
+    log(`vscroll from ${vscroll} to 100`)
+    animatePosition(vscroll, 100, hscroll.framesPerSec,
+      100, .15, vScrollDone, (position) => {
+        // log(`scroll: ${position}`)
+        window.scrollTo(0, position)
+    })
+  }
+  else {
+    vScrolling = false
+  }
+}
+
 function handleTouchEnd(event: TouchEvent) {
   // log("touchend")
 
   if (event.touches.length == 0 && hscroll.scrolling) {
     horizontalScrollEnd()
     return
+  }
+
+  if (vScrolling) {
+    snapBack()
   }
 
   if (zpan.zooming) {
@@ -563,6 +599,7 @@ function handleTouchEnd(event: TouchEvent) {
               `d: ${two(zpan.current.distance)}, scale: ${two(zoomPoint.scale)}, ` +
               `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   }
+
 }
 
 function logJson() {
@@ -597,7 +634,7 @@ function horizontalScrollEnd() {
   // If the last move was big and fast, flick the image to the next
   // one.
 
-  function scrollDone() {
+  function hScrollDone() {
     // Scrolling has finished.  Update the image index.
 
     // Set the image index to the image we scrolled to.
@@ -645,7 +682,7 @@ function horizontalScrollEnd() {
   const finishLeft = hscroll.startScrollLeft + addition;
 
   if (area.scrollLeft == finishLeft) {
-    scrollDone()
+    hScrollDone()
     return
   }
 
@@ -656,7 +693,7 @@ function horizontalScrollEnd() {
 
   log(`ScrollEnd: animate from ${two(startLeft)} to ${finishLeft}`);
   animatePosition(startLeft, finishLeft, hscroll.framesPerSec,
-    maxDistance, hscroll.maxDuration, scrollDone, (position) => {
+    maxDistance, hscroll.maxDuration, hScrollDone, (position) => {
         area.scrollLeft = position
   })
 }
@@ -668,23 +705,27 @@ function animatePosition(startLeft: number, finishLeft: number, framesPerSec: nu
   // Animate the position from start to finish. Call the posFunction
   // callback for each position and call allDone when finished.
 
-  const maxFrames = hscroll.maxDuration * hscroll.framesPerSec;
+  const maxFrames = maxDuration * framesPerSec;
+  log(`maxFrames: ${maxFrames} = maxDuration: ${maxDuration} * framesPerSec: ${framesPerSec}`)
 
   // Move at the same rate no matter the distance. Use the ratio of
   // max frames to max distance equal to the ratio of the frames to
   // the distance.
   const distance = Math.abs(finishLeft - startLeft)
   const frames = (distance * maxFrames) / maxDistance;
+  log(`frames: ${two(frames)} = (distance: ${two(distance)} * maxFrames: ${two(maxFrames)}) / maxDistance: ${two(maxDistance)}`)
 
   // Get the positions to animate.
   let distancesIndex = 0;
   const frameDistances = distanceList(startLeft, finishLeft, frames);
+  log(`frameDistances: [${frameDistances}]`)
 
   // Determine the delay between each of the animations in seconds.
-  const delay = frames / hscroll.framesPerSec;
+  const delay = 1 / hscroll.framesPerSec;
 
+  log(`frames: ${frames}, distance: ${distance}, delay: ${two(delay)} seconds`)
   // Animate to the new position.
-  const annimationId = setInterval(animateInterval, delay / 1000);
+  const annimationId = setInterval(animateInterval, delay * 1000);
   function animateInterval() {
     if (distancesIndex >= frameDistances.length) {
       // Stop animating.
@@ -732,5 +773,24 @@ function handleResize() {
     start.log("sizeImages")
     sizeImages()
   }
+
+  log("Scroll to 100")
+  window.scrollTo(0, 100)
+
   start.log("resize  done")
+}
+
+function handleScroll() {
+  const vScroll = window.pageYOffset;
+  // When the user flicks the page to vertically scroll, the page
+  // continues to scroll even though no fingers are touching and it can
+  // go under 100.  In this case scroll back to 100.
+
+  // log(`Scroll to ${vScroll}`)
+
+  if (!vScrolling && vScroll < 100) {
+    setTimeout(() => {
+      snapBack()
+    }, 200)
+  }
 }

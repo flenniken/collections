@@ -203,7 +203,7 @@ gulp.task("watch", function(cb) {
 
   const gs = gulp.series
 
-  gulp.watch("ts/image.ts", gs(["tsimage"]));
+  gulp.watch("ts/image.ts", gs(["tsimage", "rsync"]));
   gulp.watch("ts/thumbnails.ts", gs(["tsthumbnails"]));
   gulp.watch("ts/index.ts", gs(["tsindex"]));
   gulp.watch("ts/sw.ts", gs(["tssw"]));
