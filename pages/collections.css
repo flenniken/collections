@@ -39,7 +39,13 @@
 
 #images #to-thumbnails {
   height: 100px;
-  background-color: #5070b0;
+  background-color: gray;
+}
+
+#images #thumbnails-jump {
+  height: 50px;
+  background-color: #24b024fc;
+  visibility: hidden;
 }
 
 #images .container {

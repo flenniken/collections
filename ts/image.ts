@@ -453,6 +453,7 @@ function handleRestoreImage(event: Event) {
 }
 
 let vScrolling = false
+let thumbnailJump = false
 
 function handleTouchMove(event: TouchEvent) {
   // Zoom, pan and scroll the image.
@@ -474,6 +475,30 @@ function handleTouchMove(event: TouchEvent) {
       vScrolling = true
     }
   }
+
+  const jump = get("thumbnails-jump")
+  if (vScrolling) {
+    // Turn on the jump indicator when the scroll position goes to 0
+    // for a moment.  When it moves off of 0, turn the indicator off.
+    if (pageYOffset == 0) {
+      if (!thumbnailJump) {
+        setTimeout(() => {
+          if (pageYOffset == 0) {
+            thumbnailJump = true
+            jump.style.visibility = 'visible'
+          }
+        }, 400)
+      }
+    }
+    else {
+      thumbnailJump = false
+    }
+  }
+
+  if (thumbnailJump)
+    jump.style.visibility = 'visible'
+  else
+    jump.style.visibility = 'hidden'
 
   if (!zpan.zooming)
     return
@@ -561,13 +586,12 @@ function snapBack() {
     log(`done scrolling vertically, pageYOffset: ${pageYOffset}`)
   }
 
-  const vscroll = pageYOffset
-  log(`scroll ending: vscroll: ${vscroll}`)
+  log(`scroll ending: pageYOffset: ${pageYOffset}`)
   // Snap back if overscrolled.
   // todo: define a css variable for 100.
-  if (vscroll < 100) {
-    log(`vscroll from ${vscroll} to 100`)
-    animatePosition(vscroll, 100, hscroll.framesPerSec,
+  if (pageYOffset < 100) {
+    log(`pageYOffset from ${pageYOffset} to 100`)
+    animatePosition(pageYOffset, 100, hscroll.framesPerSec,
       100, .15, vScrollDone, (position) => {
         // log(`scroll: ${position}`)
         window.scrollTo(0, position)
@@ -580,6 +604,11 @@ function snapBack() {
 
 function handleTouchEnd(event: TouchEvent) {
   // log("touchend")
+
+  if (thumbnailJump) {
+    window.location.href = cJson.thumbnailsPageUrl
+    return
+  }
 
   if (event.touches.length == 0 && hscroll.scrolling) {
     horizontalScrollEnd()
@@ -781,14 +810,14 @@ function handleResize() {
 }
 
 function handleScroll() {
-  const vScroll = window.pageYOffset;
+
   // When the user flicks the page to vertically scroll, the page
   // continues to scroll even though no fingers are touching and it can
   // go under 100.  In this case scroll back to 100.
 
-  // log(`Scroll to ${vScroll}`)
+  // log(`Scroll to ${pageYOffset}`)
 
-  if (!vScrolling && vScroll < 100) {
+  if (!vScrolling && pageYOffset < 100) {
     setTimeout(() => {
       snapBack()
     }, 200)
