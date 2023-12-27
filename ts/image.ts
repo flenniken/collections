@@ -50,6 +50,8 @@ let imageIx = 0
 let availWidth = 0
 let availHeight = 0
 
+let toThumbnailsHeight = 100
+
 // The area element.
 let area: HTMLElement | null = null
 
@@ -77,6 +79,16 @@ class Timer {
     const sec3 = three(this.seconds())
     log(`${sec3}s ----- ${message}`)
   }
+}
+
+function cssNum(variable: string): number {
+  // Return the given css number variable defined in the ":root"
+  // pseudo class. It returns 100 for both of the following examples:
+  // :root {
+  //   --my-var: 100;
+  //   --my-var2: 100px;
+  // }
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable));
 }
 
 // The start time used for timing.
@@ -110,6 +122,9 @@ function three(num: number) {
 async function handleLoad() {
   // The page finished loading, setup and size things.
   startTimer.log(`load event; the collection contains ${cJson.images.length} images`)
+
+  toThumbnailsHeight = cssNum("--to-thumbnails-height")
+  log(`toThumbnailsHeight: ${toThumbnailsHeight}`)
 
   area = get("area")
 
@@ -579,20 +594,19 @@ function handleTouchCancel(event: TouchEvent) {
 }
 
 function snapBack() {
-  // When the vertical scroll position is under 100, snap back to 100.
+  // When the vertical scroll position is under toThumbnailsHeight
+  // (100), snap back to 100.
 
   function vScrollDone() {
     vScrolling = false
-    log(`done scrolling vertically, pageYOffset: ${pageYOffset}`)
+    log(`animate done: pageYOffset: ${pageYOffset}`)
   }
 
-  log(`scroll ending: pageYOffset: ${pageYOffset}`)
   // Snap back if overscrolled.
-  // todo: define a css variable for 100.
-  if (pageYOffset < 100) {
-    log(`pageYOffset from ${pageYOffset} to 100`)
-    animatePosition(pageYOffset, 100, hscroll.framesPerSec,
-      100, .15, vScrollDone, (position) => {
+  if (pageYOffset < toThumbnailsHeight) {
+    log(`animate pageYOffset from ${pageYOffset} to ${toThumbnailsHeight}`)
+    animatePosition(pageYOffset, toThumbnailsHeight, hscroll.framesPerSec,
+      toThumbnailsHeight, .15, vScrollDone, (position) => {
         // log(`scroll: ${position}`)
         window.scrollTo(0, position)
     })
@@ -606,6 +620,7 @@ function handleTouchEnd(event: TouchEvent) {
   // log("touchend")
 
   if (thumbnailJump) {
+    window.scrollTo(0, toThumbnailsHeight)
     window.location.href = cJson.thumbnailsPageUrl
     return
   }
@@ -803,22 +818,23 @@ function handleResize() {
     sizeImages()
   }
 
-  log("Scroll to 100")
-  window.scrollTo(0, 100)
+  log("Scroll to toThumbnailsHeight")
+  window.scrollTo(0, toThumbnailsHeight)
 
   start.log("resize  done")
 }
 
 function handleScroll() {
-
   // When the user flicks the page to vertically scroll, the page
-  // continues to scroll even though no fingers are touching and it can
-  // go under 100.  In this case scroll back to 100.
+  // continues to scroll even though no fingers are touching and it
+  // can go under toThumbnailsHeight limit.  In this case scroll back
+  // to toThumbnailsHeight.
 
   // log(`Scroll to ${pageYOffset}`)
 
-  if (!vScrolling && pageYOffset < 100) {
+  if (!vScrolling && pageYOffset < toThumbnailsHeight) {
     setTimeout(() => {
+      log("over scroll, snap back")
       snapBack()
     }, 200)
   }

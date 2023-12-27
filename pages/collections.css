@@ -37,8 +37,12 @@
   padding: 0;
 }
 
+:root {
+  --to-thumbnails-height: 100px;
+}
+
 #images #to-thumbnails {
-  height: 100px;
+  height: var(--to-thumbnails-height);
   background-color: gray;
 }
 
