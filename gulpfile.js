@@ -210,6 +210,14 @@ python3 -m http.server
   return child_process.spawn("python3", parameters, {stdio: "inherit", cwd: "dist"});
 })
 
+help.push("* readme -- show the readme with glow.")
+gulp.task('readme', function () {
+  const parameters = [
+    "readme.md",
+  ]
+  return child_process.spawn("glow", parameters, {stdio: "inherit"});
+});
+
 help.push("* watch -- watch file changes and call the appropriate task.")
 gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dest folder.
