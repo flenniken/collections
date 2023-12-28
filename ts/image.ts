@@ -76,8 +76,7 @@ class Timer {
     return (performance.now() - this.start) / 1000.0
   }
   log(message: string) {
-    const sec3 = three(this.seconds())
-    log(`${sec3}s ----- ${message}`)
+    log(`${three(this.seconds())}s ----- ${message}`)
   }
 }
 
@@ -440,7 +439,6 @@ function handleRestoreImage(event: Event) {
   log("Restore image to its zoom point.")
 
   // Get the original zoom point.
-  const image = cJson.images[imageIx]
   let zoomPoint = getZoomPoint(cJson)
   const origZP = getZoomPoint(cJsonOriginal)
   log(`Zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
@@ -656,8 +654,7 @@ function logJson() {
   }
 
   // Log the current json.
-  const msg = JSON.stringify(cJson, replacer, 2)
-  log(msg)
+  log(JSON.stringify(cJson, replacer, 2))
 
   // log("Copy json to the clipboard");
   // navigator.clipboard.writeText(msg);

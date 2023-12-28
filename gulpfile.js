@@ -19,18 +19,31 @@ gulp.task("default", function(cb){
   cb()
 });
 
-function ts2js(src, dest, options=null) {
-  if (options === null) {
-    options = {
+function ts2js(src, dest, tsOptions=null, debug=true) {
+  if (tsOptions === null) {
+    tsOptions = {
       noImplicitAny: true,
       lib: ["es7", "dom"],
       target: "es6",
     }
   }
+
+  // When not debugging remove the log functions.
+  let pure_funcs = []
+  if (debug == false)
+    pure_funcs = ["log", "startTimer.log", "logError"]
+
+  const ugOptions = {
+    warnings: true,
+    compress:{
+      pure_funcs: pure_funcs
+    }
+  }
   return gulp.src(src)
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
-    .pipe(ts(options))
-    .pipe(uglify())
+    .pipe(ts(tsOptions))
+    .pipe(gulp.dest("tmp")) // Make a copy for inspection.
+    .pipe(uglify(ugOptions))
     .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
     .pipe(gulp.dest(dest));
 }
