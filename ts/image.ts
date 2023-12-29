@@ -138,6 +138,9 @@ async function handleLoad() {
   startTimer.log("sizeImages")
   sizeImages()
 
+  log("Scroll to toThumbnailsHeight")
+  window.scrollTo(0, toThumbnailsHeight)
+
   // Show the page.
   document.body.style.visibility = 'visible'
   document.body.style.opacity = "1"
@@ -222,6 +225,7 @@ function sizeImages() {
     log(`Existing zoom points: ${Object.keys(cJson.zoomPoints)}`)
     zoomPoints = []
     cJson.zoomPoints[zoom_w_h] = zoomPoints
+    cJsonOriginal.zoomPoints[zoom_w_h] = zoomPoints
   }
   else {
     zoomPoints = cJson.zoomPoints[zoom_w_h]
