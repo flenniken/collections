@@ -393,7 +393,27 @@ function handleTouchStart(event: TouchEvent) {
   hscroll.currentXTime = hscroll.startXTime = performance.now()
   hscroll.startY = event.touches[0].clientY;
   log(`On image: ${imageIx+1}, hscroll: ${hscroll.startScrollLeft}, vscroll: ${pageYOffset}`)
+}
 
+function handleContainerTouchStart(event: TouchEvent) {
+  // Handle the touchstart event for the container elements.
+
+  // Start timer on first touch. If second touch comes before .5
+  // seconds, it’s a double touch. Only consider one finger cases.
+  if (event.touches.length == 1) {
+    if (doubleTouch !== null) {
+      let seconds = doubleTouch.seconds()
+      if (seconds < .5) {
+        const event = new Event("restoreimage");
+        window.dispatchEvent(event);
+        doubleTouch = null
+        return
+      }
+    }
+    doubleTouch = new Timer()
+  } else {
+    doubleTouch = null
+  }
 
   // When not two fingers touching, return.
   if (event.touches.length != 2)
@@ -412,10 +432,12 @@ function handleTouchStart(event: TouchEvent) {
   const clientY0 = event.touches[0].clientY
   const clientY1 = event.touches[1].clientY
 
+  const containerTop = pageYOffset - toThumbnailsHeight
+
   const zoomPoint = getZoomPoint()
   zpan.start = {
     "cx": (clientX0 + clientX1) / 2,
-    "cy": (clientY0 + clientY1) / 2,
+    "cy": (clientY0 + clientY1) / 2 + containerTop,
     "distance": Math.hypot(clientX0 - clientX1, clientY0 - clientY1),
     "scale": zoomPoint.scale,
     "tx": zoomPoint.tx,
@@ -426,27 +448,6 @@ function handleTouchStart(event: TouchEvent) {
   log(`i${imageIx+1}: touchstart: c: (${two(zpan.start.cx)}, ${two(zpan.start.cy)}) ` +
               `d: ${two(zpan.start.distance)}, scale: ${two(zpan.start.scale)}, ` +
               `t: (${two(zpan.start.tx)}, ${two(zpan.start.ty)})`)
-}
-
-function handleContainerTouchStart(event: TouchEvent) {
-  // Handle the touchstart event for the area element.
-
-  // Start timer on first touch. If second touch comes before .5
-  // seconds, it’s a double touch. Only consider one finger cases.
-  if (event.touches.length == 1) {
-    if (doubleTouch !== null) {
-      let seconds = doubleTouch.seconds()
-      if (seconds < .5) {
-        const event = new Event("restoreimage");
-        window.dispatchEvent(event);
-        doubleTouch = null
-        return
-      }
-    }
-    doubleTouch = new Timer()
-  } else {
-    doubleTouch = null
-  }
 }
 
 function handleRestoreImage(event: Event) {
@@ -544,10 +545,11 @@ function handleTouchMove(event: TouchEvent) {
   const image = cJson.images[imageIx]
   const zoomPoint = getZoomPoint()
 
+  const containerTop = pageYOffset - toThumbnailsHeight
   const distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
   zpan.current = {
     cx: (clientX0 + clientX1) / 2,
-    cy: (clientY0 + clientY1) / 2,
+    cy: (clientY0 + clientY1) / 2 + containerTop,
     distance: distance,
     scale: (distance / zpan.start.distance) * zpan.start.scale,
     tx: 0,
