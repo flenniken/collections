@@ -325,7 +325,7 @@ let zpan: ZPan = {
 }
 
 // A timer to detect a double touch.
-let doubleClick: Timer | null  = null
+let doubleTouch: Timer | null  = null
 
 interface HScroll {
   minFlick: number;
@@ -391,18 +391,18 @@ function handleTouchStart(event: TouchEvent) {
   // Start timer on first click. If second click comes before .5
   // seconds, it’s a double click. Only consider one finger cases.
   if (event.touches.length == 1) {
-    if (doubleClick !== null) {
-      let seconds = doubleClick.seconds()
+    if (doubleTouch !== null) {
+      let seconds = doubleTouch.seconds()
       if (seconds < .5) {
         const event = new Event("restoreimage");
         window.dispatchEvent(event);
-        doubleClick = null
+        doubleTouch = null
         return
       }
     }
-    doubleClick = new Timer()
+    doubleTouch = new Timer()
   } else {
-    doubleClick = null
+    doubleTouch = null
   }
 
   // When not two fingers touching, return.
@@ -483,7 +483,7 @@ function handleTouchMove(event: TouchEvent) {
     const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
     if (dx > dy) {
       hscroll.scrolling = true;
-      doubleClick = null
+      doubleTouch = null
       horizontalScrollMove(event)
       return
     } else {
