@@ -386,7 +386,7 @@ function handleTouchStart(event: TouchEvent) {
   hscroll.currentX = hscroll.startX = event.touches[0].clientX;
   hscroll.currentXTime = hscroll.startXTime = performance.now()
   hscroll.startY = event.touches[0].clientY;
-  log(`touchstart: scroll image: ${imageIx+1}, hscroll.startScrollLeft: ${hscroll.startScrollLeft}`)
+  log(`On image: ${imageIx+1}, hscroll: ${hscroll.startScrollLeft}, vscroll: ${pageYOffset}`)
 
   // Start timer on first click. If second click comes before .5
   // seconds, it’s a double click. Only consider one finger cases.
@@ -601,12 +601,12 @@ function snapBack() {
 
   function vScrollDone() {
     vScrolling = false
-    log(`animate done: pageYOffset: ${pageYOffset}`)
+    // log(`animate done: pageYOffset: ${pageYOffset}`)
   }
 
   // Snap back if overscrolled.
   if (pageYOffset < toThumbnailsHeight) {
-    log(`animate pageYOffset from ${pageYOffset} to ${toThumbnailsHeight}`)
+    // log(`animate pageYOffset from ${pageYOffset} to ${toThumbnailsHeight}`)
     animatePosition(pageYOffset, toThumbnailsHeight, hscroll.framesPerSec,
       toThumbnailsHeight, .15, vScrollDone, (position) => {
         // log(`scroll: ${position}`)
@@ -688,11 +688,11 @@ function horizontalScrollEnd() {
       logError(`area.scrollLeft ${area.scrollLeft} was not found.`)
     else {
       if (imageIx == ix) {
-        log(`ScrollEnd: scrolled back to the original item ${imageIx+1}.`)
+        log(`Scrolled back to the original item ${imageIx+1}.`)
       }
       else {
         imageIx = ix
-        log(`ScrollEnd: scroll done: area.scrollLeft: ${area.scrollLeft}, image: ${imageIx+1}`);
+        log(`On image: ${imageIx+1}, hscroll: ${area.scrollLeft}, vscroll: ${pageYOffset}`)
       }
     }
     hscroll.scrolling = false;
@@ -736,7 +736,6 @@ function horizontalScrollEnd() {
   // go back.
   const maxDistance = availWidth / 2;
 
-  log(`ScrollEnd: animate from ${two(startLeft)} to ${finishLeft}`);
   animatePosition(startLeft, finishLeft, hscroll.framesPerSec,
     maxDistance, hscroll.maxDuration, hScrollDone, (position) => {
         area.scrollLeft = position
@@ -751,24 +750,27 @@ function animatePosition(startLeft: number, finishLeft: number, framesPerSec: nu
   // callback for each position and call allDone when finished.
 
   const maxFrames = maxDuration * framesPerSec;
-  log(`maxFrames: ${maxFrames} = maxDuration: ${maxDuration} * framesPerSec: ${framesPerSec}`)
+  // log(`maxFrames: ${maxFrames} = maxDuration: ${maxDuration} * framesPerSec: ${framesPerSec}`)
 
   // Move at the same rate no matter the distance. Use the ratio of
   // max frames to max distance equal to the ratio of the frames to
   // the distance.
   const distance = Math.abs(finishLeft - startLeft)
   const frames = (distance * maxFrames) / maxDistance;
-  log(`frames: ${two(frames)} = (distance: ${two(distance)} * maxFrames: ${two(maxFrames)}) / maxDistance: ${two(maxDistance)}`)
+  // log(`frames: ${two(frames)} = (distance: ${two(distance)} * maxFrames: ${two(maxFrames)}) / maxDistance: ${two(maxDistance)}`)
 
   // Get the positions to animate.
   let distancesIndex = 0;
   const frameDistances = distanceList(startLeft, finishLeft, frames);
-  log(`frameDistances: [${frameDistances}]`)
+  // log(`frameDistances: [${frameDistances}]`)
 
   // Determine the delay between each of the animations in seconds.
   const delay = 1 / hscroll.framesPerSec;
 
-  log(`frames: ${frames}, distance: ${distance}, delay: ${two(delay)} seconds`)
+  // log(`frames: ${two(frames)}, distance: ${two(distance)}, delay: ${two(delay)} seconds`)
+
+  log(`Animate positions [${frameDistances}] one per ${two(delay)} seconds`);
+
   // Animate to the new position.
   const annimationId = setInterval(animateInterval, delay * 1000);
   function animateInterval() {
@@ -825,6 +827,8 @@ function handleResize() {
   start.log("resize  done")
 }
 
+let overscroll = -1
+
 function handleScroll() {
   // When the user flicks the page to vertically scroll, the page
   // continues to scroll even though no fingers are touching and it
@@ -833,10 +837,13 @@ function handleScroll() {
 
   // log(`Scroll to ${pageYOffset}`)
 
-  if (!vScrolling && pageYOffset < toThumbnailsHeight) {
-    setTimeout(() => {
-      log("over scroll, snap back")
-      snapBack()
-    }, 200)
+  if (overscroll == -1) {
+    if (!vScrolling && pageYOffset < toThumbnailsHeight) {
+      overscroll = setTimeout(() => {
+        log("Over scroll, snap back in a moment")
+        snapBack()
+        overscroll = -1
+      }, 200)
+    }
   }
 }
