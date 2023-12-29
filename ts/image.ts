@@ -127,6 +127,12 @@ async function handleLoad() {
 
   area = get("area")
 
+  // Watch the touchstart event on the containers for double touch.
+  const containers = area.querySelectorAll('.container')
+  containers.forEach(container => {
+    container.addEventListener('touchstart', handleContainerTouchStart, {passive: false})
+  })
+
   // Disable the default browser zoom and pan behavior.
   get("images").setAttribute("touch-action", "none")
 
@@ -373,7 +379,7 @@ let hscroll: HScroll = {
 }
 
 function handleTouchStart(event: TouchEvent) {
-  // Handle the touchstart event.
+  // Handle the touchstart event for the window.
 
   if (hscroll.scrolling) {
     event.preventDefault();
@@ -388,22 +394,6 @@ function handleTouchStart(event: TouchEvent) {
   hscroll.startY = event.touches[0].clientY;
   log(`On image: ${imageIx+1}, hscroll: ${hscroll.startScrollLeft}, vscroll: ${pageYOffset}`)
 
-  // Start timer on first click. If second click comes before .5
-  // seconds, it’s a double click. Only consider one finger cases.
-  if (event.touches.length == 1) {
-    if (doubleTouch !== null) {
-      let seconds = doubleTouch.seconds()
-      if (seconds < .5) {
-        const event = new Event("restoreimage");
-        window.dispatchEvent(event);
-        doubleTouch = null
-        return
-      }
-    }
-    doubleTouch = new Timer()
-  } else {
-    doubleTouch = null
-  }
 
   // When not two fingers touching, return.
   if (event.touches.length != 2)
@@ -436,6 +426,27 @@ function handleTouchStart(event: TouchEvent) {
   log(`i${imageIx+1}: touchstart: c: (${two(zpan.start.cx)}, ${two(zpan.start.cy)}) ` +
               `d: ${two(zpan.start.distance)}, scale: ${two(zpan.start.scale)}, ` +
               `t: (${two(zpan.start.tx)}, ${two(zpan.start.ty)})`)
+}
+
+function handleContainerTouchStart(event: TouchEvent) {
+  // Handle the touchstart event for the area element.
+
+  // Start timer on first touch. If second touch comes before .5
+  // seconds, it’s a double touch. Only consider one finger cases.
+  if (event.touches.length == 1) {
+    if (doubleTouch !== null) {
+      let seconds = doubleTouch.seconds()
+      if (seconds < .5) {
+        const event = new Event("restoreimage");
+        window.dispatchEvent(event);
+        doubleTouch = null
+        return
+      }
+    }
+    doubleTouch = new Timer()
+  } else {
+    doubleTouch = null
+  }
 }
 
 function handleRestoreImage(event: Event) {
