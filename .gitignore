@@ -3,3 +3,4 @@ node_modules/
 save/
 dist/js/
 tmp/
+env/debian/statictea
