@@ -18,21 +18,6 @@ function runMe() {
 
     echo "The $collectionsImage does not exist, creating it..."
 
-    # Make sure the statictea exe exists in the docker folder.
-    if [ ! -s "$dockerFolder/statictea" ]; then
-      # It's missing, look for it in the statictea code folder.
-      staticteaexe="../statictea/bin/debian/statictea"
-      if [ -s "$staticteaexe" ]; then
-        echo "Copy the statictea exe into the docker folder."
-        cp $staticteaexe $dockerFolder/
-      else
-        echo "\
-The docker folder is missing the debian statictea exe.\
-You can get it by following the statictea docker instructions."
-        exit
-      fi
-    fi
-
     docker build --tag=$collectionsImage $dockerFolder
 
     echo "If no errors, run again to run the container."
