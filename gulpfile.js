@@ -6,7 +6,7 @@ const cleanCSS = require("gulp-clean-css");
 const using = require('gulp-using');
 const ts = require('gulp-typescript');
 
-let help = `gulp tasks:
+let help = `Tasks:
 * ts -- compile and minimize ts files to dist/js.
     tsimage -- compile image.ts
     tsthumbnails -- compile image.ts
@@ -18,9 +18,12 @@ let help = `gulp tasks:
     image -- create the image page.
 * css -- minimize the collection.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea.
-* run-server -- Run the python server on the dist folder.
-* readme -- show the readme with glow.
-* watch -- watch file changes and call the appropriate task.
+* run-server -- Run a test server exposing the dist folder on port
+    8000. You can run it in the background with: g run-server &
+    Access in your browser with: http://localhost:8000/index.html
+* watch -- watch file changes and call the appropriate task. You can
+    run it in the background with: g watch &
+* readme -- show the readme file with glow.
 * all -- run the js, pages and css tasks in parallel`
 
 gulp.task("default", function(cb){
@@ -194,6 +197,7 @@ python3 -m http.server
 
 gulp.task('readme', function () {
   const parameters = [
+    "-p",
     "readme.md",
   ]
   return child_process.spawn("glow", parameters, {stdio: "inherit"});

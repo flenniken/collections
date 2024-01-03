@@ -28,6 +28,7 @@ function runMe() {
 
     # Run the container.
     status=$(docker inspect $collectionsContainer 2>/dev/null | grep Status)
+    mapports='-p 127.0.0.1:8000:8000'
     case $status in
       *running*)
         echo "The $collectionsContainer is running, attaching to it..."
@@ -40,7 +41,7 @@ function runMe() {
       *)
         echo "The $collectionsContainer does not exist, creating it..."
         shared_option="-v $rootDir:/home/coder/collections"
-        docker run --name=$collectionsContainer -it $shared_option $collectionsImage
+        docker run $mapports --name=$collectionsContainer -it $shared_option $collectionsImage
         ;;
     esac 
 
@@ -117,7 +118,7 @@ case $option in
   "" | run)
     runMe
     ;;
-  "" | rsync)
+  rsync)
     rsyncMe
     ;;
   *)
