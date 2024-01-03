@@ -10,7 +10,7 @@ alias l='ls -ltr | tail -10'
 
 alias ls='ls --color=auto'
 alias ll='ls -l'
-alias n='nimble'
+alias g='gulp'
 
 # Use the manually built version of nim.
 export PATH=/home/coder/Nim/bin:$PATH

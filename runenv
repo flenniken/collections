@@ -18,6 +18,7 @@ function runMe() {
 
     echo "The $collectionsImage does not exist, creating it..."
 
+    # docker build --no-cache --tag=$collectionsImage $dockerFolder
     docker build --tag=$collectionsImage $dockerFolder
 
     echo "If no errors, run again to run the container."
@@ -88,6 +89,11 @@ function listMe() {
   fi
 }
 
+function rsyncMe() {
+  ## Rsync dist folder to flenniken.net.
+  rsync -a --delete --progress dist/ 1and1:flenniken/site/web/collections/ 
+}
+
 # Verify we are running in the root folder by looking for
 # the Docker file.
 if [ ! -s "$dockerFolder/Dockerfile" ]; then
@@ -110,6 +116,9 @@ case $option in
     ;;
   "" | run)
     runMe
+    ;;
+  "" | rsync)
+    rsyncMe
     ;;
   *)
     echo "options: run delete list. Run is the default."
