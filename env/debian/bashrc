@@ -12,6 +12,6 @@ alias ls='ls --color=auto'
 alias ll='ls -l'
 alias g='gulp'
 
-# Use the manually built version of nim.
-export PATH=/home/coder/Nim/bin:$PATH
+alias b1='g watch &'
+alias b2='g run-server &'
 
