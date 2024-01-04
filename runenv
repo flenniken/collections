@@ -109,20 +109,20 @@ if [[ ! -z "${coder_env}" ]]; then
 fi
 
 case $option in
-  delete)
+  d | delete)
     deleteMe
     ;;
-  list)
+  l | list)
     listMe
     ;;
-  "" | run)
+  r | run)
     runMe
     ;;
-  rsync)
+  s | rsync)
     rsyncMe
     ;;
   *)
-    echo "options: run delete list. Run is the default."
+    echo "options: run (r),  delete (d),  list (l), rsync (s)."
     ;;
 esac 
 

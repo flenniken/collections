@@ -42,26 +42,22 @@ RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] \
   | tee /etc/apt/sources.list.d/nodesource.list
 RUN apt update && apt -qy install nodejs=$NODEJS npm
 
+# Install gulp command line.
+RUN npm install --global gulp-cli
+
+# Install bashrc for the prompt and some aliases.
+COPY --chown=coder:coder bashrc /home/coder/.bashrc
 
 # Switch to coder user for following commands.
 USER coder
-WORKDIR /home/coder
 
-# Install bashrc for the prompt and some aliases.
-COPY --chown=coder:coder bashrc .bashrc
+# Install node modules in the global space in the coder folder, the
+# parent of collections. This installs all modules specified in the
+# package.json file.
 
-WORKDIR /home/coder/collections
-
-# Create the package.json file used by npm.
-RUN npm init -y
-
-# Install gulp globally and locally.
-RUN sudo npm install --global gulp-cli
-RUN npm install --save-dev gulp
-
-# Install the node packages used by gulpfile.js.
-RUN sudo npm install -g npm-install-all
-RUN npm-install-all gulpfile.js
+WORKDIR /home/coder/
+COPY --chown=coder:coder package.json package.json
+Run npm install
 
 # Start in the collections directory.
 WORKDIR /home/coder/collections

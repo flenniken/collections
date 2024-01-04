@@ -5,6 +5,7 @@ const child_process = require("child_process");
 const cleanCSS = require("gulp-clean-css");
 const using = require('gulp-using');
 const ts = require('gulp-typescript');
+// const jest = require('gulp-jest').default;
 
 let help = `Tasks:
 * ts -- compile and minimize ts files to dist/js.
@@ -19,10 +20,10 @@ let help = `Tasks:
 * css -- minimize the collection.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea.
 * run-server -- Run a test server exposing the dist folder on port
-    8000. You can run it in the background with: g run-server &
+    8000. You can run it in the background with: "g run-server &" or "b1".
     Access in your browser with: http://localhost:8000/index.html
 * watch -- watch file changes and call the appropriate task. You can
-    run it in the background with: g watch &
+    run it in the background with: "g watch &" or "b2".
 * readme -- show the readme file with glow.
 * all -- run the js, pages and css tasks in parallel`
 
