@@ -8,24 +8,24 @@ const ts = require('gulp-typescript');
 // const jest = require('gulp-jest').default;
 
 let help = `Tasks:
-* ts -- compile and minimize ts files to dist/js.
-    tsimage -- compile image.ts
-    tsthumbnails -- compile image.ts
-    tsindex -- compile index.ts
-    tssw -- compile sw.ts
-* pages -- create all the pages from templates.
-    index -- create the main index page.
-    thumbnails -- create the thumbnails page.
-    image -- create the image page.
-* css -- minimize the collection.css file.
+* ts -- Compile and minimize ts files to dist/js.
+    i -- Compile image.ts
+    t -- Compile thumbnails.ts
+    x -- Compile index.ts
+    sw -- Compile sw.ts
+* pages -- Create all the pages from templates.
+    index -- Create the main index page.
+    thumbnails -- Create the thumbnails page.
+    image -- Create the image page.
+* css -- Minimize the collection.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea.
-* run-server -- Run a test server exposing the dist folder on port
-    8000. You can run it in the background with: "g run-server &" or "b1".
-    Access in your browser with: http://localhost:8000/index.html
-* watch -- watch file changes and call the appropriate task. You can
-    run it in the background with: "g watch &" or "b2".
-* readme -- show the readme file with glow.
-* all -- run the js, pages and css tasks in parallel`
+* run-server -- (alias gr) Run a test server exposing the dist folder on port
+    8000. You can run it in the background with alias gr.
+    Access files in your browser with: http://localhost:8000/index.html
+* watch -- (alias gw) Watch file changes and call the appropriate task. You can
+    run it in the background with alias gr.
+* readme -- Show the readme file with glow.
+* all -- Compile everything in parallel, tasks ts, pages and css.`
 
 gulp.task("default", function(cb){
   console.log("")
@@ -67,19 +67,19 @@ function ts2js(src, dest, tsOptions=null, debug=true) {
     .pipe(gulp.dest(dest));
 }
 
-gulp.task('tsimage', function () {
+gulp.task('i', function () {
   return ts2js('ts/image.ts', 'dist/js/', null)
 });
 
-gulp.task('tsthumbnails', function () {
+gulp.task('t', function () {
   return ts2js('ts/thumbnails.ts', 'dist/js/', null)
 });
 
-gulp.task('tsindex', function () {
+gulp.task('x', function () {
   return ts2js('ts/index.ts', 'dist/js', null)
 });
 
-gulp.task('tssw', function () {
+gulp.task('sw', function () {
   options = {
     noImplicitAny: true,
     target: "es6",
@@ -88,7 +88,7 @@ gulp.task('tssw', function () {
   return ts2js('ts/sw.ts', 'dist/', options)
 });
 
-gulp.task("ts", gulp.parallel(["tsimage", "tsthumbnails", "tsindex", "tssw"]))
+gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
 
 gulp.task("index", function (cb) {
   // Create the main index page from the index template.
@@ -209,10 +209,10 @@ gulp.task("watch", function(cb) {
 
   const gs = gulp.series
 
-  gulp.watch("ts/image.ts", gs(["tsimage"]));
-  gulp.watch("ts/thumbnails.ts", gs(["tsthumbnails"]));
-  gulp.watch("ts/index.ts", gs(["tsindex"]));
-  gulp.watch("ts/sw.ts", gs(["tssw"]));
+  gulp.watch("ts/image.ts", gs(["i"]));
+  gulp.watch("ts/thumbnails.ts", gs(["t"]));
+  gulp.watch("ts/index.ts", gs(["x"]));
+  gulp.watch("ts/sw.ts", gs(["sw"]));
 
   gulp.watch("pages/collections.css", gs(["css"]));
 
