@@ -1,3 +1,4 @@
+# Aliases used in the Collections docker container.
 
 # Show the current folder in the prompt.
 PS1='(debian)\w $ '
@@ -5,13 +6,9 @@ PS1='(debian)\w $ '
 # Allow aliases to work with sudo, i.e.: "sudo ll".
 alias sudo='sudo '
 
-# List the most recent files.
-alias l='ls -ltr | tail -10'
-
 alias ls='ls --color=auto'
 alias ll='ls -l'
+
 alias g='gulp'
-
-alias b1='g watch &'
-alias b2='g run-server &'
-
+alias gw='g watch &'
+alias gr='g run-server &'

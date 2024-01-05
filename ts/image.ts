@@ -5,7 +5,7 @@
 namespace CJson {
   // Typescript definition for the collection json data.
 
-  export class Image {
+  export interface Image {
     url: string;
     thumbnail: string;
     title: string;
@@ -29,8 +29,6 @@ namespace CJson {
   export class Collection {
     title: string;
     collection: number;
-    width: number;
-    height: number;
     imagePageUrl: string;
     thumbnailsPageUrl: string;
     // The image array contains a element for each image in the collection.
@@ -50,6 +48,8 @@ let imageIx = 0
 let availWidth = 0
 let availHeight = 0
 
+// The over scroll height. At load time it gets set to the css var:
+// --to-thumbnails-height.
 let toThumbnailsHeight = 100
 
 // The area element.
@@ -663,6 +663,7 @@ function handleTouchEnd(event: TouchEvent) {
 
 function logJson() {
   function replacer(key: string, value: any) {
+    // Write two decimals points for zoom points.
     if (["scale", "tx", "ty"].includes(key)) {
       return two(value)
     }

@@ -69,7 +69,7 @@ it works better.
 
 You install the app’s icon on your home screen following these steps:
 
-* launch safari on iphone (it doesn't work on chrome or firefox)
+* launch safari on iphone (it doesn't install on chrome or firefox)
 * go to:
 
 https://flenniken.net/collections/index.html

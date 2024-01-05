@@ -1,10 +1,16 @@
-# This builds a development environment for the Collections project.
+# You use this docker file to build a container for the Collections
+# project.  It contains all the programs needed to build the app. Use
+# runenv to build and run the container.  When running type g to see
+# the available commands.
 
 FROM debian:12
 MAINTAINER Steve Flenniken
+
+# Environment variable used to detect when we are running in the
+# container.
 ENV coder_env=debian
 
-# Install base apps.
+# Install apps and libraries.
 RUN apt update && apt -qy install less man sudo tree curl \
   wget nano git jq libpcre3 libpcre3-dev rsync
 
@@ -29,6 +35,8 @@ RUN mkdir -p /etc/sudoers.d \
   && echo 'coder:devenv' | chpasswd
 
 RUN chown coder:coder /home/coder
+
+# Install statictea.
 COPY statictea /usr/bin
 
 # Install nodejs.  See available versions with "apt-cache policy nodejs".
@@ -57,7 +65,7 @@ USER coder
 
 WORKDIR /home/coder/
 COPY --chown=coder:coder package.json package.json
-Run npm install
+RUN npm install
 
 # Start in the collections directory.
 WORKDIR /home/coder/collections
