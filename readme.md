@@ -1,5 +1,7 @@
 # Flenniken.net Collections
 
+[![icon](dist/icons/icon-64.png)](#)
+
 Collections is a progressive web app (PWA) for viewing curated
 collections of photos.
 
@@ -77,17 +79,7 @@ https://flenniken.net/collections/index.html
 * click on the share icon at the bottom center of the screen
 * scroll up and select “Add to Home screen” and click add
 
-Markdown 256 image:
-
-[![icon](dist/icons/icon-256.png)](#)
-
-Markdown 96 image:
-
-[![icon](dist/icons/icon-96.png)](#)
-
-Markdown 64 image:
-
-[![icon](dist/icons/icon-64.png)](#)
+[![icon](dist/icons/icon-32.png)](#)
 
 # Develop Collections
 
