@@ -77,13 +77,17 @@ https://flenniken.net/collections/index.html
 * click on the share icon at the bottom center of the screen
 * scroll up and select “Add to Home screen” and click add
 
-Markdown image:
+Markdown 256 image:
 
 [![icon](dist/icons/icon-256.png)](#)
 
-HTML image:
+Markdown 96 image:
 
-<img src="dist/icons/icon-256.png" alt="icon" width="128"/>
+[![icon](dist/icons/icon-96.png)](#)
+
+Markdown 64 image:
+
+[![icon](dist/icons/icon-64.png)](#)
 
 # Develop Collections
 
@@ -255,7 +259,7 @@ alias ls='ls --color=auto'
 alias sudo='sudo '
 ~~~
 
-# Manual Test Procedures
+# Manual Test Procedure
 
 When making changes to the image page test them with these steps:
 
