@@ -1,7 +1,15 @@
-// thumbnails.js
-"use strict";
+// Code for the thumbnails page.
 
 window.addEventListener("load", showPageSize)
+
+function get(id: string) {
+  // Get the dom element with the given id. Generate and exception
+  // when not found.
+  const element = document.getElementById(id)
+  if (!element)
+    throw `Element with "${id}" not found.`
+  return element
+}
 
 function showPageSize() {
   // Show the width and height of the page.
@@ -15,6 +23,6 @@ function showPageSize() {
   // var availWidth = window.screen.availWidth
   // var availHeight = window.screen.availHeight
 
-  document.getElementById("width").innerHTML = width.toString()
-  document.getElementById("height").innerHTML = height.toString()
+  get("width").innerHTML = width.toString()
+  get("height").innerHTML = height.toString()
 }

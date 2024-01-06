@@ -1,5 +1,4 @@
 // sw.js
-"use strict";
 
 const cacheName = 'collections-v1';
 const cacheContent = [
@@ -15,9 +14,13 @@ const cacheContent = [
   '/collections/icons/icon-512.png',
 ];
 
-self.addEventListener('install', (event: ExtendableEvent) => {
+
+self.addEventListener('install', (event: Event) => {
+
+  const extendableEvent = (<ExtendableEvent>event)
+
   console.log('service worker install event');
-  event.waitUntil((async () => {
+  extendableEvent.waitUntil((async () => {
     const cache = await caches.open(cacheName);
 
     console.log('cache all files');
@@ -25,9 +28,11 @@ self.addEventListener('install', (event: ExtendableEvent) => {
   })());
 });
 
-self.addEventListener('fetch', (event: FetchEvent) => {
+self.addEventListener('fetch', (event: Event) => {
+  const fetchEvent = (<FetchEvent>event)
+
   // Get the url to fetch.
-  const url = event.request.url
+  const url = fetchEvent.request.url
 
   console.log(`service worker fetch event for ${url}`);
 
@@ -38,17 +43,17 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     return
   }
 
-  event.respondWith((async () => {
+  fetchEvent.respondWith((async () => {
 
     // Look for the file on the net.
-    var response = await fetch(event.request);
+    var response = await fetch(fetchEvent.request);
     if (response) {
       console.log(`found on net: ${url}`);
 
       // Add the file to the cache.
       console.log(`add to cache: ${url}`);
       const cache = await caches.open(cacheName);
-      cache.put(event.request, response.clone());
+      cache.put(fetchEvent.request, response.clone());
 
       return response;
     }
@@ -57,14 +62,14 @@ self.addEventListener('fetch', (event: FetchEvent) => {
     // We're probably offline.
 
     // Look for the file in the cache.
-    const cacheReponse = await caches.match(event.request);
+    const cacheReponse = await caches.match(fetchEvent.request);
     if (cacheReponse) {
       console.log(`found in cache: ${url}`);
       return cacheReponse;
     } else {
       console.log(`not found: ${url}`);
     }
-    return await fetch(event.request);
+    return await fetch(fetchEvent.request);
 
   })());
 });

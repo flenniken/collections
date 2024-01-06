@@ -27,6 +27,8 @@ let help = `Tasks:
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.`
 
+const target = "es6"
+
 gulp.task("default", function(cb){
   console.log("")
   console.log("gulp tasks:")
@@ -43,7 +45,8 @@ function ts2js(src, dest, tsOptions=null, debug=true) {
     tsOptions = {
       noImplicitAny: true,
       lib: ["es7", "dom"],
-      target: "es6",
+      target: target,
+      "strict": true
     }
   }
 
@@ -62,7 +65,8 @@ function ts2js(src, dest, tsOptions=null, debug=true) {
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
     .pipe(gulp.dest("tmp")) // Make a copy in the tmp folder for inspection.
-    .pipe(uglify(ugOptions))
+    // todo
+    // .pipe(uglify(ugOptions))
     .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
     .pipe(gulp.dest(dest));
 }
@@ -82,8 +86,9 @@ gulp.task('x', function () {
 gulp.task('sw', function () {
   options = {
     noImplicitAny: true,
-    target: "es6",
+    target: target,
     lib: ["esnext", "webworker"],
+    "strict": true
   }
   return ts2js('ts/sw.ts', 'dist/', options)
 });

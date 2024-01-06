@@ -1,5 +1,3 @@
-"use strict";
-
 // Javascript for the image page.
 
 namespace CJson {
@@ -21,12 +19,11 @@ namespace CJson {
   }
 
   export interface ZoomPoints {
-
     // The wxh array contains a element for each image in the collection.
     [wxh: string]: ZoomPoint[];
   }
 
-  export class Collection {
+  export interface Collection {
     title: string;
     collection: number;
     imagePageUrl: string;
@@ -52,7 +49,7 @@ let availHeight = 0
 // --to-thumbnails-height.
 let toThumbnailsHeight = 100
 
-// The area element.
+// The area element set at load time.
 let area: HTMLElement | null = null
 
 window.addEventListener("load", handleLoad)
@@ -63,6 +60,35 @@ window.addEventListener("resize", handleResize);
 window.addEventListener("scroll", handleScroll);
 document.addEventListener('touchend', handleTouchEnd, false)
 document.addEventListener('touchcancel', handleTouchCancel, false)
+
+function get(id: string) {
+  // Get the dom element with the given id. Generate and exception
+  // when not found.
+  const element = document.getElementById(id)
+  if (!element)
+    throw `Element with "${id}" not found.`
+  return element
+}
+
+function log(message: string) {
+  // Log the message to the console.
+  console.log(message)
+}
+
+function logError(message: string) {
+  // Log an error message to the console.
+  console.error(message)
+}
+
+function two(num: number) {
+  // Return the number rounded to two decimal places.
+  return num.toFixed(2)
+}
+
+function three(num: number) {
+  // Return the number rounded to three decimal places.
+  return num.toFixed(3)
+}
 
 class Timer {
   // Time how long code takes to run, accurate to about thousands of a
@@ -93,30 +119,6 @@ function cssNum(variable: string): number {
 // The start time used for timing.
 const startTimer = new Timer()
 
-function get(id: string) {
-  // Get the dom element with the given id.
-  return document.getElementById(id)
-}
-
-function log(message: string) {
-  // Log the message to the console.
-  console.log(message)
-}
-
-function logError(message: string) {
-  // Log an error message to the console.
-  console.error(message)
-}
-
-function two(num: number) {
-  // Return the number rounded to two decimal places.
-  return num.toFixed(2)
-}
-
-function three(num: number) {
-  // Return the number rounded to three decimal places.
-  return num.toFixed(3)
-}
 
 async function handleLoad() {
   // The page finished loading, setup and size things.
@@ -128,9 +130,9 @@ async function handleLoad() {
   area = get("area")
 
   // Watch the touchstart event on the containers for double touch.
-  const containers = area.querySelectorAll('.container')
+  const containers = area!.querySelectorAll('.container')
   containers.forEach(container => {
-    container.addEventListener('touchstart', handleContainerTouchStart, {passive: false})
+    container.addEventListener("touchstart", handleContainerTouchStart, {passive: false})
   })
 
   // Disable the default browser zoom and pan behavior.
@@ -165,11 +167,12 @@ function setFirstImage() {
   log(`Image query string: ${queryStr}`)
 
   // Set the first image index.
-  const imageNum = parseInt(queryStr, 10)
-  if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length)
-    imageIx = imageNum - 1
-  else
-    imageIx = 0
+  imageIx = 0
+  if (queryStr) {
+    const imageNum = parseInt(queryStr, 10)
+    if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length)
+      imageIx = imageNum - 1
+  }
   log(`First image: ${imageIx + 1}`)
 }
 
@@ -204,8 +207,8 @@ function setAvailableArea() {
   zpan.minVisible = availWidth / 4
 
   // Size the image area to the available screen area.
-  area.style.width = `${availWidth}px`
-  // area.style.height = `${availHeight}px`
+  area!.style.width = `${availWidth}px`
+  // area!.style.height = `${availHeight}px`
   log(`Available screen size: ${availWidth} x ${availHeight}`)
   return true
 }
@@ -289,8 +292,8 @@ function sizeImages() {
   })
 
   // Scroll the current image into view.
-  area.scrollLeft = hscroll.leftEdges[imageIx]
-  log(`area.scrollLeft: ${area.scrollLeft}`)
+  area!.scrollLeft = hscroll.leftEdges[imageIx]
+  log(`area!.scrollLeft: ${area!.scrollLeft}`)
   log(`hscroll.leftEdges: ${hscroll.leftEdges}`)
 }
 
@@ -311,9 +314,9 @@ interface ZPan {
   // Whether we are zooming an image or not.
   zooming: boolean;
   // The position when we started zooming and panning.
-  start: ZoomData;
+  start: ZoomData | null;
   // The current touchmove position.
-  current: ZoomData;
+  current: ZoomData | null;
 }
 
 // Zoom and pan variables.
@@ -367,14 +370,14 @@ let hscroll: HScroll = {
   // The left edges (x scroll positions) of the images in the area.
   "leftEdges": [],
   // The touch position when scrolling starts and ends.
-  "startX": null,
-  "startY": null,
-  "currentX": null,
+  "startX": 0,
+  "startY": 0,
+  "currentX": 0,
   // The touch times when scrolling starts and ends.
-  "startXTime": null,
-  "currentXTime": null,
+  "startXTime": 0,
+  "currentXTime": 0,
   // The horizontal scroll positions when scrolling starts and ends.
-  "startScrollLeft": null,
+  "startScrollLeft": 0,
   "currentScrollLeft": 0,
 }
 
@@ -388,19 +391,21 @@ function handleTouchStart(event: TouchEvent) {
 
   // Remember the horizontal scroll position incase we are starting to
   // scroll.
-  hscroll.startScrollLeft = area.scrollLeft;
+  hscroll.startScrollLeft = area!.scrollLeft;
   hscroll.currentX = hscroll.startX = event.touches[0].clientX;
   hscroll.currentXTime = hscroll.startXTime = performance.now()
   hscroll.startY = event.touches[0].clientY;
   log(`On image: ${imageIx+1}, hscroll: ${hscroll.startScrollLeft}, vscroll: ${pageYOffset}`)
 }
 
-function handleContainerTouchStart(event: TouchEvent) {
+function handleContainerTouchStart(event: Event) {
   // Handle the touchstart event for the container elements.
+
+  const touches = (<TouchEvent>event).touches;
 
   // Start timer on first touch. If second touch comes before .5
   // seconds, it’s a double touch. Only consider one finger cases.
-  if (event.touches.length == 1) {
+  if (touches.length == 1) {
     if (doubleTouch !== null) {
       let seconds = doubleTouch.seconds()
       if (seconds < .5) {
@@ -416,7 +421,7 @@ function handleContainerTouchStart(event: TouchEvent) {
   }
 
   // When not two fingers touching, return.
-  if (event.touches.length != 2)
+  if (touches.length != 2)
     return
 
   zpan.zooming = true
@@ -427,10 +432,10 @@ function handleContainerTouchStart(event: TouchEvent) {
 
   // Save the point centered between the two fingers, the distance
   // between them, the current translation and the current scale.
-  const clientX0 = event.touches[0].clientX
-  const clientX1 = event.touches[1].clientX
-  const clientY0 = event.touches[0].clientY
-  const clientY1 = event.touches[1].clientY
+  const clientX0 = touches[0].clientX
+  const clientX1 = touches[1].clientX
+  const clientY0 = touches[0].clientY
+  const clientY1 = touches[1].clientY
 
   const containerTop = pageYOffset - toThumbnailsHeight
 
@@ -551,7 +556,7 @@ function handleTouchMove(event: TouchEvent) {
     cx: (clientX0 + clientX1) / 2,
     cy: (clientY0 + clientY1) / 2 + containerTop,
     distance: distance,
-    scale: (distance / zpan.start.distance) * zpan.start.scale,
+    scale: (distance / zpan.start!.distance) * zpan.start!.scale,
     tx: 0,
     ty: 0,
   }
@@ -571,12 +576,12 @@ function handleTouchMove(event: TouchEvent) {
   // Calculate the new image upper left hand corner based on the
   // center point between the two fingers and how far apart they are
   // compared to when zooming started.
-  const movedCx = ((zpan.start.cx - zpan.start.tx) * zpan.current.scale) /
-    zpan.start.scale + zpan.start.tx
-  const movedCy = ((zpan.start.cy - zpan.start.ty) * zpan.current.scale) /
-    zpan.start.scale + zpan.start.ty
-  let tx = zpan.start.tx - (movedCx - zpan.start.cx) + (zpan.current.cx - zpan.start.cx)
-  let ty = zpan.start.ty - (movedCy - zpan.start.cy) + (zpan.current.cy - zpan.start.cy)
+  const movedCx = ((zpan.start!.cx - zpan.start!.tx) * zpan.current.scale) /
+    zpan.start!.scale + zpan.start!.tx
+  const movedCy = ((zpan.start!.cy - zpan.start!.ty) * zpan.current.scale) /
+    zpan.start!.scale + zpan.start!.ty
+  let tx = zpan.start!.tx - (movedCx - zpan.start!.cx) + (zpan.current.cx - zpan.start!.cx)
+  let ty = zpan.start!.ty - (movedCy - zpan.start!.cy) + (zpan.current.cy - zpan.start!.cy)
 
   // Keep some of the image visible.
   if (tx > availWidth - zpan.minVisible) {
@@ -654,8 +659,8 @@ function handleTouchEnd(event: TouchEvent) {
 
     const image = cJson.images[imageIx]
     const zoomPoint = getZoomPoint()
-    log(`i${imageIx+1}: touchend: c: (${two(zpan.current.cx)}, ${two(zpan.current.cy)}) ` +
-              `d: ${two(zpan.current.distance)}, scale: ${two(zoomPoint.scale)}, ` +
+    log(`i${imageIx+1}: touchend: c: (${two(zpan.current!.cx)}, ${two(zpan.current!.cy)}) ` +
+              `d: ${two(zpan.current!.distance)}, scale: ${two(zoomPoint.scale)}, ` +
               `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   }
 
@@ -686,7 +691,7 @@ function horizontalScrollMove(event: TouchEvent) {
   hscroll.currentScrollLeft = hscroll.startScrollLeft + hscroll.startX - hscroll.currentX
 
   // scrollLeft cannot go past the ends so no need to adjust it.
-  area.scrollLeft = hscroll.currentScrollLeft;
+  area!.scrollLeft = hscroll.currentScrollLeft;
 }
 
 function horizontalScrollEnd() {
@@ -697,16 +702,16 @@ function horizontalScrollEnd() {
     // Scrolling has finished.  Update the image index.
 
     // Set the image index to the image we scrolled to.
-    const ix = hscroll.leftEdges.indexOf(area.scrollLeft)
+    const ix = hscroll.leftEdges.indexOf(area!.scrollLeft)
     if (ix == -1)
-      logError(`area.scrollLeft ${area.scrollLeft} was not found.`)
+      logError(`area!.scrollLeft ${area!.scrollLeft} was not found.`)
     else {
       if (imageIx == ix) {
         log(`Scrolled back to the original item ${imageIx+1}.`)
       }
       else {
         imageIx = ix
-        log(`On image: ${imageIx+1}, hscroll: ${area.scrollLeft}, vscroll: ${pageYOffset}`)
+        log(`On image: ${imageIx+1}, hscroll: ${area!.scrollLeft}, vscroll: ${pageYOffset}`)
       }
     }
     hscroll.scrolling = false;
@@ -740,7 +745,7 @@ function horizontalScrollEnd() {
   const startLeft = hscroll.currentScrollLeft;
   const finishLeft = hscroll.startScrollLeft + addition;
 
-  if (area.scrollLeft == finishLeft) {
+  if (area!.scrollLeft == finishLeft) {
     hScrollDone()
     return
   }
@@ -752,7 +757,7 @@ function horizontalScrollEnd() {
 
   animatePosition(startLeft, finishLeft, hscroll.framesPerSec,
     maxDistance, hscroll.maxDuration, hScrollDone, (position) => {
-        area.scrollLeft = position
+        area!.scrollLeft = position
   })
 }
 

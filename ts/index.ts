@@ -1,5 +1,4 @@
 // index.js
-"use strict";
 
 window.addEventListener("load", handleLoad)
 
