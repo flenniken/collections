@@ -228,11 +228,12 @@ function sizeImages() {
   const zoom_w_h = `${availWidth}x${availHeight}`
 
   let zoomPoints: CJson.ZoomPoint[]
-  const needZoomPoints = zoom_w_h in cJson.zoomPoints ? false : true
-  if (needZoomPoints) {
+  if (!(zoom_w_h in cJson.zoomPoints)) {
     log("No zoom points for this size, create new zoom points.")
     log(`Existing zoom points: ${Object.keys(cJson.zoomPoints)}`)
-    zoomPoints = []
+
+    zoomPoints = createZoomPoints()
+
     cJson.zoomPoints[zoom_w_h] = zoomPoints
     cJsonOriginal.zoomPoints[zoom_w_h] = zoomPoints
   }
@@ -241,7 +242,7 @@ function sizeImages() {
   }
 
   hscroll.leftEdges.length = 0
-  log("Image zoom points:")
+  log(`Image zoom points for ${availWidth} x ${availHeight}`)
   cJson.images.forEach((image, ix) => {
     if (image.width < availWidth || image.height < availHeight) {
       logError("small images are not supported")
@@ -258,24 +259,7 @@ function sizeImages() {
     container.style.width = `${availWidth}px`
     container.style.height = `${availHeight}px`
 
-    // Create or fetch the zoom point for the image.
-    let zoomPoint: CJson.ZoomPoint
-    if (needZoomPoints) {
-      // Create a zoom point where the image fits the screen.
-
-      // Fit the long side to the container.
-      let scale: number;
-      if (image.width - availWidth > image.height - availHeight) {
-        scale = availWidth / image.width
-      } else {
-        scale = availHeight / image.height
-      }
-      zoomPoint = {"scale": scale, "tx": 0, "ty": 0}
-      zoomPoints.push(zoomPoint)
-    }
-    else {
-      zoomPoint = zoomPoints[ix]
-    }
+    const zoomPoint = zoomPoints[ix]
 
     // Size the image to its zoom point.
     const img = get(`i${ix+1}`)
@@ -284,7 +268,7 @@ function sizeImages() {
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
 
     // Log the zoom point.
-    log(`i${ix+1}: ${availWidth} x ${availHeight}, ` +
+    log(`i${ix+1}: ${image.width} x ${image.height}, ` +
                 `scale: ${two(zoomPoint.scale)}, ` +
                 `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
 
@@ -295,6 +279,89 @@ function sizeImages() {
   area!.scrollLeft = hscroll.leftEdges[imageIx]
   log(`area!.scrollLeft: ${area!.scrollLeft}`)
   log(`hscroll.leftEdges: ${hscroll.leftEdges}`)
+}
+
+function defaultZoomPoints() {
+  // Create a zoom points where the images fit the screen.
+
+  let zoomPoints: CJson.ZoomPoint[] = []
+  cJson.images.forEach((image, ix) => {
+    // Create a zoom point where the image fits the screen.
+
+    // Fit the long side to the container.
+    let scale: number;
+    if (image.width - availWidth > image.height - availHeight) {
+      scale = availWidth / image.width
+    } else {
+      scale = availHeight / image.height
+    }
+    const zoomPoint = {"scale": scale, "tx": 0, "ty": 0}
+    zoomPoints.push(zoomPoint)
+    log(`Zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
+  })
+  return zoomPoints
+}
+
+function createZoomPoints() {
+  // Create zoom points for the current screen size. Base them on
+  // existing zoom points if possible.
+
+  let zoomPoints: CJson.ZoomPoint[] = []
+
+  const count = Object.keys(cJson.zoomPoints).length
+  if (count === 0) {
+    return defaultZoomPoints()
+  }
+
+  // Find closest existing zoom points.
+  let closest = 9999999
+  let closestKey = ""
+  let closestWidth = 0
+  let closestHeight = 0
+  const keys = Object.keys(cJson.zoomPoints)
+  keys.forEach((key) => {
+    const [zpWidth, zpHeight] = parseZoomPointKey(key)
+    if ((availWidth > availHeight && zpWidth > zpHeight) ||
+        (availWidth < availHeight && zpWidth < zpHeight)) {
+      const num = availWidth - zpWidth + availHeight - zpHeight
+      if (num < closest) {
+        closest = num
+        closestKey = key
+        closestWidth = zpWidth
+        closestHeight = zpHeight
+      }
+    }
+  })
+  if (closestKey == "") {
+    log("No closest key")
+    return defaultZoomPoints()
+  }
+
+  log(`Closest zoompoint key: ${closestKey}`)
+  const closestZoomPoints = cJson.zoomPoints[closestKey]
+  cJson.images.forEach((image, ix) => {
+    const closestZoomPoint = closestZoomPoints[ix]
+
+    // The new scale is based on the closest scale.
+    const scale = closestZoomPoint.scale / closestWidth * availWidth
+    // log(`closest scale: ${two(closestZoomPoint.scale)}, new scale: ${two(scale)}`)
+
+    const tx = availWidth * (closestZoomPoint.tx / closestWidth)
+    const ty = availHeight * (closestZoomPoint.ty / closestHeight)
+    const zoomPoint = {"scale": scale, "tx": tx, "ty": ty}
+    zoomPoints.push(zoomPoint)
+  })
+
+  return zoomPoints
+}
+
+function parseZoomPointKey(key: string) {
+  // Parse the width and height from a zoom point key.
+  // Example 125x423 => [125, 423]
+  const parts = key.split("x")
+  if (parts.length != 2)
+    throw new Error("Invalid key")
+  return [parseFloat(parts[0]), parseFloat(parts[1])]
 }
 
 interface ZoomData {

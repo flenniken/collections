@@ -118,6 +118,7 @@ statictea \
 gulp.task("thumbnails", function (cb) {
   // Create the thumbnails page.
 
+
 /*
 statictea \
   -t pages/thumbnails-tmpl.html \
@@ -233,4 +234,11 @@ gulp.task("watch", function(cb) {
   cb();
 });
 
-gulp.task("all", gulp.series([gulp.parallel(["ts", "pages", "css"])]));
+gulp.task("pages-folder", function (cb) {
+  // Create the pages folder. It is missing the first time you run
+  // after making a new docker container.
+  return gulp.src('*.*', {read: false})
+    .pipe(gulp.dest('./dist/pages'))
+})
+
+gulp.task("all", gulp.series(["pages-folder", gulp.parallel(["ts", "pages", "css"])]));
