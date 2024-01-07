@@ -1,7 +1,7 @@
 // Javascript for the image page.
 
 namespace CJson {
-  // Typescript definition for the collection json data.
+  // The collection json typescript definition.
 
   export interface Image {
     url: string;
@@ -34,7 +34,9 @@ namespace CJson {
   }
 }
 
-// cJson and cJsonOriginal are defined in the image html page.
+// Two versions of the collection data.  The first is mutable and
+// holds the current state, the second is the original for undo. cJson
+// and cJsonOriginal are defined in the image html page.
 var cJson: CJson.Collection
 var cJsonOriginal: CJson.Collection
 
@@ -52,6 +54,8 @@ let toThumbnailsHeight = 100
 // The area element set at load time.
 let area: HTMLElement | null = null
 
+// The event handlers for the page. handleContainerTouchStart is
+// another handler on the containers.
 window.addEventListener("load", handleLoad)
 window.addEventListener('touchstart', handleTouchStart, {passive: false})
 window.addEventListener('restoreimage', handleRestoreImage, false)
@@ -62,7 +66,7 @@ document.addEventListener('touchend', handleTouchEnd, false)
 document.addEventListener('touchcancel', handleTouchCancel, false)
 
 function get(id: string) {
-  // Get the dom element with the given id. Generate and exception
+  // Get the dom element with the given id. Generate an exception
   // when not found.
   const element = document.getElementById(id)
   if (!element)
@@ -116,12 +120,11 @@ function cssNum(variable: string): number {
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable));
 }
 
-// The start time used for timing.
+// The start time used to time loading.
 const startTimer = new Timer()
 
-
 async function handleLoad() {
-  // The page finished loading, setup and size things.
+  // Setup global variables and size the containers and images.
   startTimer.log(`load event; the collection contains ${cJson.images.length} images`)
 
   toThumbnailsHeight = cssNum("--to-thumbnails-height")
@@ -214,7 +217,7 @@ function setAvailableArea() {
 }
 
 function getZoomPoint(cjson: CJson.Collection = cJson) {
-  // Return the zoom point for the current image index.
+  // Return the zoom point for the current image.
   const zoom_w_h = `${availWidth}x${availHeight}`
   const zoomPoints = cjson.zoomPoints[zoom_w_h]
   return zoomPoints[imageIx]
@@ -304,7 +307,7 @@ function defaultZoomPoints() {
 
 function createZoomPoints() {
   // Create zoom points for the current screen size. Base them on
-  // existing zoom points if possible.
+  // existing zoom points if possible else fallback to the default.
 
   let zoomPoints: CJson.ZoomPoint[] = []
 
@@ -357,14 +360,15 @@ function createZoomPoints() {
 
 function parseZoomPointKey(key: string) {
   // Parse the width and height from a zoom point key.
-  // Example 125x423 => [125, 423]
+  // Example "125x423" => [125, 423]
   const parts = key.split("x")
   if (parts.length != 2)
     throw new Error("Invalid key")
   return [parseFloat(parts[0]), parseFloat(parts[1])]
 }
 
-interface ZoomData {
+interface RuntimeZoomPoint {
+  // Runtime zoom point data interface.
   cx: number;
   cy: number;
   distance: number;
@@ -374,20 +378,22 @@ interface ZoomData {
 }
 
 interface ZPan {
-  // The minimum amount of image to keep visible when zooming and
-  // panning.
-  minVisible: number;
+  // Runtime zoom and pan data interface.
 
+  // The minimum number of pixels of the image to keep visible when
+  // zooming and panning.
+  minVisible: number;
   // Whether we are zooming an image or not.
   zooming: boolean;
   // The position when we started zooming and panning.
-  start: ZoomData | null;
+  start: RuntimeZoomPoint | null;
   // The current touchmove position.
-  current: ZoomData | null;
+  current: RuntimeZoomPoint | null;
 }
 
-// Zoom and pan variables.
 let zpan: ZPan = {
+  // Zoom and pan variables.
+
   // The minimum amount of image to keep visible when zooming and
   // panning.
   "minVisible": 10,
@@ -401,32 +407,28 @@ let zpan: ZPan = {
 }
 
 // A timer to detect a double touch.
-let doubleTouch: Timer | null  = null
+let doubleTouch: Timer | null = null
 
 interface HScroll {
-  minFlick: number;
-  // The animation frames per second.
-  framesPerSec: number;
-  // The maximum number of seconds for the animation.
-  maxDuration: number;
+  // Horizontal scroll runtime interface.
 
+  minFlick: number;
+  framesPerSec: number;
+  maxDuration: number;
   scrolling: boolean;
-  // The left edges (x scroll positions) of the images in the area.
   leftEdges: number[];
-  // The touch position when scrolling starts and ends.
   startX: number;
   startY: number;
   currentX: number;
-  // The touch times when scrolling starts and ends.
   startXTime: number;
   currentXTime: number;
-  // The horizontal scroll positions when scrolling starts and ends.
   startScrollLeft: number;
   currentScrollLeft: number;
 }
 
-// Horizontal scrolling variables.
 let hscroll: HScroll = {
+  // Horizontal scrolling variables.
+
   // Flick the image when the scrolling speed is above this pixels per millisecond.
   "minFlick": 1.0,
   // The animation frames per second.
@@ -449,7 +451,8 @@ let hscroll: HScroll = {
 }
 
 function handleTouchStart(event: TouchEvent) {
-  // Handle the touchstart event for the window.
+  // Handle v and h scrolling. See handleContainerTouchStart for zoom
+  // and pan.
 
   if (hscroll.scrolling) {
     event.preventDefault();
@@ -466,7 +469,8 @@ function handleTouchStart(event: TouchEvent) {
 }
 
 function handleContainerTouchStart(event: Event) {
-  // Handle the touchstart event for the container elements.
+  // Handle the touchstart event for the container elements for double
+  // touch and zoom and pan.
 
   const touches = (<TouchEvent>event).touches;
 
@@ -523,14 +527,15 @@ function handleContainerTouchStart(event: Event) {
 }
 
 function handleRestoreImage(event: Event) {
-  // Restore an image position and scale to its zoom point.
+  // Restore an image position and scale to it's original zoom point.
+
   log("Restore image to its zoom point.")
 
   // Get the original zoom point.
   let zoomPoint = getZoomPoint(cJson)
   const origZP = getZoomPoint(cJsonOriginal)
-  log(`Zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
-  log(`Original zoom point: (${two(origZP.tx)}, ${two(origZP.ty)}), scale: ${two(origZP.scale)}`)
+  log(`Zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
+  log(`Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
 
   // Animate the image to its original zoom point.
   const img = get(`i${imageIx+1}`)
@@ -553,7 +558,9 @@ function handleRestoreImage(event: Event) {
   }
 }
 
+// Whether we are vertical scrolling.
 let vScrolling = false
+// Whether we should jump to the thumbnail page on touch end.
 let thumbnailJump = false
 
 function handleTouchMove(event: TouchEvent) {
@@ -704,7 +711,7 @@ function snapBack() {
 }
 
 function handleTouchEnd(event: TouchEvent) {
-  // log("touchend")
+  // Finish scrolling or log the current zoom point.
 
   if (thumbnailJump) {
     window.scrollTo(0, toThumbnailsHeight)
@@ -730,10 +737,11 @@ function handleTouchEnd(event: TouchEvent) {
               `d: ${two(zpan.current!.distance)}, scale: ${two(zoomPoint.scale)}, ` +
               `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   }
-
 }
 
 function logJson() {
+  // Log the current collection json data.
+
   function replacer(key: string, value: any) {
     // Write two decimals points for zoom points.
     if (["scale", "tx", "ty"].includes(key)) {
@@ -751,6 +759,8 @@ function logJson() {
 }
 
 function horizontalScrollMove(event: TouchEvent) {
+  // Horizontally scroll that page.
+
   event.preventDefault();
 
   hscroll.currentXTime = performance.now()
