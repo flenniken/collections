@@ -1,7 +1,7 @@
-// Javascript for the image page.
+// Code for the image page.
 
 namespace CJson {
-  // The collection json typescript definition.
+  // The collection json's typescript definition.
 
   export interface Image {
     url: string;
@@ -70,7 +70,7 @@ function get(id: string) {
   // when not found.
   const element = document.getElementById(id)
   if (!element)
-    throw `Element with "${id}" not found.`
+    throw new Error(`Element with "${id}" not found.`)
   return element
 }
 
@@ -152,7 +152,7 @@ async function handleLoad() {
   log("Scroll to toThumbnailsHeight")
   window.scrollTo(0, toThumbnailsHeight)
 
-  // Show the page.
+  // Show the page now to cut down on page flashing.
   document.body.style.visibility = 'visible'
   document.body.style.opacity = "1"
 
@@ -838,7 +838,7 @@ function horizontalScrollEnd() {
   })
 }
 
-function animatePosition(startLeft: number, finishLeft: number, framesPerSec: number,
+function animatePosition(start: number, finish: number, framesPerSec: number,
     maxDistance: number, maxDuration: number,
     allDone: () => void,
     posFunction: (position: number) => void) {
@@ -851,13 +851,13 @@ function animatePosition(startLeft: number, finishLeft: number, framesPerSec: nu
   // Move at the same rate no matter the distance. Use the ratio of
   // max frames to max distance equal to the ratio of the frames to
   // the distance.
-  const distance = Math.abs(finishLeft - startLeft)
+  const distance = Math.abs(finish - start)
   const frames = (distance * maxFrames) / maxDistance;
   // log(`frames: ${two(frames)} = (distance: ${two(distance)} * maxFrames: ${two(maxFrames)}) / maxDistance: ${two(maxDistance)}`)
 
   // Get the positions to animate.
   let distancesIndex = 0;
-  const frameDistances = distanceList(startLeft, finishLeft, frames);
+  const frameDistances = distanceList(start, finish, frames);
   // log(`frameDistances: [${frameDistances}]`)
 
   // Determine the delay between each of the animations in seconds.

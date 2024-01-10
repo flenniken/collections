@@ -1,4 +1,4 @@
-// sw.js
+// Service worker code.
 
 const cacheName = 'collections-v1';
 const cacheContent = [

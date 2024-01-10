@@ -7,7 +7,7 @@ function get(id: string) {
   // when not found.
   const element = document.getElementById(id)
   if (!element)
-    throw `Element with "${id}" not found.`
+    throw new Error(`Element with "${id}" not found.`)
   return element
 }
 

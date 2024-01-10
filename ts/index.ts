@@ -1,4 +1,4 @@
-// index.js
+// Code for the index page.
 
 window.addEventListener("load", handleLoad)
 

@@ -5,9 +5,9 @@ const child_process = require("child_process");
 const cleanCSS = require("gulp-clean-css");
 const using = require('gulp-using');
 const ts = require('gulp-typescript');
-// const jest = require('gulp-jest').default;
 
-let help = `Tasks:
+let help = `
+Tasks:
 * ts -- Compile and minimize ts files to dist/js.
     i -- Compile image.ts
     t -- Compile thumbnails.ts
@@ -23,18 +23,15 @@ let help = `Tasks:
     8000. You can run it in the background with alias gr.
     Access files in your browser with: http://localhost:8000/index.html
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
-    run it in the background with alias gr.
+    run it in the background with alias gw.
 * readme -- Show the readme file with glow.
-* all -- Compile everything in parallel, tasks ts, pages and css.`
+* all -- Compile everything in parallel, tasks ts, pages and css.
+`
 
 const target = "es6"
 
 gulp.task("default", function(cb){
-  console.log("")
-  console.log("gulp tasks:")
-  console.log("")
   console.log(help)
-  console.log("")
   cb()
 });
 
@@ -211,7 +208,7 @@ gulp.task('readme', function () {
 });
 
 gulp.task("watch", function(cb) {
-  // When a source file changes, compile it into the dest folder.
+  // When a source file changes, compile it into the dist folder.
 
   const gs = gulp.series
 

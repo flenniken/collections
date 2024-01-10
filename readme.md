@@ -13,6 +13,8 @@ of a trip to Many Glaciers Lodge.
 You navigate and view images on three types of pages, the index page,
 a thumbnails page, and an image page.
 
+[--c--](#Contents) Contents at the bottom.
+
 # Index Page
 
 The index page shows the list of available collections with the most
@@ -26,6 +28,8 @@ shown. When you reach the bottom of the list, there is a more
 indicator.
 
 Clicking on a collection switches to the thumbnails page.
+
+[--c--](#Contents)
 
 # Thumbnails Page
 
@@ -43,6 +47,8 @@ Scrolling down and holding goes back to the collection index Page.
 
 Clicking on a thumbnail shows the full size photo on the image page.
 
+[--c--](#Contents)
+
 # Image Page
 
 The image page shows one image at a time.  The image is custom zoomed
@@ -58,6 +64,8 @@ collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
 You go back to the thumbnails page by scrolling down and holding.
+
+[--c--](#Contents)
 
 # Run Collections
 
@@ -81,6 +89,8 @@ https://flenniken.net/collections/index.html
 
 [![icon](dist/icons/icon-32.png)](#)
 
+[--c--](#Contents)
+
 # Develop Collections
 
 Collections is written in typescript and there is a build step.
@@ -90,6 +100,8 @@ all the programs installed needed to build the app.
 
 The code folder is shared with the docker container and the host so
 you can edit the files on the host and build them in the container.
+
+[--c--](#Contents)
 
 # Setup
 
@@ -118,6 +130,8 @@ cd ~/code/collections
 
 (debian)~/collections $
 ~~~
+
+[--c--](#Contents)
 
 # Build
 
@@ -165,6 +179,8 @@ You build the app in the doctor container with the gulp app by typing
 [19:36:26] Finished 'all' after 2.03 s
 ~~~
 
+[--c--](#Contents)
+
 # Dist Folder
 
 The dist folder contains the app files and nothing else.
@@ -199,6 +215,8 @@ dist
 |   `-- thumbnails-1.html
 `-- sw.js
 ~~~
+
+[--c--](#Contents)
 
 # Gulp Tasks
 
@@ -251,6 +269,8 @@ alias ls='ls --color=auto'
 alias sudo='sudo '
 ~~~
 
+[--c--](#Contents)
+
 # Manual Test Procedure
 
 When making changes to the image page test them with these steps:
@@ -273,3 +293,16 @@ When making changes to the image page test them with these steps:
 * rotate landscape, h & v scroll
 * no flash on load
 * no flash on rotate
+
+# Contents
+
+* [Index Page](#Index_Page)
+* [Thumbnail Page](#Thumbnail_Page)
+* [Image Page](#Image_Page)
+* [Run Collections](#Run_Collections)
+* [Develop Collections](#Develop_Collections)
+* [Setup](#Setup)
+* [Build](#Build)
+* [Dist Folder](#Dist_Folder)
+* [Gulp Tasks](#Gulp_Tasks)
+* [Manual Test Procedure](#Manual_Test_Procedure)

@@ -1,5 +1,4 @@
 .DS_Store
-node_modules/
 save/
 tmp/
 dist/js/

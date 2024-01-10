@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Work with the collections docker build environment.  Type runenv with
+# no arguments to see the available commands.
+
 collectionsImage="collections-image"
 collectionsContainer="collections-container"
 
