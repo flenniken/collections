@@ -296,13 +296,13 @@ When making changes to the image page test them with these steps:
 
 # Contents
 
-* [Index Page](#indexpage)
-* [Thumbnail Page](#thumbnailpage)
-* [Image Page](#imagepage)
-* [Run Collections](#runcollections)
-* [Develop Collections](#developcollections)
+* [Index Page](#index-page)
+* [Thumbnail Page](#thumbnail-page)
+* [Image Page](#image-page)
+* [Run Collections](#run-collections)
+* [Develop Collections](#develop-collections)
 * [Setup](#setup)
 * [Build](#build)
-* [Dist Folder](#distfolder)
-* [Gulp Tasks](#gulptasks)
-* [Manual Test Procedure](#manualtestprocedure)
+* [Dist Folder](#dist-folder)
+* [Gulp Tasks](#gulp-tasks)
+* [Manual Test Procedure](#manual-test-procedure)
