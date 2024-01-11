@@ -297,7 +297,7 @@ When making changes to the image page test them with these steps:
 # Contents
 
 * [Index Page](#index-page)
-* [Thumbnail Page](#thumbnail-page)
+* [Thumbnails Page](#thumbnails-page)
 * [Image Page](#image-page)
 * [Run Collections](#run-collections)
 * [Develop Collections](#develop-collections)
