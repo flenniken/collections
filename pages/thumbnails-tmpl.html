@@ -19,7 +19,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   </style>
   <script type="text/javascript" src="../js/thumbnails.js"></script>
 </head>
-<body id="thumbnails-page">
+<body id="thumbnails">
   <div>
 <!--$ nextline t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
@@ -27,17 +27,14 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ : url = format("{s.imagePageUrl}?image={id}") -->
     <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
   </div>
-  <div id="details">
-    <a href="../index.html">Home</a>
-    <p>size: <span id="width"></span> x <span id="height"></span></p>
-  </div>
-
 <!--$ block -->
-  <h3 class="title">{s.title}</h3>
-  <p class="description">{s.description}</p>
-  <p class="posted">{s.posted}</p>
+  <h3 id="title">{s.title}</h3>
+  <p id="description">{s.description}</p>
+  <p id="posted">{s.posted}</p>
   </div>
 <!--$ endblock -->
-
+  <div id="details">
+    <a href="../index.html">Home</a>
+  </div>
 </body>
 </html>

@@ -1,35 +1,50 @@
 // collections.css
 
-#collections {
+#index {
   display: flex;
   flex-direction: column;
 }
 
-#collections #site-title {
+#index #site-title {
   margin-top: 60px;
   margin-left: auto;
   margin-right: auto;
 }
 
-#collections .picture {
+#index .picture {
   text-align: center;
 }
 
-#collections .thumbnail {
+#index .thumbnail {
     width: 100%;
     max-width: 480px;
 }
 
-#collections .title {
+#index .title {
   font-size: 1.5em;
 }
 
-#collections .description {
+#index .description {
   font-size: 1em;
 }
 
-#collections .posted {
+#index .posted {
   font-size: .8em;
+}
+
+#thumbnails #title {
+  font-size: 2em;
+  text-align: center;
+}
+
+#thumbnails #description {
+  margin: 0 1em 1em 1em;
+  font-size: 1.5em;
+}
+
+#thumbnails #posted {
+  margin: 0 1em 1em 1em;
+  font-size: 1.5em;
 }
 
 #images {
