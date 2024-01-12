@@ -8,7 +8,7 @@ collectionsContainer="collections-container"
 
 rootDir=$(pwd)
 dockerFolder=$rootDir/env/debian
-dockerfile=$rootDir/env/debian/Dockerfile
+dockerFile=$dockerFolder/Dockerfile
 
 option=$1
 
@@ -93,14 +93,14 @@ function listMe() {
   fi
 }
 
-function rsyncMe() {
+function syncMe() {
   ## Rsync dist folder to flenniken.net.
   rsync -a --delete --progress dist/ 1and1:flenniken/site/web/collections/ 
 }
 
 # Verify we are running in the root folder by looking for
 # the Docker file.
-if [ ! -s "$dockerFolder/Dockerfile" ]; then
+if [ ! -s "$dockerFile" ]; then
   echo "Error: run from the root folder."
   exit
 fi
@@ -121,11 +121,11 @@ case $option in
   r | run)
     runMe
     ;;
-  s | rsync)
-    rsyncMe
+  s | sync)
+    syncMe
     ;;
   *)
-    echo "options: run (r),  delete (d),  list (l), rsync (s)."
+    echo "options: run (r),  delete (d),  list (l), sync (s)."
     ;;
 esac 
 

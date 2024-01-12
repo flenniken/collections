@@ -13,7 +13,7 @@ of a trip to Many Glaciers Lodge.
 You navigate and view images on three types of pages, the index page,
 a thumbnails page, and an image page.
 
-[--c--](#Contents) Contents at the bottom.
+[--⬇ --](#Contents) (table of contents at the bottom)
 
 # Index Page
 
@@ -29,7 +29,7 @@ indicator.
 
 Clicking on a collection switches to the thumbnails page.
 
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
 # Thumbnails Page
 
@@ -47,7 +47,7 @@ Scrolling down and holding goes back to the collection index Page.
 
 Clicking on a thumbnail shows the full size photo on the image page.
 
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
 # Image Page
 
@@ -65,7 +65,7 @@ side.  This is good for multi-images that look like one wide image.
 
 You go back to the thumbnails page by scrolling down and holding.
 
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
 # Run Collections
 
@@ -89,7 +89,7 @@ https://flenniken.net/collections/index.html
 
 [![icon](dist/icons/icon-32.png)](#)
 
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
 # Develop Collections
 
@@ -101,9 +101,9 @@ all the programs installed needed to build the app.
 The code folder is shared with the docker container and the host so
 you can edit the files on the host and build them in the container.
 
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
-# Setup
+# Build Setup
 
 Make sure you have docker installed then run the following to fetch
 the collections code and start the environment.
@@ -131,7 +131,20 @@ cd ~/code/collections
 (debian)~/collections $
 ~~~
 
-[--c--](#Contents)
+The g command is an alias.  You can type alias to see them.
+
+~~~
+(debian)~/collections $ alias
+
+alias g='gulp'
+alias gr='g run-server &'
+alias gw='g watch &'
+alias ll='ls -l'
+alias ls='ls --color=auto'
+alias sudo='sudo '
+~~~
+
+[--⬇ --](#Contents)
 
 # Build
 
@@ -179,11 +192,13 @@ You build the app in the doctor container with the gulp app by typing
 [19:36:26] Finished 'all' after 2.03 s
 ~~~
 
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
 # Dist Folder
 
-The dist folder contains the app files and nothing else.
+The dist folder contains the app files and nothing else.  The static
+resources are checked in to this folder. The compiled resources are
+put here.
 
 ~~~
 (debian)~/collections $ tree dist
@@ -216,7 +231,7 @@ dist
 `-- sw.js
 ~~~
 
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
 # Gulp Tasks
 
@@ -256,20 +271,7 @@ Tasks:
 [19:32:50] Finished 'default' after 1.98 ms
 ~~~
 
-The g command is an alias.  You can type alias to see them.
-
-~~~
-(debian)~/collections $ alias
-
-alias g='gulp'
-alias gr='g run-server &'
-alias gw='g watch &'
-alias ll='ls -l'
-alias ls='ls --color=auto'
-alias sudo='sudo '
-~~~
-
-[--c--](#Contents)
+[--⬇ --](#Contents)
 
 # Manual Test Procedure
 
@@ -301,7 +303,7 @@ When making changes to the image page test them with these steps:
 * [Image Page](#image-page)
 * [Run Collections](#run-collections)
 * [Develop Collections](#develop-collections)
-* [Setup](#setup)
+* [Build Setup](#build-setup)
 * [Build](#build)
 * [Dist Folder](#dist-folder)
 * [Gulp Tasks](#gulp-tasks)
