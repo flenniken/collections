@@ -10,10 +10,11 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style"
       content="black-translucent">
-  <title>{s.title}</title>
 <!--$ endblock -->
+<!--$ nextline -->
+  <title>{s.site-title}</title>
   <meta name="description"
-    content="Flenniken.net photo collections.">
+    content="Flenniken.net Collections">
   <meta name="author" content="Steve Flenniken">
   <meta name="theme-color" content="red">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -24,7 +25,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <script src="js/index.js" defer></script>
 </head>
 <body id="collections">
-  <h1 id="site-title">Flenniken.net Collections</h1>
+<!--$ nextline -->
+  <h1 id="site-title">{s.site-title}</h1>
 <!--$ block -->
 <!--$ : t.repeat = len(s.collections) -->
 <!--$ : collection = s.collections[t.row] -->

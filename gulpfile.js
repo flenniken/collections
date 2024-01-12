@@ -115,7 +115,6 @@ statictea \
 gulp.task("thumbnails", function (cb) {
   // Create the thumbnails page.
 
-
 /*
 statictea \
   -t pages/thumbnails-tmpl.html \

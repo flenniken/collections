@@ -25,6 +25,8 @@ namespace CJson {
 
   export interface Collection {
     title: string;
+    description: string;
+    posted: string;
     collection: number;
     imagePageUrl: string;
     thumbnailsPageUrl: string;

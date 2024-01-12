@@ -10,8 +10,9 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style"
       content="black-translucent">
-  <title>{s.title}</title>
 <!--$ endblock -->
+<!--$ nextline -->
+  <title>{s.title}</title>
   <link rel="stylesheet" href="../collections.css">
   <style>
     .thumbnail {width: 200px; height: 200px;}
@@ -30,5 +31,13 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <a href="../index.html">Home</a>
     <p>size: <span id="width"></span> x <span id="height"></span></p>
   </div>
+
+<!--$ block -->
+  <h3 class="title">{s.title}</h3>
+  <p class="description">{s.description}</p>
+  <p class="posted">{s.posted}</p>
+  </div>
+<!--$ endblock -->
+
 </body>
 </html>
