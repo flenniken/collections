@@ -223,9 +223,9 @@ gulp.task("watch", function(cb) {
 
   gulp.watch([hr], gs("syncronize"))
 
-  gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs("index"))
-  gulp.watch(["pages/thumbnails-tmpl.html", json1, hr], gs("thumbnails"))
-  gulp.watch(["pages/image-tmpl.html", json1, hr], gs("image"))
+  gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs(["index"]))
+  gulp.watch(["pages/thumbnails-tmpl.html", json1, hr], gs(["thumbnails"]))
+  gulp.watch(["pages/image-tmpl.html", json1, hr], gs(["image"]))
 
   cb();
 });

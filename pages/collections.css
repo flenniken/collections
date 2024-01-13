@@ -32,6 +32,11 @@
   font-size: .8em;
 }
 
+#thumbnails {
+  margin: 0;
+  padding: 0;
+}
+
 #thumbnails #title {
   font-size: 2em;
   text-align: center;

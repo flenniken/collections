@@ -181,12 +181,8 @@ function setFirstImage() {
   log(`First image: ${imageIx + 1}`)
 }
 
-function setAvailableArea() {
-  // Size the image area to the size of the usable screen. Return
-  // false when the size did not change.
-
-  // Get the available screen width and height and store them in
-  // globals, availWidth and availHeight.
+function getAvailableWidthHeight() {
+  // Get the available screen width and height.
   const availW = document.documentElement.clientWidth
   let availH = document.documentElement.clientHeight
 
@@ -199,13 +195,20 @@ function setAvailableArea() {
     availH += 60
     log("Add 60 to height for the top bar.")
   }
+  return [availW, availH]
+}
 
-  // Check whether the size changed.
+function setAvailableArea() {
+  // Size the image area to the size of the usable screen. Return
+  // false when the size did not change.
+
+  // Get the available screen width and height and store them in
+  // globals, availWidth and availHeight.
+  const [availW, availH] = getAvailableWidthHeight()
   if (availW == availWidth && availH == availHeight) {
     log(`Available size is the same: ${availWidth} x ${availHeight}`)
     return false
   }
-
   availWidth = availW
   availHeight = availH
 
