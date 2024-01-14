@@ -10,12 +10,12 @@ function get(id: string) {
 function log(message: string) {
   // Log the message to the console.
   console.log(message)
-}
+  }
 
 // Register the Service Worker if it is supported.
 if ('serviceWorker' in navigator) {
   console.log('register service worker sw.js');
-  navigator.serviceWorker.register('js/sw.js');
+  navigator.serviceWorker.register('../sw.js');
 }
 
 let runningFromIcon = false

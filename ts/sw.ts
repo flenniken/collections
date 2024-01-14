@@ -16,10 +16,9 @@ const cacheContent = [
 
 
 self.addEventListener('install', (event: Event) => {
+  console.log('service worker install event');
 
   const extendableEvent = (<ExtendableEvent>event)
-
-  console.log('service worker install event');
   extendableEvent.waitUntil((async () => {
     const cache = await caches.open(cacheName);
 

@@ -1,6 +1,11 @@
 // Code for the thumbnails page.
 
+// The available screen area.
+let availWidth = 0
+let availHeight = 0
+
 window.addEventListener("load", handleLoad)
+window.addEventListener("resize", handleResize);
 
 // todo: move the following functions into a shared.ts file and
 // include it here and in images.ts.
@@ -24,6 +29,7 @@ function two(num: number) {
   return num.toFixed(2)
 }
 
+
 function getAvailableWidthHeight() {
   // Get the available screen width and height.
   const availW = document.documentElement.clientWidth
@@ -41,10 +47,40 @@ function getAvailableWidthHeight() {
   return [availW, availH]
 }
 
+function setAvailableArea() {
+  // Size the image area to the size of the usable screen. Return
+  // false when the size did not change.
+
+  // Get the available screen width and height and store them in
+  // globals, availWidth and availHeight.
+  const [availW, availH] = getAvailableWidthHeight()
+  if (availW == availWidth && availH == availHeight) {
+    log(`Available size is the same: ${availWidth} x ${availHeight}`)
+    return false
+  }
+  availWidth = availW
+  availHeight = availH
+  return true
+}
 
 function handleLoad() {
-  const [availW, availH] = getAvailableWidthHeight()
-  log(`${availW} x ${availH}`)
+  log("load")
+  const changed = setAvailableArea()
+  if (changed) {
+    sizeImages()
+  }
+}
+
+function handleResize() {
+  log("resize")
+  const changed = setAvailableArea()
+  if (changed) {
+    sizeImages()
+  }
+}
+
+function sizeImages() {
+  log("sizeImages")
 
   // Note: the image elements are inline elements so by default they
   // get a 4px space between them just like words. You could make the
@@ -52,7 +88,7 @@ function handleLoad() {
 
   // Size the thumbnails so two of them fit the short side of the
   // screen with 4px space between.
-  const shortSide = availW < availH ? availW : availH
+  const shortSide = availWidth < availHeight ? availWidth : availHeight
 
   const thumbnailW = (shortSide - 4) / 2
   log(`thumbnail width: ${thumbnailW}`)
@@ -66,11 +102,14 @@ function handleLoad() {
 
   // If more than 2 thumbnails fit the width of the screen, center
   // the thumbnails.
-  const numRowThumbs = Math.floor((availW - 4) / (thumbnailW + 4))
+  const numRowThumbs = Math.floor((availWidth - 4) / (thumbnailW + 4))
   if (numRowThumbs > 2) {
     log(`numRowThumbs: ${numRowThumbs}`)
-    const margin = (availW - (thumbnailW * numRowThumbs + ((numRowThumbs - 1) * 4))) / 2
+    const margin = (availWidth - (thumbnailW * numRowThumbs + ((numRowThumbs - 1) * 4))) / 2
     get("thumbnails").style.marginLeft = `${margin}px`
     log(`center thumbnails: margin: ${two(margin)}`)
+  }
+  else {
+    get("thumbnails").style.marginLeft = "0"
   }
 }
