@@ -37,6 +37,10 @@
   padding: 0;
 }
 
+#thumbnails #container {
+  margin-top: 4px;
+}
+
 #thumbnails #title {
   font-size: 2em;
   text-align: center;
@@ -91,18 +95,25 @@
   font-size: 2em;
 }
 
-#menu {
+.top-bar {
+  height: 60px;
+  background-color: lightgray;
+  /* The radius matches the iphone curve at the corners. */
+  border-top-left-radius: 54px;
+  border-top-right-radius: 54px;
+}
+
+.bottom-menu {
   height: 4em;
   background-color: lightgray;
-
   /* The radius matches the iphone curve at the corners. */
-
   border-bottom-left-radius: 54px;
   border-bottom-right-radius: 54px;
 }
 
-#menu #index {
+.bottom-menu #index {
   width: 2em;
   margin-left: 1em;
+  padding-top: 4px;
 }
 
