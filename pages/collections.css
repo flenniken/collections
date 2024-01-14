@@ -1,4 +1,4 @@
-// collections.css
+/* collections.css */
 
 #index {
   display: flex;
@@ -89,5 +89,20 @@
 #images #menu {
   margin: 0 1em 1em 1em;
   font-size: 2em;
+}
+
+#menu {
+  height: 4em;
+  background-color: lightgray;
+
+  /* The radius matches the iphone curve at the corners. */
+
+  border-bottom-left-radius: 54px;
+  border-bottom-right-radius: 54px;
+}
+
+#menu #index {
+  width: 2em;
+  margin-left: 1em;
 }
 
