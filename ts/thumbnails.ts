@@ -19,6 +19,11 @@ function log(message: string) {
   console.log(message)
 }
 
+function two(num: number) {
+  // Return the number rounded to two decimal places.
+  return num.toFixed(2)
+}
+
 function getAvailableWidthHeight() {
   // Get the available screen width and height.
   const availW = document.documentElement.clientWidth
@@ -45,15 +50,27 @@ function handleLoad() {
   // get a 4px space between them just like words. You could make the
   // space go away with font size of 0 on the parent.
 
-  // Size the thumbnails so two of them fit the width of the screen
-  // with 4px space between.
-  const width = (availW - 4) / 2
-  log(`thumbnail width: ${width}`)
+  // Size the thumbnails so two of them fit the short side of the
+  // screen with 4px space between.
+  const shortSide = availW < availH ? availW : availH
 
-  const widthPx = `${width}px`
+  const thumbnailW = (shortSide - 4) / 2
+  log(`thumbnail width: ${thumbnailW}`)
+
+  const thumbnailWPx = `${thumbnailW}px`
   var thumbnails = document.getElementsByClassName("thumbnail");
   Array.prototype.forEach.call(thumbnails, function(thumbnail, ix) {
-    thumbnail.style.width = widthPx
-    thumbnail.style.height = widthPx
+    thumbnail.style.width = thumbnailWPx
+    thumbnail.style.height = thumbnailWPx
   });
+
+  // If more than 2 thumbnails fit the width of the screen, center
+  // the thumbnails.
+  const numRowThumbs = Math.floor((availW - 4) / (thumbnailW + 4))
+  if (numRowThumbs > 2) {
+    log(`numRowThumbs: ${numRowThumbs}`)
+    const margin = (availW - (thumbnailW * numRowThumbs + ((numRowThumbs - 1) * 4))) / 2
+    get("thumbnails").style.marginLeft = `${margin}px`
+    log(`center thumbnails: margin: ${two(margin)}`)
+  }
 }
