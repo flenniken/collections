@@ -104,16 +104,23 @@
 }
 
 .bottom-menu {
-  height: 4em;
-  background-color: lightgray;
+  height: 6em;
+  padding-top: 12px;
+  border-top: 1px solid lightgray;
   /* The radius matches the iphone curve at the corners. */
   border-bottom-left-radius: 54px;
   border-bottom-right-radius: 54px;
 }
 
-.bottom-menu #index {
+.bottom-menu .icon {
   width: 2em;
   margin-left: 1em;
+  margin-right: 1em;
   padding-top: 4px;
+  float: left;
+}
+
+.bottom-menu .right {
+  float: right;
 }
 
