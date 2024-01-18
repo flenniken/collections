@@ -120,6 +120,15 @@
   float: left;
 }
 
+.bottom-menu .icon-current {
+  width: 2em;
+  margin-left: 1em;
+  margin-right: 1em;
+  padding-top: 4px;
+  float: left;
+  background-color: cornsilk;
+}
+
 .bottom-menu .right {
   float: right;
 }
