@@ -112,4 +112,13 @@ function sizeImages() {
   else {
     get("thumbnails").style.marginLeft = "0"
   }
+
+  if (availWidth < availHeight) {
+    log("Portrait mode")
+    get("top-bar").style.height = "60px"
+  }
+  else {
+    log("Landscape mode")
+    get("top-bar").style.height = "0"
+  }
 }
