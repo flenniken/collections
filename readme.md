@@ -13,7 +13,7 @@ of a trip to Many Glaciers Lodge.
 You navigate and view images on three types of pages, the index page,
 a thumbnails page, and an image page.
 
-[--⬇ --](#Contents) (table of contents at the bottom)
+[⬇ ────────](#Contents) (table of contents at the bottom)
 
 # Index Page
 
@@ -29,7 +29,7 @@ indicator.
 
 Clicking on a collection switches to the thumbnails page.
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Thumbnails Page
 
@@ -47,7 +47,7 @@ Scrolling down and holding goes back to the collection index Page.
 
 Clicking on a thumbnail shows the full size photo on the image page.
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Image Page
 
@@ -65,7 +65,7 @@ side.  This is good for multi-images that look like one wide image.
 
 You go back to the thumbnails page by scrolling down and holding.
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Run Collections
 
@@ -89,7 +89,7 @@ https://flenniken.net/collections/index.html
 
 [![icon](dist/icons/icon-32.png)](#)
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Develop Collections
 
@@ -101,7 +101,7 @@ all the programs installed needed to build the app.
 The code folder is shared with the docker container and the host so
 you can edit the files on the host and build them in the container.
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Build Setup
 
@@ -144,7 +144,7 @@ alias ls='ls --color=auto'
 alias sudo='sudo '
 ~~~
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Build
 
@@ -192,7 +192,7 @@ You build the app in the doctor container with the gulp app by typing
 [19:36:26] Finished 'all' after 2.03 s
 ~~~
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Dist Folder
 
@@ -231,7 +231,7 @@ dist
 `-- sw.js
 ~~~
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
 
 # Gulp Tasks
 
@@ -271,7 +271,54 @@ Tasks:
 [19:32:50] Finished 'default' after 1.98 ms
 ~~~
 
-[--⬇ --](#Contents)
+[⬇ ────────](#Contents)
+
+# Develop Tips
+
+How to develop on Chrome or Safari.
+
+For Chrome you start a local server on the dist folder (gr) and work
+in a phone view. You enable the mouse to simulate touch, see Test
+Touch. You set up at least two phone views for a “iPhone 14 Pro Max”,
+portrait 430 x 933 and landscape 933 x 430.
+
+For Safari you plug your iphone into your mac and debug remotely, see
+Test on iphone.
+
+[⬇ ────────](#Contents)
+
+# Test Touch
+
+You can test one finger touch with your mouse in Chrome on your
+desktop by turning on a setting in the developers tools.
+
+* bring up tools, right click and select inspect
+* bring up the run command: menu (three dots) > Run command
+* type “sensors” in the Run box and type enter -- the sensors tab appears
+* scroll down to the touch section and select "Force Enabled"
+* test by mousing over the web page.  The mouse cursor should be a small circle.
+
+I don’t know of any way to test two finger actions on the desktop.  The touch pad doesn't do it.
+
+[⬇ ────────](#Contents)
+
+# Test on iphone
+
+You can use the safari on your mac to debug collections on an iphone
+connected with a wire.  Safari works as if the app was on your mac.
+
+You must have a new iphone os and matching mac os version. The os and
+safari have the same version number and are bundled together, so look
+at the mac version number to compare.
+
+To debug:
+
+* connect iphone with wire
+* launch collections on iphone by clicking the collections desktop icon
+* launch Safari on your mac
+* pull down the develop menu and select collections
+
+[⬇ ────────](#Contents)
 
 # Manual Test Procedure
 
@@ -307,4 +354,7 @@ When making changes to the image page test them with these steps:
 * [Build](#build)
 * [Dist Folder](#dist-folder)
 * [Gulp Tasks](#gulp-tasks)
+* [Develop Tips](#develop-tips)
+* [Test Touch](#test-touch)
+* [Test on iphone](#test-on-iphone)
 * [Manual Test Procedure](#manual-test-procedure)
