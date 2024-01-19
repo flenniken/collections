@@ -4,6 +4,14 @@
 let availWidth = 0
 let availHeight = 0
 
+// Height of the top header in portrait mode. Set from css
+// --top-header-height variable in the load event.
+let topHeaderHeight = 60
+
+// The top-bar element set at dom load time.
+let topBar: HTMLElement | null = null
+
+window.addEventListener("DOMContentLoaded", handleDOMContentLoaded)
 window.addEventListener("load", handleLoad)
 window.addEventListener("resize", handleResize);
 
@@ -29,6 +37,15 @@ function two(num: number) {
   return num.toFixed(2)
 }
 
+function cssNum(variable: string): number {
+  // Return the given css number variable defined in the ":root"
+  // pseudo class. It returns 100 for both of the following examples:
+  // :root {
+  //   --my-var: 100;
+  //   --my-var2: 100px;
+  // }
+  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable));
+}
 
 function getAvailableWidthHeight() {
   // Get the available screen width and height.
@@ -38,11 +55,11 @@ function getAvailableWidthHeight() {
   // On a PWA the apple-mobile-web-app-status-bar-style setting allows
   // the toolbar area to be used, however, the area width and height
   // doesn't see this extra space. On a pwa, add the extra area.
-  // todo: how do you determine the toolbar height? replace the 60.
+
   if (availH > availW && window.matchMedia(
       '(display-mode: standalone)').matches) {
-    availH += 60
-    log("Add 60 to height for the top bar.")
+    availH += topHeaderHeight
+    log(`Add ${topHeaderHeight} to height for the top bar.`)
   }
   return [availW, availH]
 }
@@ -63,16 +80,32 @@ function setAvailableArea() {
   return true
 }
 
-function handleLoad() {
-  log("load")
+function handleDOMContentLoaded() {
+  log("--- DOMContentLoaded event")
+
+  topBar = get("top-bar")
+
   const changed = setAvailableArea()
   if (changed) {
     sizeImages()
   }
 }
 
+function handleLoad() {
+  log("--- load event")
+  topHeaderHeight = cssNum("--top-header-height")
+  log(`topHeaderHeight: ${topHeaderHeight}`)
+}
+
 function handleResize() {
-  log("resize")
+  log("--- resize event")
+
+  // Skip the resize events until the area object is set.
+  if (topBar === null) {
+    log("Wait for DOM elements to exist and be sized.")
+    return
+  }
+
   const changed = setAvailableArea()
   if (changed) {
     sizeImages()
@@ -80,7 +113,7 @@ function handleResize() {
 }
 
 function sizeImages() {
-  log("sizeImages")
+  log("sizeImages called")
 
   // Note: the image elements are inline elements so by default they
   // get a 4px space between them just like words. You could make the
@@ -91,7 +124,7 @@ function sizeImages() {
   const shortSide = availWidth < availHeight ? availWidth : availHeight
 
   const thumbnailW = (shortSide - 4) / 2
-  log(`thumbnail width: ${thumbnailW}`)
+  log(`Thumbnail width: ${thumbnailW}`)
 
   const thumbnailWPx = `${thumbnailW}px`
   var thumbnails = document.getElementsByClassName("thumbnail");
@@ -115,10 +148,10 @@ function sizeImages() {
 
   if (availWidth < availHeight) {
     log("Portrait mode")
-    get("top-bar").style.height = "60px"
+    topBar!.style.height = `${topHeaderHeight}px`
   }
   else {
     log("Landscape mode")
-    get("top-bar").style.height = "0"
+    topBar!.style.height = "0"
   }
 }

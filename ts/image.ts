@@ -53,11 +53,16 @@ let availHeight = 0
 // --to-thumbnails-height.
 let toThumbnailsHeight = 100
 
-// The area element set at load time.
+// Height of the top header in portrait mode. Set from css
+// --top-header-height variable in the load event.
+let topHeaderHeight = 60
+
+// The area element set at dom load time.
 let area: HTMLElement | null = null
 
 // The event handlers for the page. handleContainerTouchStart is
 // another handler on the containers.
+window.addEventListener("DOMContentLoaded", handleDOMContentLoaded)
 window.addEventListener("load", handleLoad)
 window.addEventListener('touchstart', handleTouchStart, {passive: false})
 window.addEventListener('restoreimage', handleRestoreImage, false)
@@ -125,14 +130,33 @@ function cssNum(variable: string): number {
 // The start time used to time loading.
 const startTimer = new Timer()
 
-async function handleLoad() {
+
+function handleDOMContentLoaded() {
+  // The DOM has loaded.
   // Setup global variables and size the containers and images.
-  startTimer.log(`load event; the collection contains ${cJson.images.length} images`)
+  startTimer.log("DOMContentLoaded event")
+  log(`The collection contains ${cJson.images.length} images.`)
+
+  area = get("area")
+
+  setFirstImage()
+
+  startTimer.log("setAvailableArea")
+  setAvailableArea()
+
+  startTimer.log("sizeImages")
+  sizeImages()
+}
+
+async function handleLoad() {
+  // The whole page has loaded including styles, images and other resources.
+  startTimer.log("load event")
 
   toThumbnailsHeight = cssNum("--to-thumbnails-height")
   log(`toThumbnailsHeight: ${toThumbnailsHeight}`)
 
-  area = get("area")
+  topHeaderHeight = cssNum("--top-header-height")
+  log(`topHeaderHeight: ${topHeaderHeight}`)
 
   // Watch the touchstart event on the containers for double touch.
   const containers = area!.querySelectorAll('.container')
@@ -142,14 +166,6 @@ async function handleLoad() {
 
   // Disable the default browser zoom and pan behavior.
   get("images").setAttribute("touch-action", "none")
-
-  setFirstImage()
-
-  startTimer.log("setAvailableArea")
-  setAvailableArea()
-
-  startTimer.log("sizeImages")
-  sizeImages()
 
   log("Scroll to toThumbnailsHeight")
   window.scrollTo(0, toThumbnailsHeight)
@@ -189,11 +205,10 @@ function getAvailableWidthHeight() {
   // On a PWA the apple-mobile-web-app-status-bar-style setting allows
   // the toolbar area to be used, however, the area width and height
   // doesn't see this extra space. On a pwa, add the extra area.
-  // todo: how do you determine the toolbar height? replace the 60.
   if (availH > availW && window.matchMedia(
       '(display-mode: standalone)').matches) {
-    availH += 60
-    log("Add 60 to height for the top bar.")
+    availH += topHeaderHeight
+    log(`Add ${topHeaderHeight} to height for the top bar.`)
   }
   return [availW, availH]
 }
@@ -906,10 +921,11 @@ function distanceList(start: number, finish: number, numberSteps: number) {
 function handleResize() {
   // When the phone orientation changes, update the image area and
   // size the images.
+  log("resize event")
 
-  // Skip the resize events until the area object is set in the load
-  // event.
+  // Skip the resize events until the area object is set.
   if (area === null) {
+    log("Wait for DOM elements to exist and be sized.")
     return
   }
 
