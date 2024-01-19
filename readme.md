@@ -55,7 +55,7 @@ The image page shows one image at a time.  The image is custom zoomed
 (a zoom point) to fit the screen showing the best view for the screen
 orientation and size.
 
-You can zoom and pan an image.
+You can zoom and pan an image and double tap to restore.
 
 You scroll up to see a description about the image.
 
@@ -63,7 +63,8 @@ You scroll left and right go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
-You go back to the thumbnails page by scrolling down and holding.
+You go back to the thumbnails page by scrolling to the bottom and
+clicking the index icon.
 
 [⬇ ────────](#Contents)
 
@@ -194,46 +195,7 @@ You build the app in the doctor container with the gulp app by typing
 
 [⬇ ────────](#Contents)
 
-# Dist Folder
-
-The dist folder contains the app files and nothing else.  The static
-resources are checked in to this folder. The compiled resources are
-put here.
-
-~~~
-(debian)~/collections $ tree dist
-
-dist
-|-- collections.css
-|-- collections.webmanifest
-|-- favicon.ico
-|-- icons
-|   |-- icon-128.png
-|   |-- icon-168.png
-|   |-- icon-192.png
-|   |-- icon-256.png
-|   ...
-|-- images
-|   |-- 1-p.jpg
-|   |-- 1-t.jpg
-|   |-- 2-p.jpg
-|   |-- 2-t.jpg
-|   ...
-|-- index.html
-|-- js
-|   |-- image.js
-|   |-- index.js
-|   |-- shared.js
-|   `-- thumbnails.js
-|-- pages
-|   |-- image-1.html
-|   `-- thumbnails-1.html
-`-- sw.js
-~~~
-
-[⬇ ────────](#Contents)
-
-# Gulp Tasks
+# Build Tasks
 
 You use gulp tasks in the container to compile the typescript to
 javascript, to minimize it and to process the html templates.
@@ -269,6 +231,45 @@ Tasks:
 * all -- Compile everything in parallel, tasks ts, pages and css.
 
 [19:32:50] Finished 'default' after 1.98 ms
+~~~
+
+[⬇ ────────](#Contents)
+
+# Build Folder
+
+The dist folder contains the app files and nothing else.  The static
+resources are checked in to this folder. The compiled resources are
+put here.
+
+~~~
+(debian)~/collections $ tree dist
+
+dist
+|-- collections.css
+|-- collections.webmanifest
+|-- favicon.ico
+|-- icons
+|   |-- icon-128.png
+|   |-- icon-168.png
+|   |-- icon-192.png
+|   |-- icon-256.png
+|   ...
+|-- images
+|   |-- 1-p.jpg
+|   |-- 1-t.jpg
+|   |-- 2-p.jpg
+|   |-- 2-t.jpg
+|   ...
+|-- index.html
+|-- js
+|   |-- image.js
+|   |-- index.js
+|   |-- shared.js
+|   `-- thumbnails.js
+|-- pages
+|   |-- image-1.html
+|   `-- thumbnails-1.html
+`-- sw.js
 ~~~
 
 [⬇ ────────](#Contents)
@@ -352,8 +353,8 @@ When making changes to the image page test them with these steps:
 * [Develop Collections](#develop-collections)
 * [Build Setup](#build-setup)
 * [Build](#build)
-* [Dist Folder](#dist-folder)
-* [Gulp Tasks](#gulp-tasks)
+* [Build Tasks](#build-tasks)
+* [Build Folder](#build-folder)
 * [Develop Tips](#develop-tips)
 * [Test Touch](#test-touch)
 * [Test on iphone](#test-on-iphone)
