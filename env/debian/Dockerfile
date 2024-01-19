@@ -59,12 +59,20 @@ COPY --chown=coder:coder bashrc /home/coder/.bashrc
 # Switch to coder user for following commands.
 USER coder
 
-# Install node modules in the global space in the coder folder, the
-# parent of collections. This installs all modules specified in the
-# package.json file.
+# You can add more gulp plugins / node modules. In the docker container
+# install the plugin you want, for example for the "gulp-if" plugin:
+#   npm install --save-dev gulp-if
+# Then copy the modified package.json to the debian folder overwriting
+# the existing one:
+#   cp ../package.json env/debian/
+# Then build a new docker image and container.
 
 WORKDIR /home/coder/
 COPY --chown=coder:coder package.json package.json
+
+# Install node modules in the global space in the coder folder, the
+# parent of collections. This installs all modules specified in the
+# package.json file.
 RUN npm install
 
 # Start in the collections directory.

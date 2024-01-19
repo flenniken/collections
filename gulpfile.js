@@ -1,10 +1,20 @@
+// Build tasks.
+
 const gulp = require("gulp");
 const uglify = require("gulp-uglify");
 const log = require("fancy-log");
 const child_process = require("child_process");
 const cleanCSS = require("gulp-clean-css");
 const using = require('gulp-using');
+const gulpif = require('gulp-if');
 const ts = require('gulp-typescript');
+
+// Minimize the javascript.
+const minimize = false
+
+// Remove the logging functions. Minimize must be on too since uglify
+// removes the functions.
+const removeLogging = false
 
 let help = `
 Tasks:
@@ -35,7 +45,7 @@ gulp.task("default", function(cb){
   cb()
 });
 
-function ts2js(src, dest, tsOptions=null, debug=true) {
+function ts2js(src, dest, tsOptions=null) {
   // Compile a typescript file to javascript and minimize it.
 
   if (tsOptions === null) {
@@ -47,10 +57,12 @@ function ts2js(src, dest, tsOptions=null, debug=true) {
     }
   }
 
-  // When not debugging remove the log functions.
+  // When specified remove the log functions.
   let pure_funcs = []
-  if (debug == false)
+  if (removeLogging) {
+    log("Remove log functions")
     pure_funcs = ["log", "startTimer.log", "logError"]
+  }
 
   const ugOptions = {
     warnings: true,
@@ -58,12 +70,13 @@ function ts2js(src, dest, tsOptions=null, debug=true) {
       pure_funcs: pure_funcs
     }
   }
+  log(`Minimize ${minimize}`)
   return gulp.src(src)
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
-    .pipe(gulp.dest("tmp")) // Make a copy in the tmp folder for inspection.
-    // todo
-    // .pipe(uglify(ugOptions))
+    // Make a copy of the typescript js in the tmp folder for inspection.
+    .pipe(gulp.dest("tmp"))
+    .pipe(gulpif(minimize, uglify()))
     .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
     .pipe(gulp.dest(dest));
 }
