@@ -14,7 +14,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ nextline -->
   <title>{s.title}</title>
   <link rel="stylesheet" href="../collections.css">
-  <script type="text/javascript" src="../js/image.js"></script>
+  <script src="../js/image.js"></script>
   <style>
 html {
 //$ # This stops overscroll on the iphone. -->
@@ -45,7 +45,7 @@ body {
     position: absolute;
 }
   </style>
-  <script type="text/javascript">
+  <script>
 //$ block
 //$ : json = string(s, "json")
     var cJson = {json}
@@ -64,7 +64,7 @@ body {
 <!--$ : id = add(t.row, 1) -->
     <div class="colbox" id="cb{id}">
       <div class="container" id="c{id}">
-        <img id="i{id}" src="{image.url}">
+        <img id="i{id}" src="{image.url}" alt="{image.title}">
       </div>
       <h3 class="title">{image.title}</h3>
       <p class="description">{image.description}</p>

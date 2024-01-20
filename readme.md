@@ -92,7 +92,7 @@ https://flenniken.net/collections/index.html
 
 [⬇ ────────](#Contents)
 
-# Develop Collections
+# Build Collections
 
 Collections is written in typescript and there is a build step.
 
@@ -147,7 +147,7 @@ alias sudo='sudo '
 
 [⬇ ────────](#Contents)
 
-# Build
+# Build All
 
 You build the app in the doctor container with the gulp app by typing
 “g all”. The results go to the dist folder.
@@ -155,42 +155,31 @@ You build the app in the doctor container with the gulp app by typing
 ~~~
 (debian)~/collections $ g all
 
-[19:36:24] Using gulpfile ~/collections/gulpfile.js
-[19:36:24] Starting 'all'...
-[19:36:24] Starting 'ts'...
-[19:36:24] Starting 'pages'...
-[19:36:24] Starting 'css'...
-[19:36:24] Starting 'i'...
-[19:36:24] Starting 't'...
-[19:36:24] Starting 'x'...
-[19:36:24] Starting 'sw'...
-[19:36:24] Starting 'index'...
-[19:36:24] Starting 'thumbnails'...
-[19:36:24] Starting 'image'...
-[19:36:24] Compiling index template.
-[19:36:24] Compiling thumbnails template.
-[19:36:24] Compiling image template.
-[19:36:24] Finished 'index' after 33 ms
-[19:36:24] Finished 'thumbnails' after 33 ms
-[19:36:24] Finished 'image' after 33 ms
-[19:36:24] Finished 'pages' after 35 ms
-[19:36:24] Compiling ./pages/collections.css - 949 B
-[19:36:24] Copy collections.css - 765 B
-[19:36:24] Compiling ./ts/index.ts - 664 B
-[19:36:24] Compiling ./ts/thumbnails.ts - 800 B
-[19:36:25] Compiling ./ts/sw.ts - 1.98 kB
-[19:36:25] Compiling ./ts/image.ts - 26.31 kB
-[19:36:26] Copy thumbnails.js - 841 B
-[19:36:26] Copy sw.js - 2.88 kB
-[19:36:26] Copy index.js - 689 B
-[19:36:26] Finished 'css' after 2.02 s
-[19:36:26] Copy image.js - 26.54 kB
-[19:36:26] Finished 't' after 2.02 s
-[19:36:26] Finished 'sw' after 2.02 s
-[19:36:26] Finished 'x' after 2.02 s
-[19:36:26] Finished 'i' after 2.03 s
-[19:36:26] Finished 'ts' after 2.03 s
-[19:36:26] Finished 'all' after 2.03 s
+[01:35:42] Using gulpfile ~/collections/gulpfile.js
+[01:35:42] Starting 'all'...
+[01:35:42] Starting 'pages-folder'...
+[01:35:42] Finished 'pages-folder' after 16 ms
+[01:35:42] Starting 'ts'...
+[01:35:42] Starting 'pages'...
+[01:35:42] Starting 'css'...
+[01:35:42] Starting 'vpages'...
+[01:35:42] Starting 'i'...
+[01:35:42] Starting 't'...
+[01:35:42] Starting 'x'...
+[01:35:42] Starting 'sw'...
+[01:35:42] Starting 'index'...
+[01:35:42] Starting 'thumbnails'...
+[01:35:42] Starting 'image'...
+[01:35:42] Starting 'vindex'...
+[01:35:42] Starting 'vthumbnails'...
+[01:35:42] Starting 'vimage'...
+...
+[01:35:44] Finished 't' after 2.18 s
+[01:35:44] Finished 'sw' after 2.18 s
+[01:35:44] Finished 'x' after 2.18 s
+[01:35:44] Finished 'i' after 2.18 s
+[01:35:44] Finished 'ts' after 2.18 s
+[01:35:44] Finished 'all' after 2.2 s
 ~~~
 
 [⬇ ────────](#Contents)
@@ -205,10 +194,8 @@ Type g to see all the tasks:
 ~~~
 (debian)~/collections $ g
 
-[19:32:50] Using gulpfile ~/collections/gulpfile.js
-[19:32:50] Starting 'default'...
-
-gulp tasks:
+[01:35:47] Using gulpfile ~/collections/gulpfile.js
+[01:35:47] Starting 'default'...
 
 Tasks:
 * ts -- Compile and minimize ts files to dist/js.
@@ -220,17 +207,21 @@ Tasks:
     index -- Create the main index page.
     thumbnails -- Create the thumbnails page.
     image -- Create the image page.
+* vpages -- Validate all the html files.
+    vindex -- Validate index html
+    vthumbnails -- Validate thumbnails html
+    vimage -- Validate image html
 * css -- Minimize the collection.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea.
 * run-server -- (alias gr) Run a test server exposing the dist folder on port
     8000. You can run it in the background with alias gr.
     Access files in your browser with: http://localhost:8000/index.html
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
-    run it in the background with alias gr.
+    run it in the background with alias gw.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 
-[19:32:50] Finished 'default' after 1.98 ms
+[01:35:47] Finished 'default' after 1.73 ms
 ~~~
 
 [⬇ ────────](#Contents)
@@ -274,7 +265,7 @@ dist
 
 [⬇ ────────](#Contents)
 
-# Develop Tips
+# Test Tips
 
 How to develop on Chrome or Safari.
 
@@ -321,7 +312,7 @@ To debug:
 
 [⬇ ────────](#Contents)
 
-# Manual Test Procedure
+# Test Procedure
 
 When making changes to the image page test them with these steps:
 
@@ -350,12 +341,12 @@ When making changes to the image page test them with these steps:
 * [Thumbnails Page](#thumbnails-page)
 * [Image Page](#image-page)
 * [Run Collections](#run-collections)
-* [Develop Collections](#develop-collections)
+* [Build Collections](#build-collections)
 * [Build Setup](#build-setup)
-* [Build](#build)
+* [Build All](#build-all)
 * [Build Tasks](#build-tasks)
 * [Build Folder](#build-folder)
-* [Develop Tips](#develop-tips)
+* [Test Tips](#test-tips)
 * [Test Touch](#test-touch)
 * [Test on iphone](#test-on-iphone)
-* [Manual Test Procedure](#manual-test-procedure)
+* [Test Procedure](#test-procedure)

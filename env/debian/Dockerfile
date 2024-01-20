@@ -50,8 +50,9 @@ RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] \
   | tee /etc/apt/sources.list.d/nodesource.list
 RUN apt update && apt -qy install nodejs=$NODEJS npm
 
-# Install gulp command line.
+# Install gulp and html validator command line apps.
 RUN npm install --global gulp-cli
+RUN npm install --global w3c-html-validator
 
 # Install bashrc for the prompt and some aliases.
 COPY --chown=coder:coder bashrc /home/coder/.bashrc

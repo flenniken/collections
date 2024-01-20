@@ -1,7 +1,9 @@
 #!/bin/bash
 
-# Work with the collections docker build environment.  Type runenv with
-# no arguments to see the available commands.
+# Work with the collections docker
+# build environment.  Type runenv
+# with no arguments to see the
+# available commands.
 
 collectionsImage="collections-image"
 collectionsContainer="collections-container"
@@ -13,7 +15,8 @@ dockerFile=$dockerFolder/Dockerfile
 option=$1
 
 function runMe() {
-  ## Create the image or run the container.
+  ## Create the image or run the
+  ## container.
 
   # Create the image if missing.
   imageExists=$(docker inspect $collectionsImage 2>/dev/null | grep "Id" | grep "sha256:")
@@ -52,9 +55,11 @@ function runMe() {
 }
 
 function deleteMe() {
-  ## Delete the container and image.
+  ## Delete the container and
+  ## image.
     
-  # Delete the container if it exists and isn't running.
+  # Delete the container if it
+  # exists and isn't running.
   status=$(docker inspect $collectionsContainer 2>/dev/null | grep Status)
   case $status in
     *running*)
@@ -94,18 +99,21 @@ function listMe() {
 }
 
 function syncMe() {
-  ## Rsync dist folder to flenniken.net.
+  ## Rsync dist folder to
+  ## flenniken.net.
   rsync -a --delete --progress dist/ 1and1:flenniken/site/web/collections/ 
 }
 
-# Verify we are running in the root folder by looking for
-# the Docker file.
+# Verify we are running in the root
+# folder by looking for the Docker
+# file.
 if [ ! -s "$dockerFile" ]; then
   echo "Error: run from the root folder."
   exit
 fi
 
-# Make sure we're not running inside the docker container.
+# Make sure we're not running
+# inside the docker container.
 if [[ ! -z "${coder_env}" ]]; then
   echo "Error: run on the host not in the docker container."
   exit
@@ -128,6 +136,4 @@ case $option in
     echo "options: run (r),  delete (d),  list (l), sync (s)."
     ;;
 esac 
-
-exit
 

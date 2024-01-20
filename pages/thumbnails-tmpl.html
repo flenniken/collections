@@ -14,7 +14,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ nextline -->
   <title>{s.title}</title>
   <link rel="stylesheet" href="../collections.css">
-  <script type="text/javascript" src="../js/thumbnails.js"></script>
+  <script src="../js/thumbnails.js"></script>
 </head>
 <body id="thumbnails">
   <div id="top-bar">
@@ -27,9 +27,10 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
   </div>
 <!--$ block -->
-  <h3 id="title">{s.title}</h3>
-  <p id="description">{s.description}</p>
-  <p id="posted">{s.posted}</p>
+  <div>
+    <h3 id="title">{s.title}</h3>
+    <p id="description">{s.description}</p>
+    <p id="posted">{s.posted}</p>
   </div>
 <!--$ endblock -->
   <div class="bottom-menu">

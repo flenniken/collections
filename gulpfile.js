@@ -27,6 +27,10 @@ Tasks:
     index -- Create the main index page.
     thumbnails -- Create the thumbnails page.
     image -- Create the image page.
+* vpages -- Validate all the html files.
+    vindex -- Validate index html
+    vthumbnails -- Validate thumbnails html
+    vimage -- Validate image html
 * css -- Minimize the collection.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea.
 * run-server -- (alias gr) Run a test server exposing the dist folder on port
@@ -104,6 +108,35 @@ gulp.task('sw', function () {
 });
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
+
+function validateHtml(filename) {
+  // Validate an html file.
+  // html-validator '--ignore-config=valid-ignore.txt ${filename}'
+
+  log(`Validating html file: ${filename}.`)
+  const parameters = [
+    "--ignore-config=valid-ignore.txt",
+    filename,
+  ]
+  return child_process.spawn("html-validator", parameters, {stdio: "inherit"});
+}
+
+gulp.task("vindex", function (cb) {
+  // Validate the index html file.
+  return validateHtml("dist/index.html")
+})
+
+gulp.task("vimage", function (cb) {
+  // Validate the image html file.
+  return validateHtml("dist/pages/image-1.html")
+})
+
+gulp.task("vthumbnails", function (cb) {
+  // Validate the thumbnails html file.
+  return validateHtml("dist/pages/thumbnails-1.html")
+})
+
+gulp.task("vpages", gulp.parallel("vindex", "vthumbnails", "vimage"));
 
 gulp.task("index", function (cb) {
   // Create the main index page from the index template.
@@ -236,9 +269,9 @@ gulp.task("watch", function(cb) {
 
   gulp.watch([hr], gs("syncronize"))
 
-  gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs(["index"]))
-  gulp.watch(["pages/thumbnails-tmpl.html", json1, hr], gs(["thumbnails"]))
-  gulp.watch(["pages/image-tmpl.html", json1, hr], gs(["image"]))
+  gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs(["index", "vindex"]))
+  gulp.watch(["pages/thumbnails-tmpl.html", json1, hr], gs(["thumbnails", "vthumbnails"]))
+  gulp.watch(["pages/image-tmpl.html", json1, hr], gs(["image", "vimage"]))
 
   cb();
 });
@@ -250,4 +283,4 @@ gulp.task("pages-folder", function (cb) {
     .pipe(gulp.dest('./dist/pages'))
 })
 
-gulp.task("all", gulp.series(["pages-folder", gulp.parallel(["ts", "pages", "css"])]));
+gulp.task("all", gulp.series(["pages-folder", gulp.parallel(["ts", "pages", "css", "vpages"])]));
