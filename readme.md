@@ -324,16 +324,14 @@ When making changes to the image page test them with these steps:
 * h scroll half way
 * h scroll at ends
 * flick h scroll
-* v scroll
-* v scroll to the bottom then flick up
-* zoom in then v scroll to 0 and hold
-* click thumbnail to go to the same image page. make sure v scroll is at 100 and image is at zoom point
-* v scroll and snap back
+* v scroll and overscroll on both ends
+* zoom image small, go to thumbnails, click same image and verify images is at its zoom point
 * long press to copy text
-* debug with safari and iphone.  click Log Json to see json in the console.
+* debug with safari and iphone.  Click paper airplane to see json in the console.
 * rotate landscape, h & v scroll
 * no flash on load
 * no flash on rotate
+* click home menu item
 
 # Contents
 

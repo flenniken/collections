@@ -49,10 +49,6 @@ let imageIx = 0
 let availWidth = 0
 let availHeight = 0
 
-// The over scroll height. At load time it gets set to the css var:
-// --to-thumbnails-height.
-let toThumbnailsHeight = 100
-
 // Height of the top header in portrait mode. Set from css
 // --top-header-height variable in the load event.
 let topHeaderHeight = 60
@@ -68,7 +64,6 @@ window.addEventListener('touchstart', handleTouchStart, {passive: false})
 window.addEventListener('restoreimage', handleRestoreImage, false)
 window.addEventListener('touchmove', handleTouchMove, {passive: false})
 window.addEventListener("resize", handleResize);
-window.addEventListener("scroll", handleScroll);
 document.addEventListener('touchend', handleTouchEnd, false)
 document.addEventListener('touchcancel', handleTouchCancel, false)
 
@@ -152,9 +147,6 @@ async function handleLoad() {
   // The whole page has loaded including styles, images and other resources.
   startTimer.log("load event")
 
-  toThumbnailsHeight = cssNum("--to-thumbnails-height")
-  log(`toThumbnailsHeight: ${toThumbnailsHeight}`)
-
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
 
@@ -166,9 +158,6 @@ async function handleLoad() {
 
   // Disable the default browser zoom and pan behavior.
   get("images").setAttribute("touch-action", "none")
-
-  log("Scroll to toThumbnailsHeight")
-  window.scrollTo(0, toThumbnailsHeight)
 
   // Show the page now to cut down on page flashing.
   document.body.style.visibility = 'visible'
@@ -485,7 +474,7 @@ function handleTouchStart(event: TouchEvent) {
   hscroll.currentX = hscroll.startX = event.touches[0].clientX;
   hscroll.currentXTime = hscroll.startXTime = performance.now()
   hscroll.startY = event.touches[0].clientY;
-  log(`On image: ${imageIx+1}, hscroll: ${hscroll.startScrollLeft}, vscroll: ${pageYOffset}`)
+  log(`On image: ${imageIx+1}, hscroll: ${hscroll.startScrollLeft}`)
 }
 
 function handleContainerTouchStart(event: Event) {
@@ -528,12 +517,10 @@ function handleContainerTouchStart(event: Event) {
   const clientY0 = touches[0].clientY
   const clientY1 = touches[1].clientY
 
-  const containerTop = pageYOffset - toThumbnailsHeight
-
   const zoomPoint = getZoomPoint()
   zpan.start = {
     "cx": (clientX0 + clientX1) / 2,
-    "cy": (clientY0 + clientY1) / 2 + containerTop,
+    "cy": (clientY0 + clientY1) / 2 + pageYOffset,
     "distance": Math.hypot(clientX0 - clientX1, clientY0 - clientY1),
     "scale": zoomPoint.scale,
     "tx": zoomPoint.tx,
@@ -578,17 +565,12 @@ function handleRestoreImage(event: Event) {
   }
 }
 
-// Whether we are vertical scrolling.
-let vScrolling = false
-// Whether we should jump to the thumbnail page on touch end.
-let thumbnailJump = false
-
 function handleTouchMove(event: TouchEvent) {
   // Zoom, pan and scroll the image.
   if (hscroll.scrolling) {
     horizontalScrollMove(event)
     return
-  } else if (!zpan.zooming && !vScrolling) {
+  } else if (!zpan.zooming) {
     // Determine whether horizontal scrolling is starting.
     const dx = Math.abs(hscroll.startX - event.touches[0].clientX)
     const dy = Math.abs(hscroll.startY - event.touches[0].clientY)
@@ -597,36 +579,8 @@ function handleTouchMove(event: TouchEvent) {
       doubleTouch = null
       horizontalScrollMove(event)
       return
-    } else {
-      // When we are vertically scrolling we don't want to start
-      // horizontally scrolling until the finger goes up.
-      vScrolling = true
     }
   }
-
-  const jump = get("thumbnails-jump")
-  if (vScrolling) {
-    // Turn on the jump indicator when the scroll position goes to 0
-    // for a moment.  When it moves off of 0, turn the indicator off.
-    if (pageYOffset == 0) {
-      if (!thumbnailJump) {
-        setTimeout(() => {
-          if (pageYOffset == 0) {
-            thumbnailJump = true
-            jump.style.visibility = 'visible'
-          }
-        }, 400)
-      }
-    }
-    else {
-      thumbnailJump = false
-    }
-  }
-
-  if (thumbnailJump)
-    jump.style.visibility = 'visible'
-  else
-    jump.style.visibility = 'hidden'
 
   if (!zpan.zooming)
     return
@@ -644,11 +598,10 @@ function handleTouchMove(event: TouchEvent) {
   const image = cJson.images[imageIx]
   const zoomPoint = getZoomPoint()
 
-  const containerTop = pageYOffset - toThumbnailsHeight
   const distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
   zpan.current = {
     cx: (clientX0 + clientX1) / 2,
-    cy: (clientY0 + clientY1) / 2 + containerTop,
+    cy: (clientY0 + clientY1) / 2 + pageYOffset,
     distance: distance,
     scale: (distance / zpan.start!.distance) * zpan.start!.scale,
     tx: 0,
@@ -707,45 +660,12 @@ function handleTouchCancel(event: TouchEvent) {
   handleTouchEnd(event)
 }
 
-function snapBack() {
-  // When the vertical scroll position is under toThumbnailsHeight
-  // (100), snap back to 100.
-
-  function vScrollDone() {
-    vScrolling = false
-    // log(`animate done: pageYOffset: ${pageYOffset}`)
-  }
-
-  // Snap back if overscrolled.
-  if (pageYOffset < toThumbnailsHeight) {
-    // log(`animate pageYOffset from ${pageYOffset} to ${toThumbnailsHeight}`)
-    animatePosition(pageYOffset, toThumbnailsHeight, hscroll.framesPerSec,
-      toThumbnailsHeight, .15, vScrollDone, (position) => {
-        // log(`scroll: ${position}`)
-        window.scrollTo(0, position)
-    })
-  }
-  else {
-    vScrolling = false
-  }
-}
-
 function handleTouchEnd(event: TouchEvent) {
   // Finish scrolling or log the current zoom point.
-
-  if (thumbnailJump) {
-    window.scrollTo(0, toThumbnailsHeight)
-    window.location.href = cJson.thumbnailsPageUrl
-    return
-  }
 
   if (event.touches.length == 0 && hscroll.scrolling) {
     horizontalScrollEnd()
     return
-  }
-
-  if (vScrolling) {
-    snapBack()
   }
 
   if (zpan.zooming) {
@@ -808,7 +728,7 @@ function horizontalScrollEnd() {
       }
       else {
         imageIx = ix
-        log(`On image: ${imageIx+1}, hscroll: ${area!.scrollLeft}, vscroll: ${pageYOffset}`)
+        log(`On image: ${imageIx+1}, hscroll: ${area!.scrollLeft}`)
       }
     }
     hscroll.scrolling = false;
@@ -938,29 +858,6 @@ function handleResize() {
     sizeImages()
   }
 
-  log("Scroll to toThumbnailsHeight")
-  window.scrollTo(0, toThumbnailsHeight)
-
   start.log("resize  done")
 }
 
-let overscroll = -1
-
-function handleScroll() {
-  // When the user flicks the page to vertically scroll, the page
-  // continues to scroll even though no fingers are touching and it
-  // can go under toThumbnailsHeight limit.  In this case scroll back
-  // to toThumbnailsHeight.
-
-  // log(`Scroll to ${pageYOffset}`)
-
-  if (overscroll == -1) {
-    if (!vScrolling && pageYOffset < toThumbnailsHeight) {
-      overscroll = setTimeout(() => {
-        log("Over scroll, snap back in a moment")
-        snapBack()
-        overscroll = -1
-      }, 200)
-    }
-  }
-}

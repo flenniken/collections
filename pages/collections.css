@@ -58,19 +58,7 @@
 }
 
 :root {
-  --to-thumbnails-height: 100px;
   --top-header-height: 60px;
-}
-
-#images #to-thumbnails {
-  height: var(--to-thumbnails-height);
-  background-color: gray;
-}
-
-#images #thumbnails-jump {
-  height: 50px;
-  background-color: #24b024fc;
-  visibility: hidden;
 }
 
 #images .container {
