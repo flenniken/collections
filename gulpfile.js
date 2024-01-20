@@ -111,12 +111,19 @@ gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
 
 function validateHtml(filename) {
   // Validate an html file.
-  // html-validator '--ignore-config=valid-ignore.txt ${filename}'
 
   log(`Validating html file: ${filename}.`)
+
+  // See https://www.npmjs.com/package/w3c-html-validator
+  // You can use a file "--ignore-config=valid-ignore.txt".
+  // You can also support multiple with | regex.
+
+  // html-validator '--ignore=/Consider/' dist/pages/thumbnails-1.html
+
+  const ignore = "Consider avoiding viewport values that prevent users from resizing documents."
   const parameters = [
-    "--ignore-config=valid-ignore.txt",
-    filename,
+    `--ignore=/${ignore}/`,
+    `${filename}`
   ]
   return child_process.spawn("html-validator", parameters, {stdio: "inherit"});
 }
