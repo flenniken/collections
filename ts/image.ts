@@ -42,9 +42,6 @@ namespace CJson {
 var cJson: CJson.Collection
 var cJsonOriginal: CJson.Collection
 
-// The current image index into the json list of images.
-let imageIx = 0
-
 // The available screen area.
 let availWidth = 0
 let availHeight = 0
@@ -134,13 +131,13 @@ function handleDOMContentLoaded() {
 
   area = get("area")
 
-  setFirstImage()
+  const imageIx = getFirstImage()
 
   startTimer.log("setAvailableArea")
   setAvailableArea()
 
   startTimer.log("sizeImages")
-  sizeImages()
+  sizeImages(imageIx)
 }
 
 async function handleLoad() {
@@ -166,9 +163,9 @@ async function handleLoad() {
   startTimer.log("load Done")
 }
 
-function setFirstImage() {
-  // Set the first image to show based on the url image query
-  // parameter.
+function getFirstImage() {
+  // Return the index of the first image to show based on the url
+  // image query parameter.
 
   // Get the image query string.
   log(`window.location.search: ${window.location.search}`)
@@ -177,13 +174,14 @@ function setFirstImage() {
   log(`Image query string: ${queryStr}`)
 
   // Set the first image index.
-  imageIx = 0
+  let imageIx = 0
   if (queryStr) {
     const imageNum = parseInt(queryStr, 10)
     if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length)
       imageIx = imageNum - 1
   }
   log(`First image: ${imageIx + 1}`)
+  return imageIx
 }
 
 function getAvailableWidthHeight() {
@@ -225,16 +223,16 @@ function setAvailableArea() {
   return true
 }
 
-function getZoomPoint(cjson: CJson.Collection = cJson) {
-  // Return the zoom point for the current image.
+function getZoomPoint(imageIx: number, cjson: CJson.Collection = cJson) {
+  // Return the zoom point for the given image index.
   const zoom_w_h = `${availWidth}x${availHeight}`
   const zoomPoints = cjson.zoomPoints[zoom_w_h]
   return zoomPoints[imageIx]
 }
 
-function sizeImages() {
+function sizeImages(firstImageIx: number) {
   // Size the image containers and the images and create zoom points
-  // when missing.
+  // when missing and scroll the given image into view.
 
   let edge = 0
   const zoom_w_h = `${availWidth}x${availHeight}`
@@ -255,7 +253,7 @@ function sizeImages() {
 
   hscroll.leftEdges.length = 0
   log(`Image zoom points for ${availWidth} x ${availHeight}`)
-  cJson.images.forEach((image, ix) => {
+  cJson.images.forEach((image, imageIx) => {
     if (image.width < availWidth || image.height < availHeight) {
       logError("small images are not supported")
     }
@@ -263,24 +261,24 @@ function sizeImages() {
     // Save the position of the left edge of all the images.
     hscroll.leftEdges.push(edge)
 
-    const colbox = get(`cb${ix+1}`)
+    const colbox = get(`cb${imageIx+1}`)
     colbox.style.width = `${availWidth}px`
 
     // Size all the containers to the size of the area.
-    const container = get(`c${ix+1}`)
+    const container = get(`c${imageIx+1}`)
     container.style.width = `${availWidth}px`
     container.style.height = `${availHeight}px`
 
-    const zoomPoint = zoomPoints[ix]
+    const zoomPoint = zoomPoints[imageIx]
 
     // Size the image to its zoom point.
-    const img = get(`i${ix+1}`)
+    const img = get(`i${imageIx+1}`)
     img.style.transformOrigin = "0px 0px"
     // Note: translate runs from right to left.
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
 
     // Log the zoom point.
-    log(`i${ix+1}: ${image.width} x ${image.height}, ` +
+    log(`i${imageIx+1}: ${image.width} x ${image.height}, ` +
                 `scale: ${two(zoomPoint.scale)}, ` +
                 `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
 
@@ -288,16 +286,16 @@ function sizeImages() {
   })
 
   // Scroll the current image into view.
-  area!.scrollLeft = hscroll.leftEdges[imageIx]
+  area!.scrollLeft = hscroll.leftEdges[firstImageIx]
   log(`area!.scrollLeft: ${area!.scrollLeft}`)
   log(`hscroll.leftEdges: ${hscroll.leftEdges}`)
 }
 
 function defaultZoomPoints() {
-  // Create a zoom points where the images fit the screen.
+  // Create zoom points where the images fit the screen.
 
   let zoomPoints: CJson.ZoomPoint[] = []
-  cJson.images.forEach((image, ix) => {
+  cJson.images.forEach((image, imageIx) => {
     // Create a zoom point where the image fits the screen.
 
     // Fit the long side to the container.
@@ -351,8 +349,8 @@ function createZoomPoints() {
 
   log(`Closest zoompoint key: ${closestKey}`)
   const closestZoomPoints = cJson.zoomPoints[closestKey]
-  cJson.images.forEach((image, ix) => {
-    const closestZoomPoint = closestZoomPoints[ix]
+  cJson.images.forEach((image, imageIx) => {
+    const closestZoomPoint = closestZoomPoints[imageIx]
 
     // The new scale is based on the closest scale.
     const scale = closestZoomPoint.scale / closestWidth * availWidth
@@ -474,6 +472,7 @@ function handleTouchStart(event: TouchEvent) {
   hscroll.currentX = hscroll.startX = event.touches[0].clientX;
   hscroll.currentXTime = hscroll.startXTime = performance.now()
   hscroll.startY = event.touches[0].clientY;
+  const imageIx = getImageIx()
   log(`On image: ${imageIx+1}, hscroll: ${hscroll.startScrollLeft}`)
 }
 
@@ -503,6 +502,9 @@ function handleContainerTouchStart(event: Event) {
   // When not two fingers touching, return.
   if (touches.length != 2)
     return
+  const imageIx = getImageIx()
+  if (imageIx == -1)
+    return
 
   zpan.zooming = true
 
@@ -517,7 +519,7 @@ function handleContainerTouchStart(event: Event) {
   const clientY0 = touches[0].clientY
   const clientY1 = touches[1].clientY
 
-  const zoomPoint = getZoomPoint()
+  const zoomPoint = getZoomPoint(imageIx)
   zpan.start = {
     "cx": (clientX0 + clientX1) / 2,
     "cy": (clientY0 + clientY1) / 2 + pageYOffset,
@@ -537,10 +539,15 @@ function handleRestoreImage(event: Event) {
   // Restore an image position and scale to it's original zoom point.
 
   log("Restore image to its zoom point.")
+  const imageIx = getImageIx()
+  if (imageIx == -1) {
+    log("Unable to restore the image because it is scrolling.")
+    return
+  }
 
   // Get the original zoom point.
-  let zoomPoint = getZoomPoint(cJson)
-  const origZP = getZoomPoint(cJsonOriginal)
+  let zoomPoint = getZoomPoint(imageIx, cJson)
+  const origZP = getZoomPoint(imageIx, cJsonOriginal)
   log(`Zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   log(`Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
 
@@ -585,6 +592,10 @@ function handleTouchMove(event: TouchEvent) {
   if (!zpan.zooming)
     return
 
+  const imageIx = getImageIx()
+  if (imageIx == -1)
+    return
+
   // Disable the default browser zoom and pan behavior when two
   // fingers are down.
   event.preventDefault()
@@ -596,7 +607,7 @@ function handleTouchMove(event: TouchEvent) {
   // log(`touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
-  const zoomPoint = getZoomPoint()
+  const zoomPoint = getZoomPoint(imageIx)
 
   const distance = Math.hypot(clientX0 - clientX1, clientY0 - clientY1)
   zpan.current = {
@@ -671,8 +682,9 @@ function handleTouchEnd(event: TouchEvent) {
   if (zpan.zooming) {
     zpan.zooming = false
 
+    const imageIx = getImageIx()
     const image = cJson.images[imageIx]
-    const zoomPoint = getZoomPoint()
+    const zoomPoint = getZoomPoint(imageIx)
     log(`i${imageIx+1}: touchend: c: (${two(zpan.current!.cx)}, ${two(zpan.current!.cy)}) ` +
               `d: ${two(zpan.current!.distance)}, scale: ${two(zoomPoint.scale)}, ` +
               `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
@@ -711,26 +723,29 @@ function horizontalScrollMove(event: TouchEvent) {
   area!.scrollLeft = hscroll.currentScrollLeft;
 }
 
+function getImageIx() {
+  // Return the current image index or -1 when scrolling between
+  // images.
+  if (area == null) {
+    log("area variable is not set yet")
+    return -1
+  }
+  const imageIx = hscroll.leftEdges.indexOf(area!.scrollLeft)
+  if (imageIx == -1) {
+    log("Horizontally scrolling between images.")
+    log(`hscroll.leftEdges: ${hscroll.leftEdges}`)
+    log(`area.scrollLeft: ${area!.scrollLeft}`)
+  }
+  return imageIx
+}
+
 function horizontalScrollEnd() {
   // If the last move was big and fast, flick the image to the next
   // one.
 
   function hScrollDone() {
-    // Scrolling has finished.  Update the image index.
-
-    // Set the image index to the image we scrolled to.
-    const ix = hscroll.leftEdges.indexOf(area!.scrollLeft)
-    if (ix == -1)
-      logError(`area!.scrollLeft ${area!.scrollLeft} was not found.`)
-    else {
-      if (imageIx == ix) {
-        log(`Scrolled back to the original item ${imageIx+1}.`)
-      }
-      else {
-        imageIx = ix
-        log(`On image: ${imageIx+1}, hscroll: ${area!.scrollLeft}`)
-      }
-    }
+    // Scrolling has finished.
+    log("Scrolling has finished.")
     hscroll.scrolling = false;
   }
 
@@ -854,8 +869,9 @@ function handleResize() {
 
   const changed = setAvailableArea()
   if (changed) {
+    const imageIx = getImageIx()
     start.log("sizeImages")
-    sizeImages()
+    sizeImages(imageIx)
   }
 
   start.log("resize  done")
