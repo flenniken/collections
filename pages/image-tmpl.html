@@ -20,18 +20,19 @@ body {
 //$ # The page is hidden until it finishes loading so it does not flash.
   visibility: hidden;
   opacity: 0;
-//$ # This stops overscroll on chrome.
-  overscroll-behavior-y: none;
 }
 #area {
   display: flex;
-  overflow-x: hidden;
+  overflow-x: scroll;
+  scroll-snap-type: x mandatory;
 }
 .colbox {
     display: flex;
     flex-direction: column;
     overflow-x: hidden;
     min-width: 100%;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
 }
 .container {
     position: relative;

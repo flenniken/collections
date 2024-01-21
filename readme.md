@@ -321,11 +321,11 @@ When making changes to the image page test them with these steps:
 * zoom when v scrolled
 * double click to restore
 * h scroll
-* h scroll half way
-* h scroll at ends
+* h scroll half way and snap back
 * flick h scroll
+* h scroll and overscroll on both ends
 * v scroll and overscroll on both ends
-* zoom image small, go to thumbnails, click same image and verify images is at its zoom point
+* zoom image small, go to thumbnails, click same image and verify image is at its zoom point
 * long press to copy text
 * debug with safari and iphone.  Click paper airplane to see json in the console.
 * rotate landscape, h & v scroll
