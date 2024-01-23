@@ -15,38 +15,6 @@ window.addEventListener("DOMContentLoaded", handleDOMContentLoaded)
 window.addEventListener("load", handleLoad)
 window.addEventListener("resize", handleResize);
 
-// todo: move the following functions into a shared.ts file and
-// include it here and in images.ts.
-
-function get(id: string) {
-  // Get the dom element with the given id. Generate and exception
-  // when not found.
-  const element = document.getElementById(id)
-  if (!element)
-    throw new Error(`Element with "${id}" not found.`)
-  return element
-}
-
-function log(message: string) {
-  // Log the message to the console.
-  console.log(message)
-}
-
-function two(num: number) {
-  // Return the number rounded to two decimal places.
-  return num.toFixed(2)
-}
-
-function cssNum(variable: string): number {
-  // Return the given css number variable defined in the ":root"
-  // pseudo class. It returns 100 for both of the following examples:
-  // :root {
-  //   --my-var: 100;
-  //   --my-var2: 100px;
-  // }
-  return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable));
-}
-
 function getAvailableWidthHeight() {
   // Get the available screen width and height.
   const availW = document.documentElement.clientWidth

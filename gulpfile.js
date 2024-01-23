@@ -49,15 +49,99 @@ gulp.task("default", function(cb){
   cb()
 });
 
-function ts2js(src, dest, tsOptions=null) {
-  // Compile a typescript file to javascript and minimize it.
+function typescriptCompile(filename, dest) {
+  // Compile the given typescript file and write the result to the
+  // given destintation.
+
+  /*
+  filename=ts/image.js
+  dest=dist/js/image.js
+  tsc -t es6 --lib es7,dom --module amd \
+    --outfile $dest $filename
+  */
+
+  log("Compiling image.ts.")
+  const parameters = [
+    "-t", "es6",
+    "-lib", "es7,dom",
+    "--module", "amd",
+    "-outFile", `${dest}`,
+    "ts/shared.ts",
+    `${filename}`,
+  ]
+  return child_process.spawn("tsc", parameters, {stdio: "inherit"});
+}
+
+gulp.task("tsi", function (cb) {
+  // Complile the image.ts file with typescript.
+
+  return typescriptCompile("ts/image.ts", "dist/js/image.js")
+})
+
+gulp.task("tst", function (cb) {
+  // Complile the thumbnails.ts file with typescript.
+
+  return typescriptCompile("ts/thumbnails.ts", "dist/js/thumbnails.js")
+})
+
+gulp.task("tsx", function (cb) {
+  // Complile the thumbnails.ts file with typescript.
+
+  return typescriptCompile("ts/index.ts", "dist/js/index.js")
+})
+
+
+// function read(filePath) {
+//   const readableStream = fs.createReadStream(filePath);
+
+//   readableStream.on('error', function (error) {
+//       console.log(`error: ${error.message}`);
+//   })
+
+//   readableStream.on('data', (chunk) => {
+//       console.log(chunk);
+//   })
+// }
+
+
+// https://www.npmjs.com/package/vinyl-fs
+
+var test = function (vinylFile, cb) {
+  console.log(vinylFile.path);
+
+  // Compile the file to a temp file.
+  // typescriptCompile(vinylFile.path, tempFile)
+
+  // make a vinyl file stream from the temp file.
+  // const newVinylFile = makeVinylFile(tempFile)
+  // what deletes the temp file?
+
+  cb(null, vinylFile);
+};
+
+gulp.task("test", function (cb) {
+  return gulp.src(['ts/image.ts'])
+    .pipe(map(test))
+    .pipe(vfs.dest('dist/'));
+})
+
+gulp.task("tssw", function (cb) {
+  // Complile the thumbnails.ts file with typescript.
+
+  return typescriptCompile("ts/ws.ts", "dist/ws.js")
+})
+
+function ts2js(srcList, destFile, destDir, tsOptions=null) {
+  // Compile a list of typescript files to one javascript file and
+  // minimize it.
 
   if (tsOptions === null) {
     tsOptions = {
-      noImplicitAny: true,
-      lib: ["es7", "dom"],
-      target: target,
-      "strict": true
+      "noImplicitAny": true,
+      "lib": ["es7", "dom"],
+      "target": target,
+      "strict": true,
+      "outFile": `${destFile}`
     }
   }
 
@@ -75,36 +159,37 @@ function ts2js(src, dest, tsOptions=null) {
     }
   }
   log(`Minimize ${minimize}`)
-  return gulp.src(src)
+  return gulp.src(srcList)
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
+    .pipe(using({prefix:'Compiled', filesize:true, color: "blue"}))
     // Make a copy of the typescript js in the tmp folder for inspection.
     .pipe(gulp.dest("tmp"))
     .pipe(gulpif(minimize, uglify()))
-    .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
-    .pipe(gulp.dest(dest));
+    .pipe(gulp.dest(destDir));
 }
 
 gulp.task('i', function () {
-  return ts2js('ts/image.ts', 'dist/js/', null)
+  return ts2js(["ts/shared.ts", "ts/image.ts"], 'image.js', "dist/js", null)
 });
 
 gulp.task('t', function () {
-  return ts2js('ts/thumbnails.ts', 'dist/js/', null)
+  return ts2js(["ts/shared.ts", 'ts/thumbnails.ts'], 'thumbnails.js', "dist/js", null)
 });
 
 gulp.task('x', function () {
-  return ts2js('ts/index.ts', 'dist/js', null)
+  return ts2js(["ts/shared.ts", "ts/index.ts"], 'index.js', "dist/js", null)
 });
 
 gulp.task('sw', function () {
   options = {
-    noImplicitAny: true,
-    target: target,
-    lib: ["esnext", "webworker"],
-    "strict": true
+    "noImplicitAny": true,
+    "target": target,
+    "lib": ["esnext", "webworker"],
+    "strict": true,
+    "outFile": "sw.js"
   }
-  return ts2js('ts/sw.ts', 'dist/', options)
+  return ts2js(['ts/sw.ts'], 'sw.js', "dist", options)
 });
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
