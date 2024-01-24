@@ -1,4 +1,4 @@
-// Build tasks.
+// Build tasks. Type "g" to see the available tasks.
 
 const gulp = require("gulp");
 const uglify = require("gulp-uglify");
@@ -48,88 +48,6 @@ gulp.task("default", function(cb){
   console.log(help)
   cb()
 });
-
-function typescriptCompile(filename, dest) {
-  // Compile the given typescript file and write the result to the
-  // given destintation.
-
-  /*
-  filename=ts/image.js
-  dest=dist/js/image.js
-  tsc -t es6 --lib es7,dom --module amd \
-    --outfile $dest $filename
-  */
-
-  log("Compiling image.ts.")
-  const parameters = [
-    "-t", "es6",
-    "-lib", "es7,dom",
-    "--module", "amd",
-    "-outFile", `${dest}`,
-    "ts/shared.ts",
-    `${filename}`,
-  ]
-  return child_process.spawn("tsc", parameters, {stdio: "inherit"});
-}
-
-gulp.task("tsi", function (cb) {
-  // Complile the image.ts file with typescript.
-
-  return typescriptCompile("ts/image.ts", "dist/js/image.js")
-})
-
-gulp.task("tst", function (cb) {
-  // Complile the thumbnails.ts file with typescript.
-
-  return typescriptCompile("ts/thumbnails.ts", "dist/js/thumbnails.js")
-})
-
-gulp.task("tsx", function (cb) {
-  // Complile the thumbnails.ts file with typescript.
-
-  return typescriptCompile("ts/index.ts", "dist/js/index.js")
-})
-
-
-// function read(filePath) {
-//   const readableStream = fs.createReadStream(filePath);
-
-//   readableStream.on('error', function (error) {
-//       console.log(`error: ${error.message}`);
-//   })
-
-//   readableStream.on('data', (chunk) => {
-//       console.log(chunk);
-//   })
-// }
-
-
-// https://www.npmjs.com/package/vinyl-fs
-
-var test = function (vinylFile, cb) {
-  console.log(vinylFile.path);
-
-  // Compile the file to a temp file.
-  // typescriptCompile(vinylFile.path, tempFile)
-
-  // make a vinyl file stream from the temp file.
-  // const newVinylFile = makeVinylFile(tempFile)
-  // what deletes the temp file?
-
-  cb(null, vinylFile);
-};
-
-gulp.task("test", function (cb) {
-  return gulp.src(['ts/image.ts'])
-    .pipe(map(test))
-    .pipe(vfs.dest('dist/'));
-})
-
-gulp.task("tssw", function (cb) {
-  // Complile the thumbnails.ts file with typescript.
-
-  return typescriptCompile("ts/ws.ts", "dist/ws.js")
-})
 
 function ts2js(srcList, destFile, destDir, tsOptions=null) {
   // Compile a list of typescript files to one javascript file and
