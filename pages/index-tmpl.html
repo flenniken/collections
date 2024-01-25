@@ -29,24 +29,18 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <body id="index">
 <!--$ nextline -->
   <h1 id="site-title">{s.site-title}</h1>
+  <div class="collections">
 <!--$ block -->
 <!--$ : t.repeat = len(s.collections) -->
 <!--$ : collection = s.collections[t.row] -->
-  <div class="collection">
-    <div class="picture">
+    <div class="collection">
+      <p class="title">{collection.title}</p>
+      <p class="posted">{collection.posted}</p>
       <a href="{collection.url}">
         <img class="thumbnail" src="{collection.thumbnail}" alt="{collection.title}">
       </a>
-    </div>
-    <div class="text">
-      <p class="title">{collection.title}</p>
       <p class="description">{collection.index-description}</p>
-      <p class="posted">{collection.posted}</p>
     </div>
   </div>
-<!--$ endblock -->
-  <!-- <div class="bottom-menu"> -->
-  <!--   <img class="icon-current" src="../icons/index.svg" alt="index"> -->
-  <!-- </div> -->
 </body>
 </html>
