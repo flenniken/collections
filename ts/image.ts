@@ -364,6 +364,26 @@ let zpan: ZPan = {
   current: null,
 }
 
+function preventSwipe(event: Event) {
+  // Prevent swipe back default gesture when near the edges.  This
+  // workaround is not perfect.
+  const touches = (<TouchEvent>event).touches;
+
+  if (touches.length == 1) {
+    const clientX = touches[0].clientX;
+    const margin = 20
+    const left = margin
+    const right = window.innerWidth - margin
+    log(`position: ${clientX}, left: ${left}, right: ${right}`)
+    if (clientX < left || clientX > right) {
+      // Sometimes preventDefault doesn't prevent swiping.
+      event.preventDefault();
+      return true
+    }
+  }
+  return false
+}
+
 // A timer to detect a double touch.
 let doubleTouch: Timer | null = null
 
@@ -372,7 +392,9 @@ function handleTouchStart(event: TouchEvent) {
   // and pan.
 
   const imageIx = getImageIx()
-  log(`On image: ${imageIx+1}`)
+  log(`Touched image: ${imageIx+1}`)
+
+  preventSwipe(event)
 }
 
 function handleContainerTouchStart(event: Event) {
