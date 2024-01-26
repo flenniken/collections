@@ -24,6 +24,13 @@
   max-width: 480px;
 }
 
+@media only screen and (max-height: 575.98px) and (orientation: landscape) {
+  /* In landscape put a box around the collection. */
+  #index .collection {
+    border: #638ec0 1px solid;
+  }
+}
+
 #index .title {
   font-size: 2em;
   margin-bottom: 0px;
@@ -48,7 +55,9 @@
 
 @media only screen and (max-height: 575.98px) and (orientation: landscape) {
   #index .thumbnail {
-  /* How do you make the thumbnail the height of the screen in landscape? */
+    /* How do you make the thumbnail the height of the screen in landscape? */
+    /* https://stackoverflow.com/questions/56622926/safari-viewport-bug-issues-with-fixed-position-and-bottom-or-top */
+    height: calc(var(--vh, 1vh) * 100);
   }
 }
 
