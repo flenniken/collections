@@ -15,7 +15,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       content="black-translucent">
 <!--$ endblock -->
 <!--$ nextline -->
-  <title>{s.title}</title>
+<!--$ : g.title = html(s.title, "body") -->
+  <title>{g.title}</title>
   <link rel="stylesheet" href="../collections.css">
   <script src="../js/thumbnails.js"></script>
 </head>
@@ -27,13 +28,15 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
 <!--$ : url = format("{s.imagePageUrl}?image={id}") -->
-    <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
+    <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{g.title}"></a>
   </div>
 <!--$ block -->
+<!--$ : description = html(s.description, "body") -->
+<!--$ : posted = html(s.posted, "body") -->
   <div>
-    <h3 id="title">{s.title}</h3>
-    <p id="description">{s.description}</p>
-    <p id="posted">{s.posted}</p>
+    <h3 id="title">{g.title}</h3>
+    <p id="description">{description}</p>
+    <p id="posted">{posted}</p>
   </div>
 <!--$ endblock -->
   <div class="bottom-menu">

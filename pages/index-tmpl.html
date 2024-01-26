@@ -14,7 +14,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       content="black-translucent">
 <!--$ endblock -->
 <!--$ nextline -->
-  <title>{s.site-title}</title>
+<!--$ : g.site-title = html(s.site-title, "body") -->
+  <title>{g.site-title}</title>
   <meta name="description"
     content="Flenniken.net Collections">
   <meta name="author" content="Steve Flenniken">
@@ -28,18 +29,22 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 </head>
 <body id="index">
 <!--$ nextline -->
-  <h1 id="site-title">{s.site-title}</h1>
+  <h1 id="site-title">{g.site-title}</h1>
   <div class="collections">
 <!--$ block -->
 <!--$ : t.repeat = len(s.collections) -->
 <!--$ : collection = s.collections[t.row] -->
+<!--$ : title = html(collection.title, "body") -->
+<!--$ : titleAttr = html(collection.title, "attribute") -->
+<!--$ : posted = html(collection.posted, "body") -->
+<!--$ : index-description = html(collection.index-description, "body") -->
     <div class="collection">
-      <p class="title">{collection.title}</p>
-      <p class="posted">{collection.posted}</p>
+      <p class="title">{title}</p>
+      <p class="posted">{posted}</p>
       <a href="{collection.url}">
-        <img class="thumbnail" src="{collection.thumbnail}" alt="{collection.title}">
+        <img class="thumbnail" src="{collection.thumbnail}" alt="{titleAttr}">
       </a>
-      <p class="description">{collection.index-description}</p>
+      <p class="description">{index-description}</p>
     </div>
   </div>
 </body>

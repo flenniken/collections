@@ -14,7 +14,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       content="black-translucent">
 <!--$ endblock -->
 <!--$ nextline -->
-  <title>{s.title}</title>
+<!--$ : title = html(s.title, "body") -->
+  <title>{title}</title>
   <link rel="stylesheet" href="../collections.css">
   <script src="../js/image.js"></script>
   <style>
@@ -58,12 +59,15 @@ body {
 <!--$ : t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
+<!--$ : title = html(image.title, "body") -->
+<!--$ : titleAttr = html(image.title, "attribute") -->
+<!--$ : description = html(image.description, "body") -->
     <div class="colbox" id="cb{id}">
       <div class="container" id="c{id}">
-        <img id="i{id}" src="{image.url}" alt="{image.title}">
+        <img id="i{id}" src="{image.url}" alt="{titleAttr}">
       </div>
-      <h3 class="title">{image.title}</h3>
-      <p class="description">{image.description}</p>
+      <h3 class="title">{title}</h3>
+      <p class="description">{description}</p>
     </div>
 <!--$ endblock -->
   </div>
