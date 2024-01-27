@@ -49,7 +49,7 @@ function runMe() {
         shared_option="-v $rootDir:/home/coder/collections"
         docker run $mapports --name=$collectionsContainer -it $shared_option $collectionsImage
         ;;
-    esac 
+    esac
 
   fi
 }
@@ -57,7 +57,7 @@ function runMe() {
 function deleteMe() {
   ## Delete the container and
   ## image.
-    
+
   # Delete the container if it
   # exists and isn't running.
   status=$(docker inspect $collectionsContainer 2>/dev/null | grep Status)
@@ -70,7 +70,7 @@ function deleteMe() {
       echo "Deleting the container"
       docker rm $collectionsContainer 2>&1 >/dev/null
       ;;
-  esac 
+  esac
 
   # Delete the image if it exists.
   imageExists=$(docker inspect $collectionsImage 2>/dev/null | grep "Id" | grep "sha256:")
@@ -101,7 +101,7 @@ function listMe() {
 function syncMe() {
   ## Rsync dist folder to
   ## flenniken.net.
-  rsync -a --delete --progress dist/ 1and1:flenniken/site/web/collections/ 
+  rsync -a --delete --progress dist/ 1and1:flenniken/collections/
 }
 
 # Verify we are running in the root
@@ -135,5 +135,4 @@ case $option in
   *)
     echo "options: run (r),  delete (d),  list (l), sync (s)."
     ;;
-esac 
-
+esac
