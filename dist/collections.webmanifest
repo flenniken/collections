@@ -1,7 +1,7 @@
 {
     "name": "Flenniken.net Collections",
     "short_name": "collections",
-    "description": "Flenniken.net photo collections.",
+    "description": "Collections is a progressive web app (PWA) for viewing curated collections of photos on an iphone.",
     "icons": [
         {
             "src": "icons/icon-32.png",
@@ -46,6 +46,6 @@
     ],
     "start_url": "index.html",
     "display": "standalone",
-    "theme_color": "red",
-    "background_color": "red"
+    "theme_color": "blue",
+    "background_color": "white"
 }

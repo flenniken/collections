@@ -46,10 +46,6 @@ var cJsonOriginal: CJson.Collection
 let availWidth = 0
 let availHeight = 0
 
-// Height of the top header in portrait mode. Set from css
-// --top-header-height variable in the load event.
-let topHeaderHeight = 60
-
 // The area element set at dom load time.
 let area: HTMLElement | null = null
 

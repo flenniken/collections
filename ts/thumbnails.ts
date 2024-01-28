@@ -4,10 +4,6 @@
 let availWidth = 0
 let availHeight = 0
 
-// Height of the top header in portrait mode. Set from css
-// --top-header-height variable in the load event.
-let topHeaderHeight = 60
-
 // The top-bar element set at dom load time.
 let topBar: HTMLElement | null = null
 

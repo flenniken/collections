@@ -55,6 +55,10 @@ function cssNum(variable: string): number {
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable));
 }
 
+// Height of the top header in portrait mode. Set from css
+// --top-header-height variable in the load event.
+let topHeaderHeight = 60
+
 function getAvailableWidthHeight() {
   // Get the available screen width and height.
   const availW = document.documentElement.clientWidth

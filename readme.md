@@ -47,7 +47,8 @@ Past the bottom of the thumbnails you see the collection title and
 description and an optional map showing the location of where the
 photos were taken.
 
-Scrolling down and holding goes back to the collection index Page.
+You go back to the index page by scrolling to the bottom and clicking
+the index icon.
 
 Clicking on a thumbnail shows the full size photo on the image page.
 
@@ -140,7 +141,7 @@ cd ~/code/collections
 (debian)~/collections $
 ~~~
 
-The g command is an alias.  You can type alias to see them.
+The g command is an alias.  You can type alias to see all the aliases:
 
 ~~~
 (debian)~/collections $ alias
@@ -202,8 +203,8 @@ Type g to see all the tasks:
 ~~~
 (debian)~/collections $ g
 
-[01:35:47] Using gulpfile ~/collections/gulpfile.js
-[01:35:47] Starting 'default'...
+[23:47:42] Using gulpfile ~/collections/gulpfile.js
+[23:47:42] Starting 'default'...
 
 Tasks:
 * ts -- Compile and minimize ts files to dist/js.
@@ -229,7 +230,7 @@ Tasks:
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 
-[01:35:47] Finished 'default' after 1.73 ms
+[23:47:42] Finished 'default' after 1.64 ms
 ~~~
 
 [⬇ ────────](#Contents)
