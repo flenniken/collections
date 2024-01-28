@@ -3,7 +3,7 @@
 [![icon](dist/icons/icon-64.png)](#)
 
 Collections is a progressive web app (PWA) for viewing curated
-collections of photos.
+collections of photos on a phone.
 
 A PWA runs in a browser but looks a lot like a native app.
 
