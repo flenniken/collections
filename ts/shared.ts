@@ -54,3 +54,20 @@ function cssNum(variable: string): number {
   // }
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue(variable));
 }
+
+function getAvailableWidthHeight() {
+  // Get the available screen width and height.
+  const availW = document.documentElement.clientWidth
+  let availH = document.documentElement.clientHeight
+
+  // On a PWA the apple-mobile-web-app-status-bar-style setting allows
+  // the toolbar area to be used, however, the area width and height
+  // doesn't see this extra space. On a pwa, add the extra area.
+
+  if (availH > availW && window.matchMedia(
+      '(display-mode: standalone)').matches) {
+    availH += topHeaderHeight
+    log(`Add ${topHeaderHeight} to height for the top bar.`)
+  }
+  return [availW, availH]
+}
