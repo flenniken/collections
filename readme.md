@@ -17,7 +17,7 @@ a thumbnails page, and an image page.
 
 # Index Page
 
-[![Index Page](dist/docs/index.png)](#)
+[![Index Page](docs/index.png)](#)
 
 The index page shows the list of available collections with the most
 recent collection on top.
@@ -35,7 +35,7 @@ Clicking on a collection switches to the thumbnails page.
 
 # Thumbnails Page
 
-[![Thumbnails Page](dist/docs/thumbnails.png)](#)
+[![Thumbnails Page](docs/thumbnails.png)](#)
 
 The thumbnails page shows the collection’s thumbnails.
 
@@ -55,7 +55,7 @@ Clicking on a thumbnail shows the full size photo on the image page.
 
 # Image Page
 
-[![Image Page](dist/docs/image.png)](#)
+[![Image Page](docs/image.png)](#)
 
 The image page shows one image at a time.  The image is custom zoomed
 (a zoom point) to fit the screen showing the best view for the screen
@@ -72,7 +72,7 @@ side.  This is good for multi-images that look like one wide image.
 You go back to the thumbnails page by scrolling to the bottom and
 clicking the index icon.
 
-[![Image Landscape](dist/docs/image-landscape.png)](#)
+[![Image Landscape](docs/image-landscape.png)](#)
 
 [⬇ ────────](#Contents)
 
