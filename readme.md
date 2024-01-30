@@ -70,8 +70,8 @@ You scroll left and right go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
-You go back to the thumbnails page by scrolling to the bottom and
-clicking the index icon.
+You go back to the thumbnails or index pages by scrolling to the
+bottom and clicking one of the icons.
 
 [![Image Landscape](docs/image-landscape.png)](#)
 
