@@ -3,7 +3,7 @@
 [![icon](dist/icons/icon-64.png)](#)
 
 Collections is a progressive web app (PWA) for viewing curated
-collections of photos on a phone.
+collections of photos on an iphone.
 
 A PWA runs in a browser but looks a lot like a native app.
 
@@ -11,7 +11,7 @@ Each collection is a small set of related photos, for example photos
 of a trip to Many Glaciers Lodge.
 
 You navigate and view images on three types of pages, the index page,
-a thumbnails page, and an image page.
+the thumbnails page, and the image page.
 
 [⬇ ────────](#Contents) (table of contents at the bottom)
 
@@ -19,8 +19,8 @@ a thumbnails page, and an image page.
 
 [![Index Page](docs/index.png)](#)
 
-The index page shows the list of available collections with the most
-recent collection on top.
+The index page shows the sort list of available collections with the
+most recent collection on top.
 
 There is a thumbnail for each collection and descriptive text.  The
 text contains a title, description and post date.
@@ -29,7 +29,7 @@ You can scroll through the list and the most recent collections are
 shown. When you reach the bottom of the list, there is a more
 indicator.
 
-Clicking on a collection switches to the thumbnails page.
+Touching a collection thumbnail switches to the thumbnails page.
 
 [⬇ ────────](#Contents)
 
@@ -47,10 +47,10 @@ Past the bottom of the thumbnails you see the collection title and
 description and an optional map showing the location of where the
 photos were taken.
 
-You go back to the index page by scrolling to the bottom and clicking
+You go back to the index page by scrolling to the bottom and touching
 the index icon.
 
-Clicking on a thumbnail shows the full size photo on the image page.
+Touching a thumbnail shows the full size photo on the image page.
 
 [⬇ ────────](#Contents)
 
@@ -71,7 +71,7 @@ collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
 You go back to the thumbnails or index pages by scrolling to the
-bottom and clicking one of the icons.
+bottom and touching one of the icons.
 
 [![Image Landscape](docs/image-landscape.png)](#)
 
@@ -79,8 +79,8 @@ bottom and clicking one of the icons.
 
 # Run Collections
 
-Since Collections is a PWA you can install the app on your iphone's
-home screen then click on the app's icon to run it.
+Since Collections is a PWA you can install the app's icon on your
+iphone's home screen then touch it to run.
 
 You can also run it from a URL in a browser but this is not
 recommended. For the best experience run it from the installed
@@ -94,8 +94,8 @@ You install the app’s icon on your home screen following these steps:
 
 https://flenniken.net/collections/index.html
 
-* click on the share icon at the bottom center of the screen
-* scroll up and select “Add to Home screen” and click add
+* touch the share icon at the bottom center of the screen
+* scroll up and select “Add to Home screen” and touch add
 
 [![icon](dist/icons/icon-32.png)](#)
 
@@ -115,10 +115,15 @@ you can edit the files on the host and build them in the container.
 
 # Build Setup
 
-Make sure you have docker installed then run the following to fetch
-the collections code and start the environment.
+You setup for building Collections with these steps:
 
-Get the code from github:
+* download the code
+* install docker
+* create docker container
+
+You download the code with the following commands. They create a
+collections folder in your code home folder then pull the code from
+github.
 
 ~~~
 cd ~
@@ -127,11 +132,15 @@ cd code/collections
 git clone git@github.com:flenniken/collections.git .
 ~~~
 
-Create and run the build environment. You run it twice, the first time
-the r command creates the docker image, the second and following times
-the r command runs it.
+You install docker, if not already installed,  from the docker website:
 
-The prompt shows you're in the environment with "(debian)".
+* https://docs.docker.com/get-docker/
+
+You create the build environment by running the runenv command as
+shown below. You run runenv’s r command twice, the first time the r
+command creates the docker image, the second and following times the r
+command runs the docker container. The command prompt shows you're in
+the build environment in the collections folder.
 
 ~~~
 cd ~/code/collections
@@ -141,7 +150,7 @@ cd ~/code/collections
 (debian)~/collections $
 ~~~
 
-The g command is an alias.  You can type alias to see all the aliases:
+The environment has a few aliases defined for common commands:
 
 ~~~
 (debian)~/collections $ alias
@@ -154,12 +163,14 @@ alias ls='ls --color=auto'
 alias sudo='sudo '
 ~~~
 
+You stop the environment by typing ctrl-d. 
+
 [⬇ ────────](#Contents)
 
 # Build All
 
 You build the app in the doctor container with the gulp app by typing
-“g all”. The results go to the dist folder.
+“g all”. The results go to the dist folder. Here is an example:
 
 ~~~
 (debian)~/collections $ g all
@@ -174,7 +185,6 @@ You build the app in the doctor container with the gulp app by typing
 [01:35:42] Starting 'vpages'...
 [01:35:42] Starting 'i'...
 [01:35:42] Starting 't'...
-[01:35:42] Starting 'x'...
 [01:35:42] Starting 'sw'...
 [01:35:42] Starting 'index'...
 [01:35:42] Starting 'thumbnails'...
@@ -305,7 +315,7 @@ I don’t know of any way to test two finger actions on the desktop.  The touch 
 
 # Test on iphone
 
-You can use the safari on your mac to debug collections on an iphone
+You can use safari on your mac to debug collections on an iphone
 connected with a wire.  Safari works as if the app was on your mac.
 
 You must have a new iphone os and matching mac os version. The os and
@@ -315,7 +325,7 @@ at the mac version number to compare.
 To debug:
 
 * connect iphone with wire
-* launch collections on iphone by clicking the collections desktop icon
+* launch collections on iphone by touching the collections desktop icon
 * launch Safari on your mac
 * pull down the develop menu and select collections
 
@@ -328,19 +338,19 @@ When making changes to the image page test them with these steps:
 * zoom at a point
 * zoom to limits, small and big, then pan around
 * zoom when v scrolled
-* double click to restore
+* double tap to restore
 * h scroll
 * h scroll half way and snap back
 * flick h scroll
 * h scroll and overscroll on both ends
 * v scroll and overscroll on both ends
-* zoom image small, go to thumbnails, click same image and verify image is at its zoom point
+* zoom image small, go to thumbnails, touch the same image and verify image is at its zoom point
 * long press to copy text
-* debug with safari and iphone.  Click paper airplane to see json in the console.
+* debug with safari and iphone.  Touch the paper airplane to see json in the console.
 * rotate landscape, h & v scroll
 * no flash on load
 * no flash on rotate
-* click home menu item
+* Touch the index menu item
 
 # Contents
 
