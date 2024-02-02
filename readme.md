@@ -62,16 +62,17 @@ The image page shows one image at a time.  The image is custom zoomed
 (a zoom point) to fit the screen showing the best view for the screen
 orientation and size.
 
-You can zoom and pan an image and double tap to restore.
+You can zoom and pan an image with two fingers and double tap to
+restore it.
 
-You scroll up to see a description about the image.
+You scroll to the bottom to see a description of the image.
 
 You scroll left and right go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
-You go back to the thumbnails or index pages by scrolling to the
-bottom and touching one of the icons.
+You go back to the thumbnails or index page by scrolling to the bottom
+and touching the thumbnail or index icon.
 
 [![Image Landscape](docs/image-landscape.png)](#)
 
@@ -105,11 +106,12 @@ https://flenniken.net/collections/index.html
 
 Collections is written in typescript and there is a build step.
 
-You use the docker build environment to develop Collections. It has
-all the programs installed needed to build the app.
+You use the provided docker build environment to develop
+Collections. It has all the programs installed needed to build the
+app.
 
-The code folder is shared with the docker container and the host so
-you can edit the files on the host and build them in the container.
+The host’s code folder is shared with the build environment so you can
+edit files on the host and build them in the container.
 
 [⬇ ────────](#Contents)
 
@@ -274,7 +276,6 @@ dist
 |-- js
 |   |-- image.js
 |   |-- index.js
-|   |-- shared.js
 |   `-- thumbnails.js
 |-- pages
 |   |-- image-1.html
@@ -347,10 +348,11 @@ When making changes to the image page test them with these steps:
 * zoom image small, go to thumbnails, touch the same image and verify image is at its zoom point
 * long press to copy text
 * debug with safari and iphone.  Touch the paper airplane to see json in the console.
-* rotate landscape, h & v scroll
+* rotate the last couple of images and verify it remains on the same image
+* scroll h & v in landscape mode
 * no flash on load
 * no flash on rotate
-* Touch the index menu item
+* touch the index menu item
 
 # Contents
 
