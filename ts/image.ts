@@ -354,7 +354,7 @@ function preventSwipe(event: Event) {
     const margin = 20
     const left = margin
     const right = window.innerWidth - margin
-    log(`position: ${clientX}, left: ${left}, right: ${right}`)
+    // log(`position: ${clientX}, left: ${left}, right: ${right}`)
     if (clientX < left || clientX > right) {
       // Sometimes preventDefault doesn't prevent swiping.
       event.preventDefault();
@@ -372,7 +372,7 @@ function handleTouchStart(event: TouchEvent) {
   // and pan.
 
   const imageIx = getImageIx()
-  log(`Touched image: ${imageIx+1}`)
+  log(`Touched image: ${imageIx+1}, image2: ${getImageIx2()+1}`)
 
   preventSwipe(event)
 }
@@ -565,6 +565,8 @@ function handleTouchEnd(event: TouchEvent) {
     zpan.zooming = false
 
     const imageIx = getImageIx()
+    if (imageIx == -1)
+      return
     const image = cJson.images[imageIx]
     const zoomPoint = getZoomPoint(imageIx)
     log(`i${imageIx+1}: touchend: c: (${two(zpan.current!.cx)}, ${two(zpan.current!.cy)}) ` +
@@ -605,6 +607,7 @@ function getImageIx() {
     log(`leftEdges: ${leftEdges}`)
     log(`area.scrollLeft: ${area!.scrollLeft}`)
   }
+  log(`area!.scrollLeft: ${area!.scrollLeft}`)
   return imageIx
 }
 
@@ -668,6 +671,8 @@ function distanceList(start: number, finish: number, numberSteps: number) {
   return steps;
 }
 
+let centerElement = null
+
 function handleResize() {
   // When the phone orientation changes, update the image area and
   // size the images.
@@ -684,7 +689,9 @@ function handleResize() {
 
   const changed = setAvailableArea()
   if (changed) {
-    const imageIx = getImageIx()
+    let imageIx = getImageIx()
+    let imageIx2 = getImageIx2()
+    log(`image: ${imageIx+1}, image2: ${getImageIx2()+1}`)
     start.log("sizeImages")
     sizeImages(imageIx)
   }
@@ -692,3 +699,21 @@ function handleResize() {
   start.log("resize  done")
 }
 
+function getImageIx2() {
+  let element = document.elementFromPoint(25, 25)
+  while (element) {
+    log(`className: ${element.className}`)
+    if (element.className == "colbox") {
+      log(`element.id: ${element.id}`)
+      const elementId = element.id.slice(2)
+      let imageNum = parseInt(elementId, 10)
+      if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length) {
+        return imageNum - 1
+      }
+      else
+        return 0
+    }
+    element = element.parentElement
+  }
+  return 0
+}
