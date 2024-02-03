@@ -291,7 +291,7 @@ How to develop on Chrome or Safari.
 For Chrome you start a local server on the dist folder (gr) and work
 in a phone view. You enable the mouse to simulate touch, see Test
 Touch. You set up at least two phone views for a “iPhone 14 Pro Max”,
-portrait 430 x 933 and landscape 933 x 430.
+portrait 430 x 933 and landscape 932 x 430.
 
 For Safari you plug your iphone into your mac and debug remotely, see
 Test on iphone.
