@@ -81,13 +81,14 @@ function handleDOMContentLoaded() {
 
   area = get("area")
 
-  const imageIx = getFirstImage()
+  imageIndex = getFirstImage()
+  log(`First image: ${imageIndex + 1}`)
 
   startTimer.log("setAvailableArea")
   setAvailableArea()
 
   startTimer.log("sizeImages")
-  sizeImages(imageIx)
+  sizeImages(imageIndex)
 }
 
 async function handleLoad() {
@@ -134,7 +135,6 @@ function getFirstImage() {
     if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length)
       imageIx = imageNum - 1
   }
-  log(`First image: ${imageIx + 1}`)
   return imageIx
 }
 
@@ -378,9 +378,7 @@ function handleTouchStart(event: TouchEvent) {
   // Log the current image. See handleContainerTouchStart for zoom
   // and pan.
 
-  const imageIx = getImageIx()
   log(`Touched image: ${imageIndex+1}`)
-
   preventSwipe(event)
 }
 
@@ -410,9 +408,7 @@ function handleContainerTouchStart(event: Event) {
   // When not two fingers touching, return.
   if (touches.length != 2)
     return
-  const imageIx = getImageIx()
-  if (imageIx == -1)
-    return
+  const imageIx = imageIndex
 
   zpan.zooming = true
 
@@ -447,11 +443,7 @@ function handleRestoreImage(event: Event) {
   // Restore an image position and scale to it's original zoom point.
 
   log("Restore image to its zoom point.")
-  const imageIx = getImageIx()
-  if (imageIx == -1) {
-    log("Unable to restore the image because it is h scrolling.")
-    return
-  }
+  const imageIx = imageIndex
 
   // Get the original zoom point.
   let zoomPoint = getZoomPoint(imageIx, cJson)
@@ -486,9 +478,7 @@ function handleTouchMove(event: TouchEvent) {
   if (!zpan.zooming)
     return
 
-  const imageIx = getImageIx()
-  if (imageIx == -1)
-    return
+  const imageIx = imageIndex
 
   // Disable the default browser zoom and pan behavior when two
   // fingers are down.
@@ -571,9 +561,7 @@ function handleTouchEnd(event: TouchEvent) {
   if (zpan.zooming) {
     zpan.zooming = false
 
-    const imageIx = getImageIx()
-    if (imageIx == -1)
-      return
+    const imageIx = imageIndex
     const image = cJson.images[imageIx]
     const zoomPoint = getZoomPoint(imageIx)
     log(`i${imageIx+1}: touchend: c: (${two(zpan.current!.cx)}, ${two(zpan.current!.cy)}) ` +
@@ -599,23 +587,6 @@ function logJson() {
 
   // log("Copy json to the clipboard");
   // navigator.clipboard.writeText(msg);
-}
-
-function getImageIx() {
-  // Return the current image index or -1 when h scrolling between
-  // images.
-  if (area == null) {
-    log("area variable is not set yet")
-    return -1
-  }
-  const imageIx = leftEdges.indexOf(area!.scrollLeft)
-  if (imageIx == -1) {
-    log("Currently horizontally scrolling between images.")
-    log(`leftEdges: ${leftEdges}`)
-    log(`area.scrollLeft: ${area!.scrollLeft}`)
-  }
-  log(`area!.scrollLeft: ${area!.scrollLeft}`)
-  return imageIx
 }
 
 function animatePosition(start: number, finish: number, framesPerSec: number,
@@ -722,10 +693,10 @@ function handleScroll() {
   scrollStopId = setInterval(() => {
     // If the current scroll position is on a left edge, we know
     // scrolling has stopped, set the imageIndex to the current image.
-    const ix = leftEdges.indexOf(area!.scrollLeft)
-    if (ix != -1) {
+    const imageIx = leftEdges.indexOf(area!.scrollLeft)
+    if (imageIx != -1) {
       // Set the image index and stop the interval checking.
-      imageIndex = ix
+      imageIndex = imageIx
       log(`scolling stopped on image: ${imageIndex + 1}`)
       clearInterval(scrollStopId);
       scrollStopId = 0
