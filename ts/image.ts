@@ -49,6 +49,9 @@ let availHeight = 0
 // The area element set at dom load time.
 let area: HTMLElement | null = null
 
+// The index of the image we are currently on.
+let imageIndex = 0
+
 // The left edges (horizontal scroll positions) of the images in the
 // area.
 let leftEdges: number[] = []
@@ -98,6 +101,10 @@ async function handleLoad() {
   const containers = area!.querySelectorAll('.container')
   containers.forEach(container => {
     container.addEventListener("touchstart", handleContainerTouchStart, {passive: false})
+
+    // Watch the area scroll and scroll end events.
+    area!.addEventListener('scroll', handleScroll, false)
+    area!.addEventListener('scrollend', handleScrollEnd, false)
   })
 
   // Disable the default browser zoom and pan behavior.
@@ -372,7 +379,7 @@ function handleTouchStart(event: TouchEvent) {
   // and pan.
 
   const imageIx = getImageIx()
-  log(`Touched image: ${imageIx+1}, image2: ${getImageIx2()+1}`)
+  log(`Touched image: ${imageIndex+1}`)
 
   preventSwipe(event)
 }
@@ -689,31 +696,45 @@ function handleResize() {
 
   const changed = setAvailableArea()
   if (changed) {
-    let imageIx = getImageIx()
-    let imageIx2 = getImageIx2()
-    log(`image: ${imageIx+1}, image2: ${getImageIx2()+1}`)
+    log(`on image: ${imageIndex+1}`)
     start.log("sizeImages")
-    sizeImages(imageIx)
+    sizeImages(imageIndex)
   }
 
   start.log("resize  done")
 }
 
-function getImageIx2() {
-  let element = document.elementFromPoint(25, 25)
-  while (element) {
-    log(`className: ${element.className}`)
-    if (element.className == "colbox") {
-      log(`element.id: ${element.id}`)
-      const elementId = element.id.slice(2)
-      let imageNum = parseInt(elementId, 10)
-      if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length) {
-        return imageNum - 1
-      }
-      else
-        return 0
+let scrollStopId = 0
+
+function handleScroll() {
+  // When an image is scrolled left or right, set the image index once
+  // it stops on an image.
+
+  // When we have an stop interval process already going don't start
+  // another one.
+  if (scrollStopId != 0)
+    return
+
+  log("scroll started")
+  log(`leftEdges: ${leftEdges}`)
+  log(`area.scrollLeft: ${area!.scrollLeft}`)
+
+  scrollStopId = setInterval(() => {
+    // If the current scroll position is on a left edge, we know
+    // scrolling has stopped, set the imageIndex to the current image.
+    const ix = leftEdges.indexOf(area!.scrollLeft)
+    if (ix != -1) {
+      // Set the image index and stop the interval checking.
+      imageIndex = ix
+      log(`scolling stopped on image: ${imageIndex + 1}`)
+      clearInterval(scrollStopId);
+      scrollStopId = 0
     }
-    element = element.parentElement
-  }
-  return 0
+  }, 100)
+}
+
+function handleScrollEnd() {
+  // When the scrollend event is supported by all browsers, we can do
+  // away with the handleScroll method.
+  log("The scrollEnd event exists.")
 }
