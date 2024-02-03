@@ -19,15 +19,13 @@ the thumbnails page, and the image page.
 
 [![Index Page](docs/index.png)](#)
 
-The index page shows the sort list of available collections with the
+The index page shows the sorted list of available collections with the
 most recent collection on top.
 
-There is a thumbnail for each collection and descriptive text.  The
-text contains a title, description and post date.
+Each collection has a title, thumbnail, description, and post date.
 
-You can scroll through the list and the most recent collections are
-shown. When you reach the bottom of the list, there is a more
-indicator.
+You can scroll through the list. When you reach the bottom there is a
+more indicator.
 
 Touching a collection thumbnail switches to the thumbnails page.
 
@@ -39,13 +37,14 @@ Touching a collection thumbnail switches to the thumbnails page.
 
 The thumbnails page shows the collection’s thumbnails.
 
-There are only a few images in a collection. This has benefits that
-the users see the best photos and it puts more focus on the story
-provided by the descriptions. It’s also easier to build well.
+Since there are only a few images in a collection the user sees the
+best and more time can be spent on the description’s story. It is also
+easier to build well.
 
 Past the bottom of the thumbnails you see the collection title and
-description and an optional map showing the location of where the
-photos were taken.
+description (a potentially different description than on index page)
+and an optional map showing the location of where the photos were
+taken.
 
 You go back to the index page by scrolling to the bottom and touching
 the index icon.
@@ -107,8 +106,8 @@ https://flenniken.net/collections/index.html
 Collections is written in typescript and there is a build step.
 
 You use the provided docker build environment to develop
-Collections. It has all the programs installed needed to build the
-app.
+Collections. It has all the programs installed that you need to build
+the app.
 
 The host’s code folder is shared with the build environment so you can
 edit files on the host and build them in the container.
@@ -165,7 +164,7 @@ alias ls='ls --color=auto'
 alias sudo='sudo '
 ~~~
 
-You stop the environment by typing ctrl-d. 
+You stop the environment by typing ctrl-d.
 
 [⬇ ────────](#Contents)
 
