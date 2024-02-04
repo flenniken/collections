@@ -27,7 +27,7 @@ Each collection has a title, thumbnail, description, and post date.
 You can scroll through the list. When you reach the bottom there is a
 more indicator.
 
-Touching a collection thumbnail switches to the thumbnails page.
+Tapping a collection thumbnail switches to the thumbnails page.
 
 [⬇ ────────](#Contents)
 
@@ -46,10 +46,10 @@ description (a potentially different description than on index page)
 and an optional map showing the location of where the photos were
 taken.
 
-You go back to the index page by scrolling to the bottom and touching
+You go back to the index page by scrolling to the bottom and tapping
 the index icon.
 
-Touching a thumbnail shows the full size photo on the image page.
+Tapping a thumbnail shows the full size photo on the image page.
 
 [⬇ ────────](#Contents)
 
@@ -71,7 +71,7 @@ collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
 You go back to the thumbnails or index page by scrolling to the bottom
-and touching the thumbnail or index icon.
+and tapping the thumbnail or index icon.
 
 [![Image Landscape](docs/image-landscape.png)](#)
 
@@ -80,7 +80,7 @@ and touching the thumbnail or index icon.
 # Run Collections
 
 Since Collections is a PWA you can install the app's icon on your
-iphone's home screen then touch it to run.
+iphone's home screen then tap it to run.
 
 You can also run it from a URL in a browser but this is not
 recommended. For the best experience run it from the installed
@@ -94,8 +94,8 @@ You install the app’s icon on your home screen following these steps:
 
 https://flenniken.net/collections/index.html
 
-* touch the share icon at the bottom center of the screen
-* scroll up and select “Add to Home screen” and touch add
+* tap the share icon at the bottom center of the screen
+* scroll up and select “Add to Home screen” and tap add
 
 [![icon](dist/icons/icon-32.png)](#)
 
@@ -344,14 +344,13 @@ When making changes to the image page test them with these steps:
 * flick h scroll
 * h scroll and overscroll on both ends
 * v scroll and overscroll on both ends
-* zoom image small, go to thumbnails, touch the same image and verify image is at its zoom point
-* long press to copy text
-* debug with safari and iphone.  Touch the paper airplane to see json in the console.
-* rotate the last couple of images and verify it remains on the same image
+* zoom image small, go to thumbnails, tap the same image and verify image is at its zoom point
+* long press to copy text then extend the selection
+* rotate the last image then rotate it back and verify it remains on the same image
 * scroll h & v in landscape mode
-* no flash on load
-* no flash on rotate
-* touch the index menu item
+* no flash on load and no flash on rotate
+* tap the thumbnails menu icon
+* tap the index menu icon
 
 # Contents
 
