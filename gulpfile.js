@@ -266,11 +266,12 @@ gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dist folder.
 
   const gs = gulp.series
+  const shared = "ts/shared.ts"
 
-  gulp.watch("ts/image.ts", gs(["i"]));
-  gulp.watch("ts/thumbnails.ts", gs(["t"]));
-  gulp.watch("ts/index.ts", gs(["x"]));
-  gulp.watch("ts/sw.ts", gs(["sw"]));
+  gulp.watch([shared, "ts/image.ts"], gs(["i"]));
+  gulp.watch([shared, "ts/thumbnails.ts"], gs(["t"]));
+  gulp.watch([shared, "ts/index.ts"], gs(["x"]));
+  gulp.watch([shared, "ts/sw.ts"], gs(["sw"]));
 
   gulp.watch("pages/collections.css", gs(["css"]));
 

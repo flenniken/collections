@@ -21,12 +21,12 @@ function logError(message: string) {
 
 function two(num: number) {
   // Return the number rounded to two decimal places.
-  return num.toFixed(2)
+  return Math.round(num * 100 ) / 100;
 }
 
 function three(num: number) {
   // Return the number rounded to three decimal places.
-  return num.toFixed(3)
+  return Math.round(num * 1000 ) / 1000;
 }
 
 class Timer {
