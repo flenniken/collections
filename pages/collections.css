@@ -1,10 +1,11 @@
 /* collections.css */
 
 #index {
-  display: flex;
-  flex-direction: column;
   margin: 0px;
   padding: 0px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 #index #site-title {
@@ -17,16 +18,22 @@
 
 #index .collections {
   display: flex;
-  justify-content: center;
+  margin-left: auto;
+  margin-right: auto;
+  flex-direction: column;
 }
 
 #index .collection {
-  border-top: #638ec0 2px solid;
+  /* border-top: #638ec0 2px solid; */
   border-bottom: #638ec0 1px solid;
   max-width: 480px;
 }
 
 @media only screen and (max-height: 575.98px) and (orientation: landscape) {
+  /* In landscape allow multiple columns. */
+  #index .collections {
+    flex-direction: row;
+  }
   /* In landscape put a box around the collection. */
   #index .collection {
     border: #638ec0 1px solid;

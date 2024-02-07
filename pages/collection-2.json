@@ -1,0 +1,162 @@
+{
+  "title": "Manzanita 2023",
+  "description": "Annual beach vacation to Manzanita Oregon.",
+  "posted": "February 2024",
+  "collection": 2,
+  "width": 480,
+  "height": 480,
+  "imagePageUrl": "../pages/image-2.html",
+  "thumbnailsPageUrl": "../pages/thumbnails-2.html",
+  "images": [
+    {
+      "url": "../images/c2-11-p.jpg",
+      "thumbnail": "../images/c2-11-t.jpg",
+      "title": "Ecola State Park",
+      "description": "Beautiful view from Ecola State Park very close to the parking lot. We're looking south.  We hiked the Indian Beach Trial to Indian Beach and we had great weather.",
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "url": "../images/c2-19-p.jpg",
+      "thumbnail": "../images/c2-19-t.jpg",
+      "title": "Wall Sandcastle",
+      "description": "One of the many sandcastles Tom and Steve made.",
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "url": "../images/c2-9-p.jpg",
+      "thumbnail": "../images/c2-9-t.jpg",
+      "title": "Esher Sandcastle",
+      "description": "Our attempt at making the impossible Esher staircases in sand.",
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "url": "../images/c2-15-p.jpg",
+      "thumbnail": "../images/c2-15-t.jpg",
+      "title": "Hot Tub House",
+      "description": "We stayed that the house at the end of the path which is at the end of Beach Street. It has a hot tub on the front deck and a eletric car charger in the garage.",
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "url": "../images/c2-16-p.jpg",
+      "thumbnail": "../images/c2-16-t.jpg",
+      "title": "Manzanita Beach",
+      "description": "Neahkahni Mountain and Manzanita Beach and a couple of seagulls flying home for the evening.",
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "url": "../images/c2-21-p.jpg",
+      "thumbnail": "../images/c2-21-t.jpg",
+      "title": "Summer Sunset",
+      "description": "Golden hour on the beach. After dinner we bundle up and rush down to the beach to see the sunset.",
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "url": "../images/c2-23-p.jpg",
+      "thumbnail": "../images/c2-23-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "Doug and I rode our bikes all the way to the Nehalem River on the Elk Run trail. This view looks south across the marsh.",
+      "width": 2016,
+      "height": 3024
+    },
+    {
+      "url": "../images/c2-24-p.jpg",
+      "thumbnail": "../images/c2-24-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "This tests the pixel perfect border for two images combined for a panoramic.",
+      "width": 2016,
+      "height": 3024
+    }
+  ],
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.44,
+        "tx": -559.37,
+        "ty": -306.81
+      },
+      {
+        "scale": 0.34,
+        "tx": -468.59,
+        "ty": -13.93
+      },
+      {
+        "scale": 0.31,
+        "tx": -446.77,
+        "ty": -3.4
+      },
+      {
+        "scale": 0.35,
+        "tx": -448.21,
+        "ty": -15.83
+      },
+      {
+        "scale": 0.32,
+        "tx": -201.5,
+        "ty": -14.02
+      },
+      {
+        "scale": 0.26,
+        "tx": -142.15,
+        "ty": -15.4
+      },
+      {
+        "scale": 0.33,
+        "tx": -234.27,
+        "ty": -25.06
+      },
+      {
+        "scale": 0.33,
+        "tx": 0,
+        "ty": -25.06
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.24,
+        "tx": -22.68,
+        "ty": -178.28
+      },
+      {
+        "scale": 0.25,
+        "tx": -18.48,
+        "ty": -177.75
+      },
+      {
+        "scale": 0.24,
+        "tx": -33.88,
+        "ty": -110.73
+      },
+      {
+        "scale": 0.23,
+        "tx": -5.04,
+        "ty": -4.62
+      },
+      {
+        "scale": 0.24,
+        "tx": -6.46,
+        "ty": -86.16
+      },
+      {
+        "scale": 0.33,
+        "tx": -8.22,
+        "ty": -111.18
+      },
+      {
+        "scale": 0.5,
+        "tx": -72,
+        "ty": -180.35
+      },
+      {
+        "scale": 0.5,
+        "tx": 0,
+        "ty": -180.35
+      }
+    ]
+  }
+}

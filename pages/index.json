@@ -2,6 +2,13 @@
   "site-title": "Flenniken.net Collections",
   "collections": [
     {
+      "url": "pages/thumbnails-2.html",
+      "thumbnail": "images/c2-21-t.jpg",
+      "title": "Manzanita Beach 2023",
+      "index-description": "Manzanita beach 2023.",
+      "posted": "February 2024",
+    },
+    {
       "url": "pages/thumbnails-1.html",
       "thumbnail": "images/c1-3-t.jpg",
       "title": "Many Glaciers Lodge",

@@ -25,12 +25,16 @@ Tasks:
     sw -- Compile sw.ts
 * pages -- Create all the pages from templates.
     index -- Create the main index page.
-    thumbnails -- Create the thumbnails page.
-    image -- Create the image page.
+    thumbnails1 -- Create the thumbnails page for collection 1.
+    thumbnails2 -- Create the thumbnails page for collection 2.
+    image1 -- Create the image page for collection 1.
+    image2 -- Create the image page for collection 2.
 * vpages -- Validate all the html files.
     vindex -- Validate index html
-    vthumbnails -- Validate thumbnails html
-    vimage -- Validate image html
+    vthumbnails1 -- Validate thumbnails html for collection 1.
+    vthumbnails2 -- Validate thumbnails html for collection 2.
+    vimage1 -- Validate image html for collection 1.
+    vimage2 -- Validate image html for collection 2.
 * css -- Minimize the collection.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea.
 * run-server -- (alias gr) Run a test server exposing the dist folder on port
@@ -136,17 +140,28 @@ gulp.task("vindex", function (cb) {
   return validateHtml("dist/index.html")
 })
 
-gulp.task("vimage", function (cb) {
+gulp.task("vimage1", function (cb) {
   // Validate the image html file.
   return validateHtml("dist/pages/image-1.html")
 })
 
-gulp.task("vthumbnails", function (cb) {
+gulp.task("vimage2", function (cb) {
+  // Validate the image html file.
+  return validateHtml("dist/pages/image-2.html")
+})
+
+gulp.task("vthumbnails1", function (cb) {
   // Validate the thumbnails html file.
   return validateHtml("dist/pages/thumbnails-1.html")
 })
 
-gulp.task("vpages", gulp.parallel("vindex", "vthumbnails", "vimage"));
+gulp.task("vthumbnails2", function (cb) {
+  // Validate the thumbnails html file.
+  return validateHtml("dist/pages/thumbnails-2.html")
+})
+
+gulp.task("vpages", gulp.parallel(
+  "vindex", "vthumbnails1", "vthumbnails2", "vimage1", "vimage2"));
 
 gulp.task("index", function (cb) {
   // Create the main index page from the index template.
@@ -168,47 +183,73 @@ statictea \
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
 })
 
-gulp.task("thumbnails", function (cb) {
-  // Create the thumbnails page.
+gulp.task("thumbnails1", function (cb) {
+  // Create the thumbnails page for collection 1.
+  thumbnailsPage(1)
+  cb()
+})
+
+gulp.task("thumbnails2", function (cb) {
+  // Create the thumbnails page for collection 2.
+  thumbnailsPage(2)
+  cb()
+})
+
+function thumbnailsPage(collectionNumber) {
+  // Create the thumbnails page for the given collection.
 
 /*
 statictea \
   -t pages/thumbnails-tmpl.html \
-  -s pages/collection-1.json \
+  -s pages/collection-x.json \
   -o pages/header.tea \
-  -r dist/pages/thumbnails-1.html
+  -r dist/pages/thumbnails-x.html
 */
 
-  log("Compiling thumbnails template.")
+  const num = collectionNumber
+  log(`Compiling the thumbnails template for collection ${num}.`)
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
-    "-s", "pages/collection-1.json",
+    "-s", `pages/collection-${num}.json`,
     "-o", "pages/header.tea",
-    "-r", "dist/pages/thumbnails-1.html",
+    "-r", `dist/pages/thumbnails-${num}.html`,
   ]
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
+}
+
+gulp.task("image1", function (cb) {
+  // Create the image page for collection 1.
+  imagePage(1)
+  cb()
 })
 
-gulp.task("image", function (cb) {
-  // Create the image page.
+gulp.task("image2", function (cb) {
+  // Create the image page for collection 2.
+  imagePage(2)
+  cb()
+})
+
+function imagePage(collectionNumber) {
+  // Create the image page for the given collection.
 
 /*
 statictea \
   -t pages/image-tmpl.html \
-  -s pages/collection-1.json \
+  -s pages/collection-x.json \
   -o pages/header.tea \
-  -r dist/pages/image-1.html
+  -r dist/pages/image-x.html
 */
 
+  const num = collectionNumber
   log("Compiling image template.")
   const parameters = [
     "-t", "pages/image-tmpl.html",
-    "-s", "pages/collection-1.json",
+    "-s", `pages/collection-${num}.json`,
     "-o", "pages/header.tea",
-    "-r", "dist/pages/image-1.html",
+    "-r", `dist/pages/image-${num}.html`,
   ]
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});
-})
+}
 
 gulp.task("syncronize", function (cb) {
   // Syncronize index template's replace blocks with header.tea.
@@ -237,7 +278,7 @@ gulp.task("css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
-gulp.task("pages", gulp.parallel("index", "thumbnails", "image"));
+gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2", "image1", "image2"));
 
 gulp.task("run-server", function(cb) {
 
@@ -277,12 +318,15 @@ gulp.task("watch", function(cb) {
 
   const hr = "pages/header.tea"
   const json1 = "pages/collection-1.json"
+  const json2 = "pages/collection-2.json"
 
   gulp.watch([hr], gs("syncronize"))
 
   gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs(["index", "vindex"]))
-  gulp.watch(["pages/thumbnails-tmpl.html", json1, hr], gs(["thumbnails", "vthumbnails"]))
-  gulp.watch(["pages/image-tmpl.html", json1, hr], gs(["image", "vimage"]))
+  gulp.watch(["pages/thumbnails-tmpl.html", json1, json2, hr], gs([
+    "thumbnails1", "thumbnails2", "vthumbnails1", "vthumbnails2"]))
+  gulp.watch(["pages/image-tmpl.html", json1, json2, hr], gs([
+    "image1", "image2", "vimage1", "vimage2"]))
 
   cb();
 });
