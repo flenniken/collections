@@ -5,5 +5,6 @@ dist/js/
 dist/index.html
 dist/sw.js
 dist/pages/
+dist/images/
 dist/collections.css
 working-images/

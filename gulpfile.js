@@ -8,6 +8,8 @@ const cleanCSS = require("gulp-clean-css");
 const using = require('gulp-using');
 const gulpif = require('gulp-if');
 const ts = require('gulp-typescript');
+const download = require('gulp-download2')
+const fs = require("fs");
 
 // Minimize the javascript.
 const minimize = false
@@ -42,6 +44,7 @@ Tasks:
     Access files in your browser with: http://localhost:8000/index.html
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
+* get-images -- Download the collection images from flenniken.net.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
@@ -295,6 +298,43 @@ python3 -m http.server
   return child_process.spawn("python3", parameters, {stdio: "inherit", cwd: "dist"});
 })
 
+function getDownloadUrls() {
+  // Return a list of urls to download. Skip files that have already
+  // been downloaded.
+
+  function downloadFilename(collection, type, num) {
+    // Return the url for the given collection image.
+    const name = `c${collection}-${num}-${type}.jpg`
+    const destination = `dist/images/${name}`
+    if (fs.existsSync(destination))
+      return ""
+    return `https://flenniken.net/collections-images/${name}`
+  }
+
+  let urls = []
+  const params = [[1, 8], [2, 16]]
+  params.forEach( (colAndCount) => {
+    const collection = colAndCount[0]
+    const count = colAndCount[1]
+    for (let num = 1; num <= count; num++) {
+      ["t", "p"].forEach( (type) => {
+        url = downloadFilename(collection, type, num)
+        if (url)
+          urls.push(url)
+      })
+    }
+  })
+  return urls
+}
+
+gulp.task("get-images", function (cb) {
+  log("Download missing images from the flenniken.net site to the images folder.")
+  const urls = getDownloadUrls()
+  if (urls.length == 0)
+    log("All images already downloaded.")
+  return download(urls).pipe(gulp.dest('dist/images'));
+});
+
 gulp.task('readme', function () {
   const parameters = [
     "-p",
@@ -331,11 +371,12 @@ gulp.task("watch", function(cb) {
   cb();
 });
 
-gulp.task("pages-folder", function (cb) {
-  // Create the pages folder. It is missing the first time you run
+gulp.task("missing-folders", function (cb) {
+  // Create the pages and images folders, they are missing the first time you run
   // after making a new docker container.
-  return gulp.src('*.*', {read: false})
-    .pipe(gulp.dest('./dist/pages'))
+  gulp.src('*.*', {read: false}).pipe(gulp.dest('./dist/pages'))
+  gulp.src('*.*', {read: false}).pipe(gulp.dest('./dist/images'))
+  return cb()
 })
 
-gulp.task("all", gulp.series(["pages-folder", gulp.parallel(["ts", "pages", "css", "vpages"])]));
+gulp.task("all", gulp.series(["missing-folders", gulp.parallel(["ts", "pages", "css", "vpages"])]));

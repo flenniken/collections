@@ -9,153 +9,297 @@
   "thumbnailsPageUrl": "../pages/thumbnails-2.html",
   "images": [
     {
-      "url": "../images/c2-11-p.jpg",
-      "thumbnail": "../images/c2-11-t.jpg",
+      "url": "../images/c2-1-p.jpg",
+      "thumbnail": "../images/c2-1-t.jpg",
       "title": "Ecola State Park",
       "description": "Beautiful view from Ecola State Park very close to the parking lot. We're looking south.  We hiked the Indian Beach Trial to Indian Beach and we had great weather.",
       "width": 4032,
       "height": 3024
     },
     {
-      "url": "../images/c2-19-p.jpg",
-      "thumbnail": "../images/c2-19-t.jpg",
+      "url": "../images/c2-2-p.jpg",
+      "thumbnail": "../images/c2-2-t.jpg",
       "title": "Wall Sandcastle",
       "description": "One of the many sandcastles Tom and Steve made.",
-      "width": 4032,
-      "height": 3024
+      "width": 3471,
+      "height": 2604
     },
     {
-      "url": "../images/c2-9-p.jpg",
-      "thumbnail": "../images/c2-9-t.jpg",
+      "url": "../images/c2-3-p.jpg",
+      "thumbnail": "../images/c2-3-t.jpg",
       "title": "Esher Sandcastle",
       "description": "Our attempt at making the impossible Esher staircases in sand.",
       "width": 4032,
       "height": 3024
     },
     {
-      "url": "../images/c2-15-p.jpg",
-      "thumbnail": "../images/c2-15-t.jpg",
+      "url": "../images/c2-4-p.jpg",
+      "thumbnail": "../images/c2-4-t.jpg",
       "title": "Hot Tub House",
       "description": "We stayed that the house at the end of the path which is at the end of Beach Street. It has a hot tub on the front deck and a eletric car charger in the garage.",
+      "width": 3560,
+      "height": 2670
+    },
+    {
+      "url": "../images/c2-5-p.jpg",
+      "thumbnail": "../images/c2-5-t.jpg",
+      "title": "Manzanita Beach",
+      "description": "Neahkahni Mountain and Manzanita Beach and a couple of seagulls flying home for the evening.",
+      "width": 2758,
+      "height": 3677
+    },
+    {
+      "url": "../images/c2-6-p.jpg",
+      "thumbnail": "../images/c2-6-t.jpg",
+      "title": "Summer Sunset",
+      "description": "Golden hour on the beach. After dinner we bundle up and rush down to the beach to see the sunset.",
+      "width": 4032,
+      "height": 3024
+    },
+    {
+      "url": "../images/c2-7-p.jpg",
+      "thumbnail": "../images/c2-7-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "Doug and I rode our bikes all the way to the Nehalem River on the Elk Run trail. This view looks south across the marsh.",
+      "width": 3958,
+      "height": 2969
+    },
+    {
+      "url": "../images/c2-8-p.jpg",
+      "thumbnail": "../images/c2-8-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "This tests the pixel perfect border for two images combined for a panoramic.",
+      "width": 1988,
+      "height": 2983
+    },
+    {
+      "url": "../images/c2-9-p.jpg",
+      "thumbnail": "../images/c2-9-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "asdf",
+      "width": 1988,
+      "height": 2983
+    },
+    {
+      "url": "../images/c2-10-p.jpg",
+      "thumbnail": "../images/c2-10-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "beach sunset",
+      "width": 3920,
+      "height": 2940
+    },
+    {
+      "url": "../images/c2-11-p.jpg",
+      "thumbnail": "../images/c2-11-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "asdf",
+      "width": 3273,
+      "height": 2456
+    },
+    {
+      "url": "../images/c2-12-p.jpg",
+      "thumbnail": "../images/c2-12-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "asdf",
+      "width": 3964,
+      "height": 2973
+    },
+    {
+      "url": "../images/c2-13-p.jpg",
+      "thumbnail": "../images/c2-13-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "asdf",
+      "width": 3024,
+      "height": 4032
+    },
+    {
+      "url": "../images/c2-14-p.jpg",
+      "thumbnail": "../images/c2-14-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "asdf",
+      "width": 3811,
+      "height": 2858
+    },
+    {
+      "url": "../images/c2-15-p.jpg",
+      "thumbnail": "../images/c2-15-t.jpg",
+      "title": "Elk Run Trail",
+      "description": "asdf",
       "width": 4032,
       "height": 3024
     },
     {
       "url": "../images/c2-16-p.jpg",
       "thumbnail": "../images/c2-16-t.jpg",
-      "title": "Manzanita Beach",
-      "description": "Neahkahni Mountain and Manzanita Beach and a couple of seagulls flying home for the evening.",
+      "title": "Elk Run Trail",
+      "description": "asdf",
       "width": 4032,
-      "height": 3024
-    },
-    {
-      "url": "../images/c2-21-p.jpg",
-      "thumbnail": "../images/c2-21-t.jpg",
-      "title": "Summer Sunset",
-      "description": "Golden hour on the beach. After dinner we bundle up and rush down to the beach to see the sunset.",
-      "width": 3024,
-      "height": 4032
-    },
-    {
-      "url": "../images/c2-23-p.jpg",
-      "thumbnail": "../images/c2-23-t.jpg",
-      "title": "Elk Run Trail",
-      "description": "Doug and I rode our bikes all the way to the Nehalem River on the Elk Run trail. This view looks south across the marsh.",
-      "width": 2016,
-      "height": 3024
-    },
-    {
-      "url": "../images/c2-24-p.jpg",
-      "thumbnail": "../images/c2-24-t.jpg",
-      "title": "Elk Run Trail",
-      "description": "This tests the pixel perfect border for two images combined for a panoramic.",
-      "width": 2016,
       "height": 3024
     }
   ],
   "zoomPoints": {
     "430x933": [
       {
-        "scale": 0.44,
-        "tx": -559.37,
-        "ty": -306.81
+        "scale": 0.5,
+        "tx": -628.83,
+        "ty": -403.19
       },
       {
-        "scale": 0.34,
-        "tx": -468.59,
-        "ty": -13.93
+        "scale": 0.55,
+        "tx": -1412.5,
+        "ty": -360.04
       },
       {
-        "scale": 0.31,
-        "tx": -446.77,
-        "ty": -3.4
+        "scale": 0.38,
+        "tx": -726.93,
+        "ty": -92.63
+      },
+      {
+        "scale": 0.48,
+        "tx": -530.09,
+        "ty": -164.48
+      },
+      {
+        "scale": 0.33,
+        "tx": -247.77,
+        "ty": -19.32
+      },
+      {
+        "scale": 0.19,
+        "tx": -202.34,
+        "ty": 184.27
       },
       {
         "scale": 0.35,
-        "tx": -448.21,
-        "ty": -15.83
+        "tx": -538.19,
+        "ty": -69.3
       },
       {
-        "scale": 0.32,
-        "tx": -201.5,
-        "ty": -14.02
+        "scale": 0.5,
+        "tx": -564,
+        "ty": 0
+      },
+      {
+        "scale": 0.5,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.34,
+        "tx": -280.44,
+        "ty": -3.82
+      },
+      {
+        "scale": 0.47,
+        "tx": -575.22,
+        "ty": -110.71
+      },
+      {
+        "scale": 0.49,
+        "tx": -591.97,
+        "ty": -243.77
       },
       {
         "scale": 0.26,
-        "tx": -142.15,
-        "ty": -15.4
+        "tx": -145.09,
+        "ty": 0.09
       },
       {
-        "scale": 0.33,
-        "tx": -234.27,
-        "ty": -25.06
+        "scale": 0.43,
+        "tx": -453.37,
+        "ty": -147.34
       },
       {
-        "scale": 0.33,
-        "tx": 0,
-        "ty": -25.06
+        "scale": 0.34,
+        "tx": -176.49,
+        "ty": -17.33
+      },
+      {
+        "scale": 0.22,
+        "tx": -131.11,
+        "ty": 165.43
       }
     ],
     "932x430": [
       {
-        "scale": 0.24,
-        "tx": -22.68,
-        "ty": -178.28
+        "scale": 0.26,
+        "tx": -101.26,
+        "ty": -232.02
+      },
+      {
+        "scale": 0.28,
+        "tx": -35.84,
+        "ty": -236.75
+      },
+      {
+        "scale": 0.26,
+        "tx": -48.98,
+        "ty": -131.51
+      },
+      {
+        "scale": 0.27,
+        "tx": -31.69,
+        "ty": -67.41
+      },
+      {
+        "scale": 0.17,
+        "tx": 207.98,
+        "ty": -16.34
+      },
+      {
+        "scale": 0.17,
+        "tx": 84.47,
+        "ty": -47.41
       },
       {
         "scale": 0.25,
-        "tx": -18.48,
-        "ty": -177.75
+        "tx": -56.09,
+        "ty": -98.01
+      },
+      {
+        "scale": 0.63,
+        "tx": -314.94,
+        "ty": -419.9
+      },
+      {
+        "scale": 0.65,
+        "tx": -3.24,
+        "ty": -435.06
       },
       {
         "scale": 0.24,
-        "tx": -33.88,
-        "ty": -110.73
+        "tx": -8.23,
+        "ty": -43.13
+      },
+      {
+        "scale": 0.3,
+        "tx": -36.46,
+        "ty": -56.13
+      },
+      {
+        "scale": 0.27,
+        "tx": -48.21,
+        "ty": -143.31
+      },
+      {
+        "scale": 0.32,
+        "tx": -0.14,
+        "ty": -81.05
+      },
+      {
+        "scale": 0.26,
+        "tx": -26.39,
+        "ty": -75.8
       },
       {
         "scale": 0.23,
-        "tx": -5.04,
-        "ty": -4.62
-      },
-      {
-        "scale": 0.24,
-        "tx": -6.46,
-        "ty": -86.16
-      },
-      {
-        "scale": 0.33,
-        "tx": -8.22,
-        "ty": -111.18
-      },
-      {
-        "scale": 0.5,
-        "tx": -72,
-        "ty": -180.35
-      },
-      {
-        "scale": 0.5,
         "tx": 0,
-        "ty": -180.35
+        "ty": 0
+      },
+      {
+        "scale": 0.19,
+        "tx": 100.81,
+        "ty": -105.5
       }
     ]
   }

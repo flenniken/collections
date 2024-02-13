@@ -7,6 +7,8 @@
     "gulp-if": "^3.0.0",
     "gulp-typescript": "^6.0.0-alpha.1",
     "gulp-uglify": "^3.0.2",
-    "gulp-using": "^0.1.1"
+    "gulp-using": "^0.1.1",
+    "gulp-download2": "^1.1.0",
+    "fs": "^0.0.1-security"
   }
 }
