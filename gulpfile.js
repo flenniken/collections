@@ -211,13 +211,24 @@ statictea \
 
   const num = collectionNumber
   log(`Compiling the thumbnails template for collection ${num}.`)
+  const result_filename = `dist/pages/thumbnails-${num}.html`
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
     "-s", `pages/collection-${num}.json`,
     "-o", "pages/header.tea",
-    "-r", `dist/pages/thumbnails-${num}.html`,
+    "-r", result_filename,
   ]
-  return child_process.spawn("statictea", parameters, {stdio: "inherit"});
+  const statictea = child_process.spawn("statictea", parameters, {stdio: "inherit"});
+
+  statictea.on('close', (code) => {
+    if (code !== 0) {
+      log(`statictea process exited with code ${code}`);
+      fs.rmSync(result_filename)
+      error() // todo: fail more elegantly.
+    }
+  });
+
+  return 0
 }
 
 gulp.task("image1", function (cb) {
