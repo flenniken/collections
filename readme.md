@@ -309,8 +309,6 @@ desktop by turning on a setting in the developers tools.
 * scroll down to the touch section and select "Force Enabled"
 * test by mousing over the web page.  The mouse cursor should be a small circle.
 
-I don’t know of any way to test two finger actions on the desktop.  The touch pad doesn't do it.
-
 [⬇ ────────](#Contents)
 
 # Test on iphone
@@ -325,7 +323,7 @@ at the mac version number to compare.
 To debug:
 
 * connect iphone with wire
-* launch collections on iphone by touching the collections desktop icon
+* launch collections on iphone by tapping the collections desktop icon
 * launch Safari on your mac
 * pull down the develop menu and select collections
 
