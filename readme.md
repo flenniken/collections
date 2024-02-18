@@ -1,6 +1,6 @@
 # Flenniken.net Collections
 
-[![icon](dist/icons/icon-64.png)](#)
+[![icon](docs/rounded-icon.png)](#)
 
 Collections is a progressive web app (PWA) for viewing curated
 collections of photos on an iphone.
@@ -97,7 +97,7 @@ https://flenniken.net/collections/index.html
 * tap the share icon at the bottom center of the screen
 * scroll up and select “Add to Home screen” and tap add
 
-[![icon](dist/icons/icon-32.png)](#)
+[![icon](docs/rounded-icon.png)](#)
 
 [⬇ ────────](#Contents)
 
