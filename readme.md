@@ -286,7 +286,7 @@ dist
 
 # Test Tips
 
-How to develop on Chrome or Safari.
+How to develop on Chrome, Safari or xcode simulator.
 
 For Chrome you start a local server on the dist folder (gr) and work
 in a phone view. You enable the mouse to simulate touch, see Test
@@ -295,6 +295,12 @@ portrait 430 x 933 and landscape 932 x 430.
 
 For Safari you plug your iphone into your mac and debug remotely, see
 Test on iphone.
+
+For xcode simulator, you get it by installing xcode.  Launch it and
+run an iphone 14 max. Like chrome you run the code on a localhost
+server (gr) and reference a localhost url. You can test the install
+process and two finger touching. It’s also good for making screenshots
+that include the bezel.
 
 [⬇ ────────](#Contents)
 
