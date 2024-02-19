@@ -211,6 +211,8 @@ function sizeImages(firstImageIx: number) {
 
     // Size the image to its zoom point.
     const img = get(`i${imageIx+1}`)
+
+    add_border(img, zoomPoint)
     img.style.transformOrigin = "0px 0px"
     // Note: translate runs from right to left.
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
@@ -468,7 +470,19 @@ function handleRestoreImage(event: Event) {
     zoomPoint.scale = origZP.scale;
     zoomPoint.tx = origZP.tx;
     zoomPoint.ty = origZP.ty;
+    add_border(img, zoomPoint)
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+  }
+}
+
+function add_border(img: HTMLElement, zoomPoint: CJson.ZoomPoint) {
+  // Add a border to the element when it's upper left corner is inside
+  // the area.
+  if (zoomPoint.tx > 0 && zoomPoint.ty > 0) {
+    img.style.border = "solid black 80px"
+  }
+  else {
+    img.style.border = ""
   }
 }
 
@@ -546,6 +560,9 @@ function handleTouchMove(event: TouchEvent) {
   zoomPoint.ty = ty;
 
   const img = get(`i${imageIx+1}`)
+
+  add_border(img, zoomPoint)
+
   // Note: translate runs from right to left.
   img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
 }

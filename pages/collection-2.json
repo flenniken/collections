@@ -67,8 +67,7 @@
       "url": "../images/c2-8-p.jpg",
       "thumbnail": "../images/c2-8-t.jpg",
       "title": "Beach and Mountain",
-      "description": "Manzanita Beach with Neahkahnie Mountain in the background.
-This tests two images side by side that make one panoramic image.",
+      "description": "Manzanita Beach with Neahkahnie Mountain in the background.\nThis tests two images side by side that make one panoramic image.",
       "width": 1988,
       "height": 2983
     },
@@ -165,9 +164,9 @@ This tests two images side by side that make one panoramic image.",
         "ty": -19.32
       },
       {
-        "scale": 0.19,
-        "tx": -202.34,
-        "ty": 184.27
+        "scale": 0.09,
+        "tx": 23.45,
+        "ty": 315.72
       },
       {
         "scale": 0.35,
@@ -215,9 +214,9 @@ This tests two images side by side that make one panoramic image.",
         "ty": -17.33
       },
       {
-        "scale": 0.22,
-        "tx": -131.11,
-        "ty": 165.43
+        "scale": 0.08,
+        "tx": 41.6,
+        "ty": 318.6
       }
     ],
     "932x430": [
@@ -237,19 +236,19 @@ This tests two images side by side that make one panoramic image.",
         "ty": -131.51
       },
       {
-        "scale": 0.27,
-        "tx": -31.69,
-        "ty": -67.41
+        "scale": 0.13,
+        "tx": 206.27,
+        "ty": 18.61
       },
       {
         "scale": 0.17,
-        "tx": 207.98,
-        "ty": -16.34
+        "tx": 219.69,
+        "ty": -2.92
       },
       {
-        "scale": 0.17,
-        "tx": 84.47,
-        "ty": -47.41
+        "scale": 0.12,
+        "tx": 192.38,
+        "ty": 13.24
       },
       {
         "scale": 0.25,
@@ -297,9 +296,9 @@ This tests two images side by side that make one panoramic image.",
         "ty": 0
       },
       {
-        "scale": 0.19,
-        "tx": 100.81,
-        "ty": -105.5
+        "scale": 0.13,
+        "tx": 200.32,
+        "ty": 9.03
       }
     ]
   }
