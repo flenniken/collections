@@ -94,6 +94,9 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
     .pipe(gulp.dest(destDir));
 }
 
+// Concatenate shared.ts to all the ts files except sw which doesn't
+// have access to the DOM window or document objects.
+
 gulp.task('i', function () {
   return ts2js(["ts/shared.ts", "ts/image.ts"], 'image.js', "dist/js", null)
 });
@@ -110,10 +113,12 @@ gulp.task('sw', function () {
   options = {
     "noImplicitAny": true,
     "target": target,
-    "lib": ["esnext", "webworker"],
+    "lib": ["es7", "webworker"],
     "strict": true,
     "outFile": "sw.js"
   }
+  // Store sw.js in the root so it has control of all files in the
+  // root and subfolders below.
   return ts2js(['ts/sw.ts'], 'sw.js', "dist", options)
 });
 
