@@ -69,7 +69,7 @@ function getAvailableWidthHeight() {
   // doesn't see this extra space. On a pwa, add the extra area.
 
   if (availH > availW && window.matchMedia(
-      '(display-mode: standalone)').matches) {
+      "(display-mode: standalone)").matches) {
     availH += topHeaderHeight
     log(`Add ${topHeaderHeight} to height for the top bar.`)
   }

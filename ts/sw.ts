@@ -20,28 +20,28 @@ function log(message: string) {
   console.log("👷 " + message)
 }
 
-const cacheName = 'collections-v1';
+const cacheName = "collections-v1";
 const cacheContent = [
-  '/',
-  'favicon.ico',
-  'icons/icon-32.png',
-  'icons/icon-64.png',
-  'icons/icon-96.png',
-  'icons/icon-128.png',
-  'icons/icon-168.png',
-  'icons/icon-192.png',
-  'icons/icon-256.png',
-  'icons/icon-512.png',
+  "/",
+  "favicon.ico",
+  "icons/icon-32.png",
+  "icons/icon-64.png",
+  "icons/icon-96.png",
+  "icons/icon-128.png",
+  "icons/icon-168.png",
+  "icons/icon-192.png",
+  "icons/icon-256.png",
+  "icons/icon-512.png",
 ];
 
-self.addEventListener('install', (event: Event) => {
-  log('Install event called.');
+self.addEventListener("install", (event: Event) => {
+  log("Install event called.");
 
   const extendableEvent = (<ExtendableEvent>event)
   extendableEvent.waitUntil((async () => {
     const cache = await caches.open(cacheName);
 
-    log('Cache all files.');
+    log("Cache all files.");
     await cache.addAll(cacheContent);
   })());
 })
@@ -60,7 +60,7 @@ self.addEventListener("activate", event => {
    log("Activate event called.");
 })
 
-self.addEventListener('fetch', (event: Event) => {
+self.addEventListener("fetch", (event: Event) => {
   const fetchEvent = (<FetchEvent>event)
 
   // Get the url to fetch.
@@ -69,7 +69,7 @@ self.addEventListener('fetch', (event: Event) => {
   log(`Fetch event for ${url}`);
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
-  if (!(url.startsWith('http:') || url.startsWith('https:'))) {
+  if (!(url.startsWith("http:") || url.startsWith("https:"))) {
     log(`ignore: ${url}`)
     // Do the default thing.
     return

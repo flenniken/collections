@@ -63,12 +63,12 @@ const framesPerSec = 30
 // another handler on the containers.
 window.addEventListener("DOMContentLoaded", handleDOMContentLoaded)
 window.addEventListener("load", handleLoad)
-window.addEventListener('touchstart', handleTouchStart, {passive: false})
-window.addEventListener('restoreimage', handleRestoreImage, false)
-window.addEventListener('touchmove', handleTouchMove, {passive: false})
+window.addEventListener("touchstart", handleTouchStart, {passive: false})
+window.addEventListener("restoreimage", handleRestoreImage, false)
+window.addEventListener("touchmove", handleTouchMove, {passive: false})
 window.addEventListener("resize", handleResize);
-document.addEventListener('touchend', handleTouchEnd, false)
-document.addEventListener('touchcancel', handleTouchCancel, false)
+document.addEventListener("touchend", handleTouchEnd, false)
+document.addEventListener("touchcancel", handleTouchCancel, false)
 
 // The start time used to time loading.
 const startTimer = new Timer()
@@ -99,20 +99,20 @@ async function handleLoad() {
   log(`topHeaderHeight: ${topHeaderHeight}`)
 
   // Watch the touchstart event on the containers for double touch.
-  const containers = area!.querySelectorAll('.container')
+  const containers = area!.querySelectorAll(".container")
   containers.forEach(container => {
     container.addEventListener("touchstart", handleContainerTouchStart, {passive: false})
 
     // Watch the area scroll and scroll end events.
-    area!.addEventListener('scroll', handleScroll, false)
-    area!.addEventListener('scrollend', handleScrollEnd, false)
+    area!.addEventListener("scroll", handleScroll, false)
+    area!.addEventListener("scrollend", handleScrollEnd, false)
   })
 
   // Disable the default browser zoom and pan behavior.
   get("images").setAttribute("touch-action", "none")
 
   // Show the page now to cut down on page flashing.
-  document.body.style.visibility = 'visible'
+  document.body.style.visibility = "visible"
   document.body.style.opacity = "1"
 
   startTimer.log("load Done")

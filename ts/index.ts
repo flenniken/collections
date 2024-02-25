@@ -3,17 +3,17 @@
 window.addEventListener("load", handleLoad)
 
 // Register the Service Worker if it is supported.
-if ('serviceWorker' in navigator) {
-  console.log('register service worker sw.js');
+if ("serviceWorker" in navigator) {
+  console.log("register service worker sw.js");
   // Load sw from the collections folder.
-  navigator.serviceWorker.register('sw.js');
+  navigator.serviceWorker.register("sw.js");
 }
 
 let runningFromIcon = false
 
 function handleLoad() {
   log("load called")
-  if (window.matchMedia('(display-mode: standalone)').matches) {
+  if (window.matchMedia("(display-mode: standalone)").matches) {
     runningFromIcon = true
     log("Running from the desktop icon.")
     return
@@ -23,7 +23,7 @@ function handleLoad() {
   // user has not installed it yet.
 
   log(`navigator.platform: ${navigator.platform}`)
-  if (navigator.platform != 'iPhone') {
+  if (navigator.platform != "iPhone") {
     return
   }
 
