@@ -21,43 +21,12 @@ function log(message: string) {
 }
 
 const cacheName = "collections-v1";
-// const cacheContent = [
-//   "/",
-//   "favicon.ico",
-//   "icons/icon-32.png",
-//   "icons/icon-64.png",
-//   "icons/icon-96.png",
-//   "icons/icon-128.png",
-//   "icons/icon-168.png",
-//   "icons/icon-192.png",
-//   "icons/icon-256.png",
-//   "icons/icon-512.png",
-//   "index.html",
-//   "collections.css",
-//   "js/index.js",
-//   "images/c2-1-t.jpg",
-//   "images/c1-3-t.jpg",
-//   "collections.webmanifest",
-//   // "missing",
-// ];
 
 self.addEventListener("install", (event: Event) => {
   log("Install event called.");
-
-  // const extendableEvent = (<ExtendableEvent>event)
-  // extendableEvent.waitUntil((async () => {
-  //   const cache = await caches.open(cacheName);
-
-  //   log("Cache all files.");
-
-  //   // Note: if addAll fails, probably one of the files in the list is
-  //   // incorrect, wrong path or name.
-  //   await cache.addAll(cacheContent);
-  //  })());
 })
 
 self.addEventListener("activate", event => {
-
   // https://web.dev/learn/pwa/service-workers:
   //
   // When the service worker is ready to control its clients, the
@@ -85,6 +54,29 @@ self.addEventListener("fetch", (event: Event) => {
 
   fetchEvent.respondWith((async () => {
 
+    // If the request is for a file needed by the index page, fetch it
+    // from the internet so we always get the newest when
+    // connected. If the file is in the images folder (except the
+    // index page thumbnails), get it from the cache and don't try the
+    // internet. The thumbnails shared with the index page end with
+    // tix.jpg.
+
+    const isImageFile = url.includes("images/") && !url.includes("tix.jpg");
+
+    if (!isImageFile) {
+      // Look for the file on the net.
+      var response = await fetch(fetchEvent.request);
+      if (response) {
+        log(`Found on net: ${url}`);
+
+        // Add the file to the cache.
+        const cache = await caches.open(cacheName);
+        cache.put(fetchEvent.request, response.clone());
+
+        return response;
+      }
+    }
+
     // Look for the file in the cache.
     const cacheReponse = await caches.match(fetchEvent.request);
     if (cacheReponse) {
@@ -92,20 +84,8 @@ self.addEventListener("fetch", (event: Event) => {
       return cacheReponse;
     }
 
-    // Look for the file on the net.
-    var response = await fetch(fetchEvent.request);
-    if (response) {
-      log(`Found on net: ${url}`);
-
-      // Add the file to the cache.
-      const cache = await caches.open(cacheName);
-      cache.put(fetchEvent.request, response.clone());
-
-      return response;
-    }
-    // We're probably offline.
+    // We're probably offline, do the default thing.
     log(`Not found: ${url}`);
-
     return await fetch(fetchEvent.request);
 
   })());
