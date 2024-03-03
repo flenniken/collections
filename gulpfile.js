@@ -318,26 +318,31 @@ function getDownloadUrls() {
   // Return a list of urls to download. Skip files that have already
   // been downloaded.
 
-  function downloadFilename(collection, type, num) {
-    // Return the url for the given collection image.
-    const name = `c${collection}-${num}-${type}.jpg`
-    const destination = `dist/images/${name}`
-    if (fs.existsSync(destination))
-      return ""
-    return `https://flenniken.net/collections-images/${name}`
-  }
+  // Note: the image.txt file is checked in.  It was created from this:
+  /*
+  cd ~/code/collections
+  find pages -name \*.json \
+    | grep -v '/\.' \
+    | xargs sed -nE 's@^.*images/(.*)".*$@\1@p' \
+    | sort | uniq \
+    > images.txt
+  */
+
+  // Read the image names in the text file and return a list.
+  const data = fs.readFileSync("images.txt", "utf8")
+  const names = data.split("\n");
 
   let urls = []
-  const params = [[1, 8], [2, 16]]
-  params.forEach( (colAndCount) => {
-    const collection = colAndCount[0]
-    const count = colAndCount[1]
-    for (let num = 1; num <= count; num++) {
-      ["t", "p"].forEach( (type) => {
-        url = downloadFilename(collection, type, num)
+  names.forEach( (name) => {
+    name = name.trim()
+    if (name != "") {
+      const destination = `dist/images/${name}`
+      log(destination)
+      if (!fs.existsSync(destination)) {
+        url = `https://flenniken.net/collections-images/${name}`
         if (url)
           urls.push(url)
-      })
+      }
     }
   })
   return urls
