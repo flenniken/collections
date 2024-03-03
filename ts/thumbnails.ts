@@ -78,6 +78,8 @@ function sizeImages() {
   Array.prototype.forEach.call(thumbnails, function(thumbnail, ix) {
     thumbnail.style.width = thumbnailWPx
     thumbnail.style.height = thumbnailWPx
+    thumbnail.style.minWidth = thumbnailWPx
+    thumbnail.style.minHeight = thumbnailWPx
   });
 
   // If more than 2 thumbnails fit the width of the screen, center

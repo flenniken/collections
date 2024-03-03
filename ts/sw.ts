@@ -44,11 +44,14 @@ self.addEventListener("fetch", (event: Event) => {
 
   // Get the url to fetch.
   const url = fetchEvent.request.url
+  // log(`fetch event url: ${url}`);
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
   if (!(url.startsWith("http:") || url.startsWith("https:"))) {
     log(`ignore: ${url}`)
-    // Do the default thing.
+    // Do the default thing.  If respondWith() is not called in the
+    // handler, then the user agent automatically makes the original
+    // network request as if the service worker did not exist.
     return
   }
 
@@ -84,9 +87,11 @@ self.addEventListener("fetch", (event: Event) => {
       return cacheReponse;
     }
 
-    // We're probably offline, do the default thing.
     log(`Not found: ${url}`);
-    return await fetch(fetchEvent.request);
+    return new Response(null, {status: 404});
+
+    // If you want the system to do it's normal thing, do this:
+    // return await fetch(fetchEvent.request);
 
   })());
 });
