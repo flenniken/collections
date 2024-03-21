@@ -8,7 +8,6 @@ const cleanCSS = require("gulp-clean-css");
 const using = require('gulp-using');
 const gulpif = require('gulp-if');
 const ts = require('gulp-typescript');
-const download = require('gulp-download2')
 const fs = require("fs");
 
 // Minimize the javascript.
@@ -44,7 +43,6 @@ Tasks:
     Access files in your browser with: http://localhost:8000/index.html
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
-* get-images -- Download the collection images from flenniken.net.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
@@ -59,6 +57,7 @@ gulp.task("default", function(cb){
 function ts2js(srcList, destFile, destDir, tsOptions=null) {
   // Compile a list of typescript files to one javascript file and
   // minimize it.
+  log(`Compile: ${srcList}`)
 
   if (tsOptions === null) {
     tsOptions = {
@@ -83,9 +82,14 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
       pure_funcs: pure_funcs
     }
   }
-  log(`Minimize ${minimize}`)
+
+  if (minimize)
+    log("Minimize")
+  else
+    log("Un-minimized")
+
   return gulp.src(srcList)
-    .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
+    .pipe(using({prefix:'File size:', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
     .pipe(using({prefix:'Compiled', filesize:true, color: "blue"}))
     // Make a copy of the typescript js in the tmp folder for inspection.
@@ -135,37 +139,56 @@ function validateHtml(filename) {
 
   // html-validator '--ignore=/Consider/' dist/pages/thumbnails-1.html
 
+  // HTML error: Bad value “{imagesFolder}/c2-1-tin.jpg” for attribute
+  // “src” on element “img”: Illegal character in path segment: “{” is
+  // not allowed.
+
   const ignore = "Consider avoiding viewport values that prevent users from resizing documents."
+  const ignore2 = "Illegal character in path segment: “{” is not allowed."
   const parameters = [
-    `--ignore=/${ignore}/`,
+    `--ignore=/${ignore}\|${ignore2}/`,
     `${filename}`
   ]
-  return child_process.spawn("html-validator", parameters, {stdio: "inherit"});
+
+  const validator = child_process.spawn("html-validator", parameters, {stdio: "inherit"});
+  validator.on('close', (code) => {
+    if (code !== 0) {
+      log(`validator exited with code ${code}`);
+      error() // todo: fail more elegantly.
+    }
+  });
+
+  return 0
 }
 
 gulp.task("vindex", function (cb) {
   // Validate the index html file.
-  return validateHtml("dist/index.html")
+  validateHtml("dist/index.html")
+  cb()
 })
 
 gulp.task("vimage1", function (cb) {
   // Validate the image html file.
-  return validateHtml("dist/pages/image-1.html")
+  validateHtml("dist/pages/image-1.html")
+  cb()
 })
 
 gulp.task("vimage2", function (cb) {
   // Validate the image html file.
-  return validateHtml("dist/pages/image-2.html")
+  validateHtml("dist/pages/image-2.html")
+  cb()
 })
 
 gulp.task("vthumbnails1", function (cb) {
   // Validate the thumbnails html file.
-  return validateHtml("dist/pages/thumbnails-1.html")
+  validateHtml("dist/pages/thumbnails-1.html")
+  cb()
 })
 
 gulp.task("vthumbnails2", function (cb) {
   // Validate the thumbnails html file.
-  return validateHtml("dist/pages/thumbnails-2.html")
+  validateHtml("dist/pages/thumbnails-2.html")
+  cb()
 })
 
 gulp.task("vpages", gulp.parallel(
@@ -177,6 +200,7 @@ gulp.task("index", function (cb) {
 /*
 statictea \
   -t pages/index-tmpl.html \
+  -s pages/images-folder.json \
   -s pages/index.json \
   -o pages/header.tea \
   -r dist/index.html
@@ -184,6 +208,7 @@ statictea \
   log("Compiling index template.")
   const parameters = [
     "-t", "pages/index-tmpl.html",
+    "-s", "pages/images-folder.json",
     "-s", "pages/index.json",
     "-o", "pages/header.tea",
     "-r", "dist/index.html",
@@ -209,6 +234,7 @@ function thumbnailsPage(collectionNumber) {
 /*
 statictea \
   -t pages/thumbnails-tmpl.html \
+  -s pages/images-folder.json \
   -s pages/collection-x.json \
   -o pages/header.tea \
   -r dist/pages/thumbnails-x.html
@@ -219,6 +245,7 @@ statictea \
   const result_filename = `dist/pages/thumbnails-${num}.html`
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
+    "-s", "pages/images-folder.json",
     "-s", `pages/collection-${num}.json`,
     "-o", "pages/header.tea",
     "-r", result_filename,
@@ -254,6 +281,7 @@ function imagePage(collectionNumber) {
 /*
 statictea \
   -t pages/image-tmpl.html \
+  -s pages/images-folder.json \
   -s pages/collection-x.json \
   -o pages/header.tea \
   -r dist/pages/image-x.html
@@ -263,6 +291,7 @@ statictea \
   log("Compiling image template.")
   const parameters = [
     "-t", "pages/image-tmpl.html",
+    "-s", "pages/images-folder.json",
     "-s", `pages/collection-${num}.json`,
     "-o", "pages/header.tea",
     "-r", `dist/pages/image-${num}.html`,
@@ -301,60 +330,14 @@ gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2", "image1"
 
 gulp.task("run-server", function(cb) {
 
-/*
-cd dist
-python3 -m http.server
-*/
-
-  log("Run python server on the dist folder.")
+  log("Run http test server on the dist folder.")
   const parameters = [
-    "-m",
-    "http.server",
+    "--cors",
+    "-p",
+    "8000",
   ]
-  return child_process.spawn("python3", parameters, {stdio: "inherit", cwd: "dist"});
+  return child_process.spawn("http-server", parameters, {stdio: "inherit", cwd: "dist"});
 })
-
-function getDownloadUrls() {
-  // Return a list of urls to download. Skip files that have already
-  // been downloaded.
-
-  // Note: the image.txt file is checked in.  It was created from this:
-  /*
-  cd ~/code/collections
-  find pages -name \*.json \
-    | grep -v '/\.' \
-    | xargs sed -nE 's@^.*images/(.*)".*$@\1@p' \
-    | sort | uniq \
-    > images.txt
-  */
-
-  // Read the image names in the text file and return a list.
-  const data = fs.readFileSync("images.txt", "utf8")
-  const names = data.split("\n");
-
-  let urls = []
-  names.forEach( (name) => {
-    name = name.trim()
-    if (name != "") {
-      const destination = `dist/images/${name}`
-      log(destination)
-      if (!fs.existsSync(destination)) {
-        url = `https://flenniken.net/collections-images/${name}`
-        if (url)
-          urls.push(url)
-      }
-    }
-  })
-  return urls
-}
-
-gulp.task("get-images", function (cb) {
-  log("Download missing images from the flenniken.net site to the images folder.")
-  const urls = getDownloadUrls()
-  if (urls.length == 0)
-    log("All images already downloaded.")
-  return download(urls).pipe(gulp.dest('dist/images'));
-});
 
 gulp.task('readme', function () {
   const parameters = [
@@ -378,15 +361,16 @@ gulp.task("watch", function(cb) {
   gulp.watch("pages/collections.css", gs(["css"]));
 
   const hr = "pages/header.tea"
-  const json1 = "pages/collection-1.json"
-  const json2 = "pages/collection-2.json"
+  const json1 = "pages/images-folder.json"
+  const json2 = "pages/collection-1.json"
+  const json3 = "pages/collection-2.json"
 
   gulp.watch([hr], gs("syncronize"))
 
   gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs(["index", "vindex"]))
-  gulp.watch(["pages/thumbnails-tmpl.html", json1, json2, hr], gs([
+  gulp.watch(["pages/thumbnails-tmpl.html", json1, json2, json3, hr], gs([
     "thumbnails1", "thumbnails2", "vthumbnails1", "vthumbnails2"]))
-  gulp.watch(["pages/image-tmpl.html", json1, json2, hr], gs([
+  gulp.watch(["pages/image-tmpl.html", json1, json2, json3, hr], gs([
     "image1", "image2", "vimage1", "vimage2"]))
 
   cb();

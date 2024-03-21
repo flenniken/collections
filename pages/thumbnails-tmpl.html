@@ -30,9 +30,11 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <div id="container">
 <!--$ nextline t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
+<!--$ : imagesFolder = s.imagesFolder -->
+<!--$ : src = format(image.thumbnail) -->
 <!--$ : id = add(t.row, 1) -->
 <!--$ : url = format("{s.imagePageUrl}?image={id}") -->
-    <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
+    <a href="{url}"><img class="thumbnail" src="{src}" alt="{image.title}"></a>
   </div>
 <!--$ block -->
 <!--$ : description = html(s.description, "body") -->

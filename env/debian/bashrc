@@ -9,6 +9,6 @@ alias sudo='sudo '
 alias ls='ls --color=auto'
 alias ll='ls -l'
 
-alias g='gulp'
+alias g='gulp --silent'
 alias gw='g watch &'
 alias gr='g run-server &'

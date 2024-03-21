@@ -58,13 +58,15 @@ body {
 <!--$ block -->
 <!--$ : t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
+<!--$ : imagesFolder = s.imagesFolder -->
+<!--$ : src = format(image.url) -->
 <!--$ : id = add(t.row, 1) -->
 <!--$ : title = html(image.title, "body") -->
 <!--$ : titleAttr = html(image.title, "attribute") -->
 <!--$ : description = html(image.description, "body") -->
     <div class="colbox" id="cb{id}">
       <div class="container" id="c{id}">
-        <img id="i{id}" src="{image.url}" alt="{titleAttr}">
+        <img id="i{id}" src="{src}" alt="{titleAttr}">
       </div>
       <h3 class="title">{title}</h3>
       <p class="description">{description}</p>

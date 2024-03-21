@@ -1,19 +1,25 @@
 {
-  "site-title": "Flenniken.net Collections",
+  "siteTitle": "Flenniken.net Collections",
   "collections": [
     {
+      "collection": 2,
       "url": "pages/thumbnails-2.html",
-      "thumbnail": "images/c2-1-tix.jpg",
+      "thumbnail": "{imagesFolder}/c2-1-tin.jpg",
       "title": "Manzanita Beach 2023",
-      "index-description": "2023 Summer vacation in Manzanita Oregon.",
+      "indexDescription": "2023 Summer vacation in Manzanita Oregon.",
       "posted": "February 2024",
+      "iCount": 16,
+      "tin": 1
     },
     {
+      "collection": 1,
       "url": "pages/thumbnails-1.html",
-      "thumbnail": "images/c1-3-tix.jpg",
+      "thumbnail": "{imagesFolder}/c1-3-tin.jpg",
       "title": "Many Glaciers Lodge",
-      "index-description": "Photos from Glacier National Park & Many Glaciers lodge.",
+      "indexDescription": "Photos from Glacier National Park & Many Glaciers lodge.",
       "posted": "June 2023",
+      "iCount": 8,
+      "tin": 3
     }
   ]
 }

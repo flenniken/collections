@@ -14,8 +14,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       content="black-translucent">
 <!--$ endblock -->
 <!--$ nextline -->
-<!--$ : g.site-title = html(s.site-title, "body") -->
-  <title>{g.site-title}</title>
+<!--$ : g.siteTitle = html(s.siteTitle, "body") -->
+  <title>{g.siteTitle}</title>
   <meta name="description"
     content="Flenniken.net Collections">
   <meta name="author" content="Steve Flenniken">
@@ -26,10 +26,17 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <link rel="stylesheet" href="collections.css">
   <link rel="manifest" href="collections.webmanifest">
   <script src="js/index.js" defer></script>
+  <script>
+//$ block
+//$ : json = string(s, "json")
+  var indexJson = {json}
+  var imagesFolder = "{s.imagesFolder}"
+//$ endblock
+</script>
 </head>
 <body id="index">
 <!--$ nextline -->
-  <p id="site-title">{g.site-title}</p>
+  <p id="siteTitle">{g.siteTitle}</p>
   <div id="install-banner">
     <h3>Note</h3>
     <p>This web site operates better if you start it from its
@@ -42,18 +49,25 @@ Screen".</p>
   <div class="collections">
 <!--$ block -->
 <!--$ : t.repeat = len(s.collections) -->
-<!--$ : collection = s.collections[t.row] -->
-<!--$ : title = html(collection.title, "body") -->
-<!--$ : titleAttr = html(collection.title, "attribute") -->
-<!--$ : posted = html(collection.posted, "body") -->
-<!--$ : index-description = html(collection.index-description, "body") -->
+<!--$ : c = s.collections[t.row] -->
+<!--$ : num = c.collection -->
+<!--$ : tid = format("t{num}") -->
+<!--$ : fid = format("f{num}") -->
+<!--$ : lid = format("l{num}") -->
+<!--$ : imagesFolder = s.imagesFolder -->
+<!--$ : src = format(c.thumbnail) -->
+<!--$ : title = html(c.title, "body") -->
+<!--$ : titleAttr = html(c.title, "attribute") -->
+<!--$ : posted = html(c.posted, "body") -->
+<!--$ : indexDescription = html(c.indexDescription, "body") -->
     <div class="collection">
       <p class="title">{title}</p>
       <p class="posted">{posted}</p>
-      <a href="{collection.url}">
-        <img class="thumbnail" src="{collection.thumbnail}" alt="{titleAttr}">
+      <a href="{c.url}" id="{lid}">
+        <img class="thumbnail" id="{tid}" src="{src}" alt="{titleAttr}">
       </a>
-      <p class="description">{index-description}</p>
+      <button id="{fid}">Fetch Collection</button>
+      <p class="description">{indexDescription}</p>
     </div>
 <!--$ endblock -->
   </div>

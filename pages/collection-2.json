@@ -8,128 +8,128 @@
   "thumbnailsPageUrl": "../pages/thumbnails-2.html",
   "images": [
     {
-      "url": "../images/c2-1-p.jpg",
-      "thumbnail": "../images/c2-1-tix.jpg",
+      "url": "{imagesFolder}/c2-1-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-1-tin.jpg",
       "title": "Ecola State Park",
       "description": "We’re looking south from Ecola State Park very close to the parking lot. From here we hiked 2 miles north on Indian Beach Trial to Indian Beach.",
       "width": 4032,
       "height": 3024
     },
     {
-      "url": "../images/c2-2-p.jpg",
-      "thumbnail": "../images/c2-2-t.jpg",
+      "url": "{imagesFolder}/c2-2-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-2-t.jpg",
       "title": "Indian Beach",
       "description": "Indian Beach on the Oregon coast. You can get to it by driving to the end of Ecole State park road, or hike to it like we did.",
       "width": 3471,
       "height": 2604
     },
     {
-      "url": "../images/c2-3-p.jpg",
-      "thumbnail": "../images/c2-3-t.jpg",
+      "url": "{imagesFolder}/c2-3-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-3-t.jpg",
       "title": "Hot Tub House",
       "description": "The hot tub house is near the end of Beach Street. It has an electric car charger in the garage.",
       "width": 4032,
       "height": 3024
     },
     {
-      "url": "../images/c2-4-p.jpg",
-      "thumbnail": "../images/c2-4-t.jpg",
+      "url": "{imagesFolder}/c2-4-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-4-t.jpg",
       "title": "Sand Dune",
       "description": "Sand dune with beach grass.",
       "width": 3560,
       "height": 2670
     },
     {
-      "url": "../images/c2-5-p.jpg",
-      "thumbnail": "../images/c2-5-t.jpg",
+      "url": "{imagesFolder}/c2-5-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-5-t.jpg",
       "title": "Lighthouse",
       "description": "Sandcastle lighthouse, stairs and an arch.",
       "width": 2758,
       "height": 3677
     },
     {
-      "url": "../images/c2-6-p.jpg",
-      "thumbnail": "../images/c2-6-t.jpg",
+      "url": "{imagesFolder}/c2-6-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-6-t.jpg",
       "title": "Esher Stairs",
       "description": "Our attempt at making the impossible Esher staircases in sand.",
       "width": 4032,
       "height": 3024
     },
     {
-      "url": "../images/c2-7-p.jpg",
-      "thumbnail": "../images/c2-7-t.jpg",
+      "url": "{imagesFolder}/c2-7-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-7-t.jpg",
       "title": "Wall Sandcastle",
       "description": "Sandcastle with Neahkahni mountain.",
       "width": 3958,
       "height": 2969
     },
     {
-      "url": "../images/c2-8-p.jpg",
-      "thumbnail": "../images/c2-8-t.jpg",
+      "url": "{imagesFolder}/c2-8-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-8-t.jpg",
       "title": "Beach and Mountain",
       "description": "Manzanita Beach with Neahkahnie Mountain in the background.\nThis tests two images side by side that make one panoramic image.",
       "width": 1988,
       "height": 2983
     },
     {
-      "url": "../images/c2-9-p.jpg",
-      "thumbnail": "../images/c2-9-t.jpg",
+      "url": "{imagesFolder}/c2-9-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-9-t.jpg",
       "title": "Beach and Mountain",
       "description": "",
       "width": 1988,
       "height": 2983
     },
     {
-      "url": "../images/c2-10-p.jpg",
-      "thumbnail": "../images/c2-10-t.jpg",
+      "url": "{imagesFolder}/c2-10-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-10-t.jpg",
       "title": "Beach Sunset",
       "description": "",
       "width": 3920,
       "height": 2940
     },
     {
-      "url": "../images/c2-11-p.jpg",
-      "thumbnail": "../images/c2-11-t.jpg",
+      "url": "{imagesFolder}/c2-11-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-11-t.jpg",
       "title": "Beach Sunset",
       "description": "",
       "width": 3273,
       "height": 2456
     },
     {
-      "url": "../images/c2-12-p.jpg",
-      "thumbnail": "../images/c2-12-t.jpg",
+      "url": "{imagesFolder}/c2-12-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-12-t.jpg",
       "title": "Beach Sunset",
       "description": "",
       "width": 3964,
       "height": 2973
     },
     {
-      "url": "../images/c2-13-p.jpg",
-      "thumbnail": "../images/c2-13-t.jpg",
+      "url": "{imagesFolder}/c2-13-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-13-t.jpg",
       "title": "Beach Sunset",
       "description": "",
       "width": 3024,
       "height": 4032
     },
     {
-      "url": "../images/c2-14-p.jpg",
-      "thumbnail": "../images/c2-14-t.jpg",
+      "url": "{imagesFolder}/c2-14-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-14-t.jpg",
       "title": "Manzanita Beach",
       "description": "Manzanita beach looking south. You can barely make out the Nehalem river jetty in the distance.",
       "width": 3811,
       "height": 2858
     },
     {
-      "url": "../images/c2-15-p.jpg",
-      "thumbnail": "../images/c2-15-t.jpg",
+      "url": "{imagesFolder}/c2-15-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-15-t.jpg",
       "title": "Elk Run Trail",
       "description": "Doug and I rode our bikes to the end of Elk Run trail to the Nehalem River. This view is across the marsh and on the left out of view is the river.",
       "width": 4032,
       "height": 3024
     },
     {
-      "url": "../images/c2-16-p.jpg",
-      "thumbnail": "../images/c2-16-t.jpg",
+      "url": "{imagesFolder}/c2-16-p.jpg",
+      "thumbnail": "{imagesFolder}/c2-16-t.jpg",
       "title": "Elk Run Trail",
       "description": "Doug’s bike at the end of Elk Run trail.",
       "width": 4032,
