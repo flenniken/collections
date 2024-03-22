@@ -12,7 +12,7 @@ ENV coder_env=debian
 
 # Install apps and libraries.
 RUN apt update && apt -qy install less man sudo tree curl \
-  wget nano git jq libpcre3 libpcre3-dev rsync
+  wget nano git jq libpcre3 libpcre3-dev rsync nginx
 
 # Install glow for viewing markdown at the command line.
 # https://github.com/charmbracelet/glow
@@ -69,6 +69,10 @@ USER coder
 #   cp ../package.json env/debian/
 # Then build a new docker image and container.
 
+# Configure nginx.
+COPY nginx-config /etc/nginx/sites-available/default
+RUN chmod +x /home/coder
+
 WORKDIR /home/coder/
 COPY --chown=coder:coder package.json package.json
 
@@ -79,5 +83,6 @@ RUN npm install
 
 # Start in the collections directory.
 WORKDIR /home/coder/collections
-CMD ["/bin/bash"]
 
+# Start nginx and leave the container running in bash.
+CMD sudo nginx && /bin/bash

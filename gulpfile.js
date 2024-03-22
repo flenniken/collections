@@ -38,10 +38,7 @@ Tasks:
     vimage1 -- Validate image html for collection 1.
     vimage2 -- Validate image html for collection 2.
 * css -- Minimize the collection.css file.
-* syncronize -- Syncronize the template's replace blocks with header.tea.
-* run-server -- (alias gr) Run a test server exposing the dist folder on port
-    8000. You can run it in the background with alias gr.
-    Access files in your browser with: http://localhost:8000/index.html
+* syncronize -- Syncronize the template's replace blocks with header.tea content.
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
 * get-images -- Download the collection images from flenniken.net.
@@ -298,21 +295,6 @@ gulp.task("css", function (cb) {
 })
 
 gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2", "image1", "image2"));
-
-gulp.task("run-server", function(cb) {
-
-/*
-cd dist
-python3 -m http.server
-*/
-
-  log("Run python server on the dist folder.")
-  const parameters = [
-    "-m",
-    "http.server",
-  ]
-  return child_process.spawn("python3", parameters, {stdio: "inherit", cwd: "dist"});
-})
 
 function getDownloadUrls() {
   // Return a list of urls to download. Skip files that have already

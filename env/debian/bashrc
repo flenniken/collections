@@ -12,3 +12,5 @@ alias ll='ls -l'
 alias g='gulp'
 alias gw='g watch &'
 alias gr='g run-server &'
+
+echo "Nginx now serving files on http://localhost:8000/index.html"

@@ -1,0 +1,16 @@
+
+# Serve files in the dist folder on port 8000 for localhost.
+
+server {
+    listen 8000 default_server;
+    listen [::]:8000 default_server;
+
+    root /home/coder/collections/dist;
+    index index.html;
+
+    server_name localhost;
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}
+
