@@ -55,7 +55,12 @@ gulp.task("default", function(cb){
 
 function ts2js(srcList, destFile, destDir, tsOptions=null) {
   // Compile a list of typescript files to one javascript file and
-  // minimize it.
+  // optionally minimize it.
+
+  if (minimize)
+    log(`Compile and minimize: ${srcList}`)
+  else
+    log(`Compile (un-minimized): ${srcList}`)
 
   if (tsOptions === null) {
     tsOptions = {
@@ -80,9 +85,9 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
       pure_funcs: pure_funcs
     }
   }
-  log(`Minimize ${minimize}`)
+
   return gulp.src(srcList)
-    .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
+    .pipe(using({prefix:'File size:', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
     .pipe(using({prefix:'Compiled', filesize:true, color: "blue"}))
     // Make a copy of the typescript js in the tmp folder for inspection.
@@ -137,32 +142,46 @@ function validateHtml(filename) {
     `--ignore=/${ignore}/`,
     `${filename}`
   ]
-  return child_process.spawn("html-validator", parameters, {stdio: "inherit"});
+
+  const validator = child_process.spawn("html-validator", parameters, {stdio: "inherit"});
+  validator.on('close', (code) => {
+    if (code !== 0) {
+      log(`validator exited with code ${code}`);
+      error() // todo: fail more elegantly.
+    }
+  });
+
+  return 0
 }
 
 gulp.task("vindex", function (cb) {
   // Validate the index html file.
-  return validateHtml("dist/index.html")
+  validateHtml("dist/index.html")
+  cb()
 })
 
 gulp.task("vimage1", function (cb) {
   // Validate the image html file.
-  return validateHtml("dist/pages/image-1.html")
+  validateHtml("dist/pages/image-1.html")
+  cb()
 })
 
 gulp.task("vimage2", function (cb) {
   // Validate the image html file.
-  return validateHtml("dist/pages/image-2.html")
+  validateHtml("dist/pages/image-2.html")
+  cb()
 })
 
 gulp.task("vthumbnails1", function (cb) {
   // Validate the thumbnails html file.
-  return validateHtml("dist/pages/thumbnails-1.html")
+  validateHtml("dist/pages/thumbnails-1.html")
+  cb()
 })
 
 gulp.task("vthumbnails2", function (cb) {
   // Validate the thumbnails html file.
-  return validateHtml("dist/pages/thumbnails-2.html")
+  validateHtml("dist/pages/thumbnails-2.html")
+  cb()
 })
 
 gulp.task("vpages", gulp.parallel(
@@ -257,7 +276,7 @@ statictea \
 */
 
   const num = collectionNumber
-  log("Compiling image template.")
+  log(`Compiling image template for collection ${collectionNumber}.`)
   const parameters = [
     "-t", "pages/image-tmpl.html",
     "-s", `pages/collection-${num}.json`,

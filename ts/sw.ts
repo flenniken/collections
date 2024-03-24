@@ -15,15 +15,15 @@
 // event, like periodic background sync or a push message, is
 // received.
 
+const cacheUrlPrefix = "/images/"
+
 function log(message: string) {
   // Log the message to the console.
   console.log("👷 " + message)
 }
 
-const cacheName = "collections-v1";
-
 self.addEventListener("install", (event: Event) => {
-  log("Install event called.");
+  log("Install service worker.");
 })
 
 self.addEventListener("activate", event => {
@@ -36,15 +36,57 @@ self.addEventListener("activate", event => {
   // navigate to that page, either due to reloading the page or
   // re-opening the PWA.
 
-   log("Activate event called.");
+   log("Activate service worker.");
 })
 
+async function fetchRemote(cache: Cache | undefined, request: Request, storeTwice: boolean): Promise<Response> {
+  // Fetch a file on the net. Return a promise that resolves to a response.
+  //
+  // When storeTwice is true, it does the normal thing, it looks in
+  // the browser cache and returns that, otherwise it fetches the
+  // remote file and then stores it in the browser cache and the
+  // application cache.
+  //
+  // When storeTwice is false, it fetches the file from the net and
+  // stores it in the application cache.
+
+  let options: any
+  if (storeTwice) {
+    options = {"cache": "default"}
+  }
+  else {
+    options = {"cache": "no-store"}
+  }
+
+  var response = await fetch(request, options)
+
+  if (!response.ok) {
+    const message = `An error has occured: ${response.status}`;
+    log(message)
+    throw new Error(message);
+  }
+
+  // Add the file to the cache.
+  cache?.put(request, response.clone());
+  return response;
+}
+
+const urlPrefix = "http://localhost:8000"
+function sUrl(url: string) {
+  // Shorten the url by removing the http://localhost:8000 part.
+
+  if (url.startsWith(urlPrefix))
+    return url.substring(urlPrefix.length)
+  return url
+}
+
 self.addEventListener("fetch", (event: Event) => {
+  // Fetch a file and return a Promise that resolves to a Response.
+
   const fetchEvent = (<FetchEvent>event)
 
   // Get the url to fetch.
   const url = fetchEvent.request.url
-  // log(`fetch event url: ${url}`);
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
   if (!(url.startsWith("http:") || url.startsWith("https:"))) {
@@ -55,43 +97,70 @@ self.addEventListener("fetch", (event: Event) => {
     return
   }
 
+  // Look for the file either in the cache or on the net where the
+  // place you look first is dependent on whether it is an image
+  // file or not.
   fetchEvent.respondWith((async () => {
 
-    // If the request is for a file needed by the index page, fetch it
-    // from the internet so we always get the newest when
-    // connected. If the file is in the images folder (except the
-    // index page thumbnails), get it from the cache and don't try the
-    // internet. The thumbnails shared with the index page end with
-    // tix.jpg.
+    // Identify image files except the index page thumbnails that end
+    // with tin.jpg.
+    // todo: use startsWith and endsWith
+    const isSpecialFile = url.includes(cacheUrlPrefix) && !url.includes("tin.jpg");
 
-    const isImageFile = url.includes("images/") && !url.includes("tix.jpg");
+    // Open or create the cache. It's undefined when the browser doesn't
+    // support it.
+    let cache
+    if ('caches' in self) {
+      cache = await caches.open("collections-v1");
+    }
 
-    if (!isImageFile) {
+    // For an image file except index thumbnails, look for it in the
+    // cache first, then go to in internet.
+    if (isSpecialFile) {
+
+      // Look for the file in the cache.
+      const cacheReponse = await cache?.match(fetchEvent.request);
+      if (cacheReponse) {
+        log(`Special file found in cache: ${sUrl(url)}`);
+        return cacheReponse;
+      }
+
+      // Look for the file on the internet.
+      try {
+        const result = await fetchRemote(cache, fetchEvent.request, false)
+        log(`Special file found in cache: ${sUrl(url)}`);
+        return result
+      }
+      catch (error) {
+        log("Special file not found.")
+      }
+    }
+    else {
+      // The file is not in the images folder (except the index page
+      // thumbnails).  Look for it in the internet first so we always
+      // get the newest when connected, then look in the cache so we
+      // work when offline.
+
       // Look for the file on the net.
-      var response = await fetch(fetchEvent.request);
-      if (response) {
-        log(`Found on net: ${url}`);
+      try {
+        const result = await fetchRemote(cache, fetchEvent.request, true)
+        log(`Regular file found on net: ${sUrl(url)}`)
+        return result
+      }
+      catch (error) {
+        log("Regular file not found on net.")
+      }
 
-        // Add the file to the cache.
-        const cache = await caches.open(cacheName);
-        cache.put(fetchEvent.request, response.clone());
-
-        return response;
+      // Look for the file in the cache.
+      const cacheReponse = await cache?.match(fetchEvent.request);
+      if (cacheReponse) {
+        log(`Regular file found in cache: ${sUrl(url)}`);
+        return cacheReponse;
       }
     }
 
-    // Look for the file in the cache.
-    const cacheReponse = await caches.match(fetchEvent.request);
-    if (cacheReponse) {
-      log(`Found in cache: ${url}`);
-      return cacheReponse;
-    }
-
-    log(`Not found: ${url}`);
+    log(`Not found on net or cache: ${url}`);
     return new Response(null, {status: 404});
-
-    // If you want the system to do it's normal thing, do this:
-    // return await fetch(fetchEvent.request);
 
   })());
 });

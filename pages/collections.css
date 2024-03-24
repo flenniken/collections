@@ -8,7 +8,7 @@
   justify-content: center;
 }
 
-#index #site-title {
+#index #siteTitle {
   font-size: 2.5em;
   margin-top: var(--top-header-height);
   margin-left: auto;
@@ -70,16 +70,28 @@
 }
 
 #index .thumbnail {
-  width: 100%;
+  width: 95%;
   max-width: 480px;
+  border: blue dashed 10px;
+  //padding: 10px;
 }
 
 @media only screen and (max-height: 575.98px) and (orientation: landscape) {
   #index .thumbnail {
     /* How do you make the thumbnail the height of the screen in landscape? */
     /* https://stackoverflow.com/questions/56622926/safari-viewport-bug-issues-with-fixed-position-and-bottom-or-top */
-    height: calc(var(--vh, 1vh) * 100);
+    height: calc(var(--vh, 1vh) * 95);
   }
+}
+
+#index button {
+  display: block;
+  margin: auto;
+  font-size: 2em;
+}
+
+#index a {
+  pointer-events: none;
 }
 
 #index .description {
@@ -87,6 +99,8 @@
   margin-left: 5px;
   margin-right: 5px;
 }
+
+
 
 #thumbnails {
   margin: 0;
