@@ -23,26 +23,37 @@ interface IndexJson {
 }
 
 window.addEventListener("load", handleLoad)
+window.addEventListener("resize", handleResize)
 
-// Register the Service Worker if it is supported.
-if ("serviceWorker" in navigator) {
+function registerServerWorker() {
+  // Register the Service Worker if it is supported.
+
+  if (!("serviceWorker" in navigator)) {
+    logError("Service worker is not supported by this browser.")
+    return
+  }
+
+  // Listen for messages sent from the worker and log them.
   navigator.serviceWorker.addEventListener("message", (event) => {
-    // Listen for messages sent from the worker and echo them here.
     log(`Worker msg received: ${event.data}`)
   })
 
-  // Load sw from the collections folder.
-  log("register service worker sw.js");
+  log("Register the service worker javascript file sw.js.");
   navigator.serviceWorker.register("sw.js");
 
-  // This is an example of sending a message to the service worker.
+  // Log when the service worker is ready.
   navigator.serviceWorker.ready.then((registration) => {
-    log("service worker ready");
+    log("Service worker ready.");
+    // Test send a message to the service worker. The worker should
+    // send the message back for logging.
     registration.active?.postMessage(
       "Message sent immediately after registration is ready.",
     );
   });
 }
+
+// todo: is this where this should go?
+registerServerWorker()
 
 // The indexJson comes from the index.html file.
 var indexJson: IndexJson
@@ -58,10 +69,29 @@ let runningFromIcon = false
 // JavaScript, CSS, and images) made by the browser following page
 // navigation.
 
+function fetchOk(url: string) {
+  // Like fetch but it throws and error when the response status is
+  // not in the range 200 - 299.
+  return fetch(url).then((response) => {
+
+    if (!response.ok) {
+      throw new Error(`Fetch failed with status: ${response.status}`);
+    }
+    return response;
+  });
+}
+
 async function downloadCollection(cache: Cache, cNum: number,
     iCount: number, tin: number) {
   // Download the collection's images and cache them. When successful,
   // add a collection ready key to the cache.
+
+  const readyRequest = new Request(`c${cNum}-ready`)
+  const readyResponse = await cache.match(readyRequest);
+  if (readyResponse) {
+    log("The collection is completely cached.")
+    return
+  }
 
   // Time the download.
   const downloadTimer = new Timer()
@@ -80,83 +110,91 @@ async function downloadCollection(cache: Cache, cNum: number,
     else
       urls.push(`${imagesFolder}/c${cNum}-${imageNum}-t.jpg`)
   }
-  log(`The collection ${cNum} has ${iCount} images and ${urls.length} files.`)
+  downloadTimer.log(`Collection ${cNum} has ${iCount} images and ${urls.length} files.`)
 
-  // Start fetching all images at once. Don't store the images in the
-  // browser cache, just the service worker cache.
+  // Start fetching all images at once.
   let promises: Promise<Response>[] = []
   urls.forEach( (url) => {
-    promises.push(fetch(url, {cache: "no-store", mode: 'cors'}))
+    // The service worker's fetch event is called for each fetch call.
+    // Caching is handled by the worker.
+    promises.push(fetchOk(url))
   })
 
   // Wait for all images to get downloaded and cached.
+  let values
   try {
     await Promise.all(promises)
-
-    // Successfully downloaded all the images.  Add a ready element to
-    // the cache that tells the collection is cached.
-    log("Add ready marker.")
-    downloadTimer.log("Images downloaded and cached.")
-    const c2ReadyRequest = new Request(`c${cNum}-ready`)
-    const c2ReadyResponse = new Response(`cNum: ${iCount} tin: ${tin}`)
-    await cache?.put(c2ReadyRequest, c2ReadyResponse);
-
   } catch (error) {
-    log(`error: ${error}`)
+    downloadTimer.log(`error: ${error}`)
     downloadTimer.log("Failed downloading all images.")
+    return
   }
+  
+  // Successfully downloaded all the images.  Add a ready element to
+  // the cache that tells the collection is cached.
+  downloadTimer.log("Add ready marker.")
+  downloadTimer.log("Images downloaded and cached.")
+  const c2ReadyRequest = new Request(`c${cNum}-ready`)
+  const c2ReadyResponse = new Response(`cNum: ${iCount} tin: ${tin}`)
+  await cache.put(c2ReadyRequest, c2ReadyResponse);
+
+  // Remove needs banner.
+  get(`n${cNum}`).style.display = "none"
+
+  // Enable the link to the thumbnails page.
+  get(`l${cNum}`).style.pointerEvents = "auto"
+}
+
+async function openCreateCache(): Promise<Cache> {
+  // Open or create the application cache and return it. When the
+  // application cache is not supported or cannot be open or created
+  // generate an exception.
+  if (!('caches' in window))
+    throw new Error("The application cache is not supported by this browser.")
+  let cache: Cache
+  cache = await caches.open("collections-v1");
+  if (!cache)
+    throw new Error("Unable to open the application cache.")
+  return cache
 }
 
 async function handleLoad() {
   log("load called")
 
+  const [availW, availH] = getAvailableWidthHeight()
+  log(`width, height = (${availW}, ${availH})`)
+
   installBanner()
 
-  // Style cached collections differently than uncached ones.
-  // Look in the cache for c1-ready.
+  // Open or create the cache.
+  const cache = await openCreateCache()
 
-  let cache: Cache
-  if ('caches' in window) {
-    // Open or create the cache.
-    cache = await caches.open("collections-v1");
-    // log("Opened the collections-v1 cache")
-  }
-
-  // Enable the collections that are cached and leave the others
-  // disabled.
+  // Mark the collections that are not cached.
   indexJson.collections.forEach(async (collection, ix) => {
     const cNum = collection.collection
-    const key = `c${cNum}-ready`
-    const readyRequest = new Request(`${key}`)
-    const readyResponse = await cache?.match(readyRequest);
+    const readyRequest = new Request(`c${cNum}-ready`)
+    const readyResponse = await cache.match(readyRequest);
     if (readyResponse) {
       // The collection is completely cached.
       const text = await readyResponse.text()
       log(`Collection ${cNum} is ready: ${text}`);
-      collectionReady(cNum)
+
+      // Enable the link to the thumbnails page.
+      get(`l${cNum}`).style.pointerEvents = "auto"
+
     } else {
       log(`Collection ${cNum} is not cached yet.`);
 
-      const button = get(`f${cNum}`)
-      button.addEventListener("click", (event) => {
+      // Show the needs banner on the collection.
+      get(`n${cNum}`).style.display = "block"
+
+      // Download the collection when its index image is touched or
+      // clicked.
+      get(`p${cNum}`).addEventListener("pointerdown", (event) => {
         downloadCollection(cache, cNum, collection.iCount, collection.tin)
       })
     }
   })
-}
-
-function collectionReady(cNum: number) {
-  // Style the collection so it is ready to view.
-
-  // Hide the fetch button.
-  get(`f${cNum}`).style.display = "none"
-
-  // Remove the dashed border and replace it with padding.
-  get(`t${cNum}`).style.borderWidth = "0"
-  get(`t${cNum}`).style.padding = "10px"
-
-  // Enable the link to the thumbnails page.
-  get(`l${cNum}`).style.pointerEvents = "auto"
 }
 
 function installBanner() {
@@ -196,3 +234,7 @@ addEventListener("message", (event) => {
 //   log("Posting message back to main script");
 //   postMessage(workerResult);
 // }
+
+function handleResize() {
+  log("resize event")
+}

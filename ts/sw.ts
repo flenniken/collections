@@ -26,6 +26,18 @@ self.addEventListener("install", (event: Event) => {
   log("Install service worker.");
 })
 
+async function openCreateCache(): Promise<Cache> {
+  // Open or create the application cache and return it. When the
+  // application cache is not supported or cannot be open or created
+  // generate an exception.
+  let cache: Cache
+  // todo: share the cache name with index.ts
+  cache = await caches.open("collections-v1");
+  if (!cache)
+    throw new Error("Unable to open the application cache.")
+  return cache
+}
+
 self.addEventListener("activate", event => {
   // https://web.dev/learn/pwa/service-workers:
   //
@@ -39,8 +51,10 @@ self.addEventListener("activate", event => {
    log("Activate service worker.");
 })
 
-async function fetchRemote(cache: Cache | undefined, request: Request, storeTwice: boolean): Promise<Response> {
-  // Fetch a file on the net. Return a promise that resolves to a response.
+async function fetchRemote(cache: Cache, request: Request,
+    storeTwice: boolean): Promise<Response> {
+  // Fetch a file on the net and store it in one or more
+  // caches. Return a promise that resolves to a response.
   //
   // When storeTwice is true, it does the normal thing, it looks in
   // the browser cache and returns that, otherwise it fetches the
@@ -48,7 +62,7 @@ async function fetchRemote(cache: Cache | undefined, request: Request, storeTwic
   // application cache.
   //
   // When storeTwice is false, it fetches the file from the net and
-  // stores it in the application cache.
+  // stores it in the application cache but not the browser cache.
 
   let options: any
   if (storeTwice) {
@@ -57,9 +71,9 @@ async function fetchRemote(cache: Cache | undefined, request: Request, storeTwic
   else {
     options = {"cache": "no-store"}
   }
-
+      
   var response = await fetch(request, options)
-
+      
   if (!response.ok) {
     const message = `An error has occured: ${response.status}`;
     log(message)
@@ -67,7 +81,8 @@ async function fetchRemote(cache: Cache | undefined, request: Request, storeTwic
   }
 
   // Add the file to the cache.
-  cache?.put(request, response.clone());
+  await cache.put(request, response.clone());
+
   return response;
 }
 
@@ -97,9 +112,13 @@ self.addEventListener("fetch", (event: Event) => {
     return
   }
 
-  // Look for the file either in the cache or on the net where the
-  // place you look first is dependent on whether it is an image
-  // file or not.
+  if (url.indexOf("//", 8 != -1)) {
+    log("Ignore urls that contain more than one //. Use one slash.")
+    return
+  }
+
+  // Look for the file either in the cache or on the net dependent on
+  // the file type.
   fetchEvent.respondWith((async () => {
 
     // Identify image files except the index page thumbnails that end
@@ -107,28 +126,24 @@ self.addEventListener("fetch", (event: Event) => {
     // todo: use startsWith and endsWith
     const isSpecialFile = url.includes(cacheUrlPrefix) && !url.includes("tin.jpg");
 
-    // Open or create the cache. It's undefined when the browser doesn't
-    // support it.
-    let cache
-    if ('caches' in self) {
-      cache = await caches.open("collections-v1");
-    }
+    const cache = await openCreateCache()
 
     // For an image file except index thumbnails, look for it in the
     // cache first, then go to in internet.
     if (isSpecialFile) {
 
       // Look for the file in the cache.
-      const cacheReponse = await cache?.match(fetchEvent.request);
+      const cacheReponse = await cache.match(fetchEvent.request);
       if (cacheReponse) {
         log(`Special file found in cache: ${sUrl(url)}`);
         return cacheReponse;
       }
 
-      // Look for the file on the internet.
+      // Look for the file on the internet and store it in the
+      // application cache when found.
       try {
         const result = await fetchRemote(cache, fetchEvent.request, false)
-        log(`Special file found in cache: ${sUrl(url)}`);
+        log(`Special file found on net: ${sUrl(url)}`);
         return result
       }
       catch (error) {
@@ -141,7 +156,8 @@ self.addEventListener("fetch", (event: Event) => {
       // get the newest when connected, then look in the cache so we
       // work when offline.
 
-      // Look for the file on the net.
+      // Look for the file on the net. When found store it in the
+      // browser cache and the application cache.
       try {
         const result = await fetchRemote(cache, fetchEvent.request, true)
         log(`Regular file found on net: ${sUrl(url)}`)
@@ -152,7 +168,7 @@ self.addEventListener("fetch", (event: Event) => {
       }
 
       // Look for the file in the cache.
-      const cacheReponse = await cache?.match(fetchEvent.request);
+      const cacheReponse = await cache.match(fetchEvent.request);
       if (cacheReponse) {
         log(`Regular file found in cache: ${sUrl(url)}`);
         return cacheReponse;

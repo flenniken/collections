@@ -48,21 +48,26 @@ Screen".</p>
 <!--$ : t.repeat = len(s.collections) -->
 <!--$ : c = s.collections[t.row] -->
 <!--$ : num = c.collection -->
+<!--$ : cid = format("c{num}") -->
 <!--$ : tid = format("t{num}") -->
 <!--$ : fid = format("f{num}") -->
 <!--$ : lid = format("l{num}") -->
+<!--$ : nid = format("n{num}") -->
+<!--$ : pid = format("p{num}") -->
 <!--$ : src = c.thumbnail -->
 <!--$ : title = html(c.title, "body") -->
 <!--$ : titleAttr = html(c.title, "attribute") -->
 <!--$ : posted = html(c.posted, "body") -->
 <!--$ : indexDescription = html(c.indexDescription, "body") -->
-    <div class="collection">
+    <div class="collection" id="{cid}">
       <p class="title">{title}</p>
       <p class="posted">{posted}</p>
-      <a href="{c.url}" id="{lid}">
-        <img class="thumbnail" id="{tid}" src="{src}" alt="{titleAttr}">
-      </a>
-      <button id="{fid}">Fetch Collection</button>
+      <div class="parent" id="{pid}">
+        <div class="needs" id="{nid}">images need downloading</div>
+        <a href="{c.url}" id="{lid}">
+          <img class="thumbnail" id="{tid}" src="{src}" alt="{titleAttr}">
+        </a>
+      </div>
       <p class="description">{indexDescription}</p>
     </div>
 <!--$ endblock -->
