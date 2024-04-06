@@ -112,8 +112,8 @@ self.addEventListener("fetch", (event: Event) => {
     return
   }
 
-  if (url.indexOf("//", 8 != -1)) {
-    log("Ignore urls that contain more than one //. Use one slash.")
+  if (url.indexOf("//", 8) != -1) {
+    log("Ignore urls that contain more than one //. Use one slash instead.")
     return
   }
 

@@ -96,19 +96,19 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
     .pipe(gulp.dest(destDir));
 }
 
-// Concatenate shared.ts to all the ts files except sw which doesn't
-// have access to the DOM window or document objects.
+// Concatenate all.ts to all the ts files and win.ts to all except sw
+// which doesn't have access to the DOM window or document objects.
 
 gulp.task('i', function () {
-  return ts2js(["ts/shared.ts", "ts/image.ts"], 'image.js', "dist/js", null)
+  return ts2js(["ts/win.ts", "ts/image.ts"], 'image.js', "dist/js", null)
 });
 
 gulp.task('t', function () {
-  return ts2js(["ts/shared.ts", 'ts/thumbnails.ts'], 'thumbnails.js', "dist/js", null)
+  return ts2js(["ts/win.ts", 'ts/thumbnails.ts'], 'thumbnails.js', "dist/js", null)
 });
 
 gulp.task('x', function () {
-  return ts2js(["ts/shared.ts", "ts/index.ts"], 'index.js', "dist/js", null)
+  return ts2js(["ts/win.ts", "ts/index.ts"], 'index.js', "dist/js", null)
 });
 
 gulp.task('sw', function () {
@@ -369,12 +369,12 @@ gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dist folder.
 
   const gs = gulp.series
-  const shared = "ts/shared.ts"
+  const wints = "ts/win.ts"
 
-  gulp.watch([shared, "ts/image.ts"], gs(["i"]));
-  gulp.watch([shared, "ts/thumbnails.ts"], gs(["t"]));
-  gulp.watch([shared, "ts/index.ts"], gs(["x"]));
-  gulp.watch([shared, "ts/sw.ts"], gs(["sw"]));
+  gulp.watch([wints, "ts/image.ts"], gs(["i"]));
+  gulp.watch([wints, "ts/thumbnails.ts"], gs(["t"]));
+  gulp.watch([wints, "ts/index.ts"], gs(["x"]));
+  gulp.watch([wints, "ts/sw.ts"], gs(["sw"]));
 
   gulp.watch("pages/collections.css", gs(["css"]));
 
