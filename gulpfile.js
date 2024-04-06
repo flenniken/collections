@@ -46,6 +46,9 @@ Tasks:
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
 
+const allts = "ts/all.ts"
+const wints = "ts/win.ts"
+
 const target = "es6"
 
 gulp.task("default", function(cb){
@@ -100,15 +103,15 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
 // which doesn't have access to the DOM window or document objects.
 
 gulp.task('i', function () {
-  return ts2js(["ts/win.ts", "ts/image.ts"], 'image.js', "dist/js", null)
+  return ts2js([allts, wints, "ts/image.ts"], 'image.js', "dist/js", null)
 });
 
 gulp.task('t', function () {
-  return ts2js(["ts/win.ts", 'ts/thumbnails.ts'], 'thumbnails.js', "dist/js", null)
+  return ts2js([allts, wints, 'ts/thumbnails.ts'], 'thumbnails.js', "dist/js", null)
 });
 
 gulp.task('x', function () {
-  return ts2js(["ts/win.ts", "ts/index.ts"], 'index.js', "dist/js", null)
+  return ts2js([allts, wints, "ts/index.ts"], 'index.js', "dist/js", null)
 });
 
 gulp.task('sw', function () {
@@ -121,7 +124,7 @@ gulp.task('sw', function () {
   }
   // Store sw.js in the root so it has control of all files in the
   // root and subfolders below.
-  return ts2js(['ts/sw.ts'], 'sw.js', "dist", options)
+  return ts2js([allts, 'ts/sw.ts'], 'sw.js', "dist", options)
 });
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
@@ -369,12 +372,11 @@ gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dist folder.
 
   const gs = gulp.series
-  const wints = "ts/win.ts"
 
-  gulp.watch([wints, "ts/image.ts"], gs(["i"]));
-  gulp.watch([wints, "ts/thumbnails.ts"], gs(["t"]));
-  gulp.watch([wints, "ts/index.ts"], gs(["x"]));
-  gulp.watch([wints, "ts/sw.ts"], gs(["sw"]));
+  gulp.watch([allts, wints, "ts/image.ts"], gs(["i"]));
+  gulp.watch([allts, wints, "ts/thumbnails.ts"], gs(["t"]));
+  gulp.watch([allts, wints, "ts/index.ts"], gs(["x"]));
+  gulp.watch([allts, "ts/sw.ts"], gs(["sw"]));
 
   gulp.watch("pages/collections.css", gs(["css"]));
 

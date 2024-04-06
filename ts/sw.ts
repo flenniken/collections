@@ -17,13 +17,13 @@
 
 const cacheUrlPrefix = "/images/"
 
-function log(message: string) {
-  // Log the message to the console.
+function logsw(message: string) {
+  // Log the service worker message to the console.
   console.log("👷 " + message)
 }
 
 self.addEventListener("install", (event: Event) => {
-  log("Install service worker.");
+  logsw("Install service worker.");
 })
 
 async function openCreateCache(): Promise<Cache> {
@@ -48,7 +48,7 @@ self.addEventListener("activate", event => {
   // navigate to that page, either due to reloading the page or
   // re-opening the PWA.
 
-   log("Activate service worker.");
+   logsw("Activate service worker.");
 })
 
 async function fetchRemote(cache: Cache, request: Request,
@@ -76,7 +76,7 @@ async function fetchRemote(cache: Cache, request: Request,
       
   if (!response.ok) {
     const message = `An error has occured: ${response.status}`;
-    log(message)
+    logsw(message)
     throw new Error(message);
   }
 
@@ -105,7 +105,7 @@ self.addEventListener("fetch", (event: Event) => {
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
   if (!(url.startsWith("http:") || url.startsWith("https:"))) {
-    log(`ignore: ${url}`)
+    logsw(`ignore: ${url}`)
     // Do the default thing.  If respondWith() is not called in the
     // handler, then the user agent automatically makes the original
     // network request as if the service worker did not exist.
@@ -113,7 +113,7 @@ self.addEventListener("fetch", (event: Event) => {
   }
 
   if (url.indexOf("//", 8) != -1) {
-    log("Ignore urls that contain more than one //. Use one slash instead.")
+    logsw("Ignore urls that contain more than one //. Use one slash instead.")
     return
   }
 
@@ -135,7 +135,7 @@ self.addEventListener("fetch", (event: Event) => {
       // Look for the file in the cache.
       const cacheReponse = await cache.match(fetchEvent.request);
       if (cacheReponse) {
-        log(`Special file found in cache: ${sUrl(url)}`);
+        logsw(`Special file found in cache: ${sUrl(url)}`);
         return cacheReponse;
       }
 
@@ -143,11 +143,11 @@ self.addEventListener("fetch", (event: Event) => {
       // application cache when found.
       try {
         const result = await fetchRemote(cache, fetchEvent.request, false)
-        log(`Special file found on net: ${sUrl(url)}`);
+        logsw(`Special file found on net: ${sUrl(url)}`);
         return result
       }
       catch (error) {
-        log("Special file not found.")
+        logsw("Special file not found.")
       }
     }
     else {
@@ -160,22 +160,22 @@ self.addEventListener("fetch", (event: Event) => {
       // browser cache and the application cache.
       try {
         const result = await fetchRemote(cache, fetchEvent.request, true)
-        log(`Regular file found on net: ${sUrl(url)}`)
+        logsw(`Regular file found on net: ${sUrl(url)}`)
         return result
       }
       catch (error) {
-        log("Regular file not found on net.")
+        logsw("Regular file not found on net.")
       }
 
       // Look for the file in the cache.
       const cacheReponse = await cache.match(fetchEvent.request);
       if (cacheReponse) {
-        log(`Regular file found in cache: ${sUrl(url)}`);
+        logsw(`Regular file found in cache: ${sUrl(url)}`);
         return cacheReponse;
       }
     }
 
-    log(`Not found on net or cache: ${url}`);
+    logsw(`Not found on net or cache: ${url}`);
     return new Response(null, {status: 404});
 
   })());
