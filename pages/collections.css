@@ -176,6 +176,11 @@
   border-top: 1px solid lightgray;
 }
 
+.collection .bottom-menu {
+  padding-top: 0;
+  border-top: none;
+}
+
 .bottom-menu .icon {
   width: 2em;
   margin-left: 1em;
@@ -196,4 +201,3 @@
 .bottom-menu .right {
   float: right;
 }
-

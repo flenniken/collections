@@ -102,6 +102,7 @@ self.addEventListener("fetch", (event: Event) => {
 
   // Get the url to fetch.
   const url = fetchEvent.request.url
+  logsw(`fetch url: ${url}`)
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
   if (!(url.startsWith("http:") || url.startsWith("https:"))) {

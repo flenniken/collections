@@ -99,7 +99,7 @@ async function downloadCollection(cache: Cache, cNum: number,
   // Download and cache the given collection images.
   downloadTimer.log(`Download collection ${cNum}.`)
 
-  const imagesFolder = "/images"
+  const imagesFolder = "images"
 
   // Create a list of the collection's image urls.
   let urls: string[] = []
@@ -129,7 +129,7 @@ async function downloadCollection(cache: Cache, cNum: number,
     downloadTimer.log("Failed downloading all images.")
     return
   }
-  
+
   // Successfully downloaded all the images.  Add a ready element to
   // the cache that tells the collection is cached.
   downloadTimer.log("Add ready marker.")
@@ -152,7 +152,7 @@ async function openCreateCache(): Promise<Cache> {
   if (!('caches' in window))
     throw new Error("The application cache is not supported by this browser.")
   let cache: Cache
-  cache = await caches.open("collections-v1");
+  cache = await caches.open(appCacheName)
   if (!cache)
     throw new Error("Unable to open the application cache.")
   return cache
@@ -237,4 +237,43 @@ addEventListener("message", (event) => {
 
 function handleResize() {
   log("resize event")
+}
+
+function refreshPage() {
+  log("refresh")
+  location.reload()
+}
+
+function removeCollection(cNum: number) {
+  const message = "Are you sure you want to this collection's images from the cache?"
+  if (confirm(message) == true) {
+    log(`remove collection ${cNum} from the app cache`)
+  } else {
+    log("don't remove anything")
+  }
+}
+
+function viewThumbnails(cNum: number) {
+  log(`view thumbnails for collection ${cNum}`)
+  window.location.assign(`pages/thumbnails-${cNum}.html`)
+}
+
+function viewCollection(cNum: number) {
+  log(`view collection ${cNum}`)
+  window.location.assign(`pages/image-${cNum}.html`)
+}
+
+function clearAppCache() {
+  log("clearAppCache")
+  const message = "Are you sure you want to delete all the collections images from the cache?"
+  if (confirm(message) == true) {
+    deleteCache()
+  }
+}
+
+async function deleteCache() {
+  // Delete the application cache.
+  log("deleted")
+  await caches.delete(appCacheName)
+  refreshPage()
 }

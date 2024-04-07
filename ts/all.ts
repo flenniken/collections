@@ -2,6 +2,10 @@
 // and document objects are not used here. See win.ts for shared code
 // using the window and document objects.
 
+// The name of the application cache where we store the collections
+// images.
+const appCacheName = "collections-v1"
+
 function log(message: string) {
   // Log the message to the console.
   console.log(message)
