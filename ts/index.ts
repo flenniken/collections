@@ -245,7 +245,7 @@ function refreshPage() {
 }
 
 function removeCollection(cNum: number) {
-  const message = "Are you sure you want to this collection's images from the cache?"
+  const message = "Are you sure you want to delete this collection's images from the cache?"
   if (confirm(message) == true) {
     log(`remove collection ${cNum} from the app cache`)
   } else {

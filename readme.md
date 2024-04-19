@@ -13,7 +13,7 @@ of a trip to Many Glaciers Lodge.
 You navigate and view images on three types of pages, the index page,
 the thumbnails page, and the image page.
 
-[⬇ ────────](#Contents) (table of contents at the bottom)
+[⬇](#Contents) (table of contents at the bottom)
 
 # Index Page
 
@@ -300,7 +300,8 @@ For xcode simulator, you get it by installing xcode.  Launch it and
 run an iphone 14 max. Like chrome you run the code on a localhost
 server (gr) and reference a localhost url. You can test the install
 process and two finger touching. It’s also good for making screenshots
-that include the bezel.
+that include the bezel. You can see the console log in desktop safari
+like you do when debugging a plugged in iphone.
 
 [⬇ ────────](#Contents)
 
