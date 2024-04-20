@@ -347,3 +347,22 @@ async function deleteCache() {
   await caches.delete(appCacheName)
   refreshPage()
 }
+
+async function logAppCache() {
+  // Log the contents of the application cache.
+  log("Application Cache")
+
+  const cache = await openCreateCache()
+
+  let imageCount = 0
+  cache.keys().then((keys) => {
+    keys.forEach((request, index, array) => {
+      if (request.url.includes("/images/")) {
+        imageCount += 1
+      }
+      log(`key: ${request.url}`)
+    });
+    log(`The cache contains ${keys.length} items and ${imageCount} images.`)
+  });
+
+}
