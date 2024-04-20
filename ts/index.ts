@@ -164,8 +164,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const c2ReadyResponse = new Response(`cNum: ${iCount} tin: ${tin}`)
   await cache.put(c2ReadyRequest, c2ReadyResponse);
 
-  // Remove needs banner.
-  get(`n${cNum}`).style.display = "none"
+  setCollectionState(cNum, true)
 }
 
 async function openCreateCache(): Promise<Cache> {
@@ -179,6 +178,42 @@ async function openCreateCache(): Promise<Cache> {
   if (!cache)
     throw new Error("Unable to open the application cache.")
   return cache
+}
+
+type ForClassesCallback = (element: HTMLElement) => void;
+
+function forClasses(parent: Element, className: string, callback: ForClassesCallback) {
+  const elements = parent.getElementsByClassName(className);
+  for (let ix = 0; ix < elements.length; ix++) {
+    callback(<HTMLElement>elements[ix])
+  }
+}
+
+function setCollectionState(cNum: number, imagesCached: boolean): void {
+  // Show or hide the UI elements that show the whether the collection is
+  // ready to view.
+
+  let withImages: string
+  let withoutImages: string
+  if (imagesCached) {
+    withImages = "block"
+    withoutImages = "none"
+  } else {
+    withImages = "none"
+    withoutImages = "block"
+  }
+
+  const parent = get(`c${cNum}`)
+
+  // Show or hide the elements with class "withImages".
+  forClasses(parent, "withImages", (element) => {
+    element.style.display = withImages
+  })
+
+  // Show or hide the elements with class "withoutImages".
+  forClasses(parent, "withoutImages", (element) => {
+    element.style.display = withoutImages
+  })
 }
 
 async function handleLoad() {
@@ -201,13 +236,11 @@ async function handleLoad() {
       // The collection is completely cached.
       const text = await readyResponse.text()
       log(`Collection ${cNum} is ready: ${text}`);
+      setCollectionState(cNum, true)
 
     } else {
       log(`Collection ${cNum} is not cached yet.`);
-
-      // Show the needs banner on the collection.
-      get(`n${cNum}`).style.display = "block"
-
+      setCollectionState(cNum, false)
     }
   })
 }
