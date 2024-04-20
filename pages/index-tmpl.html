@@ -49,12 +49,6 @@ Screen".</p>
 <!--$ : c = s.collections[t.row] -->
 <!--$ : num = c.collection -->
 <!--$ : cid = format("c{num}") -->
-<!--$ : # todo: remove all the following ids and use class names -->
-<!--$ : tid = format("t{num}") -->
-<!--$ : fid = format("f{num}") -->
-<!--$ : lid = format("l{num}") -->
-<!--$ : nid = format("n{num}") -->
-<!--$ : pid = format("p{num}") -->
 <!--$ : src = c.thumbnail -->
 <!--$ : title = html(c.title, "body") -->
 <!--$ : titleAttr = html(c.title, "attribute") -->
@@ -63,9 +57,9 @@ Screen".</p>
     <div class="collection" id="{cid}">
       <p class="title">{title}</p>
       <p class="posted">{posted}</p>
-      <div class="parent" id="{pid}">
-        <div class="needs withoutImages" id="{nid}">images need downloading</div>
-        <img class="thumbnail" id="{tid}" src="{src}" alt="{titleAttr}">
+      <div class="parent">
+        <div class="needs withoutImages">images need downloading</div>
+        <img class="thumbnail" src="{src}" alt="{titleAttr}">
       </div>
       <p class="description">{indexDescription}</p>
       <div class="bottom-menu">

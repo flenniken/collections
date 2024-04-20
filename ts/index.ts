@@ -52,7 +52,6 @@ function registerServerWorker() {
   });
 }
 
-// todo: is this where this should go?
 registerServerWorker()
 
 // The indexJson comes from the index.html file.

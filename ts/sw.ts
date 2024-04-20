@@ -31,8 +31,7 @@ async function openCreateCache(): Promise<Cache> {
   // application cache is not supported or cannot be open or created
   // generate an exception.
   let cache: Cache
-  // todo: share the cache name with index.ts
-  cache = await caches.open("collections-v1");
+  cache = await caches.open(appCacheName);
   if (!cache)
     throw new Error("Unable to open the application cache.")
   return cache
@@ -124,8 +123,7 @@ self.addEventListener("fetch", (event: Event) => {
 
     // Identify image files except the index page thumbnails that end
     // with tin.jpg.
-    // todo: use startsWith and endsWith
-    const isSpecialFile = url.includes(cacheUrlPrefix) && !url.includes("tin.jpg");
+    const isSpecialFile = url.startsWith(cacheUrlPrefix) && !url.endsWith("tin.jpg");
 
     const cache = await openCreateCache()
 
