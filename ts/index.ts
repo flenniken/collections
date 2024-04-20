@@ -81,7 +81,33 @@ function fetchOk(url: string) {
   });
 }
 
-async function downloadCollection(cache: Cache, cNum: number,
+function getCollection(cNum: number): IndexCollection | null {
+  // Return the cNum collection or null when not found.
+
+  for (let ix = 0; ix < indexJson.collections.length; ix++) {
+    if (cNum == indexJson.collections[ix].collection)
+      return indexJson.collections[ix]
+  }
+  return null
+}
+
+async function downloadCollection(cNum: number) {
+  // Download the collection's images and put them in the application
+  // cache.
+  log(`Download collection ${cNum}.`)
+
+  const collection = getCollection(cNum)
+  if (collection == null) {
+    log(`Collection ${cNum} not found.`)
+    return
+  }
+  // Open or create the cache.
+  const cache = await openCreateCache()
+
+  downloadCollectionImages(cache, cNum, collection.iCount, collection.tin)
+}
+
+async function downloadCollectionImages(cache: Cache, cNum: number,
     iCount: number, tin: number) {
   // Download the collection's images and cache them. When successful,
   // add a collection ready key to the cache.
@@ -140,9 +166,6 @@ async function downloadCollection(cache: Cache, cNum: number,
 
   // Remove needs banner.
   get(`n${cNum}`).style.display = "none"
-
-  // Enable the link to the thumbnails page.
-  get(`l${cNum}`).style.pointerEvents = "auto"
 }
 
 async function openCreateCache(): Promise<Cache> {
@@ -179,20 +202,12 @@ async function handleLoad() {
       const text = await readyResponse.text()
       log(`Collection ${cNum} is ready: ${text}`);
 
-      // Enable the link to the thumbnails page.
-      get(`l${cNum}`).style.pointerEvents = "auto"
-
     } else {
       log(`Collection ${cNum} is not cached yet.`);
 
       // Show the needs banner on the collection.
       get(`n${cNum}`).style.display = "block"
 
-      // Download the collection when its index image is touched or
-      // clicked.
-      get(`p${cNum}`).addEventListener("pointerdown", (event) => {
-        downloadCollection(cache, cNum, collection.iCount, collection.tin)
-      })
     }
   })
 }
@@ -245,12 +260,16 @@ function refreshPage() {
 }
 
 function removeCollection(cNum: number) {
-  const message = "Are you sure you want to delete this collection's images from the cache?"
-  if (confirm(message) == true) {
-    log(`remove collection ${cNum} from the app cache`)
-  } else {
-    log("don't remove anything")
-  }
+  return Promise.resolve().then(() => {
+    const message = "Are you sure you want to delete this collection's images from the cache?"
+    if (confirm(message) == true) {
+      log(`remove collection ${cNum} from the app cache`)
+      // todo: remove images from the app cache.
+
+    } else {
+      log("don't remove anything")
+    }
+  });
 }
 
 function viewThumbnails(cNum: number) {

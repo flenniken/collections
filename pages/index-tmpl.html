@@ -64,9 +64,7 @@ Screen".</p>
       <p class="posted">{posted}</p>
       <div class="parent" id="{pid}">
         <div class="needs" id="{nid}">images need downloading</div>
-        <a href="{c.url}" id="{lid}">
-          <img class="thumbnail" id="{tid}" src="{src}" alt="{titleAttr}">
-        </a>
+        <img class="thumbnail" id="{tid}" src="{src}" alt="{titleAttr}">
       </div>
       <p class="description">{indexDescription}</p>
       <div class="bottom-menu">
@@ -74,15 +72,15 @@ Screen".</p>
           onclick="viewThumbnails({num})" alt="view thumbnails">
         <img class="icon" src="icons/camera.svg"
           onclick="viewCollection({num})" alt="view collection">
-        <img class="icon" src="icons/clear-cache.svg"
+        <img class="icon" src="icons/download.svg"
+          onclick="downloadCollection({num})" alt="download collection images">
+        <img class="icon right" src="icons/clear-cache.svg"
           onclick="removeCollection({num})" alt="remove collection from cache">
       </div>
     </div>
 <!--$ endblock -->
   </div>
   <div class="bottom-menu">
-    <img class="icon right" src="icons/clear-cache.svg"
-      onclick="clearAppCache()" alt="clear application cache">
     <img class="icon right" src="icons/refresh.svg"
       onclick="refreshPage()" alt="refresh">
   </div>
