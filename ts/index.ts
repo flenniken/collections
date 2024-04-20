@@ -81,14 +81,14 @@ function fetchOk(url: string) {
   });
 }
 
-function getCollection(cNum: number): IndexCollection | null {
+function getCollection(cNum: number): IndexCollection {
   // Return the cNum collection or null when not found.
 
   for (let ix = 0; ix < indexJson.collections.length; ix++) {
     if (cNum == indexJson.collections[ix].collection)
       return indexJson.collections[ix]
   }
-  return null
+  throw new Error(`Invalid collection number: ${cNum}`);
 }
 
 async function downloadCollection(cNum: number) {
@@ -97,14 +97,28 @@ async function downloadCollection(cNum: number) {
   log(`Download collection ${cNum}.`)
 
   const collection = getCollection(cNum)
-  if (collection == null) {
-    log(`Collection ${cNum} not found.`)
-    return
-  }
+
   // Open or create the cache.
   const cache = await openCreateCache()
 
   downloadCollectionImages(cache, cNum, collection.iCount, collection.tin)
+}
+
+function getCollectionImageUrls(cNum: number): string[] {
+  // Return a list of the collection's image urls.
+
+  const imagesFolder = "images"
+  const collection = getCollection(cNum)
+
+  let urls: string[] = []
+  for (let imageNum = 1; imageNum <= collection.iCount; imageNum++) {
+    urls.push(`${imagesFolder}/c${cNum}-${imageNum}-p.jpg`)
+    if (imageNum == collection.tin)
+      urls.push(`${imagesFolder}/c${cNum}-${imageNum}-tin.jpg`)
+    else
+      urls.push(`${imagesFolder}/c${cNum}-${imageNum}-t.jpg`)
+  }
+  return urls
 }
 
 async function downloadCollectionImages(cache: Cache, cNum: number,
@@ -125,18 +139,8 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   // Download and cache the given collection images.
   downloadTimer.log(`Download collection ${cNum}.`)
 
-  const imagesFolder = "images"
-
-  // Create a list of the collection's image urls.
-  let urls: string[] = []
-  for (let imageNum = 1; imageNum <= iCount; imageNum++) {
-    urls.push(`${imagesFolder}/c${cNum}-${imageNum}-p.jpg`)
-    if (imageNum == tin)
-      urls.push(`${imagesFolder}/c${cNum}-${imageNum}-tin.jpg`)
-    else
-      urls.push(`${imagesFolder}/c${cNum}-${imageNum}-t.jpg`)
-  }
-  downloadTimer.log(`Collection ${cNum} has ${iCount} images and ${urls.length} files.`)
+  const urls = getCollectionImageUrls(cNum)
+  downloadTimer.log(`Collection ${cNum} has ${urls.length} files.`)
 
   // Start fetching all images at once.
   let promises: Promise<Response>[] = []
@@ -156,13 +160,8 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
     return
   }
 
-  // Successfully downloaded all the images.  Add a ready element to
-  // the cache that tells the collection is cached.
-  downloadTimer.log("Add ready marker.")
+  // Successfully downloaded all the images.
   downloadTimer.log("Images downloaded and cached.")
-  const c2ReadyRequest = new Request(`c${cNum}-ready`)
-  const c2ReadyResponse = new Response(`cNum: ${iCount} tin: ${tin}`)
-  await cache.put(c2ReadyRequest, c2ReadyResponse);
 
   setCollectionState(cNum, true)
 }
@@ -189,7 +188,7 @@ function forClasses(parent: Element, className: string, callback: ForClassesCall
   }
 }
 
-function setCollectionState(cNum: number, imagesCached: boolean): void {
+async function setCollectionState(cNum: number, imagesCached: boolean) {
   // Show or hide the UI elements that show the whether the collection is
   // ready to view.
 
@@ -214,6 +213,22 @@ function setCollectionState(cNum: number, imagesCached: boolean): void {
   forClasses(parent, "withoutImages", (element) => {
     element.style.display = withoutImages
   })
+
+  // Add or remove the ready element to the cache that tells whether
+  // the collection is cached or not.
+  const cache = await openCreateCache()
+  const c2ReadyRequest = new Request(`c${cNum}-ready`)
+  if (imagesCached) {
+    const collection = getCollection(cNum)
+    const text = `cNum: ${collection.iCount} tin: ${collection.tin}`
+    const c2ReadyResponse = new Response(text)
+    await cache.put(c2ReadyRequest, c2ReadyResponse)
+
+    // const text = await readyResponse.text()
+    log(`Collection ${cNum} is ready: ${text}`);
+  } else {
+    await cache.delete(c2ReadyRequest)
+  }
 }
 
 async function handleLoad() {
@@ -234,8 +249,6 @@ async function handleLoad() {
     const readyResponse = await cache.match(readyRequest);
     if (readyResponse) {
       // The collection is completely cached.
-      const text = await readyResponse.text()
-      log(`Collection ${cNum} is ready: ${text}`);
       setCollectionState(cNum, true)
 
     } else {
@@ -292,17 +305,23 @@ function refreshPage() {
   location.reload()
 }
 
-function removeCollection(cNum: number) {
-  return Promise.resolve().then(() => {
-    const message = "Are you sure you want to delete this collection's images from the cache?"
-    if (confirm(message) == true) {
-      log(`remove collection ${cNum} from the app cache`)
-      // todo: remove images from the app cache.
+async function removeCollection(cNum: number) {
+  const message = "Are you sure you want to delete this collection's images from the cache?"
+  if (confirm(message) == true) {
+    log(`remove collection ${cNum} from the app cache`)
+    const urls = getCollectionImageUrls(cNum)
+    const cache = await openCreateCache()
 
-    } else {
-      log("don't remove anything")
-    }
-  });
+    urls.forEach( (url) => {
+      cache.delete(url).then((response) => {
+        log(`removed ${url}`)
+      });
+    })
+    setCollectionState(cNum, false)
+
+  } else {
+    log("nothing removed")
+  }
 }
 
 function viewThumbnails(cNum: number) {
@@ -317,7 +336,7 @@ function viewCollection(cNum: number) {
 
 function clearAppCache() {
   log("clearAppCache")
-  const message = "Are you sure you want to delete all the collections images from the cache?"
+  const message = "Are you sure you want to delete the full application cache?"
   if (confirm(message) == true) {
     deleteCache()
   }
