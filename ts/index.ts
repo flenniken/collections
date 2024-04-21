@@ -359,8 +359,9 @@ async function logAppCache() {
     keys.forEach((request, index, array) => {
       if (request.url.includes("/images/")) {
         imageCount += 1
+      } else {
+        log(`key: ${request.url}`)
       }
-      log(`key: ${request.url}`)
     });
     log(`The cache contains ${keys.length} items and ${imageCount} images.`)
   });

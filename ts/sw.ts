@@ -50,6 +50,14 @@ self.addEventListener("activate", event => {
    logsw("Activate service worker.");
 })
 
+function stripUrlParameters(url: string): string {
+  // Return the url without any query parameters.
+  let u = new URL(url)
+  u.hash = ''
+  u.search = ''
+  return u.toString()
+}
+
 async function fetchRemote(cache: Cache, request: Request,
     storeTwice: boolean): Promise<Response> {
   // Fetch a file on the net and store it in one or more
@@ -70,9 +78,9 @@ async function fetchRemote(cache: Cache, request: Request,
   else {
     options = {"cache": "no-store"}
   }
-      
+
   var response = await fetch(request, options)
-      
+
   if (!response.ok) {
     const message = `An error has occured: ${response.status}`;
     logsw(message)
@@ -80,7 +88,13 @@ async function fetchRemote(cache: Cache, request: Request,
   }
 
   // Add the file to the cache.
-  await cache.put(request, response.clone());
+
+  // If the url has query parameters, strip them off so we only have
+  // one version of the file in the cache.
+  let bareUrl = stripUrlParameters(request.url)
+  log(`bare url: ${bareUrl}`)
+  let bareRequest = new Request(bareUrl)
+  await cache.put(bareRequest, response.clone());
 
   return response;
 }
@@ -92,6 +106,10 @@ function sUrl(url: string) {
   if (url.startsWith(urlPrefix))
     return url.substring(urlPrefix.length)
   return url
+}
+
+async function cacheMatch(cache: Cache, request: Request) {
+  return await cache.match(request, {ignoreSearch: true})
 }
 
 self.addEventListener("fetch", (event: Event) => {
@@ -132,7 +150,7 @@ self.addEventListener("fetch", (event: Event) => {
     if (isSpecialFile) {
 
       // Look for the file in the cache.
-      const cacheReponse = await cache.match(fetchEvent.request);
+      const cacheReponse = await cacheMatch(cache, fetchEvent.request);
       if (cacheReponse) {
         logsw(`Special file found in cache: ${sUrl(url)}`);
         return cacheReponse;
@@ -167,7 +185,7 @@ self.addEventListener("fetch", (event: Event) => {
       }
 
       // Look for the file in the cache.
-      const cacheReponse = await cache.match(fetchEvent.request);
+      const cacheReponse = await cacheMatch(cache, fetchEvent.request);
       if (cacheReponse) {
         logsw(`Regular file found in cache: ${sUrl(url)}`);
         return cacheReponse;
