@@ -101,20 +101,27 @@ async function downloadCollection(cNum: number) {
   downloadCollectionImages(cache, cNum, collection.iCount, collection.tin)
 }
 
-function getCollectionImageUrls(cNum: number): string[] {
-  // Return a list of the collection's image urls.
+function getCollectionUrls(cNum: number): string[] {
+  // Return a list of the collection's urls. This includes the images
+  // and the html pages -- everything needed to view the collection
+  // thumbnails and image pages.
 
-  const imagesFolder = "images"
   const collection = getCollection(cNum)
 
   let urls: string[] = []
   for (let imageNum = 1; imageNum <= collection.iCount; imageNum++) {
-    urls.push(`${imagesFolder}/c${cNum}-${imageNum}-p.jpg`)
+    urls.push(`images/c${cNum}-${imageNum}-p.jpg`)
     if (imageNum == collection.tin)
-      urls.push(`${imagesFolder}/c${cNum}-${imageNum}-tin.jpg`)
+      urls.push(`images/c${cNum}-${imageNum}-tin.jpg`)
     else
-      urls.push(`${imagesFolder}/c${cNum}-${imageNum}-t.jpg`)
+      urls.push(`images/c${cNum}-${imageNum}-t.jpg`)
   }
+  urls.push("js/image.js")
+  urls.push("js/thumbnails.js")
+  urls.push("icons/index.svg")
+  urls.push(`pages/image-${cNum}.html`)
+  urls.push(`pages/thumbnails-${cNum}.html`)
+
   return urls
 }
 
@@ -133,7 +140,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   // Time the download.
   const downloadTimer = new Timer()
 
-  const urls = getCollectionImageUrls(cNum)
+  const urls = getCollectionUrls(cNum)
   downloadTimer.log(`Download collection ${cNum} which has ${urls.length} files.`)
 
   // Start fetching all images at once.
@@ -302,7 +309,7 @@ async function removeCollection(cNum: number) {
   const message = "Are you sure you want to delete this collection's images from the cache?"
   if (confirm(message) == true) {
     log(`remove collection ${cNum} from the app cache`)
-    const urls = getCollectionImageUrls(cNum)
+    const urls = getCollectionUrls(cNum)
     const cache = await openCreateCache()
 
     urls.forEach( (url) => {
