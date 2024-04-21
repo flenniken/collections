@@ -112,8 +112,11 @@ function getCollectionUrls(cNum: number): string[] {
   // thumbnails and image pages.
 
   const collection = getCollection(cNum)
-
   let urls: string[] = []
+
+  // Try to download a file that doesn't exist for testing the error path.
+  // urls.push("js/missing.js")
+
   for (let imageNum = 1; imageNum <= collection.iCount; imageNum++) {
     urls.push(`images/c${cNum}-${imageNum}-p.jpg`)
     if (imageNum == collection.tin)
@@ -121,13 +124,25 @@ function getCollectionUrls(cNum: number): string[] {
     else
       urls.push(`images/c${cNum}-${imageNum}-t.jpg`)
   }
-  urls.push("js/image.js")
-  urls.push("js/thumbnails.js")
-  urls.push("icons/index.svg")
   urls.push(`pages/image-${cNum}.html`)
   urls.push(`pages/thumbnails-${cNum}.html`)
 
   return urls
+}
+
+async function downloadUrls(urls: string[]) {
+  // Download the given urls in parallel.
+
+  // Start fetching all images at once.
+  let promises: Promise<Response>[] = []
+  urls.forEach( (url) => {
+    // The service worker's fetch event is called for each fetch call.
+    // Caching is handled by the worker.
+    promises.push(fetchOk(url))
+  })
+
+  // Wait for all images to get downloaded and cached.
+  await Promise.all(promises)
 }
 
 async function downloadCollectionImages(cache: Cache, cNum: number,
@@ -148,17 +163,8 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const urls = getCollectionUrls(cNum)
   downloadTimer.log(`Download collection ${cNum} which has ${urls.length} files.`)
 
-  // Start fetching all images at once.
-  let promises: Promise<Response>[] = []
-  urls.forEach( (url) => {
-    // The service worker's fetch event is called for each fetch call.
-    // Caching is handled by the worker.
-    promises.push(fetchOk(url))
-  })
-
-  // Wait for all images to get downloaded and cached.
   try {
-    await Promise.all(promises)
+    await downloadUrls(urls)
   } catch (error) {
     downloadTimer.log(`error: ${error}`)
     downloadTimer.log("Failed downloading all images.")
@@ -243,6 +249,14 @@ async function handleLoad() {
   log(`Available width and height: (${availW}, ${availH})`)
 
   installBanner()
+
+  log("Download shared collection files.")
+  const sharedCollectionUrls = [
+    "js/image.js",
+    "js/thumbnails.js",
+    "icons/index.svg",
+  ]
+  downloadUrls(sharedCollectionUrls)
 
   // Open or create the cache.
   const cache = await openCreateCache()
