@@ -93,8 +93,6 @@ function getCollection(cNum: number): IndexCollection {
 async function downloadCollection(cNum: number) {
   // Download the collection's images and put them in the application
   // cache.
-  log(`Download collection ${cNum}.`)
-
   const collection = getCollection(cNum)
 
   // Open or create the cache.
@@ -135,11 +133,8 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   // Time the download.
   const downloadTimer = new Timer()
 
-  // Download and cache the given collection images.
-  downloadTimer.log(`Download collection ${cNum}.`)
-
   const urls = getCollectionImageUrls(cNum)
-  downloadTimer.log(`Collection ${cNum} has ${urls.length} files.`)
+  downloadTimer.log(`Download collection ${cNum} which has ${urls.length} files.`)
 
   // Start fetching all images at once.
   let promises: Promise<Response>[] = []
@@ -150,7 +145,6 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   })
 
   // Wait for all images to get downloaded and cached.
-  let values
   try {
     await Promise.all(promises)
   } catch (error) {
@@ -231,17 +225,17 @@ async function setCollectionState(cNum: number, imagesCached: boolean) {
 }
 
 async function handleLoad() {
-  log("load called")
+  log("Window load event")
 
   const [availW, availH] = getAvailableWidthHeight()
-  log(`width, height = (${availW}, ${availH})`)
+  log(`Available width and height: (${availW}, ${availH})`)
 
   installBanner()
 
   // Open or create the cache.
   const cache = await openCreateCache()
 
-  // Mark the collections that are not cached.
+  // Add a banner over the collections that are not cached.
   indexJson.collections.forEach(async (collection, ix) => {
     const cNum = collection.collection
     const readyRequest = new Request(`c${cNum}-ready`)
@@ -355,15 +349,18 @@ async function logAppCache() {
   const cache = await openCreateCache()
 
   let imageCount = 0
-  cache.keys().then((keys) => {
-    keys.forEach((request, index, array) => {
-      if (request.url.includes("/images/")) {
-        imageCount += 1
-      } else {
-        log(`key: ${request.url}`)
-      }
-    });
-    log(`The cache contains ${keys.length} items and ${imageCount} images.`)
-  });
+  cache.keys().then((requests) => {
 
+    let urls: string[] = []
+    requests.forEach((request, index, array) => {
+      urls.push(request.url)
+    })
+    // Sort the keys (urls).  The normal order is insertion order.
+    urls.sort()
+
+    urls.forEach((url) => {
+      log(`key: ${url}`)
+    })
+    log(`The cache contains ${urls.length} items.`)
+  })
 }

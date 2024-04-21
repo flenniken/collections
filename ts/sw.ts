@@ -92,7 +92,7 @@ async function fetchRemote(cache: Cache, request: Request,
   // If the url has query parameters, strip them off so we only have
   // one version of the file in the cache.
   let bareUrl = stripUrlParameters(request.url)
-  log(`bare url: ${bareUrl}`)
+  // log(`bare url: ${bareUrl}`)
   let bareRequest = new Request(bareUrl)
   await cache.put(bareRequest, response.clone());
 
@@ -119,7 +119,7 @@ self.addEventListener("fetch", (event: Event) => {
 
   // Get the url to fetch.
   const url = fetchEvent.request.url
-  logsw(`fetch url: ${url}`)
+  // logsw(`fetch url: ${url}`)
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
   if (!(url.startsWith("http:") || url.startsWith("https:"))) {
