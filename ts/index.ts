@@ -93,6 +93,11 @@ function getCollection(cNum: number): IndexCollection {
 async function downloadCollection(cNum: number) {
   // Download the collection's images and put them in the application
   // cache.
+  if (!window.navigator.onLine) {
+    window.alert(["You cannot download because there is no internet connection."])
+    return
+  }
+
   const collection = getCollection(cNum)
 
   // Open or create the cache.
