@@ -275,6 +275,7 @@ async function handleLoad() {
       setCollectionState(cNum, false)
     }
   })
+
 }
 
 function installBanner() {
@@ -325,7 +326,10 @@ function refreshPage() {
 }
 
 async function removeCollection(cNum: number) {
-  const message = "Are you sure you want to delete this collection's images from the cache?"
+  const quota = await getUsageQuotaString()
+  const message = `${quota}
+
+Are you sure you want to delete this collection's images from the cache?`
   if (confirm(message) == true) {
     log(`remove collection ${cNum} from the app cache`)
     const urls = getCollectionUrls(cNum)
@@ -339,7 +343,7 @@ async function removeCollection(cNum: number) {
     setCollectionState(cNum, false)
 
   } else {
-    log("nothing removed")
+    log("Nothing removed")
   }
 }
 
@@ -368,6 +372,20 @@ async function deleteCache() {
   refreshPage()
 }
 
+async function getUsageQuotaString() {
+  // Return a string telling how much disk storage the collection app uses.
+
+  const estimate = await navigator.storage.estimate()
+
+  if (!estimate.usage || !estimate.quota)
+    return "No disk quota estimate."
+
+  const percent = ((estimate.usage / estimate.quota) * 100).toFixed(0)
+  const usage = (estimate.usage / 1024 / 1024 / 1024).toFixed(1)
+  const quota = (estimate.quota / 1024 / 1024 / 1024).toFixed(1)
+  return `Disk quota used: ${percent}% (${usage} GB), quota: ${quota} GB`
+}
+
 async function logAppCache() {
   // Log the contents of the application cache.
   log("Application Cache")
@@ -388,5 +406,9 @@ async function logAppCache() {
       log(`key: ${url}`)
     })
     log(`The cache contains ${urls.length} items.`)
+
+    getUsageQuotaString().then((message) => {
+      log(message)
+    })
   })
 }
