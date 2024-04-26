@@ -150,6 +150,8 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   // Download the collection's images and cache them. When successful,
   // add a collection ready key to the cache.
 
+  setCollectionState(cNum, "waitForImages")
+
   const readyRequest = new Request(`c${cNum}-ready`)
   const readyResponse = await cache.match(readyRequest);
   if (readyResponse) {
@@ -174,7 +176,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   // Successfully downloaded all the images.
   downloadTimer.log("Images downloaded and cached.")
 
-  setCollectionState(cNum, true)
+  setCollectionState(cNum, "withImages")
 }
 
 async function openCreateCache(): Promise<Cache> {
@@ -199,18 +201,29 @@ function forClasses(parent: Element, className: string, callback: ForClassesCall
   }
 }
 
-async function setCollectionState(cNum: number, imagesCached: boolean) {
+async function setCollectionState(cNum: number, collectionState: string) {
   // Show or hide the UI elements that show the whether the collection is
   // ready to view.
 
   let withImages: string
   let withoutImages: string
-  if (imagesCached) {
+  let waitForImages: string
+  if (collectionState == "withImages") {
     withImages = "block"
     withoutImages = "none"
-  } else {
+    waitForImages = "none"
+  } else if (collectionState == "withoutImages") {
     withImages = "none"
     withoutImages = "block"
+    waitForImages = "none"
+  }
+  else if (collectionState == "waitForImages") {
+    withImages = "none"
+    withoutImages = "none"
+    waitForImages = "block"
+  }
+  else {
+    throw new Error(`Invalid collection state: ${collectionState}`);
   }
 
   const parent = get(`c${cNum}`)
@@ -225,11 +238,16 @@ async function setCollectionState(cNum: number, imagesCached: boolean) {
     element.style.display = withoutImages
   })
 
+  // Show or hide the elements with class "waitForImages".
+  forClasses(parent, "waitForImages", (element) => {
+    element.style.display = waitForImages
+  })
+
   // Add or remove the ready element to the cache that tells whether
   // the collection is cached or not.
   const cache = await openCreateCache()
   const c2ReadyRequest = new Request(`c${cNum}-ready`)
-  if (imagesCached) {
+  if (collectionState == "withImages") {
     const collection = getCollection(cNum)
     const text = `cNum: ${collection.iCount} tin: ${collection.tin}`
     const c2ReadyResponse = new Response(text)
@@ -237,7 +255,7 @@ async function setCollectionState(cNum: number, imagesCached: boolean) {
 
     // const text = await readyResponse.text()
     log(`Collection ${cNum} is ready: ${text}`);
-  } else {
+  } else if (collectionState == "withoutImages") {
     await cache.delete(c2ReadyRequest)
   }
 }
@@ -268,11 +286,11 @@ async function handleLoad() {
     const readyResponse = await cache.match(readyRequest);
     if (readyResponse) {
       // The collection is completely cached.
-      setCollectionState(cNum, true)
+      setCollectionState(cNum, "withImages")
 
     } else {
       log(`Collection ${cNum} is not cached yet.`);
-      setCollectionState(cNum, false)
+      setCollectionState(cNum, "withoutImages")
     }
   })
 
@@ -335,12 +353,13 @@ Are you sure you want to delete this collection's images from the cache?`
     const urls = getCollectionUrls(cNum)
     const cache = await openCreateCache()
 
+    setCollectionState(cNum, "withoutImages")
+
     urls.forEach( (url) => {
       cache.delete(url).then((response) => {
         log(`removed ${url}`)
       });
     })
-    setCollectionState(cNum, false)
 
   } else {
     log("Nothing removed")
