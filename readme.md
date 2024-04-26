@@ -27,7 +27,7 @@ Each collection has a title, thumbnail, description, and post date.
 You can scroll through the list. When you reach the bottom there is a
 more indicator.
 
-Tapping a collection thumbnail switches to the thumbnails page.
+You view and maintain the collection by tapping the icons under it.
 
 [⬇ ────────](#Contents)
 
@@ -49,7 +49,8 @@ taken.
 You go back to the index page by scrolling to the bottom and tapping
 the index icon.
 
-Tapping a thumbnail shows the full size photo on the image page.
+Tapping a camera icon shows the full size photo on the image
+page. Tapping the index icon takes you to the index page.
 
 [⬇ ────────](#Contents)
 
