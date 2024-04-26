@@ -13,7 +13,9 @@
       "title": "Many Glaciers Fireplace",
       "description": "I was amazed how well the fireplace hood worked. The one we made for the cabin smoked like crazy. We cut it up and turned it into a planter.",
       "width": 3024,
-      "height": 4032
+      "height": 4032,
+      "size": 2797506,
+      "sizet": 71810,
     },
     {
       "url": "../images/c1-2-p.jpg",
@@ -21,7 +23,9 @@
       "title": "Swiftcurrent Lake",
       "description": "A mountain view south from Many Glaciers Logde over Swiftcurrent Lake.",
       "width": 4032,
-      "height": 3024
+      "height": 3024,
+      "size": 3871458,
+      "sizet": 70466,
     },
     {
       "url": "../images/c1-3-p.jpg",
@@ -29,7 +33,9 @@
       "title": "Many Glaciers Lodge",
       "description": "This is the south wing of the lodge.  We stayed in the room one from the left end with a deck looking at the camera. We didn't have a view of the lake, instead we had a great view of the mountains.",
       "width": 4032,
-      "height": 3024
+      "height": 3024,
+      "size": 4040403,
+      "sizet": 81188,
     },
     {
       "url": "../images/c1-4-p.jpg",
@@ -37,7 +43,9 @@
       "title": "Mount Grinnell",
       "description": "Mount Grinnel is right across the lake from the lodge.",
       "width": 4032,
-      "height": 3024
+      "height": 3024,
+      "size": 3834135,
+      "sizet": 71680,
     },
     {
       "url": "../images/c1-5-p.jpg",
@@ -45,7 +53,9 @@
       "title": "Swiftcurrent Lake",
       "description": "We walked around Swiftcurrent Lake and Lake Josephine. They are connected with a slow moving river. That is where this picture was taken. The red mountain in the background is Mount Henkel.",
       "width": 4032,
-      "height": 3024
+      "height": 3024,
+      "size": 4843825,
+      "size": 87322,
     },
     {
       "url": "../images/c1-6-p.jpg",
@@ -53,7 +63,9 @@
       "title": "Moose Land",
       "description": "We saw a moose on the far side of the lake and Kathleen filmed it.",
       "width": 4032,
-      "height": 3024
+      "height": 3024,
+      "size": 3265476,
+      "sizet": 62027,
     },
     {
       "url": "../images/c1-7-p.jpg",
@@ -61,7 +73,9 @@
       "title": "Lake Trail",
       "description": "This is a trail around the lakes near the Many Glaciers Lodge.",
       "width": 3024,
-      "height": 4032
+      "height": 4032,
+      "size": 2458238,
+      "sizet": 120478,
     },
     {
       "url": "../images/c1-8-p.jpg",
@@ -69,7 +83,9 @@
       "title": "Two Red Rocks",
       "description": "The two red rocks are having a great time playing and sliding down the hill into the river. They’re living at a time scale that’s hard for us to imagine. We saw two other red rocks swimming in the lake but I didn’t get a picture of that.",
       "width": 2556,
-      "height": 2556
+      "height": 2556,
+      "size": 1831865,
+      "sizet": 92666,
     }
   ],
   "zoomPoints": {

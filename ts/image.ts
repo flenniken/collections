@@ -10,6 +10,8 @@ namespace CJson {
     description: string;
     width: number;
     height: number;
+    size: number;
+    sizet: number;
   }
 
   export interface ZoomPoint {
