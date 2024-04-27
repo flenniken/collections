@@ -14,6 +14,9 @@ interface IndexCollection {
 
   // The number of the thumbnail shared with the index page.
   tin: number
+
+  // The total size the of the images in the collection in bytes.
+  totalSize: number
 }
 
 interface IndexJson {
@@ -81,13 +84,40 @@ function fetchOk(url: string) {
 }
 
 function getCollection(cNum: number): IndexCollection {
-  // Return the cNum collection or null when not found.
+  // Return the collection given the collection cNum or null when not
+  // found.
 
   for (let ix = 0; ix < indexJson.collections.length; ix++) {
     if (cNum == indexJson.collections[ix].collection)
       return indexJson.collections[ix]
   }
   throw new Error(`Invalid collection number: ${cNum}`);
+}
+
+function humanFileSize(size: number) {
+  // Convert the number to a human readable file size string using MB,
+  // GB, etc.
+  if (size == 0)
+    return 0
+  const i = Math.floor(Math.log(size) / Math.log(1024));
+  return +((size / Math.pow(1024, i)).toFixed(1)) * 1 + ' ' +
+    ['B', 'kB', 'MB', 'GB', 'TB'][i];
+}
+
+async function enoughSpace(collection: IndexCollection) {
+  // Return true when there is enough space to download the
+  // collection.
+
+  const sizeString = humanFileSize(collection.totalSize)
+  log(`Collection ${collection.collection} size: ${sizeString}`)
+  log(await getUsageQuotaString())
+
+  const estimate = await navigator.storage.estimate()
+  if (!estimate.usage || !estimate.quota)
+    return true
+  if (estimate.usage + collection.totalSize > estimate.quota)
+    return false
+  return true
 }
 
 async function downloadCollection(cNum: number) {
@@ -99,6 +129,11 @@ async function downloadCollection(cNum: number) {
   }
 
   const collection = getCollection(cNum)
+
+  if (!await enoughSpace(collection)) {
+    window.alert(["There is not enough space for the collection's images."])
+    return
+  }
 
   // Open or create the cache.
   const cache = await openCreateCache()
@@ -400,9 +435,9 @@ async function getUsageQuotaString() {
     return "No disk quota estimate."
 
   const percent = ((estimate.usage / estimate.quota) * 100).toFixed(0)
-  const usage = (estimate.usage / 1024 / 1024 / 1024).toFixed(1)
-  const quota = (estimate.quota / 1024 / 1024 / 1024).toFixed(1)
-  return `Disk quota used: ${percent}% (${usage} GB), quota: ${quota} GB`
+  const usage = humanFileSize(estimate.usage)
+  const quota = humanFileSize(estimate.quota)
+  return `Disk quota used: ${percent}% (${usage}), quota: ${quota}`
 }
 
 async function logAppCache() {
