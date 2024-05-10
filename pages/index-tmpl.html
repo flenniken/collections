@@ -32,8 +32,13 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 </script>
 </head>
 <body id="index">
-<!--$ nextline -->
-  <p id="siteTitle">{g.siteTitle}</p>
+  <div class="top-menu">
+    <span id="menu-name">Collections</span>
+    <img class="icon left" src="icons/icon-512.png"
+      onclick="about()" alt="about">
+    <img class="icon right" src="icons/user.svg"
+      onclick="loginOrOut()" alt="log in out">
+  </div>
   <div id="install-banner">
     <h3>Note</h3>
     <p>This web site operates better if you start it from its

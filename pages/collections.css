@@ -8,14 +8,6 @@
   justify-content: center;
 }
 
-#index #siteTitle {
-  font-size: 2.5em;
-  margin-top: var(--top-header-height);
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 20px;
-}
-
 #install-banner {
   display: none;
   font-size: 1.5em;
@@ -195,5 +187,26 @@
 }
 
 .bottom-menu .right {
+  float: right;
+}
+
+.top-menu {
+  margin-top: var(--top-header-height);
+  padding-bottom: 2em;
+}
+
+.top-menu #menu-name {
+  font-size: 2em;
+  margin-left: 3px;
+  margin-right: auto;
+  margin-bottom: 20px;
+}
+
+.top-menu .icon {
+  width: 2em;
+  float: left;
+}
+
+.top-menu .right {
   float: right;
 }

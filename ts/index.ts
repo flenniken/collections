@@ -378,6 +378,14 @@ function refreshPage() {
   location.reload()
 }
 
+function loginOrOut() {
+  log("loginOrOut")
+}
+
+function about() {
+  log("about")
+}
+
 async function removeCollection(cNum: number) {
   const quota = await getUsageQuotaString()
   const message = `${quota}
