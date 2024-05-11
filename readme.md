@@ -93,7 +93,7 @@ You install the app’s icon on your home screen following these steps:
 * launch safari on iphone (it doesn't install on chrome or firefox)
 * go to:
 
-https://flenniken.net/collections/index.html
+https://collections.flenniken.net
 
 * tap the share icon at the bottom center of the screen
 * scroll up and select “Add to Home screen” and tap add

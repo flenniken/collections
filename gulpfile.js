@@ -41,7 +41,7 @@ Tasks:
 * syncronize -- Syncronize the template's replace blocks with header.tea content.
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
-* get-images -- Download the collection images from flenniken.net.
+* get-images -- Download the collection images from collections.flenniken.net.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
@@ -343,7 +343,7 @@ function getDownloadUrls() {
       const destination = `dist/images/${name}`
       log(destination)
       if (!fs.existsSync(destination)) {
-        url = `https://flenniken.net/collections-images/${name}`
+        url = `https://collections.flenniken.net/collections-images/${name}`
         if (url)
           urls.push(url)
       }
@@ -353,7 +353,7 @@ function getDownloadUrls() {
 }
 
 gulp.task("get-images", function (cb) {
-  log("Download missing images from the flenniken.net site to the images folder.")
+  log("Download missing images from the collections.flenniken.net site to the images folder.")
   const urls = getDownloadUrls()
   if (urls.length == 0)
     log("All images already downloaded.")
