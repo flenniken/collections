@@ -29,12 +29,12 @@ more indicator.
 
 The icons do the following:
 
-* ![about](dist/icons/icon-32.png) — tells about the app
-* ![login and logout](dist/icons/user.svg) — login and logout
-* ![view thumbnails](dist/icons/thumbnails.svg) — view the collection's thumbnails
-* ![view images](dist/icons/camera.svg) — view the collection's images
-* ![delete cached images](dist/icons/trash-can.svg) — delete the collection's cached images
-* ![download images](dist/icons/download.svg) — download the collection's images
+* ![about](dist/icons/icon-32.png) about the app
+* ![login and logout](dist/icons/user.svg) login and logout
+* ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
+* ![view images](dist/icons/camera.svg) view the collection's images
+* ![download images](dist/icons/download.svg) download the collection's images
+* ![delete cached images](dist/icons/trash-can.svg) delete the collection's cached images
 
 [⬇ ────────](#Contents)
 
