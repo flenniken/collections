@@ -8,7 +8,9 @@ collections of photos on an iphone.
 A PWA runs in a browser but looks a lot like a native app.
 
 Each collection is a small set of related photos, for example photos
-of a trip to Many Glaciers Lodge.
+of a trip to Many Glaciers Lodge. Since there are only a few images in
+a collection the user sees the best and more time can be spent on the
+description’s story. It is also easier to build well.
 
 You navigate and view images on three types of pages, the index page,
 the thumbnails page, and the image page.
@@ -44,14 +46,8 @@ The icons do the following:
 
 The thumbnails page shows the collection’s thumbnails.
 
-Since there are only a few images in a collection the user sees the
-best and more time can be spent on the description’s story. It is also
-easier to build well.
-
-Past the bottom of the thumbnails you see the collection title and
-description (a potentially different description than on index page)
-and an optional map showing the location of where the photos were
-taken.
+Past the bottom of the thumbnails you see the collection's title and
+description which might be different description than on index page.
 
 You go back to the index page by scrolling to the bottom and tapping
 the index icon.
@@ -72,11 +68,11 @@ orientation and size.
 You can zoom and pan an image with two fingers and double tap to
 restore it.
 
-You scroll to the bottom to see a description of the image.
-
 You scroll left and right go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
+
+You scroll to the bottom to see a description of the image.
 
 You go back to the thumbnails or index page by scrolling to the bottom
 and tapping the thumbnail or index icon.
