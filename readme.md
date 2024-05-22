@@ -27,7 +27,14 @@ Each collection has a title, thumbnail, description, and post date.
 You can scroll through the list. When you reach the bottom there is a
 more indicator.
 
-You view and maintain the collection by tapping the icons under it.
+The icons do the following:
+
+* ![about](dist/icons/icon-32.png) — tells about the app
+* ![login and logout](dist/icons/user.svg) — login and logout
+* ![view thumbnails](dist/icons/thumbnails.svg) — view the collection's thumbnails
+* ![view images](dist/icons/camera.svg) — view the collection's images
+* ![delete cached images](dist/icons/trash-can.svg) — delete the collection's cached images
+* ![download images](dist/icons/download.svg) — download the collection's images
 
 [⬇ ────────](#Contents)
 
