@@ -522,9 +522,12 @@ function viewCollection(cNum: number) {
   window.location.assign(`pages/image-${cNum}.html`)
 }
 
-function clearAppCache() {
+async function clearAppCache() {
   log("clearAppCache")
-  const message = "Are you sure you want to delete the full application cache?"
+  const quota = await getUsageQuotaString()
+  const message = `${quota}
+
+Are you sure you want to delete all the photos and files from the cache?`
   if (confirm(message) == true) {
     deleteCache()
   }
