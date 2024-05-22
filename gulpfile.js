@@ -392,6 +392,11 @@ gulp.task("watch", function(cb) {
   gulp.watch(["pages/image-tmpl.html", json1, json2, hr], gs([
     "image1", "image2", "vimage1", "vimage2"]))
 
+  // todo: it is hard to tell whether the watch ran or not because the
+  // time is in utc and it is not clear what the current time is.
+  // Show the current time when the watch process finishes using
+  // log(`${Date()}`)?
+
   cb();
 });
 

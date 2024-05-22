@@ -329,6 +329,15 @@ async function handleLoad() {
     }
   })
 
+  // // After the user logs in call loggedIn.
+  // log(`window.location.search: ${window.location.search}`)
+  // const searchParams = new URLSearchParams(window.location.search)
+  // const state = searchParams.get("state")
+  // if (state && state == "loggedIn") {
+  //   loggedIn()
+  //   return
+  // }
+
 }
 
 function installBanner() {
@@ -378,9 +387,103 @@ function refreshPage() {
   location.reload()
 }
 
+// You can get current log data of aws cognito actions.  Additionally
+// you can save the logs to s3.  See:
+
+// https://docs.aws.amazon.com/cognito/latest/developerguide/logging-using-cloudtrail.html
+
+
+// You can set alarms when quotes you define are hit.  See:
+
+// https://docs.aws.amazon.com/cognito/latest/developerguide/tracking-quotas-and-usage-in-cloud-watch-and-service-quotas.html
+
+
 function loginOrOut() {
   log("loginOrOut")
+  // Jump to the AWS cognito login UI. After logging in it will jump
+  // to the index page passing state=loggedIn.
+
+  // See documentation:
+  // https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html
+
+  // The scope parameter determines what permissions the returned code
+  // has. You set the permissions in the user pool configuration. See:
+  // email+openid+phone+aws.cognito.signin.user.admin+profile
+
+  // You set the scopes (permissions) in the console here:
+  // Amazon Cognito > User pools > collections-pool > App client: CollectionsClient > Hosted UI
+  // OpenID Connect scopes
+
+
+  // https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html
+
+//   const login_url = encodeURI("\
+// https://collections.auth.us-west-2.amazoncognito.com/oauth2/authorize?\
+// client_id=1h1emkd4pof3vacle2albgj2qn&\
+// response_type=code&\
+// scope=email+openid+phone+aws.cognito.signin.user.admin+profile&\
+// redirect_uri=https://collections.flenniken.net/index.html&\
+// state=loggedIn\
+// ")
+//     window.location.assign(login_url)
+
+
+
+  // The logout attributes are documented here:
+  // https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html
+
+
 }
+
+function loggedIn() {
+  // The user just logged in.
+  log("loggedIn")
+
+  // // Get the code from the url query parameters.
+  // const searchParams = new URLSearchParams(window.location.search)
+  // const code = searchParams.get("code")
+  // if (!code) {
+  //   log("Missing the code query parameter.")
+  //   return
+  // }
+
+  // // Fetch the user information.
+  // // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
+  // const url = "https://collections.auth.us-west-2.amazoncognito.com/oauth2/userInfo"
+
+  // const options = {
+  //   "headers": {
+  //     "Authorization": `Bearer ${code}`,
+  //   }
+  // }
+  // fetch(url, options).then(function(response) {
+  //   return response.json();
+  // }).then(function(data) {
+  //   console.log(data);
+  // }).catch(function(err) {
+  //   logError('Error fetching the user data.')
+  //   log(err)
+  // });
+
+  // const xhr = new XMLHttpRequest();
+  // xhr.open("GET", url);
+  // xhr.setRequestHeader("Authorization", `Bearer ${code}`)
+  // xhr.send();
+  // xhr.responseType = "json";
+  // xhr.onload = () => {
+  //   if (xhr.readyState == 4 && xhr.status == 200) {
+  //     console.log(xhr.response);
+  //   } else {
+  //     logError('Error fetching the user data.')
+  //     log(`Error: ${xhr.status}`)
+  //   }
+  // };
+
+  // Store the code in local storage.
+
+}
+
+
 
 function about() {
   log("about")

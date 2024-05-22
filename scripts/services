@@ -1,0 +1,260 @@
+#!/usr/bin/python3
+
+"""
+This script is for setting up, testing, and maintaining the AWS
+services that collections uses.
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the docker environment.")
+  exit(1)
+
+import sys
+import argparse
+import traceback
+import sys
+import signal
+import unittest
+import urllib.parse
+from collections import namedtuple
+import json
+import requests
+
+class ServicesException(Exception):
+  """ An exception we plan for. """
+  pass
+
+def getCognitoParameters():
+  """
+  Return a namedtuple containing the AWS Cognito parameters,
+  client_id etc.
+  """
+
+  CognitoParameters = namedtuple('CognitoParameters', ['domain', 'client_id', 'redirect_uri',
+    'logout_uri', 'scope',])
+
+  return CognitoParameters(
+    domain="https://collections.auth.us-west-2.amazoncognito.com",
+    client_id="1h1emkd4pof3vacle2albgj2qn",
+    redirect_uri="https://collections.flenniken.net/index.html",
+    logout_uri="https://collections.flenniken.net/index.html",
+    scope="openid profile",
+  )
+  # "scope": "aws.cognito.signin.user.admin email openid phone profile"
+
+def showLoginUrl():
+  """
+  Print out the login url.
+  """
+  params = getCognitoParameters()
+
+  print("""\
+
+Enter the following url into your browser to login.  After logging in
+it will redirect to the redirect_uri which will contain a code and a
+state of "loggedIn". You have a few minutes to use the code to get a
+token.
+""")
+
+  url = f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedIn&\
+response_type=code&scope={urllib.parse.quote(params.scope)}&redirect_uri={params.redirect_uri}"
+  print(url)
+  print()
+
+def showLogoutUrl():
+  """
+  Print out the logout url.
+  """
+  params = getCognitoParameters()
+
+  print("""\
+
+Enter the following url into your browser to logout.  After logging
+out it will redirect to the logout_uri which will contain a state of
+"loggedOut".
+""")
+
+  url = f"{domain}/logout?client_id={params.client_id}&state=loggedOut&\
+logout_uri={params.logout_uri}"
+  print(url)
+  print()
+
+def getTokens():
+  """
+  Get the tokens given a code.
+  """
+  # Post to the cognito oauth2/token endpoint. Save the result in a file. See:
+  # https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
+
+  # Prompt for the login code.
+  code = input("Enter the login code: ")
+  if not code:
+    raise ServicesException("No code.")
+  print(f"code: '{code}'")
+
+  # Create the token url.
+  params = getCognitoParameters()
+  url = f"{params.domain}/oauth2/token"
+  print(f"url: '{url}'")
+
+  # Post to the token url.
+  headers = {"Content-type": "application/x-www-form-urlencoded"}
+  data = {
+    "grant_type": "authorization_code",
+    "client_id": params.client_id,
+    "redirect_uri": params.redirect_uri,
+    "code": code,
+  }
+  response = requests.post(url, data=data, headers=headers)
+
+  # Write the tokens returned to a file.
+  filename = "tokens.json"
+  result = response.text
+  with open(filename, 'w') as fp:
+    fp.write(result)
+
+  # Tell how to read the tokens.
+  print(f"""\
+Wrote the tokens to tokens.json.
+Use the following command to look at them:
+
+cat {filename} | jq -C | less -R
+""")
+
+def getUserInfo():
+  """
+  Get the user information from the access token.
+  """
+  # GET to the cognito oauth2/userInfo endpoint. See:
+  # https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
+
+  # Prompt for the login code.
+  code = input("Enter the login code: ")
+  if not code:
+    raise ServicesException("No code.")
+  print(f"code: '{code}'")
+
+  # Create the token url.
+  params = getCognitoParameters()
+  url = f"{params.domain}/oauth2/token"
+  print(f"url: '{url}'")
+
+  # Post to the token url.
+  headers = {"Content-type": "application/x-www-form-urlencoded"}
+  data = {
+    "grant_type": "authorization_code",
+    "client_id": params.client_id,
+    "redirect_uri": params.redirect_uri,
+    "code": code,
+  }
+  response = requests.post(url, data=data, headers=headers)
+
+  # Write the tokens returned to a file.
+  filename = "tokens.json"
+  result = response.text
+  with open(filename, 'w') as fp:
+    fp.write(result)
+
+  # Tell how to read the tokens.
+  print(f"""\
+Wrote the tokens to tokens.json.
+Use the following command to look at them:
+
+cat {filename} | jq -C | less -R
+""")
+
+def process(args):
+  """
+  """
+  if args.login:
+    showLoginUrl()
+  elif args.logout:
+    showLogoutUrl()
+  elif args.tokens:
+    getTokens()
+  elif args.userinfo:
+    getUserInfo()
+  else:
+    showHelp()
+
+def parseCommandLine():
+  """
+  Parse the command line arguments.
+  """
+  if len(sys.argv) == 1:
+    # When there are no arguments provided, show the help information.
+    sys.argv.append("-h")
+  else:
+    # When -t is provided, change argv so unittest does not see it.
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ['-t', '--test']:
+        sys.argv.pop(ix+1)
+        args = argparse.Namespace(test = True)
+        return args
+
+  # Use this module's comment at the top of the file for the
+  # description.
+  parser = argparse.ArgumentParser(description= __doc__)
+
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests. Use alone to run all tests.")
+  parser.add_argument("-l", "--login", action="store_true",
+    help="show the login url")
+  parser.add_argument("-o", "--logout", action="store_true",
+    help="show the logout url")
+  parser.add_argument("-k", "--tokens", action="store_true",
+    help="write cognito tokens to tokens.json given a login code")
+  parser.add_argument("-u", "--userinfo", action="store_true",
+    help="show the user information give an access token")
+
+  args = parser.parse_args(sys.argv[1:])
+  return args
+
+def printError(*args, **kwargs):
+  """ Print message to standard error. """
+  print(*args, file=sys.stderr, **kwargs)
+
+def signalHandler(sig, frame):
+  """ Handle ctrl-C """
+  sys.exit(1)
+
+def main(args):
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    process(args)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except ServicesException as ex:
+    print(str(ex))
+  except Exception as ex:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0 # success
+
+class TestServices(unittest.TestCase):
+
+  def test_me(self):
+    self.assertEqual(True, bool(1))
+    self.assertEqual(False, bool(0))
+
+  def test_getCognitoParameters(self):
+    params = getCognitoParameters()
+    # print("Cognito Parameters:")
+    # for name, value in params._asdict().items():
+    #   print(f"{name}: {value}")
+    self.assertTrue(params.domain.startswith("https://"))
+    self.assertEqual(len(params.client_id), 26)
+    self.assertTrue(params.redirect_uri.startswith("https://"))
+    self.assertTrue(params.logout_uri.startswith("https://"))
+    self.assertTrue(params.scope != "")
+
+
+if __name__ == '__main__':
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)
