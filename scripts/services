@@ -95,59 +95,6 @@ logout_uri={params.logout_uri}"
   print(url)
   print()
 
-def getTokens(code):
-  """
-  Get the tokens from cognito given a login code. Write the result
-  to tokens.json.
-  """
-  # Post to the cognito oauth2/token endpoint. Save the result in a file. See:
-  # https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
-
-  # print(f"code: '{code}'")
-
-  # Create the token url.
-  params = getCognitoParameters()
-  url = f"{params.domain}/oauth2/token"
-  print(f"url: '{url}'")
-
-  # Post to the token url.
-  headers = {"Content-type": "application/x-www-form-urlencoded"}
-  data = {
-    "grant_type": "authorization_code",
-    "client_id": params.client_id,
-    "redirect_uri": params.redirect_uri,
-    "code": code,
-  }
-  response = requests.post(url, data=data, headers=headers)
-
-  if response.status_code != 200:
-    print(f"""Coginto responded with status code: {response.status_code}
-The file was not written. Response text:""")
-    runJqLess(response.text)
-    return
-
-  # Write the tokens returned to a file.
-  result = response.text
-  with open(tokenFilename, 'w') as fp:
-    fp.write(result)
-
-  # Tell how to read the tokens.
-  print(f"""\
-Wrote the tokens to {tokenFilename}.
-
-You can use the following options to look at and use the tokens.
-
-  -s -- look at the file in the less command or:
-    cat {tokenFilename} | jq -C | less -R
-
-  -d -- decode one of the tokens in the file. Similar to jwt.io.
-
-  -u -- use the access_token in the file to get the user information
-   from cognito. You have about an hour before the access_token
-   expires.
-
-""")
-
 def readJsonKey(filename, key):
   """
   Read the given json file and return the specified key's value.
@@ -198,6 +145,95 @@ def getUserInfo():
   # Display the result in the less command.
   runJqLess(response.text)
 
+def getTokens(code=None, refresh=False):
+  """
+  Get new tokens using a code or using the refresh token in the tokens.json
+  file. Overwrite the file with the new tokens.
+  """
+  # Post to the cognito oauth2/token endpoint. Save the result in a file. See:
+  # https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
+
+  if not code and not refresh:
+    raise ServicesException("Pass a code or specify refresh.")
+
+  if refresh:
+    refresh_token = readJsonKey(tokenFilename, "refresh_token")
+
+  # Create the token url.
+  params = getCognitoParameters()
+  url = f"{params.domain}/oauth2/token"
+  print(f"url: '{url}'")
+
+  # Post to the token url.
+  headers = {"Content-type": "application/x-www-form-urlencoded"}
+  if refresh:
+    data = {
+      "grant_type": "refresh_token",
+      "client_id": params.client_id,
+      "refresh_token": refresh_token,
+    }
+  else:
+    data = {
+      "grant_type": "authorization_code",
+      "client_id": params.client_id,
+      "redirect_uri": params.redirect_uri,
+      "code": code,
+    }
+
+  response = requests.post(url, data=data, headers=headers)
+
+  if response.status_code != 200:
+    print(f"""Coginto responded with status code: {response.status_code}
+The file was not written. Response text:""")
+    runJqLess(response.text)
+    return
+
+  # Write the tokens returned to a file.
+  result = response.text
+  with open(tokenFilename, 'w') as fp:
+    fp.write(result)
+
+  # Tell how to read the tokens.
+  print(f"""\
+Wrote the tokens to {tokenFilename}.
+
+You can use the following options to look at and use the tokens.
+
+  -s -- look at the file in the less command or:
+    cat {tokenFilename} | jq -C | less -R
+
+  -d -- decode one of the tokens in the file. Similar to jwt.io.
+
+  -u -- use the access_token in the file to get the user information
+   from cognito. You have about an hour before the access_token
+   expires.
+
+  -r -- refresh the tokens using the refresh token.
+
+  -k -- revoke the tokens.
+""")
+
+def revokeTokens():
+  """
+  This revokes current and future access and identity tokens given
+  the refresh token in the tokens.json file.
+  """
+  # Create the token url.
+  params = getCognitoParameters()
+  url = f"{params.domain}/oauth2/revoke"
+  print(f"url: '{url}'")
+
+  refresh_token = readJsonKey(tokenFilename, "refresh_token")
+  headers = {"Content-type": "application/x-www-form-urlencoded"}
+  data = {
+    "token": refresh_token,
+    "client_id": params.client_id,
+  }
+  response = requests.post(url, data=data, headers=headers)
+  print(f"""Coginto responded with status code: {response.status_code}
+Response text:""")
+  runJqLess(response.text)
+
 def showDecodedToken(tokenName):
   tokenNames = ['access_token', 'id_token', 'refresh_token']
   if tokenName not in tokenNames:
@@ -244,13 +280,17 @@ def process(args):
   elif args.logout:
     showLogoutUrl()
   elif args.getTokens:
-    getTokens(args.getTokens)
+    getTokens(code=args.getTokens, refresh=False)
   elif args.showTokens:
     showTokens()
   elif args.decodeToken:
     showDecodedToken(args.decodeToken)
-  elif args.userinfo:
+  elif args.getUserInfo:
     getUserInfo()
+  elif args.refreshTokens:
+    getTokens(code=None, refresh=True)
+  elif args.revokeTokens:
+    revokeTokens()
   else:
     showHelp()
 
@@ -276,18 +316,22 @@ def parseCommandLine():
   parser.add_argument("-t", "--test", action="store_true",
     help="run internal unit tests. Use alone to run all tests.")
   parser.add_argument("-l", "--login", action="store_true",
-    help="show the login url")
+    help="show the login url (login endpoint)")
   parser.add_argument("-o", "--logout", action="store_true",
-    help="show the logout url")
-  parser.add_argument("-g", "--getTokens",
-    help=f"Get the cognito tokens and write them to {tokenFilename}. Specify a login code.")
+    help="show the logout url (logout endpoint)")
+  parser.add_argument("-g", "--getTokens", metavar="code",
+    help=f"get the cognito tokens (oauth2/token endpoint) and write them to {tokenFilename}. Specify a login code.")
   parser.add_argument("-s", "--showTokens", action="store_true",
-    help=f"Show the {tokenFilename} file")
-  parser.add_argument("-d", "--decodeToken",
+    help=f"show the {tokenFilename} file")
+  parser.add_argument("-d", "--decodeToken", metavar='token',
     help=f"""decode a token from the {tokenFilename} file, specify id_token,
     access_token, or refresh_token""")
-  parser.add_argument("-u", "--userinfo", action="store_true",
-    help=f"show the user information give an access token in {tokenFilename}")
+  parser.add_argument("-u", "--getUserInfo", action="store_true",
+    help=f"show the user information (oauth2/userInfo endpoint) given an access token in {tokenFilename}.")
+  parser.add_argument("-r", "--refreshTokens", action="store_true",
+    help=f"get a new access and id token but not a refresh token (oauth2/token endpoint). It uses the refresh token in {tokenFilename} and overwrites the file with the new tokens. Since the refresh token is not in the file, calling refresh again will fail.")
+  parser.add_argument("-k", "--revokeTokens", action="store_true",
+    help=f"revoke the refresh token (oauth2/revoke endpoint) in {tokenFilename} and its related tokens")
 
   args = parser.parse_args(sys.argv[1:])
   return args
