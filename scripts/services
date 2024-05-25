@@ -21,10 +21,23 @@ import urllib.parse
 from collections import namedtuple
 import json
 import requests
+import jwt
+import subprocess
+import sys
+
+# The token file created by the -g option. Used by the -u and -s options.
+tokenFilename = "tokens.json"
 
 class ServicesException(Exception):
   """ An exception we plan for. """
   pass
+
+def createFile(filename, content):
+  """
+  Create a file with the given content.
+  """
+  with open(filename, "w") as fp:
+    fp.write(content)
 
 def getCognitoParameters():
   """
@@ -54,8 +67,9 @@ def showLoginUrl():
 
 Enter the following url into your browser to login.  After logging in
 it will redirect to the redirect_uri which will contain a code and a
-state of "loggedIn". You have a few minutes to use the code to get a
-token.
+state of "loggedIn". You have a few minutes to use the code to get
+tokens with the -g option.
+
 """)
 
   url = f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedIn&\
@@ -81,18 +95,15 @@ logout_uri={params.logout_uri}"
   print(url)
   print()
 
-def getTokens():
+def getTokens(code):
   """
-  Get the tokens given a code.
+  Get the tokens from cognito given a login code. Write the result
+  to tokens.json.
   """
   # Post to the cognito oauth2/token endpoint. Save the result in a file. See:
   # https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
 
-  # Prompt for the login code.
-  code = input("Enter the login code: ")
-  if not code:
-    raise ServicesException("No code.")
-  print(f"code: '{code}'")
+  # print(f"code: '{code}'")
 
   # Create the token url.
   params = getCognitoParameters()
@@ -109,61 +120,121 @@ def getTokens():
   }
   response = requests.post(url, data=data, headers=headers)
 
+  if response.status_code != 200:
+    print(f"""Coginto responded with status code: {response.status_code}
+The file was not written. Response text:""")
+    runJqLess(response.text)
+    return
+
   # Write the tokens returned to a file.
-  filename = "tokens.json"
   result = response.text
-  with open(filename, 'w') as fp:
+  with open(tokenFilename, 'w') as fp:
     fp.write(result)
 
   # Tell how to read the tokens.
   print(f"""\
-Wrote the tokens to tokens.json.
-Use the following command to look at them:
+Wrote the tokens to {tokenFilename}.
 
-cat {filename} | jq -C | less -R
+You can use the following options to look at and use the tokens.
+
+  -s -- look at the file in the less command or:
+    cat {tokenFilename} | jq -C | less -R
+
+  -d -- decode one of the tokens in the file. Similar to jwt.io.
+
+  -u -- use the access_token in the file to get the user information
+   from cognito. You have about an hour before the access_token
+   expires.
+
 """)
+
+def readJsonKey(filename, key):
+  """
+  Read the given json file and return the specified key's value.
+  """
+  if (not os.path.exists(filename)):
+    raise ServicesException(f"The token file '{filename}' doesn't exist.")
+  with open(filename) as fp:
+    fileData = fp.read()
+  try:
+    data = json.loads(fileData)
+  except Exception as ex:
+    raise ServicesException("Unable to read the json file data.")
+  if key not in data:
+    raise ServicesException(f"The key '{key}' doesn't exist in the json data.")
+  return data[key]
+
+def getDecodeToken(tokenFilename, tokenName):
+  """
+  Read the given json file and return the specified token's decoded json.
+  """
+  token = readJsonKey(tokenFilename, tokenName)
+
+  # Decode the token but don't verify it.
+  try:
+    jdata = jwt.decode(token, algorithms=["RS256"], options={"verify_signature": False})
+  except Exception as ex:
+    raise ServicesException(f"Unable to decode the token. jwt returns:\n{str(ex)}")
+  return(jdata)
 
 def getUserInfo():
   """
   Get the user information from the access token.
   """
-  # GET to the cognito oauth2/userInfo endpoint. See:
+  # Get user info from the cognito oauth2/userInfo endpoint. See:
   # https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
-
-  # Prompt for the login code.
-  code = input("Enter the login code: ")
-  if not code:
-    raise ServicesException("No code.")
-  print(f"code: '{code}'")
 
   # Create the token url.
   params = getCognitoParameters()
-  url = f"{params.domain}/oauth2/token"
+  url = f"{params.domain}/oauth2/userInfo"
   print(f"url: '{url}'")
 
-  # Post to the token url.
-  headers = {"Content-type": "application/x-www-form-urlencoded"}
-  data = {
-    "grant_type": "authorization_code",
-    "client_id": params.client_id,
-    "redirect_uri": params.redirect_uri,
-    "code": code,
-  }
-  response = requests.post(url, data=data, headers=headers)
+  access_token = readJsonKey(tokenFilename, "access_token")
 
-  # Write the tokens returned to a file.
-  filename = "tokens.json"
-  result = response.text
-  with open(filename, 'w') as fp:
-    fp.write(result)
+  # Post to the userInfo url.
+  headers = {"Authorization": f"Bearer {access_token}"}
+  response = requests.get(url, headers=headers)
 
-  # Tell how to read the tokens.
-  print(f"""\
-Wrote the tokens to tokens.json.
-Use the following command to look at them:
+  # Display the result in the less command.
+  runJqLess(response.text)
 
-cat {filename} | jq -C | less -R
-""")
+def showDecodedToken(tokenName):
+  tokenNames = ['access_token', 'id_token', 'refresh_token']
+  if tokenName not in tokenNames:
+    raise ServicesExpection(f"Invalid token name, specify one of: {tokenNames}")
+  data = getDecodeToken(tokenFilename, tokenName)
+  jData = json.dumps(data)
+  runJqLess(jData)
+
+def showTokens():
+  """
+  Show the token file.
+  """
+  with open(tokenFilename) as fp:
+    text = fp.read()
+    # text = utf8Bytes.decode("utf-8")
+  runJqLess(text)
+
+def runJqLess(jsonText):
+  """
+  Launch less to view the specified json. The jq command formats
+  and colors it.
+  """
+  # Run json data through jq.
+  utf8Bytes = jsonText.encode('utf-8')
+  try:
+    result = subprocess.run(['jq', '-C'], stdout=subprocess.PIPE, input=utf8Bytes)
+    utf8Bytes = result.stdout
+  except:
+    # If the json text is not valid json, we pass the text unchanged
+    # to the less command below.
+    pass
+
+  # Launch less.
+  try:
+    result = subprocess.run(['less', '-F', '-R', '-X', '-K'], input=utf8Bytes)
+  except KeyboardInterrupt:
+    pass
 
 def process(args):
   """
@@ -172,8 +243,12 @@ def process(args):
     showLoginUrl()
   elif args.logout:
     showLogoutUrl()
-  elif args.tokens:
-    getTokens()
+  elif args.getTokens:
+    getTokens(args.getTokens)
+  elif args.showTokens:
+    showTokens()
+  elif args.decodeToken:
+    showDecodedToken(args.decodeToken)
   elif args.userinfo:
     getUserInfo()
   else:
@@ -204,10 +279,15 @@ def parseCommandLine():
     help="show the login url")
   parser.add_argument("-o", "--logout", action="store_true",
     help="show the logout url")
-  parser.add_argument("-k", "--tokens", action="store_true",
-    help="write cognito tokens to tokens.json given a login code")
+  parser.add_argument("-g", "--getTokens",
+    help=f"Get the cognito tokens and write them to {tokenFilename}. Specify a login code.")
+  parser.add_argument("-s", "--showTokens", action="store_true",
+    help=f"Show the {tokenFilename} file")
+  parser.add_argument("-d", "--decodeToken",
+    help=f"""decode a token from the {tokenFilename} file, specify id_token,
+    access_token, or refresh_token""")
   parser.add_argument("-u", "--userinfo", action="store_true",
-    help="show the user information give an access token")
+    help=f"show the user information give an access token in {tokenFilename}")
 
   args = parser.parse_args(sys.argv[1:])
   return args
@@ -251,6 +331,70 @@ class TestServices(unittest.TestCase):
     self.assertTrue(params.logout_uri.startswith("https://"))
     self.assertTrue(params.scope != "")
 
+  def test_readJsonKey(self):
+    content = """\
+{
+  "name": "Steve",
+  "flower": "rose"
+}
+"""
+    filename = "tmp/readJsonKey.json"
+    createFile(filename, content)
+    value = readJsonKey(filename, "name")
+    # print(value)
+    self.assertEqual(value, "Steve")
+    os.remove(filename)
+
+  def test_readJsonKey_error(self):
+    filename = "tmp/readJsonKey_error.json"
+    createFile(filename, """{"name": "Steve",}""")
+
+    with self.assertRaises(ServicesException) as context:
+      value = readJsonKey(filename, "name")
+
+    os.remove(filename)
+
+    self.assertEqual(str(context.exception), "Unable to read the json file data.")
+
+  def test_readJsonKey_error2(self):
+    with self.assertRaises(ServicesException) as context:
+      value = readJsonKey("missingfile", "name")
+    self.assertEqual(str(context.exception), """The token file 'missingfile' doesn't exist.""")
+
+  def test_readJsonKey_error3(self):
+    filename = "tmp/readJsonKey_error3.json"
+    createFile(filename, """{"name": "Steve"}""")
+    with self.assertRaises(ServicesException) as context:
+      value = readJsonKey(filename, "notkey")
+    os.remove(filename)
+    self.assertEqual(str(context.exception), "The key 'notkey' doesn't exist in the json data.")
+
+  def test_getDecodeToken(self):
+    content = """{
+    "access_token": "eyJraWQiOiJieEtvVmw5K2hBKzRpV1IrWUtCdFVsbVNheVNPUklCUzZNRFhoYWQ4dHVrPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIyODkxOTNiMC0xMDAxLTcwMTYtNGQzNC1iNjMxYzY5M2RkYTEiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9MbTJsdTZvY1giLCJ2ZXJzaW9uIjoyLCJjbGllbnRfaWQiOiIxaDFlbWtkNHBvZjN2YWNsZTJhbGJnajJxbiIsIm9yaWdpbl9qdGkiOiIwZDM1ZTFlNy05YWVmLTRhNDgtODBhYi02NDc2YjQ4MzVjNmUiLCJldmVudF9pZCI6IjBkZGIzMmY4LTRmMTUtNGM2ZC1hM2I1LTliZmUzYTIzMmRjZiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUiLCJhdXRoX3RpbWUiOjE3MTY1ODEyNzIsImV4cCI6MTcxNjU4NDg3MiwiaWF0IjoxNzE2NTgxMjcyLCJqdGkiOiJjNzMxNjE5MC1kNjAzLTQyMGItOTM5Yy0zZTFiNjVlZDU3OGQiLCJ1c2VybmFtZSI6IjI4OTE5M2IwLTEwMDEtNzAxNi00ZDM0LWI2MzFjNjkzZGRhMSJ9.ygyyNnJlDDlY3KKYJu9-yfkI3F2PFVGy44_oIMlWFcPiS7b-IHuDeBpBMlkRhYG_PD4h7HIRp-39UQuuC0gJX4Z3nRIFg49lj4i3h-dsx3gsgNjFPG-MGwWZYJoALK_2PiEqyq4zOl_3Szy5CPRXOXqIwvMKhTtz6l9Saaa-y5zSL_TygF1Y5ZRHiWfGDKIwCdZD5asjuwZa6ZT2FiD-3dARN2OngH7CX9omohcrUPSwyhedFMtKbA4AeCW8y_hhHQFcc_PoI4S80DXBvECzcKvc_GQUPx2fCwGxfE__i57iZVzzhZKrtqXc9Ndoy_ka4T7jVa60DQ_-Jb51rprRVg"
+}
+"""
+    filename = "tmp/getDecodeToken.json"
+    createFile(filename, content)
+    data = getDecodeToken(filename, "access_token")
+    os.remove(filename)
+
+    # print(data)
+    # for k, v in data.items():
+    #   print(f"'{k}', ", end="")
+
+    # for k, v in data.items():
+    #   print(f"{k: >10}: {v}")
+
+    keys = ['sub', 'iss', 'version', 'client_id', 'origin_jti',
+            'event_id', 'token_use', 'scope', 'auth_time', 'exp',
+            'iat', 'jti', 'username']
+    for key in keys:
+      if key not in data:
+        print(f"missing key: 'key'")
+        self.assertTrue(false)
+
+    self.assertEqual(data['scope'], "openid profile")
 
 if __name__ == '__main__':
   args = parseCommandLine()
