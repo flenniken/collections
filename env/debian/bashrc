@@ -9,6 +9,10 @@ alias sudo='sudo '
 alias ls='ls --color=auto'
 alias ll='ls -l'
 
+# Run jq to format and color json, the pipe that to less.
+# Use it as a pipe:  cat my.json | jqless
+alias jqless='jq -C | less -R'
+
 alias g='gulp --silent'
 alias gw='g watch &'
 alias gr='g run-server &'

@@ -1,14 +1,24 @@
 #!/usr/bin/python3
 
+# This is the help text shown with -h:
+
 """
-This script is for setting up, testing, and maintaining the AWS
-services that collections uses.
+This script is for testing the login flow that Collections uses.
+
+The basic flow:
+
+  * Use -l to get the login url.
+  * Paste the login url in your browser and login, you will be redirected.
+  * Copy the code in the url in your browser's address bar.
+  * Use -g option specifying the code. This creates the tokens.json file.
+  * Use -s to look at the tokens file.
+  * Use -d id_token, -d access_token, -d refresh_token, to peer into each token.
 """
 
 import os
 
 if not os.environ.get("coder_env"):
-  print("Run from the docker environment.")
+  print("Run from the Collection's docker environment.")
   exit(1)
 
 import sys
@@ -24,9 +34,10 @@ import requests
 import jwt
 import subprocess
 import sys
+import textwrap
 
-# The token file created by the -g option. Used by the -u and -s options.
-tokenFilename = "tokens.json"
+# The token file created by the -g option. Used by some of the other options.
+tokenFilename = "tmp/tokens.json"
 
 class ServicesException(Exception):
   """ An exception we plan for. """
@@ -48,6 +59,7 @@ def getCognitoParameters():
   CognitoParameters = namedtuple('CognitoParameters', ['domain', 'client_id', 'redirect_uri',
     'logout_uri', 'scope',])
 
+  # todo: don't hard code these settings:
   return CognitoParameters(
     domain="https://collections.auth.us-west-2.amazoncognito.com",
     client_id="1h1emkd4pof3vacle2albgj2qn",
@@ -248,7 +260,6 @@ def showTokens():
   """
   with open(tokenFilename) as fp:
     text = fp.read()
-    # text = utf8Bytes.decode("utf-8")
   runJqLess(text)
 
 def runJqLess(jsonText):
@@ -311,7 +322,11 @@ def parseCommandLine():
 
   # Use this module's comment at the top of the file for the
   # description.
-  parser = argparse.ArgumentParser(description= __doc__)
+  # parser = argparse.ArgumentParser(description= __doc__)
+
+  parser = argparse.ArgumentParser(
+  prog='PROG', formatter_class=argparse.RawDescriptionHelpFormatter,
+  description=textwrap.dedent(__doc__))
 
   parser.add_argument("-t", "--test", action="store_true",
     help="run internal unit tests. Use alone to run all tests.")

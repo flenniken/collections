@@ -13,7 +13,7 @@ ENV coder_env=debian
 # Install apps and libraries.
 RUN apt update && apt -qy install less man sudo tree curl \
   wget nano git jq libpcre3 libpcre3-dev rsync nginx \
-  python3-requests python3-jwt
+  python3-requests python3-jwt unzip
 
 # Install glow for viewing markdown at the command line.
 # https://github.com/charmbracelet/glow
@@ -81,6 +81,11 @@ COPY --chown=coder:coder package.json package.json
 # parent of collections. This installs all modules specified in the
 # package.json file.
 RUN npm install
+
+# Install aws cli in the ~/aws folder
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+RUN unzip awscliv2.zip
+RUN sudo ./aws/install
 
 # Start in the collections directory.
 WORKDIR /home/coder/collections
