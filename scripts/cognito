@@ -268,7 +268,7 @@ def parseCommandLine():
   parser.add_argument("--createPool", metavar='pool-name',
     help="Not Implemented: Create a cognito pool for use with collections. Specify the pool name, e.g. collections_pool")
   parser.add_argument("--writeCognitoConfig", metavar='pool-name',
-    help="Not Implemented: write the ~/.aws/cognito-config file")
+    help="write the ~/.aws/cognito-config file")
   parser.add_argument("-l", "--listUsers", action="store_true",
     help="show the collections users")
   parser.add_argument("--createUser", action="store_true",
