@@ -59,6 +59,9 @@ RUN npm install --global typescript
 # Install bashrc for the prompt and some aliases.
 COPY --chown=coder:coder bashrc /home/coder/.bashrc
 
+# Install more packages.
+RUN apt -qy install python3-boto3
+
 # Switch to coder user for following commands.
 USER coder
 

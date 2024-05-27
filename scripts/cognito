@@ -1,0 +1,219 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+
+"""
+This script is for setting up cognito and managing users.
+
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+import sys
+import argparse
+import traceback
+import sys
+import signal
+import unittest
+import urllib.parse
+from collections import namedtuple
+import json
+import requests
+import jwt
+import subprocess
+import sys
+import textwrap
+import tomllib
+import boto3
+
+class CognitoException(Exception):
+  """ An exception we plan for. """
+  pass
+
+def printError(*args, **kwargs):
+  """ Print message to standard error. """
+  print(*args, file=sys.stderr, **kwargs)
+
+def createFile(filename, content):
+  """
+  Create a file with the given content.
+  """
+  with open(filename, "w") as fp:
+    fp.write(content)
+
+def runJqLess(jsonText):
+  """
+  Launch less to view the specified json. The jq command formats
+  and colors it.
+  """
+  # Run json data through jq.
+  utf8Bytes = jsonText.encode('utf-8')
+  try:
+    result = subprocess.run(['jq', '-C'], stdout=subprocess.PIPE, input=utf8Bytes)
+    utf8Bytes = result.stdout
+  except:
+    # If the json text is not valid json, we pass the text unchanged
+    # to the less command below.
+    pass
+
+  # Launch less.
+  try:
+    result = subprocess.run(['less', '-F', '-R', '-X', '-K'], input=utf8Bytes)
+  except KeyboardInterrupt:
+    pass
+
+def getAttributes(cognito_attributes):
+  """
+  Convert the cognito attributes to a dictionary.
+  """
+# 'Attributes': [{'Name': 'email', 'Value':
+#   'steve.flenniken@gmail.com'}, {'Name': 'family_name', 'Value':
+#   'Flenniken'}, {'Name': 'given_name', 'Value': 'Steve'}, {'Name':
+#   'custom:admin', 'Value': '0'}]
+#
+# { 'email': 'steve.flenniken@gmail.com', 'family_name': 'Flenniken', 'given_name': 'Steve', 'custom:admin': 0}
+  result = {}
+  for d in cognito_attributes:
+    result[d['Name']] = d['Value']
+  return result    
+
+def printDataTime(dt):
+  """
+  """
+  # https://strftime.org/
+  # https://en.wikipedia.org/wiki/ISO_8601
+  # return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+  # return dt.astimezone().replace(microsecond=0).isoformat()
+  return dt.strftime("%Y-%m-%d %H:%M:%S %Z")
+
+def listUsers():
+  """
+  Show the users.
+  """
+  client = boto3.client('cognito-idp')
+  userPoolId = "us-west-2_Lm2lu6ocX"
+  response = client.list_users(
+    UserPoolId=userPoolId,
+    AttributesToGet=[ "email", "given_name", "family_name", 'custom:admin']
+  )
+  users = response['Users']
+
+  print("id enabled admin status first last email created")
+  for user in users:
+    a = getAttributes(user['Attributes'])
+    # print(f"email: {a['email']}")
+    # print(f"given_name: {a['given_name']}")
+    # print(f"family_name: {a['family_name']}")
+    # print(f"custom:admin: {a['custom:admin']}")
+    # print(f"Username: {user['Username']}")
+    # print(f"UserCreateDate: {printDataTime(user['UserCreateDate'])}")
+    # print(f"UserLastModifiedDate: {printDataTime(user['UserLastModifiedDate'])}")
+    # print(f"Enabled: {user['Enabled']}")
+    # print(f"Enabled: {user['UserStatus']}")
+
+    # Print a user per line.
+    print(f"\
+{user['Username']} \
+{user['Enabled']} \
+{a['custom:admin']} \
+{user['UserStatus']} \
+{a['given_name']} \
+{a['family_name']} \
+{a['email']} \
+{printDataTime(user['UserCreateDate'])}")
+
+def process(args):
+  """
+  """
+  if args.listUsers:
+    listUsers()
+  else:
+    showHelp()
+
+def parseCommandLine():
+  """
+  Parse the command line arguments.
+  """
+  if len(sys.argv) == 1:
+    # When there are no arguments provided, show the help information.
+    sys.argv.append("-h")
+  else:
+    # When -t is provided, change argv so unittest does not see it.
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ['-t', '--test']:
+        sys.argv.pop(ix+1)
+        args = argparse.Namespace(test = True)
+        return args
+
+  # Use this module's comment at the top of the file for the
+  # description.
+  # parser = argparse.ArgumentParser(description= __doc__)
+
+  parser = argparse.ArgumentParser(
+  prog='PROG', formatter_class=argparse.RawDescriptionHelpFormatter,
+  description=textwrap.dedent(__doc__))
+
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests. Use alone to run all tests.")
+  parser.add_argument("--createPool", metavar='pool-name',
+    help="Not Implemented: Create a cognito pool for use with collections. Specify the pool name, e.g. collections_pool")
+  parser.add_argument("--writeCognitoConfig", metavar='pool-name',
+    help="Not Implemented: write the ~/.aws/cognito-config file")
+  parser.add_argument("-l", "--listUsers", action="store_true",
+    help="show the collections users")
+  parser.add_argument("--createUser", action="store_true",
+    help="Not Implemented: create a new user")
+  parser.add_argument("--editUser", metavar='user-id',
+    help="Not Implemented: edit an existing user")
+
+  args = parser.parse_args(sys.argv[1:])
+  return args
+
+def signalHandler(sig, frame):
+  """ Handle ctrl-C """
+  sys.exit(1)
+
+def main(args):
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    process(args)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except CognitoException as ex:
+    print(str(ex))
+  except Exception as ex:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0 # success
+
+class TestCognito(unittest.TestCase):
+
+  def test_me(self):
+    self.assertEqual(True, bool(1))
+    self.assertEqual(False, bool(0))
+
+  def test_getAttributes(self):
+    cognito_attributes = [
+      {'Name': 'email', 'Value': 'steve.flenniken@gmail.com'},
+      {'Name': 'family_name', 'Value': 'Flenniken'},
+      {'Name': 'given_name', 'Value': 'Steve'},
+      {'Name': 'custom:admin', 'Value': '0'}
+    ]
+    d = getAttributes(cognito_attributes)
+    self.assertEqual(d['email'], 'steve.flenniken@gmail.com')
+    self.assertEqual(d['family_name'], 'Flenniken')
+    self.assertEqual(d['given_name'], 'Steve')
+    self.assertEqual(d['custom:admin'], '0')
+
+
+if __name__ == '__main__':
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)
