@@ -29,6 +29,7 @@ import sys
 import textwrap
 import tomllib
 import boto3
+import pprint
 
 class CognitoException(Exception):
   """ An exception we plan for. """
@@ -79,7 +80,7 @@ def getAttributes(cognito_attributes):
   result = {}
   for d in cognito_attributes:
     result[d['Name']] = d['Value']
-  return result    
+  return result
 
 def printDataTime(dt):
   """
@@ -126,11 +127,116 @@ def listUsers():
 {a['email']} \
 {printDataTime(user['UserCreateDate'])}")
 
+def getCognitoBoto3Client():
+  """
+  Return the boto3 cognito client.
+  """
+  configFilename = "/home/coder/.aws/config"
+  credsFilename = "/home/coder/.aws/credentials"
+  if not os.path.exists(configFilename) or not os.path.exists(credsFilename):
+     raise CognitoException("""\
+
+Before this script can access your aws cognito user pool, you need an
+AWS account and an IAM user with with AmazonCognitoPowerUser
+permissions.
+
+Run "aws configure" and specify the IAM user's credentials.
+""")
+  return boto3.client('cognito-idp')
+
+def writeCognitoConfig(poolName):
+  """
+  Write the cognito config file: ~/.aws/cognito-config given the pool name.
+  """
+  client = getCognitoBoto3Client()
+  client = boto3.client('cognito-idp')
+
+  # Get the cognito user pools.
+  response = client.list_user_pools(MaxResults=30)
+  userPools = response['UserPools']
+
+  # Find the user pool with the passed in name.
+  for userPool in userPools:
+    if userPool['Name'] == poolName:
+      userPoolId = userPool['Id']
+      break
+  else: # no break
+  # List the user pools.
+    print("User Pools:")
+    for ix, userPool in enumerate(userPools):
+      print(f"  {ix} {userPool['Name']} {userPool['Id']}")
+    raise CognitoException("The pool name doesn't exist.")
+
+  # Get the pool's application clients.
+  response = client.list_user_pool_clients(
+    UserPoolId=userPoolId,
+    MaxResults=30,
+  )
+
+  # print()
+  # pprint.pp(response)
+
+  # Find the collections client.
+  userPoolClients = response["UserPoolClients"]
+  for userPoolClient in userPoolClients:
+    if userPoolClient['ClientName'] == 'CollectionsClient':
+      client_id = userPoolClient['ClientId']
+      break
+  else: # no break
+    raise CognitoException(
+      "The pool doesn't have an application client called CollectionsClient.")
+
+  response = client.describe_user_pool_client(
+    UserPoolId=userPoolId, ClientId=client_id)
+
+  # print()
+  # pprint.pp(response)
+
+  userPoolClient = response['UserPoolClient']
+  assert userPoolClient['ClientName'] == 'CollectionsClient'
+
+  callbackURLs = userPoolClient['CallbackURLs']
+  if len(callbackURLs) != 1:
+    raise CognitoException(f"Expected one callback (redirect_uri) but got: {len(callbackURLs)}")
+  redirect_uri = callbackURLs[0]
+
+  logoutURLs = userPoolClient['LogoutURLs']
+  if len(logoutURLs) != 1:
+    raise CognitoException(f"Expected one callback (logout_uri) but got: {len(logoutURLs)}")
+  logout_uri = logoutURLs[0]
+
+  # Get the domain from the redirect_uri
+  from urllib.parse import urlparse
+  domain = urlparse(redirect_uri).netloc
+
+  # Hard code the scope.
+  scope = "openid profile"
+
+  config = {}
+  config['client_id'] = client_id
+  config['redirect_uri'] = redirect_uri
+  config['logout_uri'] = logout_uri
+  config['scope'] = scope
+  config['domain'] = domain
+
+  # Write the cognito config file: ~/.aws/cognito-config.
+  filename = "/home/coder/.aws/cognito-config"
+  with open(filename, 'w') as fp:
+    fp.write(json.dumps(config))
+
+  print(f"""\
+Wrote the cognito config file. View it with:
+
+  cat {filename} | jqless
+""")
+
 def process(args):
   """
   """
   if args.listUsers:
     listUsers()
+  elif args.writeCognitoConfig:
+    writeCognitoConfig(args.writeCognitoConfig)
   else:
     showHelp()
 

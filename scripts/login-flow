@@ -61,6 +61,29 @@ def getCognitoParameters(filename=None):
 
   if filename is None:
     filename = "/home/coder/.aws/cognito-config"
+    if not os.path.exists(filename):
+      content = """\
+{
+  "domain": "collections.flenniken.net",
+  "client_id": "1h1emkd4pof3vacle2albgj2qn&",
+  "redirect_uri": "https://collections.flenniken.net/index.html",
+  "logout_uri": "https://collections.flenniken.net/index.html",
+  "scope": "openid profile"
+}
+    """
+
+      raise LoginFlowException(f"""\
+The cognito file is missing: {filename}.
+
+Either run:
+
+  scripts/cognito --writeCognitoConfig collections-pool
+
+Or create it by hand using this template:
+
+{content}
+""")
+
 
   # Read the Cognito parameters from the file.
   cognitoParameters = readJsonFile(filename)
@@ -122,7 +145,7 @@ def readJsonFile(filename):
   Read the given json file and return a dictionary.
   """
   if (not os.path.exists(filename)):
-    raise LoginFlowException(f"The json file doesn't exist.")
+    raise LoginFlowException(f"The json file doesn't exist: {filename}")
 
   try:
     with open(filename) as fp:
@@ -428,7 +451,7 @@ class TestLoginFlow(unittest.TestCase):
   def test_getCognitoParameters_error1(self):
     with self.assertRaises(LoginFlowException) as context:
       params = getCognitoParameters("missing")
-    self.assertEqual(str(context.exception), "The json file doesn't exist.")
+    self.assertEqual(str(context.exception), "The json file doesn't exist: missing")
 
   def test_getCognitoParameters_error(self):
     filename = "tmp/test_getCognitoParameters_error.txt"
@@ -467,7 +490,7 @@ class TestLoginFlow(unittest.TestCase):
   def test_readJsonKey_error2(self):
     with self.assertRaises(LoginFlowException) as context:
       value = readJsonKey("missingfile", "name")
-    self.assertEqual(str(context.exception), """The json file doesn't exist.""")
+    self.assertEqual(str(context.exception), """The json file doesn't exist: missingfile""")
 
   def test_readJsonKey_error3(self):
     filename = "tmp/readJsonKey_error3.json"
