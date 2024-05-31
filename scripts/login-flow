@@ -258,7 +258,7 @@ Wrote the tokens to {tokenFilename}.
 You can use the following options to look at and use the tokens.
 
   -s -- look at the file in the less command or:
-    cat {tokenFilename} | jq -C | less -R
+    cat {tokenFilename} | jqless
 
   -d -- decode one of the tokens in the file. Similar to jwt.io.
 
@@ -368,8 +368,6 @@ def parseCommandLine():
 
   # Use this module's comment at the top of the file for the
   # description.
-  # parser = argparse.ArgumentParser(description= __doc__)
-
   parser = argparse.ArgumentParser(
   prog='PROG', formatter_class=argparse.RawDescriptionHelpFormatter,
   description=textwrap.dedent(__doc__))

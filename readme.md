@@ -288,6 +288,96 @@ dist
 
 [⬇ ────────](#Contents)
 
+# Login Setup
+
+Collections uses the AWS cognito service to handle login.  This allows
+collections to be a public static website without a backend server
+(other than AWS).
+
+The pool is configured to login with an email and password and it
+doesn’t allow sign up.  You add new users manually.
+
+A user can be an admin which sees debugging controls in the UI.
+
+You run two scripts, configure-pool and login-flow, for working with
+cognito.
+
+## Configure-pool Script
+
+You use configure-pool script to create the cognito user pool, to
+create the cognito-config file and to maintain users.
+
+~~~
+# docker container
+scripts/configure-pool
+~~~
+
+Configure-pool communicates with AWS Cognito through an IAM user.
+
+## Create IAM User
+
+You need to create an IAM user.  To do this you login to your AWS
+account console and select the IAM service. Click the plus sign to add
+a new user and give it cognito power user permissions
+(AmazonCognitoPowerUser).  Save the credentials somewhere safe.
+
+Put the credentials on the docker container with the aws command line
+as shown below.
+
+Note: you will need the credentials again when you delete and recreate
+the docker image.
+
+~~~
+# docker container
+aws configure 
+~~~
+
+## Create Pool
+
+You create a new pool with the cognito createUserPool option as shown
+below. In the example we name the pool “collections-pool”.
+
+~~~
+# docker container
+scripts/configure-pool —createUserPool collections-pool
+~~~
+
+## Create Config File
+
+The config file is used by the website and the login-flow script so
+they know how to communicate with AWS Cognito.
+
+You create the config file with the writeCognitoConfig option. It
+reads the pool information from AWS.
+
+~~~
+# docker container
+scripts/cognito —writeCognitoConfig collections-pool
+~~~
+
+## Login-flow Script
+
+You use login-flow script to manually step through the website login
+process and decode tokens.
+
+~~~
+# docker container
+scripts/login-flow
+
+This script is for testing the login flow that Collections uses.
+
+The basic flow:
+
+  * Use -l to get the login url.
+  * Paste the login url in your browser and login, you will be redirected.
+  * Copy the code in the url in your browser's address bar.
+  * Use -g option specifying the code. This creates the tokens.json file.
+  * Use -s to look at the tokens file.
+  * Use -d id_token, -d access_token, -d refresh_token, to peer into each token.
+~~~
+
+[⬇ ────────](#Contents)
+
 # Test Tips
 
 How to develop on Chrome, Safari or xcode simulator.
@@ -372,6 +462,7 @@ When making changes to the image page test them with these steps:
 * [Build All](#build-all)
 * [Build Tasks](#build-tasks)
 * [Build Folder](#build-folder)
+* [Login Setup](#login-setup)
 * [Test Tips](#test-tips)
 * [Test Touch](#test-touch)
 * [Test on iphone](#test-on-iphone)

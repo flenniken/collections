@@ -3,7 +3,7 @@
 # This is the help text shown with -h:
 
 """
-This script is for setting up cognito and managing users.
+This script is for setting up the cognito login system and managing users.
 
 """
 
@@ -82,7 +82,7 @@ def getAttributes(cognito_attributes):
     result[d['Name']] = d['Value']
   return result
 
-def printDataTime(dt):
+def printDateTime(dt):
   """
   """
   # https://strftime.org/
@@ -95,7 +95,7 @@ def listUsers():
   """
   Show the users.
   """
-  client = boto3.client('cognito-idp')
+  client = getCognitoBoto3Client()
   userPoolId = "us-west-2_Lm2lu6ocX"
   response = client.list_users(
     UserPoolId=userPoolId,
@@ -111,8 +111,8 @@ def listUsers():
     # print(f"family_name: {a['family_name']}")
     # print(f"custom:admin: {a['custom:admin']}")
     # print(f"Username: {user['Username']}")
-    # print(f"UserCreateDate: {printDataTime(user['UserCreateDate'])}")
-    # print(f"UserLastModifiedDate: {printDataTime(user['UserLastModifiedDate'])}")
+    # print(f"UserCreateDate: {printDateTime(user['UserCreateDate'])}")
+    # print(f"UserLastModifiedDate: {printDateTime(user['UserLastModifiedDate'])}")
     # print(f"Enabled: {user['Enabled']}")
     # print(f"Enabled: {user['UserStatus']}")
 
@@ -125,7 +125,7 @@ def listUsers():
 {a['given_name']} \
 {a['family_name']} \
 {a['email']} \
-{printDataTime(user['UserCreateDate'])}")
+{printDateTime(user['UserCreateDate'])}")
 
 def getCognitoBoto3Client():
   """
@@ -149,7 +149,6 @@ def writeCognitoConfig(poolName):
   Write the cognito config file: ~/.aws/cognito-config given the pool name.
   """
   client = getCognitoBoto3Client()
-  client = boto3.client('cognito-idp')
 
   # Get the cognito user pools.
   response = client.list_user_pools(MaxResults=30)
@@ -161,10 +160,10 @@ def writeCognitoConfig(poolName):
       userPoolId = userPool['Id']
       break
   else: # no break
-  # List the user pools.
+    # The specified pool was not found. List the existing user pools.
     print("User Pools:")
     for ix, userPool in enumerate(userPools):
-      print(f"  {ix} {userPool['Name']} {userPool['Id']}")
+      print(f"  {ix+1} {userPool['Name']} {userPool['Id']}")
     raise CognitoException("The pool name doesn't exist.")
 
   # Get the pool's application clients.
@@ -257,8 +256,6 @@ def parseCommandLine():
 
   # Use this module's comment at the top of the file for the
   # description.
-  # parser = argparse.ArgumentParser(description= __doc__)
-
   parser = argparse.ArgumentParser(
   prog='PROG', formatter_class=argparse.RawDescriptionHelpFormatter,
   description=textwrap.dedent(__doc__))
