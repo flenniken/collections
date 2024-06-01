@@ -35,6 +35,7 @@ import jwt
 import subprocess
 import sys
 import textwrap
+import pprint
 
 # The token file created by the -g option. Used by some of the other options.
 tokenFilename = "tmp/tokens.json"
@@ -43,12 +44,37 @@ class LoginFlowException(Exception):
   """ An exception we plan for. """
   pass
 
+def printError(*args, **kwargs):
+  """ Print message to standard error. """
+  print(*args, file=sys.stderr, **kwargs)
+
 def createFile(filename, content):
   """
   Create a file with the given content.
   """
   with open(filename, "w") as fp:
     fp.write(content)
+
+def runJqLess(jsonText):
+  """
+  Launch less to view the specified json. The jq command formats
+  and colors it.
+  """
+  # Run json data through jq.
+  utf8Bytes = jsonText.encode('utf-8')
+  try:
+    result = subprocess.run(['jq', '-C'], stdout=subprocess.PIPE, input=utf8Bytes)
+    utf8Bytes = result.stdout
+  except:
+    # If the json text is not valid json, we pass the text unchanged
+    # to the less command below.
+    pass
+
+  # Launch less.
+  try:
+    result = subprocess.run(['less', '-F', '-R', '-X', '-K'], input=utf8Bytes)
+  except KeyboardInterrupt:
+    pass
 
 def getCognitoParameters(filename=None):
   """
@@ -59,12 +85,15 @@ def getCognitoParameters(filename=None):
   requiredParameters = ['domain', 'client_id', 'redirect_uri',
     'logout_uri', 'scope',]
 
+  ## cognito domain:
+  ## https://collections.auth.us-west-2.amazoncognito.com
+
   if filename is None:
     filename = "/home/coder/.aws/cognito-config"
     if not os.path.exists(filename):
       content = """\
 {
-  "domain": "collections.flenniken.net",
+  "domain": "https://collections.auth.us-west-2.amazoncognito.com",
   "client_id": "1h1emkd4pof3vacle2albgj2qn&",
   "redirect_uri": "https://collections.flenniken.net/index.html",
   "logout_uri": "https://collections.flenniken.net/index.html",
@@ -103,49 +132,55 @@ Or create it by hand using this template:
   )
 
 def showLoginUrl():
-  """
-  Print out the login url.
-  """
-  params = getCognitoParameters()
-
-  print("""\
+  url = getLoginUrl()
+  print(f"""\
 
 Enter the following url into your browser to login.  After logging in
 it will redirect to the redirect_uri which will contain a code and a
 state of "loggedIn". You have a few minutes to use the code to get
 tokens with the -g option.
 
+{url}
+
 """)
 
-  url = f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedIn&\
+def getLoginUrl():
+  """
+  Return the login url.
+  """
+  params = getCognitoParameters()
+  return f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedIn&\
 response_type=code&scope={urllib.parse.quote(params.scope)}&redirect_uri={params.redirect_uri}"
-  print(url)
-  print()
+
+def getLogoutUrl():
+  """
+  Return the logout url.
+  """
+  params = getCognitoParameters()
+  return f"{params.domain}/logout?client_id={params.client_id}&state=loggedOut&\
+logout_uri={params.logout_uri}"
 
 def showLogoutUrl():
   """
   Print out the logout url.
   """
-  params = getCognitoParameters()
-
-  print("""\
+  url = getLogoutUrl()
+  print(f"""\
 
 Enter the following url into your browser to logout.  After logging
 out it will redirect to the logout_uri which will contain a state of
 "loggedOut".
-""")
 
-  url = f"{domain}/logout?client_id={params.client_id}&state=loggedOut&\
-logout_uri={params.logout_uri}"
-  print(url)
-  print()
+{url}
+
+""")
 
 def readJsonFile(filename):
   """
   Read the given json file and return a dictionary.
   """
   if (not os.path.exists(filename)):
-    raise LoginFlowException(f"The json file doesn't exist: {filename}")
+    raise LoginFlowException(f"The json file doesn't exist: '{filename}'.")
 
   try:
     with open(filename) as fp:
@@ -174,10 +209,12 @@ def getDecodeToken(tokenFilename, tokenName):
   Read the given json file and return the specified token's decoded json.
   """
   token = readJsonKey(tokenFilename, tokenName)
+  return decodeToken(token)
 
-  # Decode the token but don't verify it.
+def decodeToken(tokenString):
+  # Decode the token string and return json.
   try:
-    jdata = jwt.decode(token, algorithms=["RS256"], options={"verify_signature": False})
+    jdata = jwt.decode(tokenString, algorithms=["RS256"], options={"verify_signature": False})
   except Exception as ex:
     raise LoginFlowException(f"Unable to decode the token. jwt returns:\n{str(ex)}")
   return(jdata)
@@ -220,7 +257,6 @@ def getTokens(code=None, refresh=False):
   # Create the token url.
   params = getCognitoParameters()
   url = f"{params.domain}/oauth2/token"
-  print(f"url: '{url}'")
 
   # Post to the token url.
   headers = {"Content-type": "application/x-www-form-urlencoded"}
@@ -238,12 +274,18 @@ def getTokens(code=None, refresh=False):
       "code": code,
     }
 
+  print(f"url: '{url}'")
+  print("headers:")
+  pprint.pp(headers)
+  print("data:")
+  pprint.pp(data)
+
   response = requests.post(url, data=data, headers=headers)
 
   if response.status_code != 200:
     print(f"""Coginto responded with status code: {response.status_code}
 The file was not written. Response text:""")
-    runJqLess(response.text)
+    print(response.text)
     return
 
   # Write the tokens returned to a file.
@@ -308,27 +350,6 @@ def showTokens():
     text = fp.read()
   runJqLess(text)
 
-def runJqLess(jsonText):
-  """
-  Launch less to view the specified json. The jq command formats
-  and colors it.
-  """
-  # Run json data through jq.
-  utf8Bytes = jsonText.encode('utf-8')
-  try:
-    result = subprocess.run(['jq', '-C'], stdout=subprocess.PIPE, input=utf8Bytes)
-    utf8Bytes = result.stdout
-  except:
-    # If the json text is not valid json, we pass the text unchanged
-    # to the less command below.
-    pass
-
-  # Launch less.
-  try:
-    result = subprocess.run(['less', '-F', '-R', '-X', '-K'], input=utf8Bytes)
-  except KeyboardInterrupt:
-    pass
-
 def process(args):
   """
   """
@@ -375,7 +396,7 @@ def parseCommandLine():
   parser.add_argument("-t", "--test", action="store_true",
     help="run internal unit tests. Use alone to run all tests.")
   parser.add_argument("-l", "--login", action="store_true",
-    help="show the login url (login endpoint)")
+    help="show the login url (oauth2/authorize endpoint)")
   parser.add_argument("-o", "--logout", action="store_true",
     help="show the logout url (logout endpoint)")
   parser.add_argument("-g", "--getTokens", metavar="code",
@@ -394,10 +415,6 @@ def parseCommandLine():
 
   args = parser.parse_args(sys.argv[1:])
   return args
-
-def printError(*args, **kwargs):
-  """ Print message to standard error. """
-  print(*args, file=sys.stderr, **kwargs)
 
 def signalHandler(sig, frame):
   """ Handle ctrl-C """
@@ -422,6 +439,20 @@ class TestLoginFlow(unittest.TestCase):
   def test_me(self):
     self.assertEqual(True, bool(1))
     self.assertEqual(False, bool(0))
+
+  def test_getLoginUrl(self):
+    url = getLoginUrl()
+    # print(url)
+    self.assertTrue(url.startswith("https://"))
+    self.assertTrue("/oauth2/authorize?client_id=" in url)
+    self.assertTrue("state=loggedIn" in url)
+
+  def test_getLogoutUrl(self):
+    url = getLogoutUrl()
+    # print(url)
+    self.assertTrue(url.startswith("https://"))
+    self.assertTrue("/logout?client_id=" in url)
+    self.assertTrue("state=loggedOut" in url)
 
   def test_getCognitoParameters(self):
     filename = "tmp/test_getCognitoParameters.txt"
@@ -449,7 +480,7 @@ class TestLoginFlow(unittest.TestCase):
   def test_getCognitoParameters_error1(self):
     with self.assertRaises(LoginFlowException) as context:
       params = getCognitoParameters("missing")
-    self.assertEqual(str(context.exception), "The json file doesn't exist: missing")
+    self.assertEqual(str(context.exception), "The json file doesn't exist: 'missing'.")
 
   def test_getCognitoParameters_error(self):
     filename = "tmp/test_getCognitoParameters_error.txt"
@@ -488,7 +519,7 @@ class TestLoginFlow(unittest.TestCase):
   def test_readJsonKey_error2(self):
     with self.assertRaises(LoginFlowException) as context:
       value = readJsonKey("missingfile", "name")
-    self.assertEqual(str(context.exception), """The json file doesn't exist: missingfile""")
+    self.assertEqual(str(context.exception), """The json file doesn't exist: 'missingfile'.""")
 
   def test_readJsonKey_error3(self):
     filename = "tmp/readJsonKey_error3.json"
@@ -524,6 +555,67 @@ class TestLoginFlow(unittest.TestCase):
         self.assertTrue(false)
 
     self.assertEqual(data['scope'], "openid profile")
+
+  def test_readJsonFile(self):
+    filename = "tmp/test_readJsonFile.json"
+    contents = """\
+{
+  "a": 5
+}
+"""
+    createFile(filename, contents)
+    data = readJsonFile(filename)
+    self.assertEqual(data["a"], 5)
+    os.remove(filename)
+
+  def test_readJsonFile_error(self):
+    with self.assertRaises(LoginFlowException) as context:
+      data = readJsonFile("missing")
+    self.assertEqual(str(context.exception), "The json file doesn't exist: 'missing'.")
+
+  def test_readJsonFile_error2(self):
+    filename = "tmp/test_readJsonFile_error2.json"
+    contents = """\
+{
+  "a": 5, error
+}
+"""
+    createFile(filename, contents)
+    with self.assertRaises(LoginFlowException) as context:
+      data = readJsonFile(filename)
+    self.assertEqual(str(context.exception), "Invalid json file data.")
+    os.remove(filename)
+
+  def test_decodeToken(self):
+    tokenString = "eyJraWQiOiIzZ0pzTmNjVnEzYTRNK1JQRmNUcHptU1ZDc3BSemYya\
+UdLbVQ4WjJHdWFBPSIsImFsZyI6IlJTMjU2In0.eyJhdF9oYXNoIjoiMzQ0eFFRQkZkOXBtYm\
+ViZlA1bjh2USIsInN1YiI6IjI4OTE5M2IwLTEwMDEtNzAxNi00ZDM0LWI2MzFjNjkzZGRhMSIs\
+ImN1c3RvbTphZG1pbiI6IjEiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0\
+yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9MbTJsdTZvY1giLCJjb2duaXRvOnVzZXJuYW1lIjo\
+iMjg5MTkzYjAtMTAwMS03MDE2LTRkMzQtYjYzMWM2OTNkZGExIiwiZ2l2ZW5fbmFtZSI6IlN0ZXZl\
+Iiwib3JpZ2luX2p0aSI6IjE2ZTM4YmM4LTlhN2ItNDUwMC1hYTMyLTA2NmQzYmY1M2EyZCIsImF1ZC\
+I6IjFoMWVta2Q0cG9mM3ZhY2xlMmFsYmdqMnFuIiwiZXZlbnRfaWQiOiI2MGQ4YTlkNC01OTE2LTQwZ\
+mQtOTM1MC0xZmM3ZTFmNzk0NjgiLCJ0b2tlbl91c2UiOiJpZCIsImF1dGhfdGltZSI6MTcxNjc0ODE1M\
+CwiZXhwIjoxNzE2NzUxNzUwLCJpYXQiOjE3MTY3NDgxNTAsImZhbWlseV9uYW1lIjoiRmxlbm5pa2VuIi\
+wianRpIjoiMTIyZmU5MGUtYjU4Yi00NzlmLWE0ZWQtYTA2ZDg4N2Y3OGYxIiwiZW1haWwiOiJzdGV2ZS5m\
+bGVubmlrZW5AZ21haWwuY29tIn0.jrFF11SXYpHIp9YMCiKngkahmcgCjYvaTgjmy5RwGjpa7l8jFJFf-mI\
+D45WJoKC4iKcrdQL0sR4NRWzt74tnoBU2czCl_wB4OUq93JKakncmgMEqCOCO6Yq3eG99fKf1ARfJQ8Aa_N4\
+Qx4B3DwbtsoI7NkBhFao6vXwU49HSixMkExcbB9DDVPGLrhxDBveDmATsDPb-jElDSQtqrpF8fiw6QHxKo3UJ\
+P8Is_e72DOsWOpiLhciZglMPjO2HR_ZF6FQL1zsklykVyzvR9y_W9FC8SjB6fvYghV2GjJ0PP_nxr_GKHkPHK8\
+NGItumhDXKXoHvjwD-5s2qiJQ2xHDptw"
+    data = decodeToken(tokenString)
+    self.assertTrue("at_hash" in data)
+    self.assertTrue("given_name" in data)
+    self.assertTrue("family_name" in data)
+    self.assertTrue("email" in data)
+    self.assertTrue("custom:admin" in data)
+
+  def test_decodeToken_error(self):
+    with self.assertRaises(LoginFlowException) as context:
+      decodeToken("not a token")
+    self.assertEqual(str(context.exception), """\
+Unable to decode the token. jwt returns:
+Not enough segments""")
 
 if __name__ == '__main__':
   args = parseCommandLine()

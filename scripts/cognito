@@ -35,38 +35,6 @@ class CognitoException(Exception):
   """ An exception we plan for. """
   pass
 
-def printError(*args, **kwargs):
-  """ Print message to standard error. """
-  print(*args, file=sys.stderr, **kwargs)
-
-def createFile(filename, content):
-  """
-  Create a file with the given content.
-  """
-  with open(filename, "w") as fp:
-    fp.write(content)
-
-def runJqLess(jsonText):
-  """
-  Launch less to view the specified json. The jq command formats
-  and colors it.
-  """
-  # Run json data through jq.
-  utf8Bytes = jsonText.encode('utf-8')
-  try:
-    result = subprocess.run(['jq', '-C'], stdout=subprocess.PIPE, input=utf8Bytes)
-    utf8Bytes = result.stdout
-  except:
-    # If the json text is not valid json, we pass the text unchanged
-    # to the less command below.
-    pass
-
-  # Launch less.
-  try:
-    result = subprocess.run(['less', '-F', '-R', '-X', '-K'], input=utf8Bytes)
-  except KeyboardInterrupt:
-    pass
-
 def getAttributes(cognito_attributes):
   """
   Convert the cognito attributes to a dictionary.
@@ -84,6 +52,7 @@ def getAttributes(cognito_attributes):
 
 def printDateTime(dt):
   """
+  Print time like: 2024-05-05 21:41:57 UTC
   """
   # https://strftime.org/
   # https://en.wikipedia.org/wiki/ISO_8601
@@ -204,9 +173,9 @@ def writeCognitoConfig(poolName):
     raise CognitoException(f"Expected one callback (logout_uri) but got: {len(logoutURLs)}")
   logout_uri = logoutURLs[0]
 
-  # Get the domain from the redirect_uri
-  from urllib.parse import urlparse
-  domain = urlparse(redirect_uri).netloc
+  # todo: get the domain from cognito
+  ## cognito domain:
+  domain = "https://collections.auth.us-west-2.amazoncognito.com"
 
   # Hard code the scope.
   scope = "openid profile"
@@ -263,7 +232,7 @@ def parseCommandLine():
   parser.add_argument("-t", "--test", action="store_true",
     help="run internal unit tests. Use alone to run all tests.")
   parser.add_argument("--createPool", metavar='pool-name',
-    help="Not Implemented: Create a cognito pool for use with collections. Specify the pool name, e.g. collections_pool")
+    help="Not Implemented: Create a cognito pool for use with collections. Specify the pool name, e.g. collections-pool")
   parser.add_argument("--writeCognitoConfig", metavar='pool-name',
     help="write the ~/.aws/cognito-config file")
   parser.add_argument("-l", "--listUsers", action="store_true",
