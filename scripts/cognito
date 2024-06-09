@@ -31,6 +31,9 @@ import tomllib
 import boto3
 from datetime import datetime, timezone
 
+clientName = "CollectionsClient"
+
+
 class CognitoException(Exception):
   """ An exception we plan for. """
   pass
@@ -62,12 +65,15 @@ def formatDateTime(dt):
 
 def listUsers(poolName):
   """
-  Show the users.
+  List the users.
   """
   client = getCognitoBoto3Client()
-  userPoolId = getUserPoolId(client, poolName)
+  pools = poolNameToId(client)
+  if poolName not in pools:
+    raise CognitoException("The user pool doesn't exist.")
+
   response = client.list_users(
-    UserPoolId=userPoolId,
+    UserPoolId=pool[poolName],
     AttributesToGet=[ "email", "given_name", "family_name", 'custom:admin']
   )
   users = response['Users']
@@ -113,13 +119,16 @@ Run "aws configure" and specify the IAM user's credentials.
 """)
   return boto3.client('cognito-idp')
 
-def createPool(poolName, domainPrefix):
+def createPool(poolName):
   """
-  Create the pool. Example poolName: collections-pool, example
-  domainPrefix: collections. The domainPrefix must be unique in the
-  world.
+  Create a pool with the given name. Prompt for other parameters when needed.
   """
   client = getCognitoBoto3Client()
+
+  # Make sure the pool name doesn't already exist.
+  pools = poolNameToId(client)
+  if poolName in pools:
+    raise CognitoException("The user pool already exists.")
 
   # reference:
   # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/create_user_pool.html
@@ -186,7 +195,12 @@ def createPool(poolName, domainPrefix):
     #     'DeviceOnlyRememberedOnUserPrompt': True|False
     # },
 
-    # todo: pass in the following?
+    # todo: pass in the following. The email needs to be setup in
+    # Amazon ahead of time.  Here we query for the information and put
+    # it in the pool settings. Create a command to setup the email.
+    # ses:
+    # https://us-west-2.console.aws.amazon.com/ses/home?region=us-west-2#/identities
+
     EmailConfiguration={
         'SourceArn': 'arn:aws:ses:us-west-2:169317056116:identity/collections@flenniken.net',
         'ReplyToEmailAddress': 'collections@flenniken.net',
@@ -246,6 +260,87 @@ def createPool(poolName, domainPrefix):
   print(response)
   printDict("Response", response)
 
+  # Create the pool client.
+  response = client.create_user_pool_client(
+    UserPoolId=userPoolId,
+    ClientName=clientName,
+    # GenerateSecret=True|False,
+    # RefreshTokenValidity=123,
+    # AccessTokenValidity=123,
+    # IdTokenValidity=123,
+    # TokenValidityUnits={
+    #     'AccessToken': 'seconds'|'minutes'|'hours'|'days',
+    #     'IdToken': 'seconds'|'minutes'|'hours'|'days',
+    #     'RefreshToken': 'seconds'|'minutes'|'hours'|'days'
+    # },
+    ReadAttributes=[
+      "email",
+      "family_name",
+      "given_name"
+    ],
+    WriteAttributes=[
+      "email",
+      "family_name",
+      "given_name"
+    ],
+    ExplicitAuthFlows=[
+      'ALLOW_REFRESH_TOKEN_AUTH',
+      "ALLOW_USER_PASSWORD_AUTH"
+    ],
+    SupportedIdentityProviders=[
+      "COGNITO"
+    ],
+    CallbackURLs=[
+      "https://collections.flenniken.net/index.html"
+    ],
+    LogoutURLs=[
+      'https://collections.flenniken.net/index.html'
+    ],
+    # DefaultRedirectURI='string',
+    AllowedOAuthFlows=[
+      'code'
+    ],
+    AllowedOAuthScopes=[
+      'aws.cognito.signin.user.admin',
+      'email',
+      'openid',
+      "phone",
+      'profile'
+    ],
+    AllowedOAuthFlowsUserPoolClient=True,
+    # AnalyticsConfiguration={
+    #     'ApplicationId': 'string',
+    #     'ApplicationArn': 'string',
+    #     'RoleArn': 'string',
+    #     'ExternalId': 'string',
+    #     'UserDataShared': True|False
+    # },
+    PreventUserExistenceErrors='LEGACY',
+    EnableTokenRevocation=True,
+    EnablePropagateAdditionalUserContextData=False,
+    AuthSessionValidity=5
+  )
+
+  msg = """\
+The domainPrefix is used in the login and logout urls
+with Amazon. It is a short string of lower case letters, digits,
+underscores and hyphens. It must be unique with Amazon.
+
+For example, "collections" is a domain prefix and it is used like:
+
+https://collections.auth.us-west-2.amazoncognito.com
+
+domain prefix: """
+
+  domainPrefix = input(msg)
+  response = client.create_user_pool_domain(
+      Domain=domainPrefix,
+      UserPoolId=userPoolId,
+      # CustomDomainConfig={
+      #     'CertificateArn': 'string'
+      # }
+  )
+
 def printDict(name, d):
   lines = []
   formatDict(name, d, 0, lines)
@@ -285,40 +380,26 @@ def formatDict(name, d, indent=0, lines=[]):
       value = repr(v)
     lines.append("%s%s: %s" % (spaces2, k, value))
 
-def getUserPoolId(client, poolName, lines=None):
+def poolNameToId(client):
   """
-  Return the userPoolId for the given pool name. When lines is not
-  None, append the pool details to lines.
+  Return a dictionary mapping pool name to pool userPoolId.
   """
-  # Get the cognito user pools.
+  d = {}
   response = client.list_user_pools(MaxResults=30)
-  userPools = response['UserPools']
-
-  # Find the pool name.
-  userPoolId = None
-  if lines is not None:
-    lines.append("User Pools:")
-  for ix, userPool in enumerate(userPools):
-    name = userPool['Name']
-    id = userPool['Id']
-    if lines is not None:
-      lines.append(f"  {ix+1} {name} {id}")
-    if name == poolName:
-      userPoolId = id
-  if lines is not None:
-    lines.append("")
-
-  if userPoolId is None:
-    # The specified pool was not found.
-    raise CognitoException(f"The pool name doesn't exist: {poolName}")
-  return userPoolId
+  userPools = response.get('UserPools')
+  for userPool in userPools:
+    userPoolName = userPool["Name"]
+    userPoolId = userPool['Id']
+    d[userPoolName] = userPoolId
+  return d
 
 def writeCognitoConfig(poolName, domainPrefix):
   """
   Write the cognito config file: ~/.aws/cognito-config for the
   given the pool name and domain prefix.
   """
-  config = getPoolSettings(poolName, domainPrefix, lines=None)
+  settings = getPoolSettings(poolName)
+  config = settings['config']
 
   # Write the cognito config file: ~/.aws/cognito-config.
   filename = "/home/coder/.aws/cognito-config"
@@ -331,67 +412,102 @@ Wrote the cognito config file. View it with:
   cat {filename} | jqless
 """)
 
-def listPoolSettings(poolName, domainPrefix):
-  lines = []
-  config = None
-  error = ""
-  try:
-    config = getPoolSettings(poolName, domainPrefix, lines)
-  except CognitoException as ex:
-    error = str(ex)
-  print('\n'.join(lines))
-  if config:
-    printDict("Config", config)
-  if error:
-    print(error)
+def showPoolSettings(poolName):
+  """
+  Show the pool settings.
+  """
+  settings = getPoolSettings(poolName)
+  printDict(poolName + ":", settings)
 
-def getPoolSettings(poolName, domainPrefix, lines=None):
+def printPools():
   """
-  Append the pool setting lines to the lines parameter (when not
-  None) and return the config settings as a dictionary.
   """
+  # Get the pools.
   client = getCognitoBoto3Client()
-  userPoolId = getUserPoolId(client, poolName, lines=lines)
+  pools = poolNameToId(client)
+  for name in pools.keys():
+    print(name)
 
-  # Get the user pool settings.
-  response = client.describe_user_pool(UserPoolId=userPoolId)
-  if 'UserPool' not in response:
-    raise CognitoException(f"  UserPool was not in the response.")
-  if lines:
-    formatDict(poolName+":", response['UserPool'], 0, lines)
+  # client = getCognitoBoto3Client()
+  # response = client.list_user_pools(MaxResults=30)
+  # userPools = response['UserPools']
+
+  # for userPoolsBasic in userPools:
+  #   name = userPoolsBasic['Name']
+  #   userPoolId = userPoolsBasic['Id']
+  #   print(f"  {name} {domainPrefix} '{clientName}'")
+
+  #   # Get the user pool information and pull out the domain prefix.
+  #   response = client.describe_user_pool(UserPoolId=userPoolId)
+  #   if 'UserPool' not in response:
+  #     raise CognitoException(f"UserPool was not in the response.")
+  #   userPool = response['UserPool']
+  #   domainPrefix = userPool['Domain']
+
+  #   # Get the pool's application clients.
+  #   response = client.list_user_pool_clients(
+  #       UserPoolId=userPoolId,
+  #       MaxResults=30,
+  #   )
+
+  #   userPoolClients = response["UserPoolClients"]
+  #   for userPoolClient in userPoolClients:
+  #     clientName = userPoolClient['ClientName']
+  #     clientId = userPoolClient['ClientId']
+  #     print(f"  {name} {domainPrefix} '{clientName}'")
+
+def poolClientNameToId(client, userPoolId):
+  """
+  Return a dictionary mapping the pool client names to their id.
+  """
 
   # Get the pool's application clients.
   response = client.list_user_pool_clients(
     UserPoolId=userPoolId,
     MaxResults=30,
   )
+  userPoolClients = response.get("UserPoolClients")
+
+  # Build and return a dictionary mapping name to id.
+  clients = {}
+  for userPoolClient in userPoolClients:
+    clientName = userPoolClient['ClientName']
+    clientId = userPoolClient['ClientId']
+    clients[clientName] = clientId
+  return clients
+
+def getPoolSettings(poolName):
+  """
+  Return the pool setting in a dictionary. The config key contains
+  a dictionary for the cognito_config file.
+  """
+  # If the pool has more than one application client, prompt for the one to use?
+
+  # Get the pool id of the given pool name.
+  client = getCognitoBoto3Client()
+  pools = poolNameToId(client)
+  if poolName not in pools:
+    raise CognitoException("The user pool doesn't exist.")
+  userPoolId = pools[poolName]
+
+  # Get the user pool settings.
+  settings = {}
+  response = client.describe_user_pool(UserPoolId=userPoolId)
+  if 'UserPool' not in response:
+    raise CognitoException(f"UserPool was not in the response.")
+  settings['UserPool'] = response['UserPool']
 
   # Find the collections client.
-  collectionsClientName = "CollectionsClient"
-  client_id = None
-  if lines:
-    lines.append("Application clients:")
-  userPoolClients = response["UserPoolClients"]
-  for ix, userPoolClient in enumerate(userPoolClients):
-    name = userPoolClient['ClientName']
-    id = userPoolClient['ClientId']
-    if lines:
-      lines.append(f"  {ix+1} {name} {id}")
-    if name == collectionsClientName:
-      client_id = id
-  if lines:
-    lines.append('')
-  if client_id is None:
+  clients = poolClientNameToId(client, userPoolId)
+  if clientName not in clients:
     raise CognitoException(
-      f"The pool doesn't have an application client called {collectionsClientName}.")
+      f"The pool doesn't have an application client called {clientName}.")
 
   response = client.describe_user_pool_client(
-    UserPoolId=userPoolId, ClientId=client_id)
+    UserPoolId=userPoolId, ClientId=clients[clientName])
 
   userPoolClient = response['UserPoolClient']
-  assert userPoolClient['ClientName'] == 'CollectionsClient'
-  if lines:
-    formatDict(collectionsClientName+":", userPoolClient, 0, lines)
+  assert userPoolClient['ClientName'] == clientName
 
   callbackURLs = userPoolClient['CallbackURLs']
   if len(callbackURLs) != 1:
@@ -403,54 +519,42 @@ def getPoolSettings(poolName, domainPrefix, lines=None):
     raise CognitoException(f"Expected one callback (logout_uri) but got: {len(logoutURLs)}")
   logout_uri = logoutURLs[0]
 
-  # Is it possible to query cognito for the domain prefix? Then
-  # we wouldn't need to pass it in.
+  # todo: get the domain prefix from the settings above.
+  domainPrefix = "collections"
 
   response = client.describe_user_pool_domain(Domain=domainPrefix)
   domainDescription = response['DomainDescription']
   if len(domainDescription) == 0:
-    raise CognitoException(f"  The domain prefix doesn't exist: {domainPrefix}")
-  if lines:
-    formatDict("DomainDescription:", domainDescription, 0, lines)
+    raise CognitoException(f"The domain prefix doesn't exist: {domainPrefix}")
 
   ## cognito domain
 
-  # UserPoolId: 'us-west-2_Lm2lu6ocX'
   region = domainDescription['UserPoolId'].split('_')[0]
   domain = f"https://{domainPrefix}.auth.{region}.amazoncognito.com"
-  if lines:
-    lines.append('')
-    lines.append(f"domain: {domain}")
-    lines.append('')
-
-  # Hard code the scope.
-  scope = "openid profile"
 
   config = {}
-  config['client_id'] = client_id
+  config['client_id'] = userPoolClient['ClientId']
   config['redirect_uri'] = redirect_uri
   config['logout_uri'] = logout_uri
-  config['scope'] = scope
+  config['scope'] = "openid profile"
   config['domain'] = domain
-  return config
+  settings['config'] = config
+
+  return settings
 
 def process(args):
   """
   """
   if args.listUsers:
     listUsers(args.listUsers)
-  elif args.listPoolSettings:
-    poolName = args.listPoolSettings[0][0]
-    domainPrefix = args.listPoolSettings[0][1]
-    listPoolSettings(poolName, domainPrefix)
+  elif args.printPools:
+    printPools()
+  elif args.showPoolSettings:
+    showPoolSettings(args.showPoolSettings)
   elif args.createPool:
-    poolName = args.createPool[0][0]
-    domainPrefix = args.createPool[0][1]
-    createPool(poolName, domainPrefix)
+    createPool(args.createPool)
   elif args.writeCognitoConfig:
-    poolName = args.writeCognitoConfig[0][0]
-    domainPrefix = args.writeCognitoConfig[0][1]
-    writeCognitoConfig(poolName, domainPrefix)
+    writeCognitoConfig(args.writeCognitoConfig)
   else:
     raise CognitoException(f"""No implementation for args:
 {args}
@@ -480,24 +584,26 @@ def parseCommandLine():
   parser.add_argument("-t", "--test", action="store_true",
     help="run internal unit tests. Use alone to run all tests.")
 
-  parser.add_argument("-c", "--createPool", nargs=2, action="append", type=str,
-    metavar=("pool-name", "domainPrefix"),
-    help="create a cognito pool with the given name and domain prefix. The domainPrefix needs to be unique. Example: [scripts/cognito -c collections-pool collections]")
+  parser.add_argument("-p", "--printPools", action='store_true',
+    help="print (list) the pool names")
 
-  parser.add_argument("-w", "--writeCognitoConfig", nargs=2, action="append", type=str,
-    metavar=("pool-name", "domainPrefix"),
-    help="write the ~/.aws/cognito-config file. Example: [scripts/cognito -w collections-pool collections]")
+  parser.add_argument("-s", "--showPoolSettings", metavar="pool-name",
+    help="show (list) the pool settings for the given cognito pool")
 
-  parser.add_argument("-s", "--listPoolSettings", nargs=2, action="append", type=str,
-    metavar=("pool-name", "domainPrefix"),
-    help="list the pool settings for the given cognito pool. Example: [scripts/cognito -s collections-pool collections]")
+  parser.add_argument("-c", "--createPool", metavar="pool-name",
+    help="create a cognito pool with the given name")
+
+  parser.add_argument("-w", "--writeCognitoConfig", metavar="pool-name",
+    help="write the ~/.aws/cognito-config file for use with the given pool.")
 
   parser.add_argument("-l", "--listUsers", metavar='pool-name',
-    help="show the pool users for the given cognito pool")
+    help="show the pool users for the given pool")
+
   parser.add_argument("-u", "--createUser", action="store_true",
-    help="Not Implemented: create a new user")
+    help="(not Implemented) create a new user")
+
   parser.add_argument("-e", "--editUser", metavar='user-id',
-    help="Not Implemented: edit an existing user")
+    help="(not Implemented) edit an existing user")
 
   args = parser.parse_args(sys.argv[1:])
   return args
@@ -520,11 +626,26 @@ def main(args):
     return 1
   return 0 # success
 
+client = None
+
 class TestCognito(unittest.TestCase):
 
-  def test_me(self):
-    self.assertEqual(True, bool(1))
-    self.assertEqual(False, bool(0))
+  def setUpClass():
+    global client
+    client = getCognitoBoto3Client()
+
+  def test_poolNameToId(self):
+    pools = poolNameToId(client)
+    printDict("\npools:", pools)
+
+  def test_poolClientNameToId(self):
+    pools = poolNameToId(client)
+    print()
+    print("pool clients:")
+    for poolName, poolId in pools.items():
+      clients = poolClientNameToId(client, poolId)
+      printDict(poolName+":", clients)
+    print()
 
   def test_getAttributes(self):
     cognito_attributes = [
@@ -598,18 +719,6 @@ name:
     d: {}
     e: 42"""
     self.assertEqual(got, expected)
-
-  # def test_getUserPoolId(self):
-  #   client = getCognitoBoto3Client()
-  #   userPoolId = getUserPoolId(client, "collections-pool", lines=None)
-  #   self.assertEqual(userPoolId, "us-west-2_Lm2lu6ocX")
-
-  # def test_getUserPoolId_lines(self):
-  #   client = getCognitoBoto3Client()
-  #   lines = []
-  #   userPoolId = getUserPoolId(client, "collections-pool", lines=lines)
-  #   for line in lines:
-  #     print(line)
 
 if __name__ == '__main__':
   args = parseCommandLine()
