@@ -27,27 +27,52 @@ import jwt
 import subprocess
 import sys
 import textwrap
-import tomllib
 import boto3
 from datetime import datetime, timezone
 
-clientName = "CollectionsClient"
-
+# The name of the application client of a pool created for
+# collections.
+appName = "CollectionsClient"
 
 class CognitoException(Exception):
   """ An exception we plan for. """
   pass
 
-def getAttributes(cognito_attributes):
+def convertToKeyValue(cognito_attributes):
   """
-  Convert the cognito attributes to a dictionary.
+  Convert the verbose cognito attributes to a dictionary of key
+  value pairs.
   """
-# 'Attributes': [{'Name': 'email', 'Value':
-#   'steve.flenniken@gmail.com'}, {'Name': 'family_name', 'Value':
-#   'Flenniken'}, {'Name': 'given_name', 'Value': 'Steve'}, {'Name':
-#   'custom:admin', 'Value': '0'}]
+
+# convert:
 #
-# { 'email': 'steve.flenniken@gmail.com', 'family_name': 'Flenniken', 'given_name': 'Steve', 'custom:admin': 0}
+# [
+#   {
+#     'Name': 'email', 'Value':
+#     'steve.flenniken@gmail.com'
+#   },
+#   {
+#     'Name': 'family_name',
+#     'Value': 'Flenniken'
+#   },
+#   {
+#     'Name': 'given_name',
+#     'Value': 'Steve'
+#   },
+#   {
+#     'Name': 'custom:admin',
+#     'Value': '0'
+#   }
+# ]
+#
+# to:
+#
+# {
+# 'email': 'steve.flenniken@gmail.com',
+# 'family_name': 'Flenniken',
+# 'given_name': 'Steve',
+# 'custom:admin': 0
+# }
   result = {}
   for d in cognito_attributes:
     result[d['Name']] = d['Value']
@@ -65,14 +90,14 @@ def formatDateTime(dt):
 
 def listUsers(poolName):
   """
-  List the users.
+  List the users in the given cognito user pool.
   """
-  client = getCognitoBoto3Client()
-  pools = poolNameToId(client)
+  cognitoClient = getBotoClient()
+  pools = poolNamesToIds(cognitoClient)
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")
 
-  response = client.list_users(
+  response = cognitoClient.list_users(
     UserPoolId=pool[poolName],
     AttributesToGet=[ "email", "given_name", "family_name", 'custom:admin']
   )
@@ -80,7 +105,7 @@ def listUsers(poolName):
 
   print("id enabled admin status first last email created")
   for user in users:
-    a = getAttributes(user['Attributes'])
+    a = convertToKeyValue(user['Attributes'])
     # print(f"email: {a['email']}")
     # print(f"given_name: {a['given_name']}")
     # print(f"family_name: {a['family_name']}")
@@ -102,9 +127,10 @@ def listUsers(poolName):
 {a['email']} \
 {formatDateTime(user['UserCreateDate'])}")
 
-def getCognitoBoto3Client():
+def getBotoClient(serviceName='cognito-idp'):
   """
-  Return the boto3 cognito client.
+  Return the boto3 client for the given AWS service. Services names
+  like 'cognito-idp', 'ses', 'sts', etc.
   """
   configFilename = "/home/coder/.aws/config"
   credsFilename = "/home/coder/.aws/credentials"
@@ -112,28 +138,156 @@ def getCognitoBoto3Client():
      raise CognitoException("""\
 
 Before this script can access your aws cognito user pool, you need an
-AWS account and an IAM user with with AmazonCognitoPowerUser
-permissions.
+AWS account and an IAM user with with AmazonCognitoPowerUser and
+AmazonSESReadOnlyAccess permissions.
 
-Run "aws configure" and specify the IAM user's credentials.
-""")
-  return boto3.client('cognito-idp')
+Once the IAM user exists run "aws configure" and specify the IAM
+user's credentials.  """)
+  return boto3.client(serviceName)
+
+def getEmailConfig(poolName, emailFromName):
+  """
+  Return a dictionary of the email configuration settings needed
+  by the new pool (EmailConfiguration). Iterate the SES emails and use
+  the one that is tagged with the given poolName.
+  """
+
+  # Get the SES emails.
+  response = sesv2Client.list_email_identities()
+  email_identities = response.get("EmailIdentities")
+  if email_identities is None:
+    raise CognitoException("No AWS SES emails are configured.")
+
+  # Look through the emails looking for the one tagged with the given
+  # poolName.
+  for email_identity in email_identities:
+    response = sesv2Client.get_email_identity(
+        EmailIdentity=email_identity['IdentityName']
+    )
+    tags = response['tags']
+    for tag in tags:
+      if tag['key'] != 'poolName' or tag['value'] != poolName:
+        continue
+      if email_identity['IdentityType'] != 'EMAIL_ADDRESS':
+        continue
+      # Found the SES email associated with this pool.
+      break
+    else: # no break
+      raise CognitoException(f"The ${poolName} tagged SES email was not found.")
+
+  if email_identity['SendingEnabled'] != True:
+    raise CognitoException(f"Found the ${poolName} tagged email but it isn't enabled.")
+  if email_identity['VerificationStatus'] != "SUCCESS":
+    raise CognitoException(f"Found the ${poolName} tagged email but it isn't verified yet.")
+
+  replyToEmail = email_identity['IdentityName']
+
+  # Get the AWS account number that we are running under.
+  stsClient = getBotoClient('sts')
+  response = stsClient.get_caller_identity()
+  accountNumber = response['Account']
+
+  # todo: How do you get the region the iam is currently using?
+  # This is the region where the user pool will be created.  We need
+  # the region to build the SourceArn for the ses email.
+  region = 'us-west-2'
+
+  sourceArn = f"arn:aws:ses:${region}:${accountNumber}:identity/${replyToEmail}"
+
+  # todo: get the EmailSendingAccount field from aws ses.
+  emailSendingAccount = 'DEVELOPER'
+
+  emailConfiguration = {
+    'SourceArn': sourceArn,
+    'ReplyToEmailAddress': replyToEmail,
+    'EmailSendingAccount': emailSendingAccount,
+    'From': f'${emailFromName} <${replyToEmail}>',
+  }
+  return emailConfiguration
 
 def createPool(poolName):
   """
   Create a pool with the given name. Prompt for other parameters when needed.
   """
-  client = getCognitoBoto3Client()
+  cognitoClient = getBotoClient()
 
   # Make sure the pool name doesn't already exist.
-  pools = poolNameToId(client)
+  pools = poolNamesToIds(cognitoClient)
   if poolName in pools:
     raise CognitoException("The user pool already exists.")
+
+  msg = f"""\
+What name should be used with From address of the emails cognito sends out?
+For example, the placeholder "Steve Flenniken" is the From name below:
+
+  Steve Flenniken <collections@flenniken.net>
+
+Enter From name: """
+  emailFromName = input(msg)
+
+  # Return a dictionary of the email configuration settings needed by
+  # the new pool. Look up the SES emails and use the one that is
+  # tagged with poolName as this pool's name.
+  emailConfiguration = getEmailConfig(poolName, emailFromName)
+
+  # Look up the SES emails and use the one that is tagged with
+  # poolName as this pool's name.
+  response = sesv2Client.list_email_identities()
+  email_identities = response.get("EmailIdentities")
+  if email_identities is None:
+    raise CognitoException("No AWS SES emails configured.")
+
+  for email_identity in email_identities:
+    response = sesv2Client.get_email_identity(
+        EmailIdentity=email_identity['IdentityName']
+    )
+
+    tags = response['tags']
+    for tag in tags:
+      if tag['key'] == 'poolName' and tag['value'] == poolName:
+        # Found the SES email associated with this pool.
+        break
+    else: # no break
+      raise CognitoException("No AWS SES emails configured.")
+
+  if email_identity['IdentityType'] != 'EMAIL_ADDRESS':
+    raise CognitoException("No AWS SES emails configured.")
+  if email_identity['SendingEnabled'] != True:
+    raise CognitoException("No AWS SES emails configured.")
+  if email_identity['VerificationStatus'] != "SUCCESS":
+    raise CognitoException("No AWS SES emails configured.")
+
+  replyToEmail = email_identity['IdentityName']
+
+  # Get the AWS account number that we are running under.
+  stsClient = getBotoClient('sts')
+  response = stsClient.get_caller_identity()
+  accountNumber = response['Account']
+
+  # todo: How do you get the region the iam is currently using?
+  # This is the region where the user pool will be created.  We need
+  # the region to build the SourceArn for the ses email.
+  region = 'us-west-2'
+
+  sourceArn = f"arn:aws:ses:${region}:${accountNumber}:identity/${replyToEmail}"
+
+  # todo: get the EmailSendingAccount field from aws ses.
+  emailSendingAccount = 'DEVELOPER'
+
+  msg = f"""\
+What name should be used with "from" address of the emails cognito sends out?
+For example, the placeholder "Steve Flenniken" is the from name below:
+
+  Steve Flenniken <${replyToEmail}>
+
+From name: """
+  emailFromName = input(msg)
+
 
   # reference:
   # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/create_user_pool.html
 
-  response = client.create_user_pool(
+  response = cognitoClient.create_user_pool(
     PoolName = poolName,
     # Use defaults for the commented out parameters.
     # Policies={
@@ -195,19 +349,14 @@ def createPool(poolName):
     #     'DeviceOnlyRememberedOnUserPrompt': True|False
     # },
 
-    # todo: pass in the following. The email needs to be setup in
-    # Amazon ahead of time.  Here we query for the information and put
-    # it in the pool settings. Create a command to setup the email.
     # ses:
-    # https://us-west-2.console.aws.amazon.com/ses/home?region=us-west-2#/identities
+    # https://boto3.amazonaws.com/v1/documentation/api/1.26.93/reference/services/ses.html
 
-    EmailConfiguration={
-        'SourceArn': 'arn:aws:ses:us-west-2:169317056116:identity/collections@flenniken.net',
-        'ReplyToEmailAddress': 'collections@flenniken.net',
-        'EmailSendingAccount': 'DEVELOPER',
-        'From': 'Steve Flenniken <collections@flenniken.net>',
-        # 'ConfigurationSet': 'string'
-    },
+    # todo: add a note to the iam creation part about adding
+    # AmazonSESReadOnlyAccess permissions to the iam user.
+
+    EmailConfiguration=emailConfiguration,
+
     # SmsConfiguration={
     #     'SnsCallerArn': 'string',
     #     'ExternalId': 'string',
@@ -261,9 +410,9 @@ def createPool(poolName):
   printDict("Response", response)
 
   # Create the pool client.
-  response = client.create_user_pool_client(
+  response = cognitoClient.create_user_pool_client(
     UserPoolId=userPoolId,
-    ClientName=clientName,
+    ClientName=appName,
     # GenerateSecret=True|False,
     # RefreshTokenValidity=123,
     # AccessTokenValidity=123,
@@ -330,10 +479,10 @@ For example, "collections" is a domain prefix and it is used like:
 
 https://collections.auth.us-west-2.amazoncognito.com
 
-domain prefix: """
-
+Enter the domain prefix: """
   domainPrefix = input(msg)
-  response = client.create_user_pool_domain(
+
+  response = cognitoClient.create_user_pool_domain(
       Domain=domainPrefix,
       UserPoolId=userPoolId,
       # CustomDomainConfig={
@@ -380,12 +529,13 @@ def formatDict(name, d, indent=0, lines=[]):
       value = repr(v)
     lines.append("%s%s: %s" % (spaces2, k, value))
 
-def poolNameToId(client):
+def poolNamesToIds(cognitoClient):
   """
-  Return a dictionary mapping pool name to pool userPoolId.
+  Return a dictionary mapping a pool name to a pool userPoolId for all
+  the pools.
   """
   d = {}
-  response = client.list_user_pools(MaxResults=30)
+  response = cognitoClient.list_user_pools(MaxResults=30)
   userPools = response.get('UserPools')
   for userPool in userPools:
     userPoolName = userPool["Name"]
@@ -423,46 +573,47 @@ def printPools():
   """
   """
   # Get the pools.
-  client = getCognitoBoto3Client()
-  pools = poolNameToId(client)
+  cognitoClient = getBotoClient()
+  pools = poolNamesToIds(cognitoClient)
   for name in pools.keys():
     print(name)
 
-  # client = getCognitoBoto3Client()
-  # response = client.list_user_pools(MaxResults=30)
+  # cognitoClient = getBotoClient()
+  # response = cognitoClient.list_user_pools(MaxResults=30)
   # userPools = response['UserPools']
 
   # for userPoolsBasic in userPools:
   #   name = userPoolsBasic['Name']
   #   userPoolId = userPoolsBasic['Id']
-  #   print(f"  {name} {domainPrefix} '{clientName}'")
+  #   print(f"  {name} {domainPrefix} '{appName}'")
 
   #   # Get the user pool information and pull out the domain prefix.
-  #   response = client.describe_user_pool(UserPoolId=userPoolId)
+  #   response = cognitoClient.describe_user_pool(UserPoolId=userPoolId)
   #   if 'UserPool' not in response:
   #     raise CognitoException(f"UserPool was not in the response.")
   #   userPool = response['UserPool']
   #   domainPrefix = userPool['Domain']
 
   #   # Get the pool's application clients.
-  #   response = client.list_user_pool_clients(
+  #   response = cognitoClient.list_user_pool_clients(
   #       UserPoolId=userPoolId,
   #       MaxResults=30,
   #   )
 
   #   userPoolClients = response["UserPoolClients"]
   #   for userPoolClient in userPoolClients:
-  #     clientName = userPoolClient['ClientName']
+  #     appName = userPoolClient['ClientName']
   #     clientId = userPoolClient['ClientId']
-  #     print(f"  {name} {domainPrefix} '{clientName}'")
+  #     print(f"  {name} {domainPrefix} '{appName}'")
 
-def poolClientNameToId(client, userPoolId):
+def poolAppNameToId(cognitoClient, userPoolId):
   """
-  Return a dictionary mapping the pool client names to their id.
+  Return a dictionary mapping the pool application client names to
+  their id.
   """
 
   # Get the pool's application clients.
-  response = client.list_user_pool_clients(
+  response = cognitoClient.list_user_pool_clients(
     UserPoolId=userPoolId,
     MaxResults=30,
   )
@@ -484,54 +635,59 @@ def getPoolSettings(poolName):
   # If the pool has more than one application client, prompt for the one to use?
 
   # Get the pool id of the given pool name.
-  client = getCognitoBoto3Client()
-  pools = poolNameToId(client)
+  cognitoClient = getBotoClient()
+  pools = poolNamesToIds(cognitoClient)
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")
   userPoolId = pools[poolName]
 
   # Get the user pool settings.
   settings = {}
-  response = client.describe_user_pool(UserPoolId=userPoolId)
+  response = cognitoClient.describe_user_pool(UserPoolId=userPoolId)
   if 'UserPool' not in response:
     raise CognitoException(f"UserPool was not in the response.")
   settings['UserPool'] = response['UserPool']
 
-  # Find the collections client.
-  clients = poolClientNameToId(client, userPoolId)
-  if clientName not in clients:
+  # Find the collections application client.
+  poolApps = poolAppNameToId(cognitoClient, userPoolId)
+  if appName not in poolApps:
     raise CognitoException(
-      f"The pool doesn't have an application client called {clientName}.")
+      f"The pool doesn't have an application client called {appName}.")
 
-  response = client.describe_user_pool_client(
-    UserPoolId=userPoolId, ClientId=clients[clientName])
-
+  # Get the settings for the collection's application client.
+  response = cognitoClient.describe_user_pool_client(
+    UserPoolId=userPoolId, ClientId=poolApps[appName])
   userPoolClient = response['UserPoolClient']
-  assert userPoolClient['ClientName'] == clientName
+  assert userPoolClient['ClientName'] == appName
 
+  # Verify there is one redirect uri.
   callbackURLs = userPoolClient['CallbackURLs']
   if len(callbackURLs) != 1:
-    raise CognitoException(f"Expected one callback (redirect_uri) but got: {len(callbackURLs)}")
+    raise CognitoException(f"Expected one redirect_uri but got: {len(callbackURLs)}")
   redirect_uri = callbackURLs[0]
 
+  # Verify there is one callback uri.
   logoutURLs = userPoolClient['LogoutURLs']
   if len(logoutURLs) != 1:
-    raise CognitoException(f"Expected one callback (logout_uri) but got: {len(logoutURLs)}")
+    raise CognitoException(f"Expected one logout_uri but got: {len(logoutURLs)}")
   logout_uri = logoutURLs[0]
 
   # todo: get the domain prefix from the settings above.
   domainPrefix = "collections"
 
-  response = client.describe_user_pool_domain(Domain=domainPrefix)
+  # Verify there is a domain prefix.
+  response = cognitoClient.describe_user_pool_domain(Domain=domainPrefix)
   domainDescription = response['DomainDescription']
   if len(domainDescription) == 0:
     raise CognitoException(f"The domain prefix doesn't exist: {domainPrefix}")
 
-  ## cognito domain
-
+  # Create the cognito domain from the domain prefix and the region
+  # extracted from the description.
   region = domainDescription['UserPoolId'].split('_')[0]
   domain = f"https://{domainPrefix}.auth.{region}.amazoncognito.com"
 
+  # Assign the config dictionary and add it to the return settings for
+  # use by the congnito-config file.
   config = {}
   config['client_id'] = userPoolClient['ClientId']
   config['redirect_uri'] = redirect_uri
@@ -626,35 +782,47 @@ def main(args):
     return 1
   return 0 # success
 
-client = None
+cognitoClient = None
+sesClient = None
+sesv2Client = None
+stsClient = None
 
 class TestCognito(unittest.TestCase):
 
   def setUpClass():
-    global client
-    client = getCognitoBoto3Client()
+    # Get the boto clients we test. This method is called once by the
+    # test suite. The code is here to avoid a runtime error in the
+    # shutdown phase.
+    global cognitoClient
+    global sesClient
+    global sesv2Client
+    global stsClient
+    cognitoClient = getBotoClient()
+    sesClient = getBotoClient('ses')
+    sesv2Client = getBotoClient('sesv2')
+    stsClient = getBotoClient('sts')
 
-  def test_poolNameToId(self):
-    pools = poolNameToId(client)
+  def test_poolNamesToIds(self):
+    pools = poolNamesToIds(cognitoClient)
     printDict("\npools:", pools)
 
-  def test_poolClientNameToId(self):
-    pools = poolNameToId(client)
+  def test_poolAppNameToId(self):
+    pools = poolNamesToIds(cognitoClient)
     print()
     print("pool clients:")
     for poolName, poolId in pools.items():
-      clients = poolClientNameToId(client, poolId)
+      clients = poolAppNameToId(client, poolId)
       printDict(poolName+":", clients)
     print()
 
-  def test_getAttributes(self):
+  def test_convertToKeyValue(self):
     cognito_attributes = [
       {'Name': 'email', 'Value': 'steve.flenniken@gmail.com'},
       {'Name': 'family_name', 'Value': 'Flenniken'},
       {'Name': 'given_name', 'Value': 'Steve'},
       {'Name': 'custom:admin', 'Value': '0'}
     ]
-    d = getAttributes(cognito_attributes)
+    d = convertToKeyValue(cognito_attributes)
     self.assertEqual(d['email'], 'steve.flenniken@gmail.com')
     self.assertEqual(d['family_name'], 'Flenniken')
     self.assertEqual(d['given_name'], 'Steve')
@@ -719,6 +887,79 @@ name:
     d: {}
     e: 42"""
     self.assertEqual(got, expected)
+
+  def test_aws_api(self):
+
+    # Returns a list containing all of the identities (email addresses
+    # and domains) for your AWS account in the current AWS Region,
+    # regardless of verification status.
+    response = sesClient.list_identities(MaxItems=30)
+    printDict("list_identities", response)
+    return
+
+    # response = sesClient.list_identity_policies(
+    #   Identity='flenniken.net',
+    # )
+    # print("\nlist_identity_policies:")
+    # print(response)
+    # # no policies: 'PolicyNames': []
+
+    # response = sesClient.get_account_sending_enabled()
+    # printDict("account_sending_enabled", response)
+
+    # response = sesClient.get_identity_mail_from_domain_attributes(
+    #   Identities=['flenniken.net']
+    # )
+    # printDict("get_identity_mail_from_domain_attributes", response)
+
+    # response = sesClient.get_identity_notification_attributes(
+    #   Identities=['flenniken.net']
+    # )
+    # printDict("get_identity_notification_attributes", response)
+
+    # response = sesClient.get_identity_verification_attributes(
+    #   Identities=['flenniken.net']
+    # )
+    # printDict("get_identity_verification_attributes", response)
+
+
+    # response = sesClient.get_send_quota()
+    # printDict("get_send_quota", response)
+
+    # # You can specify an identity by using its name or by using its
+    # # Amazon Resource Name (ARN). Examples: user@example.com,
+    # # example.com,
+    # # arn:aws:ses:us-east-1:123456789012:identity/example.com
+
+    # # Tells what a ARN is and how to generate one:
+    # # https://docs.aws.amazon.com/IAM/latest/UserGuide/reference-arns.html
+
+    # # the console shows the arn.
+    # # arn:aws:ses:us-west-2:169317056116:identity/collections@flenniken.net
+
+    # response = sesv2Client.get_account()
+    # printDict("get_account", response)
+
+    # # response = client.list_tags_for_resource(
+    # #     ResourceArn='string'
+    # # )
+
+    # response = sesv2Client.get_email_identity(
+    #     EmailIdentity='collections@flenniken.net'
+    # )
+    # printDict("get_email_identity", response)
+
+    # response = sesv2Client.list_email_identities()
+    # printDict("list_email_identities", response)
+
+    def test_getAccountNumber(self):
+      response = stsClient.get_caller_identity()
+      printDict("get_caller_identity", response)
+      # accountNumber = response['Account']
+
+    def test_getEmailConfig(self):
+      emailConfiguration = getEmailConfig("poolName", "emailFromName")
+      printDict("getEmailConfig", emailConfiguration)
 
 if __name__ == '__main__':
   args = parseCommandLine()
