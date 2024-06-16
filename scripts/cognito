@@ -145,12 +145,14 @@ Once the IAM user exists run "aws configure" and specify the IAM
 user's credentials.  """)
   return boto3.client(serviceName)
 
-def getEmailConfig(poolName, emailFromName):
+def getEmailConfig(sesv2Client, poolName, emailFromName):
   """
   Return a dictionary of the email configuration settings needed
   by the new pool (EmailConfiguration). Iterate the SES emails and use
   the one that is tagged with the given poolName.
   """
+
+  # todo: tell the developer what to do when there is an error getting the SES email.
 
   # Get the SES emails.
   response = sesv2Client.list_email_identities()
@@ -164,7 +166,7 @@ def getEmailConfig(poolName, emailFromName):
     response = sesv2Client.get_email_identity(
         EmailIdentity=email_identity['IdentityName']
     )
-    tags = response['tags']
+    tags = response['Tags']
     for tag in tags:
       if tag['key'] != 'poolName' or tag['value'] != poolName:
         continue
@@ -173,12 +175,12 @@ def getEmailConfig(poolName, emailFromName):
       # Found the SES email associated with this pool.
       break
     else: # no break
-      raise CognitoException(f"The ${poolName} tagged SES email was not found.")
+      raise CognitoException(f"None of the SES emails are tag with '{poolName}'.")
 
   if email_identity['SendingEnabled'] != True:
-    raise CognitoException(f"Found the ${poolName} tagged email but it isn't enabled.")
+    raise CognitoException(f"Found the {poolName} tagged email but it isn't enabled.")
   if email_identity['VerificationStatus'] != "SUCCESS":
-    raise CognitoException(f"Found the ${poolName} tagged email but it isn't verified yet.")
+    raise CognitoException(f"Found the {poolName} tagged email but it isn't verified yet.")
 
   replyToEmail = email_identity['IdentityName']
 
@@ -192,7 +194,7 @@ def getEmailConfig(poolName, emailFromName):
   # the region to build the SourceArn for the ses email.
   region = 'us-west-2'
 
-  sourceArn = f"arn:aws:ses:${region}:${accountNumber}:identity/${replyToEmail}"
+  sourceArn = f"arn:aws:ses:{region}:{accountNumber}:identity/{replyToEmail}"
 
   # todo: get the EmailSendingAccount field from aws ses.
   emailSendingAccount = 'DEVELOPER'
@@ -201,7 +203,7 @@ def getEmailConfig(poolName, emailFromName):
     'SourceArn': sourceArn,
     'ReplyToEmailAddress': replyToEmail,
     'EmailSendingAccount': emailSendingAccount,
-    'From': f'${emailFromName} <${replyToEmail}>',
+    'From': f'{emailFromName} <{replyToEmail}>',
   }
   return emailConfiguration
 
@@ -228,7 +230,7 @@ Enter From name: """
   # Return a dictionary of the email configuration settings needed by
   # the new pool. Look up the SES emails and use the one that is
   # tagged with poolName as this pool's name.
-  emailConfiguration = getEmailConfig(poolName, emailFromName)
+  emailConfiguration = getEmailConfig(stsClient, poolName, emailFromName)
 
   # Look up the SES emails and use the one that is tagged with
   # poolName as this pool's name.
@@ -269,7 +271,7 @@ Enter From name: """
   # the region to build the SourceArn for the ses email.
   region = 'us-west-2'
 
-  sourceArn = f"arn:aws:ses:${region}:${accountNumber}:identity/${replyToEmail}"
+  sourceArn = f"arn:aws:ses:{region}:{accountNumber}:identity/{replyToEmail}"
 
   # todo: get the EmailSendingAccount field from aws ses.
   emailSendingAccount = 'DEVELOPER'
@@ -278,7 +280,7 @@ Enter From name: """
 What name should be used with "from" address of the emails cognito sends out?
 For example, the placeholder "Steve Flenniken" is the from name below:
 
-  Steve Flenniken <${replyToEmail}>
+  Steve Flenniken <{replyToEmail}>
 
 From name: """
   emailFromName = input(msg)
@@ -782,38 +784,37 @@ def main(args):
     return 1
   return 0 # success
 
-cognitoClient = None
-sesClient = None
-sesv2Client = None
-stsClient = None
+
+class TestClients:
+  def __init__(self):
+    self.cognitoClient = getBotoClient()
+    self.sesClient = getBotoClient('ses')
+    self.sesv2Client = getBotoClient('sesv2')
+    self.stsClient = getBotoClient('sts')
+
+tc = None
+
+def setUpModule():
+  # Get the boto clients we test. This method is called once by the
+  # test suite. The code is here to avoid a runtime error in the
+  # shutdown phase.
+  global tc
+  tc = TestClients()
+
+def tearDownModule():
+  pass
 
 class TestCognito(unittest.TestCase):
 
-  def setUpClass():
-    # Get the boto clients we test. This method is called once by the
-    # test suite. The code is here to avoid a runtime error in the
-    # shutdown phase.
-    global cognitoClient
-    global sesClient
-    global sesv2Client
-    global stsClient
-    cognitoClient = getBotoClient()
-    sesClient = getBotoClient('ses')
-    sesv2Client = getBotoClient('sesv2')
-    stsClient = getBotoClient('sts')
-
   def test_poolNamesToIds(self):
-    pools = poolNamesToIds(cognitoClient)
-    printDict("\npools:", pools)
+    pools = poolNamesToIds(tc.cognitoClient)
+    # printDict("pools", pools)
 
-  def test_poolAppNameToId(self):
-    pools = poolNamesToIds(cognitoClient)
-    print()
-    print("pool clients:")
+  def test_poolNamesToIds2(self):
+    pools = poolNamesToIds(tc.cognitoClient)
     for poolName, poolId in pools.items():
-      clients = poolAppNameToId(client, poolId)
-      printDict(poolName+":", clients)
-    print()
+      appClients = poolAppNameToId(tc.cognitoClient, poolId)
+      # printDict(f"{poolName} application clients:", appClients)
 
   def test_convertToKeyValue(self):
     cognito_attributes = [
@@ -848,7 +849,7 @@ name2:
   b: 'hello'"""
     self.assertEqual(got, expected)
 
-  def test_formatDict(self):
+  def test_formatDict2(self):
     dt = datetime(2024, 6, 2, 4, 4, 42, 501295, tzinfo=timezone.utc)
     d = {
       "a": 5,
@@ -888,14 +889,39 @@ name:
     e: 42"""
     self.assertEqual(got, expected)
 
-  def test_aws_api(self):
-
+  def test_list_identities(self):
     # Returns a list containing all of the identities (email addresses
     # and domains) for your AWS account in the current AWS Region,
     # regardless of verification status.
-    response = sesClient.list_identities(MaxItems=30)
-    printDict("list_identities", response)
+    response = tc.sesClient.list_identities(MaxItems=30)
+    # print()
+    # printDict("list_identities", response)
+    self.assertTrue('Identities' in response)
     return
+
+  def test_getAccountNumber(self):
+    response = tc.stsClient.get_caller_identity()
+    # printDict("get_caller_identity", response)
+    self.assertTrue('Account' in response)
+
+  def test_getEmailConfig(self):
+    with self.assertRaises(CognitoException) as context:
+      getEmailConfig(tc.sesv2Client, "testPoolName", "testEmailFromName")
+    self.assertEqual(str(context.exception), """\
+None of the SES emails are tag with 'testPoolName'.""")
+
+    # todo: test more error cases and good case
+
+  def test_list_email_identities(self):
+    response = tc.sesv2Client.list_email_identities()
+    # printDict("list_email_identities", response)
+
+  def test_get_email_identity(self):
+    return
+    response = tc.sesv2Client.get_email_identity(
+        EmailIdentity='collections@flenniken.net'
+    )
+    printDict("get_email_identity", response)
 
     # response = sesClient.list_identity_policies(
     #   Identity='flenniken.net',
@@ -944,22 +970,7 @@ name:
     # #     ResourceArn='string'
     # # )
 
-    # response = sesv2Client.get_email_identity(
-    #     EmailIdentity='collections@flenniken.net'
-    # )
-    # printDict("get_email_identity", response)
 
-    # response = sesv2Client.list_email_identities()
-    # printDict("list_email_identities", response)
-
-    def test_getAccountNumber(self):
-      response = stsClient.get_caller_identity()
-      printDict("get_caller_identity", response)
-      # accountNumber = response['Account']
-
-    def test_getEmailConfig(self):
-      emailConfiguration = getEmailConfig("poolName", "emailFromName")
-      printDict("getEmailConfig", emailConfiguration)
 
 if __name__ == '__main__':
   args = parseCommandLine()
