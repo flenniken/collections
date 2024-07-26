@@ -290,45 +290,46 @@ dist
 
 # Login Setup
 
-Collections uses the AWS cognito service to handle login.  This allows
+Collections uses the AWS Cognito service to handle login.  This allows
 collections to be a public static website without a backend server
 (other than AWS).
 
 The pool is configured to login with an email and password and it
-doesn’t allow sign up.  You add new users manually.
+doesn’t allow sign up.  You add and remove users manually.
 
 A user can be an admin which sees debugging controls in the UI.
 
-You run two scripts, configure-pool and login-flow, for working with
+You run two scripts, cognito and login-flow, for working with
 cognito.
 
-## Configure-pool Script
+## Cognito Script
 
-You use configure-pool script to create the cognito user pool, to
-create the cognito-config file and to maintain users.
+You use cognito script to create the AWS Cognito user pool and for
+adding and removing users.
 
 ~~~
 # docker container
-scripts/configure-pool
+scripts/cognito
 ~~~
 
-Configure-pool communicates with AWS Cognito through an IAM user.
+The cognito script communicates with AWS Cognito through an IAM user
+with the correct permissions.
 
 ## Create IAM User
 
-You need to create an IAM user.  To do this you login to your AWS
-account console and select the IAM service. Click the plus sign to add
-a new user and give it cognito power user permissions
-(AmazonCognitoPowerUser).  Save the credentials somewhere safe.
+You need to create an IAM user with the correct permissions.  To do
+this you login to your AWS account console and select the IAM
+service. Click the plus sign to add a new user and give it cognito
+power user permissions, and SES readonly permissions
+(AmazonCognitoPowerUser, AmazonSESReadOnlyAccess).  Save the
+credentials somewhere safe. You need the credentials when you create
+the docker image.
 
 Put the credentials on the docker container with the aws command line
 as shown below.
 
-Note: you will need the credentials again when you delete and recreate
-the docker image.
-
 ~~~
-# docker container
+# from docker container
 aws configure 
 ~~~
 
@@ -338,7 +339,7 @@ You create a new pool with the cognito createUserPool option as shown
 below. In the example we name the pool “collections-pool”.
 
 ~~~
-# docker container
+# from docker container
 scripts/configure-pool —createUserPool collections-pool
 ~~~
 
