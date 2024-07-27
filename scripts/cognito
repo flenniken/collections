@@ -27,6 +27,8 @@ import jwt
 import subprocess
 import sys
 import textwrap
+import random
+import string
 import boto3
 from datetime import datetime, timezone
 
@@ -175,7 +177,6 @@ Make sure to enable and verify it.
 
   print("""\
 Choose the SES email to use when sending mail to users.
-
 0: exit""")
 
   for email_identity in email_identities:
@@ -202,9 +203,9 @@ Choose the SES email to use when sending mail to users.
     raise CognitoException(noEmailsMsg)
 
   while True:
-    pick = input("Use number?: ")
+    pick = input("Number?: ")
     if pick == '0':
-      raise CognitoException("Exit from create pool.")
+      raise CognitoException("Stopping create pool.")
 
     try:
       emailNumber = int(pick)
@@ -225,10 +226,8 @@ Choose the SES email to use when sending mail to users.
   msg = f"""\
 
 What friendly name should be used with the email?
-
-  friendly-name <{fromEmail}>
-
-name?: """
+Example: Steve Flenniken
+Name?: """
   friendlyName = input(msg)
   prettyFromEmail = f"{friendlyName} <{fromEmail}>"
 
@@ -275,6 +274,14 @@ def createPool(poolName, cognitoClient=None):
   # tagged with poolName as this pool's name.
   emailConfiguration = promptForEmailConfiguration()
 
+  yourDomain = input("""\
+
+Enter your domain name where collections is hosted.
+Example: collections.flenniken.net
+Domain?: """)
+  if yourDomain == '':
+    raise CognitoException("Stopping create pool.")
+
   # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cognito-idp/client/create_user_pool.html
 
   response = cognitoClient.create_user_pool(
@@ -290,7 +297,7 @@ def createPool(poolName, cognitoClient=None):
     #         'TemporaryPasswordValidityDays': 123
     #     }
     # },
-    DeletionProtection='ACTIVE',
+    DeletionProtection='INACTIVE', # ACTIVE | INACTIVE
     # LambdaConfig={
     #     'PreSignUp': 'string',
     #     'CustomMessage': 'string',
@@ -378,23 +385,77 @@ def createPool(poolName, cognitoClient=None):
     #         }
     #     },
     # ],
+
+    Schema=[
+      # {
+      #   'Name': 'given_name',
+      #   'AttributeDataType': 'String',
+      #   'DeveloperOnlyAttribute': False,
+      #   'Mutable': True,
+      #   'Required': False,
+      #   'StringAttributeConstraints': {
+      #     'MinLength': '0',
+      #     'MaxLength': '2048'
+      #   }
+      # },
+      # {
+      #   'Name': 'family_name',
+      #   'AttributeDataType': 'String',
+      #   'DeveloperOnlyAttribute': False,
+      #   'Mutable': True,
+      #   'Required': False,
+      #   'StringAttributeConstraints': {
+      #     'MinLength': '0',
+      #     'MaxLength': '2048',
+      #   }
+      # },
+      # {
+      #   'Name': 'email',
+      #   'AttributeDataType': 'String',
+      #   'DeveloperOnlyAttribute': False,
+      #   'Mutable': True,
+      #   'Required': False,
+      #   'StringAttributeConstraints': {
+      #     'MinLength': '0',
+      #     'MaxLength': '2048',
+      #   }
+      # },
+      # {
+      #   'Name': 'email_verified',
+      #   'AttributeDataType': 'Boolean',
+      #   'DeveloperOnlyAttribute': False,
+      #   'Mutable': True,
+      #   'Required': False
+      # },
+      {
+        'Name': 'admin',
+        'AttributeDataType': 'Boolean',
+        'DeveloperOnlyAttribute': False,
+        'Mutable': True,
+        'Required': False,
+      }
+    ],
+
     # UserPoolAddOns={
     #     'AdvancedSecurityMode': 'OFF'
     # },
     # UsernameConfiguration={
     #     'CaseSensitive': False
     # },
-    # AccountRecoverySetting={
-    #     'RecoveryMechanisms': [
-    #         {
-    #             'Priority': 123,
-    #             'Name': 'verified_email'|'verified_phone_number'|'admin_only'
-    #         },
-    #     ]
-    # }
+
+    AccountRecoverySetting={
+      'RecoveryMechanisms': [
+        {
+          'Priority': 1,
+          'Name': 'admin_only'
+        },
+      ]
+    }
   )
-  print(response)
-  printDict("Response", response)
+  # printDict("Response", response)
+
+  userPool = response['UserPool']
+  userPoolId = userPool['Id']
 
   # Create the pool client.
   response = cognitoClient.create_user_pool_client(
@@ -427,12 +488,10 @@ def createPool(poolName, cognitoClient=None):
       "COGNITO"
     ],
     CallbackURLs=[
-      # todo
-      "https://collections.flenniken.net/index.html"
+      f"https://{yourDomain}/index.html"
     ],
     LogoutURLs=[
-      # todo
-      'https://collections.flenniken.net/index.html'
+      f"https://{yourDomain}/index.html"
     ],
     # DefaultRedirectURI='string',
     AllowedOAuthFlows=[
@@ -459,17 +518,8 @@ def createPool(poolName, cognitoClient=None):
     AuthSessionValidity=5
   )
 
-  msg = """\
-The domainPrefix is used in the login and logout urls
-with Amazon. It is a short string of lower case letters, digits,
-underscores and hyphens. It must be unique with Amazon.
-
-For example, "collections" is a domain prefix and it is used like:
-
-https://collections.auth.us-west-2.amazoncognito.com
-
-Enter the domain prefix: """
-  domainPrefix = input(msg)
+  randomDigits = ''.join(random.choice(string.digits) for x in range(8))
+  domainPrefix = f"pool{randomDigits}"
 
   response = cognitoClient.create_user_pool_domain(
       Domain=domainPrefix,
@@ -640,8 +690,10 @@ def getPoolSettings(poolName, cognitoClient=None):
     raise CognitoException(f"Expected one logout_uri but got: {len(logoutURLs)}")
   logout_uri = logoutURLs[0]
 
-  # todo: get the domain prefix from the settings above.
-  domainPrefix = "collections"
+  userPool = settings['UserPool']
+  if 'Domain' not in userPool:
+    raise CognitoException("The user pool does not have a Domain key.")
+  domainPrefix = userPool['Domain']
 
   # Verify there is a domain prefix.
   response = cognitoClient.describe_user_pool_domain(Domain=domainPrefix)
@@ -717,7 +769,7 @@ def parseCommandLine():
     help="show the pool settings for the given pool.")
 
   parser.add_argument("-c", "--createPool", metavar="pool-name",
-    help="create a AWS Cognito pool with the given name.")
+    help="create an AWS Cognito pool with the given name. Use the console to delete it.")
 
   parser.add_argument("-w", "--writeCognitoConfig", metavar="pool-name",
     help="""write the ~/.aws/cognito-config file containing pool information
