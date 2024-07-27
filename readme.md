@@ -65,6 +65,8 @@ The image page shows one image at a time.  The image is custom zoomed
 (a zoom point) to fit the screen showing the best view for the screen
 orientation and size.
 
+[![Image Landscape](docs/image-landscape.png)](#)
+
 You can zoom and pan an image with two fingers and double tap to
 restore it.
 
@@ -76,8 +78,6 @@ You scroll to the bottom to see a description of the image.
 
 You go back to the thumbnails or index page by scrolling to the bottom
 and tapping the thumbnail or index icon.
-
-[![Image Landscape](docs/image-landscape.png)](#)
 
 [⬇ ────────](#Contents)
 
@@ -110,11 +110,11 @@ https://collections.flenniken.net
 Collections is written in typescript and there is a build step.
 
 You use the provided docker build environment to develop
-Collections. It has all the programs installed that you need to build
-the app.
+Collections. It has all the programs installed needed to build the
+app.
 
-The host’s code folder is shared with the build environment so you can
-edit files on the host and build them in the container.
+The code folder is shared with docker and your local environment so
+you can edit files locally and build them in the container.
 
 [⬇ ────────](#Contents)
 
@@ -335,12 +335,12 @@ aws configure
 
 ## Create Pool
 
-You create a new pool with the cognito createUserPool option as shown
-below. In the example we name the pool “collections-pool”.
+You create a new user pool with the cognito as shown below. In the
+example we name the pool “collections-pool”.
 
 ~~~
 # from docker container
-scripts/configure-pool —createUserPool collections-pool
+scripts/cognito —c collections-pool
 ~~~
 
 ## Create Config File
@@ -348,18 +348,18 @@ scripts/configure-pool —createUserPool collections-pool
 The config file is used by the website and the login-flow script so
 they know how to communicate with AWS Cognito.
 
-You create the config file with the writeCognitoConfig option. It
-reads the pool information from AWS.
+You create the config file with cognito as shown below. It reads the
+pool information from AWS.
 
 ~~~
 # docker container
-scripts/cognito —writeCognitoConfig collections-pool
+scripts/cognito —w collections-pool
 ~~~
 
 ## Login-flow Script
 
-You use login-flow script to manually step through the website login
-process and decode tokens.
+You use login-flow script to manually step through and debug the
+website login process and decode tokens.
 
 ~~~
 # docker container
