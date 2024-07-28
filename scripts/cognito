@@ -111,21 +111,19 @@ def listUsers(poolName, cognitoClient=None):
   for user in users:
     a = convertToKeyValue(user['Attributes'])
     print(f"""\
+
 email: {a['email']}
 first: {a['given_name']}
 last: {a['family_name']}
 id: {user['Username']}
-enabled: {user['Enabled']}
 status: {user['UserStatus']}
 created: {formatDateTime(user['UserCreateDate'])}
-admin: {a['custom:admin']}
-""")
+admin: {a['custom:admin']}""")
 
 
 #     # Print a user per line.
 #     print(f"\
 # {user['Username']} \
-# {user['Enabled']} \
 # {a['custom:admin']} \
 # {user['UserStatus']} \
 # {a['given_name']} \
@@ -156,13 +154,11 @@ This command will add a new user after prompting for their information.
   family_name = input("Enter family name, e.g. Flenniken\nfamily name?: ")
   if family_name == '':
     raise CognitoException("Stopping create user.")
-  admin = input("Is the user an admin, yes or no?: ")
-  if admin == '' or (admin != 'yes' and admin != 'no'):
+  admin = inputBoolean("Is the user an admin, True or False?: ")
+  if admin is None:
     raise CognitoException("Stopping create user.")
-  if admin == 'yes':
-    admin = 'true'
   else:
-    admin = 'false'
+    admin = 'True' if admin else 'False'
 
   try:
     response = cognitoClient.admin_create_user(
@@ -199,7 +195,20 @@ This command will add a new user after prompting for their information.
 
   # printDict("response", response)
 
-def editUser(poolName, cognitoClient=None):
+def inputBoolean(message):
+  """
+  Prompt for a True or False. Return True, False or None.
+  """
+  result = input(message)
+  if result == '':
+    return None
+  if result != "True" and result != "False":
+    raise CognitoException("Invalid True or False setting.")
+  if result == "True":
+    return True
+  return False
+
+def editUser(poolName, userId, cognitoClient=None):
   """
   Edit or delete a user in the given cognito user pool.
   """
@@ -208,7 +217,79 @@ def editUser(poolName, cognitoClient=None):
   pools = poolNamesToIds(cognitoClient)
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")
-  print("not implemented")
+
+  response = cognitoClient.list_users(
+    UserPoolId=pools[poolName],
+    AttributesToGet=[ "email", "given_name", "family_name", 'custom:admin']
+  )
+  users = response['Users']
+
+  for user in users:
+    if user['Username'] == userId:
+      break;
+  else: # no break
+    raise CognitoException("The user doesn't exist.")
+
+  print("""\
+Type in the new user settings or type enter to leave as is.""")
+  a = convertToKeyValue(user['Attributes'])
+
+  email = input(f"{a['email']}, email?: ")
+  if email == '':
+    email = a['email']
+
+  given_name = input(f"{a['given_name']}, given name?: ")
+  if given_name == '':
+    given_name = a['given_name']
+
+  family_name = input(f"{a['family_name']}, family name?: ")
+  if family_name == '':
+    family_name = a['family_name']
+
+  # enabled = inputBoolean(f"{user['Enabled']}, enabled (True or False)?: ")
+  # if enabled is None:
+  #   enabled = user['Enabled']
+
+  admin = inputBoolean(f"{a['custom:admin']}, admin (True or False)?: ")
+  if admin is None:
+    admin = a['custom:admin']
+  else:
+    admin = "True" if admin else "False"
+
+  print(f"""\
+
+email: {email}
+first: {given_name}
+last: {family_name}
+admin: {admin}
+""")
+
+  response = cognitoClient.admin_update_user_attributes(
+    UserPoolId=pools[poolName],
+    Username=email,
+    UserAttributes=[
+      {
+        "Name": "given_name",
+         "Value": given_name
+      },
+      {
+        "Name": "family_name",
+         "Value": family_name
+      },
+      {
+        "Name": "email",
+         "Value": email
+      },
+      {
+        "Name": "custom:admin",
+         "Value": admin
+      },
+    ],
+    ClientMetadata={
+        'string': 'string'
+    }
+  )
+
 
 def getBotoClient(serviceName='cognito-idp'):
   """
@@ -509,7 +590,7 @@ Domain?: """)
       #   'Required': False
       # },
       {
-        'Name': 'admin',
+        'Name': 'admin', # not custom:admin
         'AttributeDataType': 'Boolean',
         'DeveloperOnlyAttribute': False,
         'Mutable': True,
@@ -807,7 +888,9 @@ def process(args):
   elif args.createUser:
     createUser(args.createUser)
   elif args.editUser:
-    editUser(args.editUsers)
+    poolName = args.editUser[0][0]
+    userId = args.editUser[0][1]
+    editUser(poolName, userId)
   elif args.printPools:
     printPools()
   elif args.showPoolSettings:
@@ -866,8 +949,9 @@ needed by the website and login-flow script""")
   parser.add_argument("-u", "--createUser", metavar='pool-name',
     help="create a new pool user.")
 
-  parser.add_argument("-e", "--editUser", metavar='pool-name',
-    help="edit or delete an existing pool user.")
+  parser.add_argument("-e", "--editUser", nargs=2, action="append", type=str,
+    metavar=("pool-name", "user-id"),
+    help="edit an existing pool user. Get the user id from listUsers.")
 
   args = parser.parse_args(sys.argv[1:])
   return args
