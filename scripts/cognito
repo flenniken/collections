@@ -287,8 +287,11 @@ Type in the new user settings or type enter to leave as is.""")
 email: {email}
 first: {given_name}
 last: {family_name}
-admin: {admin}
-""")
+admin: {admin}""")
+  if password != '':
+    print("Password: set")
+  else:
+    print("Password: unchanged")
 
   response = cognitoClient.admin_update_user_attributes(
     UserPoolId=pools[poolName],
