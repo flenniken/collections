@@ -30,8 +30,10 @@ import textwrap
 import random
 import string
 import botocore
+
 import boto3
 from datetime import datetime, timezone
+from getpass import getpass
 
 # The name of the application client of a pool created for
 # collections.
@@ -141,24 +143,29 @@ def createUser(poolName, cognitoClient=None):
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")
 
+  stop = CognitoException("Stopping create user.")
+
   print("""\
 This command will add a new user after prompting for their information.
 """)
 
   email = input("Enter email address, e.g. steve.flenniken@gmail.com\nemail?: ")
   if email == '':
-    raise CognitoException("Stopping create user.")
+    raise stop
   given_name = input("Enter given name, e.g. Steve\ngiven name?: ")
   if given_name == '':
-    raise CognitoException("Stopping create user.")
+    raise stop
   family_name = input("Enter family name, e.g. Flenniken\nfamily name?: ")
   if family_name == '':
-    raise CognitoException("Stopping create user.")
+    raise stop
   admin = inputBoolean("Is the user an admin, True or False?: ")
   if admin is None:
-    raise CognitoException("Stopping create user.")
+    raise stop
   else:
     admin = 'True' if admin else 'False'
+  password = getpass("password?: ")
+  if password == '':
+    raise stop
 
   try:
     response = cognitoClient.admin_create_user(
@@ -192,6 +199,14 @@ This command will add a new user after prompting for their information.
       raise CognitoException("The user already exists.")
     else:
       raise error
+
+  if password != '':
+    response = cognitoClient.admin_set_user_password(
+        UserPoolId=pools[poolName],
+        Username=email,
+        Password=password,
+        Permanent=True
+    )
 
   # printDict("response", response)
 
@@ -255,6 +270,17 @@ Type in the new user settings or type enter to leave as is.""")
     admin = a['custom:admin']
   else:
     admin = "True" if admin else "False"
+  password = getpass("password?: ")
+  if password != '':
+    try:
+      response = cognitoClient.admin_set_user_password(
+          UserPoolId=pools[poolName],
+          Username=email,
+          Password=password,
+          Permanent=True
+      )
+    except botocore.exceptions.ClientError as error:
+      raise CognitoException(error.response['Error']['Message'])
 
   print(f"""\
 

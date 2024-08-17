@@ -274,11 +274,11 @@ def getTokens(code=None, refresh=False):
       "code": code,
     }
 
-  print(f"url: '{url}'")
-  print("headers:")
-  pprint.pp(headers)
-  print("data:")
-  pprint.pp(data)
+  # print(f"url: '{url}'")
+  # print("headers:")
+  # pprint.pp(headers)
+  # print("data:")
+  # pprint.pp(data)
 
   response = requests.post(url, data=data, headers=headers)
 
