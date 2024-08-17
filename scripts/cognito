@@ -270,7 +270,7 @@ Type in the new user settings or type enter to leave as is.""")
     admin = a['custom:admin']
   else:
     admin = "True" if admin else "False"
-  password = getpass("password?: ")
+  password = getpass("password?(use blank to leave as is): ")
   if password != '':
     try:
       response = cognitoClient.admin_set_user_password(
