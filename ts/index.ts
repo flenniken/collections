@@ -329,14 +329,14 @@ async function handleLoad() {
     }
   })
 
-  // // After the user logs in call loggedIn.
-  // log(`window.location.search: ${window.location.search}`)
-  // const searchParams = new URLSearchParams(window.location.search)
-  // const state = searchParams.get("state")
-  // if (state && state == "loggedIn") {
-  //   loggedIn()
-  //   return
-  // }
+  // After the user logs in call loggedIn.
+  log(`window.location.search: ${window.location.search}`)
+  const searchParams = new URLSearchParams(window.location.search)
+  const state = searchParams.get("state")
+  if (state && state == "loggedIn") {
+    loggedIn()
+    return
+  }
 
 }
 
@@ -398,11 +398,6 @@ function refreshPage() {
 // https://docs.aws.amazon.com/cognito/latest/developerguide/tracking-quotas-and-usage-in-cloud-watch-and-service-quotas.html
 
 
-function loginOrOut() {
-  log("loginOrOut")
-  // Jump to the AWS cognito login UI. After logging in it will jump
-  // to the index page passing state=loggedIn.
-
   // See documentation:
   // https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html
 
@@ -417,70 +412,100 @@ function loginOrOut() {
 
   // https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html
 
-//   const login_url = encodeURI("\
-// https://collections.auth.us-west-2.amazoncognito.com/oauth2/authorize?\
-// client_id=1h1emkd4pof3vacle2albgj2qn&\
-// response_type=code&\
-// scope=email+openid+phone+aws.cognito.signin.user.admin+profile&\
-// redirect_uri=https://collections.flenniken.net/index.html&\
-// state=loggedIn\
-// ")
-//     window.location.assign(login_url)
+  // {"client_id": "59nnrgfelhidaqhdkrdcnocait", "redirect_uri":
+  //"https://collections.flenniken.net/index.html", "logout_uri":
+  //"https://collections.flenniken.net/index.html", "scope": "openid
+  //profile", "domain":
+  //"https://pool42613626.auth.us-west-2.amazoncognito.com"}(debian)~/collections
+  //$
 
-
+  // todo: get admin setting somehow.
+  // scope=openid+profile+aws.cognito.signin.user.admin+profile&\
 
   // The logout attributes are documented here:
   // https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html
 
 
+
+function loginOrOut() {
+  // Run the login or logout procedure.
+  // Jump to the AWS cognito login UI. After logging in it will jump
+  // to the index page passing state=loggedIn.
+
+  log("loginOrOut")
+
+  log("login")
+
+  // todo: use template to add the info from the docker cognito-config.jsonfile.
+  // login-flow -l shows this url
+  const loginUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/oauth2/authorize?client_id=59nnrgfelhidaqhdkrdcnocait&state=loggedIn&response_type=code&scope=openid%20profile&redirect_uri=https://collections.flenniken.net/index.html"
+  log(loginUrl)
+
+  // Login
+  window.location.assign(loginUrl)
 }
 
-function loggedIn() {
+async function loggedIn() {
   // The user just logged in.
   log("loggedIn")
 
-  // // Get the code from the url query parameters.
-  // const searchParams = new URLSearchParams(window.location.search)
-  // const code = searchParams.get("code")
-  // if (!code) {
-  //   log("Missing the code query parameter.")
-  //   return
-  // }
+  // Get the code from the url query parameters.
+  const searchParams = new URLSearchParams(window.location.search)
+  const code = searchParams.get("code")
+  if (!code) {
+    log("Missing the code query parameter.")
+    return
+  }
+  log(`code: ${code}`)
 
-  // // Fetch the user information.
-  // // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
-  // const url = "https://collections.auth.us-west-2.amazoncognito.com/oauth2/userInfo"
+  // Fetch the user information.
+  // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
+  // todo: use template to fill this in.
+  const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
+  const url = `${domain}/oauth2/token`
 
-  // const options = {
-  //   "headers": {
-  //     "Authorization": `Bearer ${code}`,
-  //   }
-  // }
-  // fetch(url, options).then(function(response) {
-  //   return response.json();
-  // }).then(function(data) {
-  //   console.log(data);
-  // }).catch(function(err) {
-  //   logError('Error fetching the user data.')
-  //   log(err)
-  // });
+  // why is there a redirect parameter in this post?
+  // todo: template
+  const bodyText = `grant_type=authorization_code&client_id=59nnrgfelhidaqhdkrdcnocait&redirect_uri=https://collections.flenniken.net/index.html&code=${code}`
 
-  // const xhr = new XMLHttpRequest();
-  // xhr.open("GET", url);
-  // xhr.setRequestHeader("Authorization", `Bearer ${code}`)
-  // xhr.send();
-  // xhr.responseType = "json";
-  // xhr.onload = () => {
-  //   if (xhr.readyState == 4 && xhr.status == 200) {
-  //     console.log(xhr.response);
-  //   } else {
-  //     logError('Error fetching the user data.')
-  //     log(`Error: ${xhr.status}`)
-  //   }
-  // };
+  let response
+  const headers = new Headers();
+  headers.append("Content-Type", "application/x-www-form-urlencoded");
+  try {
+    response = await fetch(url, {
+      "method": "POST",
+      "body": bodyText,
+      "headers": headers,
+    })
+    if (!response.ok) {
+      // You can only use the code once, so this error happens when
+      // you reload a page with state=loggedIn.
+      log(`get user info failed: ${response.status}`)
+      return
+    }
+  }
+  catch (error) {
+    log(`get user info error: ${error}`)
+    return
+  }
 
-  // Store the code in local storage.
+  const data = await response.json()
+  log(`token keys: ${Object.keys(data)}`)
+  const access_token = data["access_token"]
 
+  // Get the user info from from cognito using the access token.
+  const userInfoUrl = `${domain}/oauth2/userInfo`
+  const userInfoheaders = new Headers()
+  userInfoheaders.append("Content-Type", "application/json")
+  userInfoheaders.append("Authorization", `Bearer ${access_token}`)
+  const userInfoResponse = await fetch(userInfoUrl, {"headers": userInfoheaders})
+  const userInfo = await userInfoResponse.json()
+  log(`userInfo keys: ${Object.keys(userInfo)}`)
+  log(`given_name: ${userInfo["given_name"]}`)
+  log(`family_name: ${userInfo["family_name"]}`)
+  log(`email: ${userInfo["email"]}`)
+  log(`username: ${userInfo["username"]}`)
+  log(`sub: ${userInfo["sub"]}`)
 }
 
 

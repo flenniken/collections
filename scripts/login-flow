@@ -274,7 +274,7 @@ def getTokens(code=None, refresh=False):
       "code": code,
     }
 
-  # print(f"url: '{url}'")
+  print(f"/oauth2/token url: '{url}'")
   # print("headers:")
   # pprint.pp(headers)
   # print("data:")
