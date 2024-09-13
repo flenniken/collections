@@ -12,7 +12,8 @@ interface IndexCollection {
   // The number of images in the collection.
   iCount: number
 
-  // The number of the thumbnail shared with the index page.
+  // The number of the thumbnail image shared between the index and
+  // thumbnails pages.
   tin: number
 
   // The total size the of the images in the collection in bytes.
@@ -84,8 +85,8 @@ function fetchOk(url: string) {
 }
 
 function getCollection(cNum: number): IndexCollection {
-  // Return the collection given the collection cNum or null when not
-  // found.
+  // Return the collection given the collection cNum.  Raise an
+  // exception when not found.
 
   for (let ix = 0; ix < indexJson.collections.length; ix++) {
     if (cNum == indexJson.collections[ix].collection)

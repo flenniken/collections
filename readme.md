@@ -2,10 +2,10 @@
 
 [![icon](docs/rounded-icon.png)](#)
 
-Collections is a progressive web app (PWA) for viewing curated
-collections of photos on an iphone.
+Collections is a progressive web app for viewing curated collections
+of photos on an iphone.
 
-A PWA runs in a browser but looks a lot like a native app.
+It runs in a browser but looks a lot like a native app.
 
 Each collection is a small set of related photos, for example photos
 of a trip to Many Glaciers Lodge. Since there are only a few images in
@@ -52,8 +52,8 @@ description which might be different description than on index page.
 You go back to the index page by scrolling to the bottom and tapping
 the index icon.
 
-Tapping a camera icon shows the full size photo on the image
-page. Tapping the index icon takes you to the index page.
+Tapping a camera icon shows the first photo full size on the image
+page.  Tapping the index icon takes you to the index page.
 
 [⬇ ────────](#Contents)
 
@@ -70,7 +70,7 @@ orientation and size.
 You can zoom and pan an image with two fingers and double tap to
 restore it.
 
-You scroll left and right go to the previous and next images in the
+You scroll left and right to go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
@@ -99,7 +99,7 @@ You install the app’s icon on your home screen following these steps:
 https://collections.flenniken.net
 
 * tap the share icon at the bottom center of the screen
-* scroll up and select “Add to Home screen” and tap add
+* scroll down and select “Add to Home screen” and tap add
 
 [![icon](docs/rounded-icon.png)](#)
 
@@ -294,18 +294,18 @@ Collections uses the AWS Cognito service to handle login.  This allows
 collections to be a public static website without a backend server
 (other than AWS).
 
-The pool is configured to login with an email and password and it
-doesn’t allow sign up.  You add and remove users manually.
+Users login with an email an password. You add and remove users
+manually.
 
-A user can be an admin which sees debugging controls in the UI.
+Admin users see debugging controls in the UI.
 
 You run two scripts, cognito and login-flow, for working with
 cognito.
 
 ## Cognito Script
 
-You use cognito script to create the AWS Cognito user pool and for
-adding and removing users.
+You use the cognito script to create and maintain the AWS Cognito user
+pool.
 
 ~~~
 # docker container
@@ -323,7 +323,7 @@ service. Click the plus sign to add a new user and give it cognito
 power user permissions, and SES readonly permissions
 (AmazonCognitoPowerUser, AmazonSESReadOnlyAccess).  Save the
 credentials somewhere safe. You need the credentials when you create
-the docker image.
+a new docker image.
 
 Put the credentials on the docker container with the aws command line
 as shown below.
@@ -335,7 +335,7 @@ aws configure
 
 ## Create Pool
 
-You create a new user pool with the cognito as shown below. In the
+You create a new user pool with cognito as shown below. In the
 example we name the pool “collections-pool”.
 
 ~~~
@@ -346,7 +346,7 @@ scripts/cognito —c collections-pool
 ## Create Config File
 
 The config file is used by the website and the login-flow script so
-they know how to communicate with AWS Cognito.
+they know how to communicate with the AWS Cognito user pool.
 
 You create the config file with cognito as shown below. It reads the
 pool information from AWS.
@@ -358,8 +358,8 @@ scripts/cognito —w collections-pool
 
 ## Login-flow Script
 
-You use login-flow script to manually step through and debug the
-website login process and decode tokens.
+You use login-flow script to manually step through and debug and test
+the website login process and decode tokens.
 
 ~~~
 # docker container

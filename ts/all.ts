@@ -1,4 +1,4 @@
-// Shared code concatenated with the all of other ts files. The window
+// Shared code concatenated with all the other ts files. The window
 // and document objects are not used here. See win.ts for shared code
 // using the window and document objects.
 
