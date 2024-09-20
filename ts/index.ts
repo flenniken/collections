@@ -334,6 +334,8 @@ async function handleLoad() {
   log(`window.location.search: ${window.location.search}`)
   const searchParams = new URLSearchParams(window.location.search)
   const state = searchParams.get("state")
+  // The state is loggedInTest when login-flow is used so we don't
+  // call loggedIn and use up the code.
   if (state && state == "loggedIn") {
     loggedIn()
     return

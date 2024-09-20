@@ -149,8 +149,9 @@ def getLoginUrl():
   Return the login url.
   """
   params = getCognitoParameters()
-  return f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedIn&\
-response_type=code&scope={urllib.parse.quote(params.scope)}&redirect_uri={params.redirect_uri}"
+  return f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedIn41Test&\
+response_type=code&scope={urllib.parse.quote(params.scope)}\
+&redirect_uri={params.redirect_uri}"
 
 def getLogoutUrl():
   """
@@ -337,7 +338,7 @@ Response text:""")
 def showDecodedToken(tokenName):
   tokenNames = ['access_token', 'id_token', 'refresh_token']
   if tokenName not in tokenNames:
-    raise ServicesExpection(f"Invalid token name, specify one of: {tokenNames}")
+    raise LoginFlowException(f"Invalid token name, specify one of: {tokenNames}.")
   data = getDecodeToken(tokenFilename, tokenName)
   jData = json.dumps(data)
   runJqLess(jData)
