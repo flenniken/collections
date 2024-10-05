@@ -26,6 +26,17 @@ interface IndexJson {
   collections: IndexCollection[]
 }
 
+
+interface UserInfo {
+  // The typescript definition of user login information.
+  givenName: string
+  familyName: string
+  email: string
+  userId: string
+  admin: boolean
+  token: string
+}
+
 window.addEventListener("load", handleLoad)
 window.addEventListener("resize", handleResize)
 
@@ -85,7 +96,7 @@ function fetchOk(url: string) {
 }
 
 function getCollection(cNum: number): IndexCollection {
-  // Return the collection given the collection cNum.  Raise an
+  // Return the collection given the collection cNum.  Throw an
   // exception when not found.
 
   for (let ix = 0; ix < indexJson.collections.length; ix++) {
@@ -390,52 +401,23 @@ function refreshPage() {
   location.reload()
 }
 
-// You can get current log data of aws cognito actions.  Additionally
-// you can save the logs to s3.  See:
-
-// https://docs.aws.amazon.com/cognito/latest/developerguide/logging-using-cloudtrail.html
-
-
-// You can set alarms when quotes you define are hit.  See:
-
-// https://docs.aws.amazon.com/cognito/latest/developerguide/tracking-quotas-and-usage-in-cloud-watch-and-service-quotas.html
-
-
-  // See documentation:
-  // https://docs.aws.amazon.com/cognito/latest/developerguide/authorization-endpoint.html
-
-  // The scope parameter determines what permissions the returned code
-  // has. You set the permissions in the user pool configuration. See:
-  // email+openid+phone+aws.cognito.signin.user.admin+profile
-
-  // You set the scopes (permissions) in the console here:
-  // Amazon Cognito > User pools > collections-pool > App client: CollectionsClient > Hosted UI
-  // OpenID Connect scopes
-
-
-  // https://docs.aws.amazon.com/cognito/latest/developerguide/amazon-cognito-user-pools-using-the-access-token.html
-
-  // {"client_id": "59nnrgfelhidaqhdkrdcnocait", "redirect_uri":
-  //"https://collections.flenniken.net/index.html", "logout_uri":
-  //"https://collections.flenniken.net/index.html", "scope": "openid
-  //profile", "domain":
-  //"https://pool42613626.auth.us-west-2.amazoncognito.com"}(debian)~/collections
-  //$
-
-  // todo: get admin setting somehow.
-  // scope=openid+profile+aws.cognito.signin.user.admin+profile&\
-
-  // The logout attributes are documented here:
-  // https://docs.aws.amazon.com/cognito/latest/developerguide/logout-endpoint.html
-
-
-
 function loginOrOut() {
-  // Run the login or logout procedure.
-  // Jump to the AWS cognito login UI. After logging in it will jump
-  // to the index page passing state=loggedIn.
-
+  // Login or logout the user.
   log("loginOrOut")
+
+  // If logged in, show the user name and logout button, else login.
+  if (hasLoggedIn()) {
+    showUserInformation()
+  }
+  else {
+    logIn()
+  }
+}
+
+function logIn() {
+  // Log in the user using the AWS cognito login UI.  After the user
+  // logs in it will jump to the index page URL passing
+  // state=loggedIn and loggedIn will be called.
 
   log("login")
 
@@ -444,12 +426,14 @@ function loginOrOut() {
   const loginUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/oauth2/authorize?client_id=59nnrgfelhidaqhdkrdcnocait&state=loggedIn&response_type=code&scope=openid%20profile&redirect_uri=https://collections.flenniken.net/index.html"
   log(loginUrl)
 
-  // Login
+  // Login by jumping to the AWS congnito UI.
   window.location.assign(loginUrl)
 }
 
 async function loggedIn() {
-  // The user just logged in.
+  // The user just logged in. Get the user information and store it in
+  // local storage.
+
   log("loggedIn")
 
   // Get the code from the url query parameters.
@@ -457,9 +441,21 @@ async function loggedIn() {
   const code = searchParams.get("code")
   if (!code) {
     log("Missing the code query parameter.")
-    return
+    return null
   }
   log(`code: ${code}`)
+
+  // Get the user information and store it in local storage.
+  const userInfo = await getUserInfo(code)
+  if (userInfo)
+    storeUserInfo(userInfo)
+}
+
+async function getUserInfo(code: string): Promise<UserInfo | null> {
+  // Get the user details from AWS congnito. The code comes from
+  // cognito login UI.
+
+  log("getUserInfo")
 
   // Fetch the user information.
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
@@ -468,7 +464,7 @@ async function loggedIn() {
   const url = `${domain}/oauth2/token`
 
   // why is there a redirect parameter in this post?
-  // todo: template
+  // todo: use template to fill in this
   const bodyText = `grant_type=authorization_code&client_id=59nnrgfelhidaqhdkrdcnocait&redirect_uri=https://collections.flenniken.net/index.html&code=${code}`
 
   let response
@@ -483,13 +479,13 @@ async function loggedIn() {
     if (!response.ok) {
       // You can only use the code once, so this error happens when
       // you reload a page with state=loggedIn.
-      log(`get user info failed: ${response.status}`)
-      return
+      log(`Fetching user info failed. Code already used? status: ${response.status}`)
+      return null
     }
   }
   catch (error) {
-    log(`get user info error: ${error}`)
-    return
+    log(`Fetch user info error: ${error}`)
+    return null
   }
 
   const data = await response.json()
@@ -502,19 +498,92 @@ async function loggedIn() {
   userInfoheaders.append("Content-Type", "application/json")
   userInfoheaders.append("Authorization", `Bearer ${access_token}`)
   const userInfoResponse = await fetch(userInfoUrl, {"headers": userInfoheaders})
-  const userInfo = await userInfoResponse.json()
-  log(`userInfo keys: ${Object.keys(userInfo)}`)
-  log(`given_name: ${userInfo["given_name"]}`)
-  log(`family_name: ${userInfo["family_name"]}`)
-  log(`email: ${userInfo["email"]}`)
-  log(`username: ${userInfo["username"]}`)
-  log(`sub: ${userInfo["sub"]}`)
+  const info = await userInfoResponse.json()
+  log(`info keys: ${Object.keys(info)}`)
+  return {
+    givenName: info["given_name"],
+    familyName: info["family_name"],
+    email: info["email"],
+    userId: info["username"],
+    admin: info["custom:admin"],
+    token: "",
+  }
 }
 
+// The user information keys stored in local storage when the user is
+// logged in.
+const userInfoKeys: string[] = [
+  "givenName", "familyName", "email", "userId", "admin"
+]
 
+function storeUserInfo(userInfo: UserInfo) {
+  // Store the user information in local storage.
+
+  userInfoKeys.forEach((key, ix) => {
+    const value = `${userInfoKeys[ix]}`
+    log(`${key}: ${value}`)
+    localStorage.setItem(key, value)
+  })
+  console.assert(localStorage.length == userInfoKeys.length)
+}
+
+function removeUserInfo() {
+  // Remove the user information in local storage.
+  userInfoKeys.forEach((key, ix) => {
+    localStorage.removeItem(key)
+  })
+  console.assert(localStorage.length == 0)
+}
+
+function hasLoggedIn(): boolean {
+  // Return true when the user has logged in. Determine this by
+  // looking for a user key in local storage.
+  console.assert(userInfoKeys.length > 0, "no userInfoKeys")
+  const userId = localStorage.getItem(userInfoKeys[0])
+  if (userId == null)
+    return false
+  else
+    return true
+}
+
+function showUserInformation() {
+  // Show the user name and a logout button on the page.
+  console.assert(userInfoKeys.includes("givenName"))
+  console.assert(userInfoKeys.includes("familyName"))
+  console.assert(userInfoKeys.includes("admin"))
+
+  const givenName = localStorage.getItem("givenName")
+  const familyName = localStorage.getItem("familyName")
+  const admin = localStorage.getItem("admin")
+
+  if (givenName == null) {
+    log("The user is not logged in.")
+  }
+  else {
+    log(`The logged in user's given name is ${givenName}`)
+    log(`The logged in user's family name is ${familyName}`)
+    if (admin == "true")
+      log(`The logged in user is an admin.`)
+    else
+      log(`The logged in user is not an admin.`)
+  }
+}
+
+function hideUserDetails() {
+  // Hide the user name and logout button.
+  log("hideUserDetails")
+  log("not implemented")
+}
+
+function logout() {
+  // Logout the user. Remove the user details from local storage.
+  removeUserInfo()
+  hideUserDetails()
+}
 
 function about() {
   log("about")
+  log("not implemented")
 }
 
 async function removeCollection(cNum: number) {

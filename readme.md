@@ -307,9 +307,36 @@ cognito.
 You use the cognito script to create and maintain the AWS Cognito user
 pool.
 
+You can see the available options by running it without any options:
+
 ~~~
-# docker container
+# from docker container
 scripts/cognito
+
+usage: PROG [-h] [-t] [-p] [-s pool-name] [-c pool-name] [-w pool-name] [-l pool-name]
+            [-u pool-name] [-e pool-name user-id]
+
+This script is for setting up the cognito login system and managing users.
+
+options:
+  -h, --help            show this help message and exit
+  -t, --test            run all or one internal unit tests. You can run just one like this: cognito
+                        -t TestCognito.test_poolNamesToIds
+  -p, --printPools      print the pool names.
+  -s pool-name, --showPoolSettings pool-name
+                        show the pool settings for the given pool.
+  -c pool-name, --createPool pool-name
+                        create an AWS Cognito pool with the given name. Use the console to delete
+                        it.
+  -w pool-name, --writeCognitoConfig pool-name
+                        write the ~/.aws/cognito-config file containing pool information needed by
+                        the website and login-flow script
+  -l pool-name, --listUsers pool-name
+                        list the pool users.
+  -u pool-name, --createUser pool-name
+                        create a new pool user.
+  -e pool-name user-id, --editUser pool-name user-id
+                        edit an existing pool user. Get the user id from listUsers.
 ~~~
 
 The cognito script communicates with AWS Cognito through an IAM user
@@ -330,7 +357,7 @@ as shown below.
 
 ~~~
 # from docker container
-aws configure 
+aws configure
 ~~~
 
 ## Create Pool
@@ -376,6 +403,77 @@ The basic flow:
   * Use -s to look at the tokens file.
   * Use -d id_token, -d access_token, -d refresh_token, to peer into each token.
 ~~~
+
+# Create or Edit User
+
+You create a new user with the cognito command from the docker
+container.  For example, to add a user to the “collections” pool do
+the following:
+
+~~~
+scripts/cognito -u collections # variable
+~~~
+
+The command will prompt for the needed information. Below is an
+example:
+
+~~~
+# from docker container
+scripts/cognito -u collections-pool
+
+This command will add a new user after prompting for their information.
+
+Enter email address, e.g. steve.Flenniken@gmail.com
+email?: tom.bombadil@gmail.com
+Enter given name, e.g. Steve
+given name?: Tom
+Enter family name, e.g. Flenniken
+family name?: Bombadil
+Is the user an admin, True or False?: True
+password?:
+~~~
+
+If you want to edit an existing user, list the users to find the
+user’s id then use the -e option to edit them.
+
+Find user, for example Tom Bombadil:
+
+~~~
+# from docker container
+scripts/cognito -l collections-pool | less
+
+...
+email: tom.bombadil@gmail.com
+first: Tom
+last: Bombadil
+id: 0861b3f0-e041-707e-bb34-4a03ac172325
+status: CONFIRMED
+created: 2024-10-04 20:45:39 UTC
+admin: true
+...
+~~~
+
+Edit user Tom bombadil:
+
+~~~
+# from docker container
+scripts/cognito -e collections-pool  0861b3f0-e041-707e-bb34-4a03ac172325
+
+Type in the new user settings or type enter to leave as is.
+tom.bombadil@gmail.com, email?:
+Tom, given name?: Thomas
+Bombadil, family name?:
+true, admin (True or False)?:
+password?(use blank to leave as is):
+
+email: tom.bombadil@gmail.com
+first: Thomas
+last: Bombadil
+admin: true
+Password: unchanged
+~~~
+
+You use the AWS console to disable of delete a user
 
 [⬇ ────────](#Contents)
 
