@@ -15,18 +15,18 @@
 }
 
 #first-letter {
-    /* display: inline-block; */
-    display: none;
-    border-style: solid;
-    margin-right: 15px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     color: blue;
-    border-radius: 50%;
-    font-size: 32px;
-    line-height: 32px;
     width: 32px;
     height: 32px;
-    text-align: center;
+    border-style: solid;
     border-color: black;
+    border-radius: 50%;
+    font-size: 24px;
+    margin-right: 15px;
+    display: none;
 }
 
 #user-info {

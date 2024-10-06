@@ -28,11 +28,20 @@ window.onload = function() {
   updateLoginUI()
 }
 
+function getFirstLetter() {
+  let firstLetter = "A"
+  const userInfo = fetchUserInfo()
+  if (userInfo != null && userInfo.givenName.length > 0)
+    firstLetter = userInfo.givenName[0]
+  return firstLetter
+}
+
 function updateLoginUI() {
   // Update the UI to reflect the current login state.
   if (hasLoggedIn()) {
+    get("first-letter").textContent = getFirstLetter()
     get("login-or-out").style.display = "none"
-    get("first-letter").style.display = "inline-block"
+    get("first-letter").style.display = "flex"
   }
   else {
     get("login-or-out").style.display = "block"
@@ -169,6 +178,15 @@ function removeUserInfo() {
   localStorage.clear() // todo: remove this so we can store other things.
 }
 
+function fetchUserInfo() {
+  // Return the user info from local storage or return null when it
+  // doesn't exist.
+  const userInfoJson = localStorage.getItem('userInfo')
+  if (userInfoJson == null)
+    return null
+  return JSON.parse(userInfoJson) as UserInfo;
+}
+
 function hasLoggedIn(): boolean {
   // Return true when the user has logged in. Determine this by
   // looking for the user information in local storage.
@@ -178,13 +196,11 @@ function hasLoggedIn(): boolean {
 function showUserInformation() {
   // Show the user name and a logout button on the page.
 
-  const userInfoJson = localStorage.getItem('userInfo')
-  if (userInfoJson == null) {
+  const userInfo = fetchUserInfo()
+  if (userInfo == null) {
     log("The user is not logged in.")
   }
   else {
-    let userInfo = JSON.parse(userInfoJson) as UserInfo;
-    // log(userInfoJson)
     let adminStr = ""
     if (userInfo.admin == "true")
       adminStr = " (admin)"
