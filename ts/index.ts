@@ -33,7 +33,7 @@ interface UserInfo {
   familyName: string
   email: string
   userId: string
-  admin: boolean
+  admin: string // either "true" or "false"
   token: string
 }
 
@@ -402,16 +402,31 @@ function refreshPage() {
 }
 
 window.onload = function() {
-  // Hide the user info when the user clicks anything but the logout
-  // button.
+  // Hide the user info when the user clicks something except
+  // the login elements.
   document.onclick = function(event: Event) {
     const id = (<HTMLElement>event.target).id
-    if (id == null || id == 'logout' || id == 'login-or-out')
+    const ids = [null, 'logout', 'login-or-out', 'first-letter']
+    if (ids.includes(id))
+    // if (id == null || id == 'logout' || id == 'login-or-out')
       return
     if (get("user-info").style.display != 'none') {
       get("user-info").style.display = 'none'
       log(`Hide user information. id: ${id}`)
     }
+  }
+  updateLoginUI()
+}
+
+function updateLoginUI() {
+  // Update the UI to reflect the current login state.
+  if (hasLoggedIn()) {
+    get("login-or-out").style.display = "none"
+    get("first-letter").style.display = "inline-block"
+  }
+  else {
+    get("login-or-out").style.display = "block"
+    get("first-letter").style.display = "none"
   }
 }
 
@@ -421,6 +436,7 @@ function loginOrOut() {
 
   // If logged in, show the user name and logout button, else login.
   if (hasLoggedIn()) {
+    log("Already logged in.")
     showUserInformation()
   }
   else {
@@ -461,8 +477,10 @@ async function loggedIn() {
 
   // Get the user information and store it in local storage.
   const userInfo = await getUserInfo(code)
-  if (userInfo)
+  if (userInfo) {
     storeUserInfo(userInfo)
+    updateLoginUI()
+  }
   else
     // Redirect to index.
     window.location.assign("index.html")
@@ -529,8 +547,10 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
 
 function storeUserInfo(userInfo: UserInfo) {
   // Store the user information in local storage.
-
-  localStorage.setItem('userInfo', JSON.stringify(userInfo));
+  log("storeUserInfo")
+  const userInfoJson = JSON.stringify(userInfo)
+  log(userInfoJson)
+  localStorage.setItem('userInfo', userInfoJson);
 }
 
 function removeUserInfo() {
@@ -554,7 +574,10 @@ function showUserInformation() {
   }
   else {
     let userInfo = JSON.parse(userInfoJson) as UserInfo;
-    const adminStr = userInfo.admin ? " (admin)" : ""
+    // log(userInfoJson)
+    let adminStr = ""
+    if (userInfo.admin == "true")
+      adminStr = " (admin)"
     log(`${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
 
     get("given-name").textContent = userInfo.givenName
@@ -572,8 +595,10 @@ function hideUserDetails() {
 
 function logout() {
   // Logout the user. Remove the user details from local storage.
+  log("logout")
   removeUserInfo()
   hideUserDetails()
+  updateLoginUI()
 }
 
 function about() {
