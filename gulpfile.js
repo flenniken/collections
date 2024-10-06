@@ -48,6 +48,7 @@ Tasks:
 
 const allts = "ts/all.ts"
 const wints = "ts/win.ts"
+const logints = "ts/login.ts"
 
 const target = "es6"
 
@@ -111,7 +112,7 @@ gulp.task('t', function () {
 });
 
 gulp.task('x', function () {
-  return ts2js([allts, wints, "ts/index.ts"], 'index.js', "dist/js", null)
+  return ts2js([allts, wints, logints, "ts/index.ts"], 'index.js', "dist/js", null)
 });
 
 gulp.task('sw', function () {
