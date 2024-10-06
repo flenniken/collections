@@ -12,20 +12,21 @@ interface UserInfo {
 }
 
 window.onload = function() {
-  // Hide the user info when the user clicks something except
-  // the login elements.
-  document.onclick = function(event: Event) {
-    const id = (<HTMLElement>event.target).id
-    const ids = [null, 'logout', 'login-or-out', 'first-letter']
-    if (ids.includes(id))
-    // if (id == null || id == 'logout' || id == 'login-or-out')
-      return
-    if (get("user-info").style.display != 'none') {
-      get("user-info").style.display = 'none'
-      log(`Hide user information. id: ${id}`)
-    }
-  }
+
+  // Update the login state on load.
   updateLoginUI()
+
+  // Define on click event handler on the document.
+  document.onclick = function(event: Event) {
+    // Hide the user info if the user clicks something besides the
+    // login buttons. The button will handle show / hide themself.
+    const loginIds = ['logout', 'login-or-out', 'first-letter']
+    const id = (<HTMLElement>event.target).id
+    log(`on click target id: ${id}`)
+    if (loginIds.includes(id))
+      return
+    hideUserInformation()
+  }
 }
 
 function getFirstLetter() {
@@ -56,7 +57,16 @@ function loginOrOut() {
   // If logged in, show the user name and logout button, else login.
   if (hasLoggedIn()) {
     log("Already logged in.")
-    showUserInformation()
+    if (get("user-info").style.display != 'block') {
+      const userInfo = fetchUserInfo()
+      if (userInfo == null) {
+        log("The user is not logged in.")
+        return
+      }
+      showUserInformation(userInfo)
+    }
+    else
+      hideUserInformation()
   }
   else {
     logIn()
@@ -193,37 +203,32 @@ function hasLoggedIn(): boolean {
   return (localStorage.getItem("userInfo")) ? true : false
 }
 
-function showUserInformation() {
+function showUserInformation(userInfo: UserInfo) {
   // Show the user name and a logout button on the page.
 
-  const userInfo = fetchUserInfo()
-  if (userInfo == null) {
-    log("The user is not logged in.")
-  }
-  else {
-    let adminStr = ""
-    if (userInfo.admin == "true")
-      adminStr = " (admin)"
-    log(`${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
+  let adminStr = ""
+  if (userInfo.admin == "true")
+    adminStr = " (admin)"
+  log(`${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
 
-    get("given-name").textContent = userInfo.givenName
-    get("family-name").textContent = userInfo.familyName
-    get("user-info").style.display = "block"
-    // Note: the user info is hidden when the user clicks
-    // something besides logout, see onload.
-  }
+  get("given-name").textContent = userInfo.givenName
+  get("family-name").textContent = userInfo.familyName
+  get("user-info").style.display = "block"
+  // Note: the user info is hidden when the user clicks
+  // something besides logout, see onload.
 }
 
-function hideUserDetails() {
+function hideUserInformation() {
   // Hide the user name and logout button.
-  get("user-info").style.display = "none"
+  log("hide user details")
+  get("user-info").style.display = 'none'
 }
 
 function logout() {
   // Logout the user. Remove the user details from local storage.
   log("logout")
   removeUserInfo()
-  hideUserDetails()
+  hideUserInformation()
   updateLoginUI()
 }
 
