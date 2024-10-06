@@ -401,6 +401,20 @@ function refreshPage() {
   location.reload()
 }
 
+window.onload = function() {
+  // Hide the user info when the user clicks anything but the logout
+  // button.
+  document.onclick = function(event: Event) {
+    const id = (<HTMLElement>event.target).id
+    if (id == null || id == 'logout' || id == 'login-or-out')
+      return
+    if (get("user-info").style.display != 'none') {
+      get("user-info").style.display = 'none'
+      log(`Hide user information. id: ${id}`)
+    }
+  }
+}
+
 function loginOrOut() {
   // Login or logout the user.
   log("loginOrOut")
@@ -449,6 +463,9 @@ async function loggedIn() {
   const userInfo = await getUserInfo(code)
   if (userInfo)
     storeUserInfo(userInfo)
+  else
+    // Redirect to index.
+    window.location.assign("index.html")
 }
 
 async function getUserInfo(code: string): Promise<UserInfo | null> {
@@ -499,7 +516,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   userInfoheaders.append("Authorization", `Bearer ${access_token}`)
   const userInfoResponse = await fetch(userInfoUrl, {"headers": userInfoheaders})
   const info = await userInfoResponse.json()
-  log(`info keys: ${Object.keys(info)}`)
+  log(`user info from cognito: ${JSON.stringify(info)}`)
   return {
     givenName: info["given_name"],
     familyName: info["family_name"],
@@ -510,69 +527,47 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   }
 }
 
-// The user information keys stored in local storage when the user is
-// logged in.
-const userInfoKeys: string[] = [
-  "givenName", "familyName", "email", "userId", "admin"
-]
-
 function storeUserInfo(userInfo: UserInfo) {
   // Store the user information in local storage.
 
-  userInfoKeys.forEach((key, ix) => {
-    const value = `${userInfoKeys[ix]}`
-    log(`${key}: ${value}`)
-    localStorage.setItem(key, value)
-  })
-  console.assert(localStorage.length == userInfoKeys.length)
+  localStorage.setItem('userInfo', JSON.stringify(userInfo));
 }
 
 function removeUserInfo() {
   // Remove the user information in local storage.
-  userInfoKeys.forEach((key, ix) => {
-    localStorage.removeItem(key)
-  })
-  console.assert(localStorage.length == 0)
+  localStorage.removeItem("userInfo")
+  localStorage.clear() // todo: remove this so we can store other things.
 }
 
 function hasLoggedIn(): boolean {
   // Return true when the user has logged in. Determine this by
-  // looking for a user key in local storage.
-  console.assert(userInfoKeys.length > 0, "no userInfoKeys")
-  const userId = localStorage.getItem(userInfoKeys[0])
-  if (userId == null)
-    return false
-  else
-    return true
+  // looking for the user information in local storage.
+  return (localStorage.getItem("userInfo")) ? true : false
 }
 
 function showUserInformation() {
   // Show the user name and a logout button on the page.
-  console.assert(userInfoKeys.includes("givenName"))
-  console.assert(userInfoKeys.includes("familyName"))
-  console.assert(userInfoKeys.includes("admin"))
 
-  const givenName = localStorage.getItem("givenName")
-  const familyName = localStorage.getItem("familyName")
-  const admin = localStorage.getItem("admin")
-
-  if (givenName == null) {
+  const userInfoJson = localStorage.getItem('userInfo')
+  if (userInfoJson == null) {
     log("The user is not logged in.")
   }
   else {
-    log(`The logged in user's given name is ${givenName}`)
-    log(`The logged in user's family name is ${familyName}`)
-    if (admin == "true")
-      log(`The logged in user is an admin.`)
-    else
-      log(`The logged in user is not an admin.`)
+    let userInfo = JSON.parse(userInfoJson) as UserInfo;
+    const adminStr = userInfo.admin ? " (admin)" : ""
+    log(`${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
+
+    get("given-name").textContent = userInfo.givenName
+    get("family-name").textContent = userInfo.familyName
+    get("user-info").style.display = "block"
+    // Note: the user info is hidden when the user clicks
+    // something besides logout, see onload.
   }
 }
 
 function hideUserDetails() {
   // Hide the user name and logout button.
-  log("hideUserDetails")
-  log("not implemented")
+  get("user-info").style.display = "none"
 }
 
 function logout() {
