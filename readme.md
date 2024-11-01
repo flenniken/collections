@@ -2,18 +2,16 @@
 
 [![icon](docs/rounded-icon.png)](#)
 
-Collections is a progressive web app for viewing curated collections
-of photos on an iphone.
+Collections is a progressive web app for viewing a curated collections
+of photos on an iphone. It runs in a browser but looks a lot like a
+native app.
 
-It runs in a browser but looks a lot like a native app.
+Each collection contains the best photos of a photo shoot with a
+description about each one. Having associated text and good photos is
+intended to make the collection more meaningful and long lasting.
 
-Each collection is a small set of related photos, for example photos
-of a trip to Many Glaciers Lodge. Since there are only a few images in
-a collection the user sees the best and more time can be spent on the
-description’s story. It is also easier to build well.
-
-You navigate and view images on three types of pages, the index page,
-the thumbnails page, and the image page.
+You navigate and view collections on three types of pages, the index
+page, the thumbnails page, and the image page.
 
 [⬇](#Contents) (table of contents at the bottom)
 
@@ -294,7 +292,7 @@ Collections uses the AWS Cognito service to handle login.  This allows
 collections to be a public static website without a backend server
 (other than AWS).
 
-Users login with an email an password. You add and remove users
+Users login with an email and a password. You add and remove users
 manually.
 
 Admin users see debugging controls in the UI.
@@ -304,8 +302,7 @@ cognito.
 
 ## Cognito Script
 
-You use the cognito script to create and maintain the AWS Cognito user
-pool.
+You use the cognito script to create and maintain user access.
 
 You can see the available options by running it without any options:
 
@@ -383,27 +380,6 @@ pool information from AWS.
 scripts/cognito —w collections-pool
 ~~~
 
-## Login-flow Script
-
-You use login-flow script to manually step through and debug and test
-the website login process and decode tokens.
-
-~~~
-# docker container
-scripts/login-flow
-
-This script is for testing the login flow that Collections uses.
-
-The basic flow:
-
-  * Use -l to get the login url.
-  * Paste the login url in your browser and login, you will be redirected.
-  * Copy the code in the url in your browser's address bar.
-  * Use -g option specifying the code. This creates the tokens.json file.
-  * Use -s to look at the tokens file.
-  * Use -d id_token, -d access_token, -d refresh_token, to peer into each token.
-~~~
-
 # Create or Edit User
 
 You create a new user with the cognito command from the docker
@@ -411,7 +387,7 @@ container.  For example, to add a user to the “collections” pool do
 the following:
 
 ~~~
-scripts/cognito -u collections # variable
+scripts/cognito -u collections-pool
 ~~~
 
 The command will prompt for the needed information. Below is an
@@ -473,7 +449,28 @@ admin: true
 Password: unchanged
 ~~~
 
-You use the AWS console to disable of delete a user
+You use the AWS console to disable or delete a user
+
+## Login-flow Script
+
+You use login-flow script to manually step through and debug and test
+the website login process and decode tokens.
+
+~~~
+# docker container
+scripts/login-flow
+
+This script is for testing the login flow that Collections uses.
+
+The basic flow:
+
+  * Use -l to get the login url.
+  * Paste the login url in your browser and login, you will be redirected.
+  * Copy the code in the url in your browser's address bar.
+  * Use -g option specifying the code. This creates the tokens.json file.
+  * Use -s to look at the tokens file.
+  * Use -d id_token, -d access_token, -d refresh_token, to peer into each token.
+~~~
 
 [⬇ ────────](#Contents)
 
