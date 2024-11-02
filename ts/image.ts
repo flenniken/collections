@@ -97,6 +97,9 @@ async function handleLoad() {
   // The whole page has loaded including styles, images and other resources.
   startTimer.log("load event")
 
+  // Show the admin icons when an admin is logged in.
+  // showAdminIcons("image")
+
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
 

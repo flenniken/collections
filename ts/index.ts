@@ -129,6 +129,10 @@ async function downloadCollection(cNum: number) {
     window.alert(["You cannot download because there is no internet connection."])
     return
   }
+  if (!hasLoggedIn()) {
+    window.alert(["You need to login before you can download images."])
+    return
+  }
 
   const collection = getCollection(cNum)
 
@@ -297,6 +301,20 @@ async function setCollectionState(cNum: number, collectionState: string) {
   }
 }
 
+function showHideAdminUI(pageId: string) {
+  // Show the admin icons on the index page when an admin is logged
+  // in.
+  const parent = get(pageId)
+  forClasses(parent, "admin", (element) => {
+    if (isAdmin())
+      log("admin")
+    else
+      log("regular user")
+    element.style.display = isAdmin() ? "block" : "none"
+
+  })
+}
+
 async function handleLoad() {
   log("Window load event")
 
@@ -304,6 +322,9 @@ async function handleLoad() {
   log(`Available width and height: (${availW}, ${availH})`)
 
   installBanner()
+
+  // Show the admin icons when an admin is logged in.
+  showHideAdminUI("index")
 
   log("Download shared collection files.")
   const sharedCollectionUrls = [

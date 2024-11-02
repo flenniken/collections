@@ -244,3 +244,7 @@
 .top-menu .right {
   float: right;
 }
+
+.admin {
+  display: none;
+}

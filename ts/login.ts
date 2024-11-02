@@ -48,6 +48,7 @@ function updateLoginUI() {
     get("login-or-out").style.display = "block"
     get("first-letter").style.display = "none"
   }
+  showHideAdminUI("index")
 }
 
 function loginOrOut() {
@@ -85,8 +86,20 @@ function logIn() {
   const loginUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/oauth2/authorize?client_id=59nnrgfelhidaqhdkrdcnocait&state=loggedIn&response_type=code&scope=openid%20profile&redirect_uri=https://collections.flenniken.net/index.html"
   log(loginUrl)
 
-  // Login by jumping to the AWS congnito UI.
+  // Login by jumping to the AWS cognito UI.
   window.location.assign(loginUrl)
+}
+
+function cognitoLogout() {
+  // Log out of cognito.
+
+  log("cognito logout")
+
+  // todo: use template to add the info from the docker cognito-config.jsonfile.
+  const logoutUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/logout?client_id=59nnrgfelhidaqhdkrdcnocait&state=cognitoLogout&logout_uri=https://collections.flenniken.net/index.html"
+  log(logoutUrl)
+
+  window.location.assign(logoutUrl)
 }
 
 async function loggedIn() {
@@ -176,7 +189,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
 
 function storeUserInfo(userInfo: UserInfo) {
   // Store the user information in local storage.
-  log("storeUserInfo")
+  log("store user info")
   const userInfoJson = JSON.stringify(userInfo)
   log(userInfoJson)
   localStorage.setItem('userInfo', userInfoJson);
@@ -184,8 +197,9 @@ function storeUserInfo(userInfo: UserInfo) {
 
 function removeUserInfo() {
   // Remove the user information in local storage.
+  log("remove user info")
   localStorage.removeItem("userInfo")
-  localStorage.clear() // todo: remove this so we can store other things.
+  // localStorage.clear() // todo: remove this so we can store other things.
 }
 
 function fetchUserInfo() {
@@ -201,6 +215,14 @@ function hasLoggedIn(): boolean {
   // Return true when the user has logged in. Determine this by
   // looking for the user information in local storage.
   return (localStorage.getItem("userInfo")) ? true : false
+}
+
+function isAdmin(): boolean {
+  // Return true when the user has logged in and is an admin.
+  const userInfo = fetchUserInfo()
+  if (userInfo != null && userInfo.admin)
+    return true
+  return false
 }
 
 function showUserInformation(userInfo: UserInfo) {
@@ -225,10 +247,11 @@ function hideUserInformation() {
 }
 
 function logout() {
-  // Logout the user. Remove the user details from local storage.
+  // Logout the user. Remove the user details from local storage and
+  // tell cognito to logout the user.
   log("logout")
   removeUserInfo()
   hideUserInformation()
   updateLoginUI()
+  cognitoLogout()
 }
-
