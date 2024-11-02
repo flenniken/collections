@@ -22,7 +22,7 @@ window.onload = function() {
     // login buttons. The button will handle show / hide themself.
     const loginIds = ['logout', 'login-or-out', 'first-letter']
     const id = (<HTMLElement>event.target).id
-    log(`on click target id: ${id}`)
+    logt("login", `on click target id: ${id}`)
     if (loginIds.includes(id))
       return
     hideUserInformation()
@@ -53,15 +53,15 @@ function updateLoginUI() {
 
 function loginOrOut() {
   // Login or logout the user.
-  log("loginOrOut")
+  logt("login", "loginOrOut")
 
   // If logged in, show the user name and logout button, else login.
   if (hasLoggedIn()) {
-    log("Already logged in.")
+    logt("login", "Already logged in.")
     if (get("user-info").style.display != 'block') {
       const userInfo = fetchUserInfo()
       if (userInfo == null) {
-        log("The user is not logged in.")
+        logt("login", "The user is not logged in.")
         return
       }
       showUserInformation(userInfo)
@@ -79,12 +79,12 @@ function logIn() {
   // logs in it will jump to the index page URL passing
   // state=loggedIn and loggedIn will be called.
 
-  log("login")
+  logt("login", "login")
 
   // todo: use template to add the info from the docker cognito-config.jsonfile.
   // login-flow -l shows this url
   const loginUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/oauth2/authorize?client_id=59nnrgfelhidaqhdkrdcnocait&state=loggedIn&response_type=code&scope=openid%20profile&redirect_uri=https://collections.flenniken.net/index.html"
-  log(loginUrl)
+  logt("login", loginUrl)
 
   // Login by jumping to the AWS cognito UI.
   window.location.assign(loginUrl)
@@ -93,11 +93,11 @@ function logIn() {
 function cognitoLogout() {
   // Log out of cognito.
 
-  log("cognito logout")
+  logt("login", "cognito logout")
 
   // todo: use template to add the info from the docker cognito-config.jsonfile.
   const logoutUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/logout?client_id=59nnrgfelhidaqhdkrdcnocait&state=cognitoLogout&logout_uri=https://collections.flenniken.net/index.html"
-  log(logoutUrl)
+  logt("login", logoutUrl)
 
   window.location.assign(logoutUrl)
 }
@@ -106,16 +106,16 @@ async function loggedIn() {
   // The user just logged in. Get the user information and store it in
   // local storage.
 
-  log("loggedIn")
+  logt("login", "loggedIn")
 
   // Get the code from the url query parameters.
   const searchParams = new URLSearchParams(window.location.search)
   const code = searchParams.get("code")
   if (!code) {
-    log("Missing the code query parameter.")
+    logt("login", "Missing the code query parameter.")
     return null
   }
-  log(`code: ${code}`)
+  logt("login", `code: ${code}`)
 
   // Get the user information and store it in local storage.
   const userInfo = await getUserInfo(code)
@@ -132,7 +132,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   // Get the user details from AWS congnito. The code comes from
   // cognito login UI.
 
-  log("getUserInfo")
+  logt("login", "getUserInfo")
 
   // Fetch the user information.
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
@@ -156,17 +156,17 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
     if (!response.ok) {
       // You can only use the code once, so this error happens when
       // you reload a page with state=loggedIn.
-      log(`Fetching user info failed. Code already used? status: ${response.status}`)
+      logt("login", `Fetching user info failed. Code already used? status: ${response.status}`)
       return null
     }
   }
   catch (error) {
-    log(`Fetch user info error: ${error}`)
+    logt("login", `Fetch user info error: ${error}`)
     return null
   }
 
   const data = await response.json()
-  log(`token keys: ${Object.keys(data)}`)
+  logt("login", `token keys: ${Object.keys(data)}`)
   const access_token = data["access_token"]
 
   // Get the user info from from cognito using the access token.
@@ -176,7 +176,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   userInfoheaders.append("Authorization", `Bearer ${access_token}`)
   const userInfoResponse = await fetch(userInfoUrl, {"headers": userInfoheaders})
   const info = await userInfoResponse.json()
-  log(`user info from cognito: ${JSON.stringify(info)}`)
+  logt("login", `user info from cognito: ${JSON.stringify(info)}`)
   return {
     givenName: info["given_name"],
     familyName: info["family_name"],
@@ -189,15 +189,15 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
 
 function storeUserInfo(userInfo: UserInfo) {
   // Store the user information in local storage.
-  log("store user info")
+  logt("login", "store user info")
   const userInfoJson = JSON.stringify(userInfo)
-  log(userInfoJson)
+  logt("login", userInfoJson)
   localStorage.setItem('userInfo', userInfoJson);
 }
 
 function removeUserInfo() {
   // Remove the user information in local storage.
-  log("remove user info")
+  logt("login", "remove user info")
   localStorage.removeItem("userInfo")
   // localStorage.clear() // todo: remove this so we can store other things.
 }
@@ -231,7 +231,7 @@ function showUserInformation(userInfo: UserInfo) {
   let adminStr = ""
   if (userInfo.admin == "true")
     adminStr = " (admin)"
-  log(`${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
+  logt("login", `${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
 
   get("given-name").textContent = userInfo.givenName
   get("family-name").textContent = userInfo.familyName
@@ -242,14 +242,14 @@ function showUserInformation(userInfo: UserInfo) {
 
 function hideUserInformation() {
   // Hide the user name and logout button.
-  log("hide user details")
+  logt("login", "hide user details")
   get("user-info").style.display = 'none'
 }
 
 function logout() {
   // Logout the user. Remove the user details from local storage and
   // tell cognito to logout the user.
-  log("logout")
+  logt("login", "logout")
   removeUserInfo()
   hideUserInformation()
   updateLoginUI()

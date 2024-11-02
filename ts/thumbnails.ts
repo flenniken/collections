@@ -19,7 +19,7 @@ function setAvailableArea() {
   // globals, availWidth and availHeight.
   const [availW, availH] = getAvailableWidthHeight()
   if (availW == availWidth && availH == availHeight) {
-    log(`Available size is the same: ${availWidth} x ${availHeight}`)
+    logt("thumbnails", `Available size is the same: ${availWidth} x ${availHeight}`)
     return false
   }
   availWidth = availW
@@ -28,7 +28,7 @@ function setAvailableArea() {
 }
 
 function handleDOMContentLoaded() {
-  log("--- DOMContentLoaded event")
+  logt("thumbnails", "DOMContentLoaded event")
 
   topBar = get("top-bar")
 
@@ -39,17 +39,17 @@ function handleDOMContentLoaded() {
 }
 
 function handleLoad() {
-  log("--- load event")
+  logt("thumbnails", "load event")
   topHeaderHeight = cssNum("--top-header-height")
-  log(`topHeaderHeight: ${topHeaderHeight}`)
+  logt("thumbnails", `topHeaderHeight: ${topHeaderHeight}`)
 }
 
 function handleResize() {
-  log("--- resize event")
+  logt("thumbnails", "resize event")
 
   // Skip the resize events until the area object is set.
   if (topBar === null) {
-    log("Wait for DOM elements to exist and be sized.")
+    logt("thumbnails", "Wait for DOM elements to exist and be sized.")
     return
   }
 
@@ -60,7 +60,7 @@ function handleResize() {
 }
 
 function sizeImages() {
-  log("sizeImages called")
+  logt("thumbnails", "sizeImages called")
 
   // Note: the image elements are inline elements so by default they
   // get a 4px space between them just like words. You could make the
@@ -71,7 +71,7 @@ function sizeImages() {
   const shortSide = availWidth < availHeight ? availWidth : availHeight
 
   const thumbnailW = (shortSide - 4) / 2
-  log(`Thumbnail width: ${thumbnailW}`)
+  logt("thumbnails", `Thumbnail width: ${thumbnailW}`)
 
   const thumbnailWPx = `${thumbnailW}px`
   var thumbnails = document.getElementsByClassName("thumbnail");
@@ -86,21 +86,21 @@ function sizeImages() {
   // the thumbnails.
   const numRowThumbs = Math.floor((availWidth - 4) / (thumbnailW + 4))
   if (numRowThumbs > 2) {
-    log(`numRowThumbs: ${numRowThumbs}`)
+    logt("thumbnails", `numRowThumbs: ${numRowThumbs}`)
     const margin = (availWidth - (thumbnailW * numRowThumbs + ((numRowThumbs - 1) * 4))) / 2
     get("thumbnails").style.marginLeft = `${margin}px`
-    log(`center thumbnails: margin: ${two(margin)}`)
+    logt("thumbnails", `center thumbnails: margin: ${two(margin)}`)
   }
   else {
     get("thumbnails").style.marginLeft = "0"
   }
 
   if (availWidth < availHeight) {
-    log("Portrait mode")
+    logt("thumbnails", "Portrait mode")
     topBar!.style.height = `${topHeaderHeight}px`
   }
   else {
-    log("Landscape mode")
+    logt("thumbnails", "Landscape mode")
     topBar!.style.height = "0"
   }
 }

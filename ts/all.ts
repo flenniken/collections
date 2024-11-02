@@ -6,9 +6,31 @@
 // images.
 const appCacheName = "collections-v1"
 
-function log(message: string) {
-  // Log the message to the console.
-  console.log(message)
+// Each log message has a tag that categories it. Currently tags are
+// named after the file the where the log message is used. You can
+// enable or disable log messages by adding or removing the tag from
+// the showTags object.
+const showTags = {
+  "login": 0,
+  "index": 0,
+  "thumbnails": 0,
+  "image": 0,
+  // "sw": 0,
+  "win": 0,
+}
+
+function logt(tags: string, message: string) {
+  // Log the message to the console if it is enabled.
+  // tags is a space separated list of tags.
+
+  const parts = tags.split(" ")
+  for (const tag of parts) {
+    if (showTags.hasOwnProperty(tag)) {
+      const msg = `${tag}: ${message}`
+      console.log(msg)
+      return
+    }
+  }
 }
 
 function logError(message: string) {
@@ -37,7 +59,7 @@ class Timer {
   seconds() {
     return (performance.now() - this.start) / 1000.0
   }
-  log(message: string) {
-    log(`${three(this.seconds())}s ----- ${message}`)
+  logt(tags: string, message: string) {
+    logt(tags, `${three(this.seconds())}s ----- ${message}`)
   }
 }

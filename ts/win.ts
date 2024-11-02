@@ -37,7 +37,7 @@ function getAvailableWidthHeight() {
   if (availH > availW && window.matchMedia(
       "(display-mode: standalone)").matches) {
     availH += topHeaderHeight
-    log(`Add ${topHeaderHeight} to height for the top bar.`)
+    logt("win", `Add ${topHeaderHeight} to height for the top bar.`)
   }
   return [availW, availH]
 }
