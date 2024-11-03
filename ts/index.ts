@@ -347,11 +347,11 @@ async function handleLoad() {
     }
   })
 
-  // After the user logs in call loggedIn.  The state is loggedInTest
-  // when login-flow is used so we don't call loggedIn and use up the
-  // code.
+  // After the user logs in call processCognitoLogin.  The state is
+  // loggedInTest when the login-flow script is used so we don't call
+  // processCognitoLogin and use up the code.
   if (state == "loggedIn") {
-    loggedIn()
+    processCognitoLogin()
     return
   }
 }

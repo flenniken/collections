@@ -7,10 +7,12 @@ interface UserInfo {
   familyName: string
   email: string
   userId: string
+  // todo: make this a boolean?
   admin: string // either "true" or "false"
   token: string
 }
 
+// todo: which load function runs first, this one or index.ts one?
 window.onload = function() {
 
   // Update the login state on load.
@@ -18,6 +20,7 @@ window.onload = function() {
 }
 
 function getFirstLetter() {
+  // Return the user's first initial of their name.
   let firstLetter = "A"
   const userInfo = fetchUserInfo()
   if (userInfo != null && userInfo.givenName.length > 0)
@@ -51,15 +54,22 @@ function logMeIn() {
 }
 
 function logIn() {
-  // Log in the user using the AWS cognito login UI.  After the user
-  // logs in it will jump to the index page URL passing
-  // state=loggedIn and loggedIn will be called.
+  // Login the user using the AWS cognito login UI.  After the user
+  // logs in it will jump to the index page URL passing state=loggedIn
+  // and processCognitoLogin will be called.
 
   log("login", "login")
 
   // todo: use template to add the info from the docker cognito-config.jsonfile.
   // login-flow -l shows this url
-  const loginUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/oauth2/authorize?client_id=59nnrgfelhidaqhdkrdcnocait&state=loggedIn&response_type=code&scope=openid%20profile&redirect_uri=https://collections.flenniken.net/index.html"
+
+  const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
+  const client_id = "59nnrgfelhidaqhdkrdcnocait"
+  const state = "loggedIn"
+  const response_type = "code&scope=openid%20profile"
+  const redirect_uri = "https://collections.flenniken.net/index.html"
+
+  const loginUrl = `${domain}/oauth2/authorize?client_id=${client_id}&state=${state}&response_type=${response_type}&redirect_uri=${redirect_uri}`
   log("login", loginUrl)
 
   // Login by jumping to the AWS cognito UI.
@@ -84,11 +94,12 @@ function cognitoLogout() {
   window.location.assign(logoutUrl)
 }
 
-async function loggedIn() {
+async function processCognitoLogin() {
   // The user just logged in. Get the user information and store it in
-  // local storage.
+  // local storage. This is called after the cognito login dialog
+  // successfully logs in.
 
-  log("login", "loggedIn")
+  log("login", "processCognitoLogin")
 
   // Get the code from the url query parameters.
   const code = getSearchParam("code")
@@ -104,27 +115,31 @@ async function loggedIn() {
     storeUserInfo(userInfo)
     updateLoginUI()
   }
-  else
+  else {
     // Redirect to index.
     window.location.assign("index.html")
+  }
 }
 
 async function getUserInfo(code: string): Promise<UserInfo | null> {
-  // Get the user details from AWS congnito. The code comes from
-  // cognito login UI.
+  // Get the user information from AWS congnito given the cognito
+  // login code.
 
-  log("login", "getUserInfo")
+  log("login", "get user info")
 
-  // Fetch the user information.
+  // Fetch the user information from cognito.
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
   // todo: use template to fill this in.
   const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
   const url = `${domain}/oauth2/token`
+  const client_id = "59nnrgfelhidaqhdkrdcnocait"
+  const redirect_uri = "https://collections.flenniken.net/index.html"
 
   // why is there a redirect parameter in this post?
   // todo: use template to fill in this
-  const bodyText = `grant_type=authorization_code&client_id=59nnrgfelhidaqhdkrdcnocait&redirect_uri=https://collections.flenniken.net/index.html&code=${code}`
+  const bodyText = `grant_type=authorization_code&client_id=${client_id}&redirect_uri=${redirect_uri}&code=${code}`
 
+  // Post url to get the access token.
   let response
   const headers = new Headers();
   headers.append("Content-Type", "application/x-www-form-urlencoded");
@@ -145,7 +160,6 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
     log("login", `Fetch user info error: ${error}`)
     return null
   }
-
   const data = await response.json()
   log("login", `token keys: ${Object.keys(data)}`)
   const access_token = data["access_token"]
@@ -176,11 +190,10 @@ function storeUserInfo(userInfo: UserInfo) {
   localStorage.setItem('userInfo', userInfoJson);
 }
 
-function removeUserInfo() {
-  // Remove the user information in local storage.
-  log("login", "remove user info")
+function clearUserInfo() {
+  // Remove the user information from local storage.
+  log("login", "clear user info")
   localStorage.removeItem("userInfo")
-  // localStorage.clear() // todo: remove this so we can store other things.
 }
 
 function fetchUserInfo() {
@@ -215,9 +228,7 @@ function isAdmin(userInfo?: UserInfo): boolean {
 function showUserInformation(userInfo: UserInfo) {
   // Show the user name and a logout button on the page.
 
-  let adminStr = ""
-  if (isAdmin(userInfo))
-    adminStr = " (admin)"
+  const adminStr = isAdmin(userInfo) ? " (admin)" : ""
   log("login", `${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
 
   get("given-name").textContent = userInfo.givenName
@@ -230,9 +241,8 @@ function showUserInformation(userInfo: UserInfo) {
 }
 
 function hideUserInformation(element: Element) {
-  // Hide the user information.
+  // Hide the user information from the page.
   log("login", "hide user information")
-
   get("user-info").style.display = 'none'
 }
 
@@ -240,8 +250,7 @@ function logout() {
   // Logout the user. Remove the user details from local storage and
   // tell cognito to logout the user.
   log("login", "logout")
-  removeUserInfo()
-  // hideUserInformation(get("user-info"))
+  clearUserInfo()
   updateLoginUI()
   cognitoLogout()
 }
