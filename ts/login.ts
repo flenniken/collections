@@ -41,7 +41,7 @@ function updateLoginUI() {
 
 function logMeIn() {
   // Login or show the user information.
-  logt("login", "logMeIn")
+  log("login", "logMeIn")
 
   const userInfo = fetchUserInfo()
   if (userInfo)
@@ -55,12 +55,12 @@ function logIn() {
   // logs in it will jump to the index page URL passing
   // state=loggedIn and loggedIn will be called.
 
-  logt("login", "login")
+  log("login", "login")
 
   // todo: use template to add the info from the docker cognito-config.jsonfile.
   // login-flow -l shows this url
   const loginUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/oauth2/authorize?client_id=59nnrgfelhidaqhdkrdcnocait&state=loggedIn&response_type=code&scope=openid%20profile&redirect_uri=https://collections.flenniken.net/index.html"
-  logt("login", loginUrl)
+  log("login", loginUrl)
 
   // Login by jumping to the AWS cognito UI.
   window.location.assign(loginUrl)
@@ -69,7 +69,7 @@ function logIn() {
 function cognitoLogout() {
   // Log out of cognito.
 
-  logt("login", "cognito logout")
+  log("login", "cognito logout")
 
   // todo: use template to add the info from the docker cognito-config.jsonfile.
   const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
@@ -79,7 +79,7 @@ function cognitoLogout() {
   // const state = "cognitoLogout"
 
   const logoutUrl = `${domain}/logout?client_id=${client_id}&logout_uri=${logout_uri}`
-  logt("login", logoutUrl)
+  log("login", logoutUrl)
 
   window.location.assign(logoutUrl)
 }
@@ -88,15 +88,15 @@ async function loggedIn() {
   // The user just logged in. Get the user information and store it in
   // local storage.
 
-  logt("login", "loggedIn")
+  log("login", "loggedIn")
 
   // Get the code from the url query parameters.
   const code = getSearchParam("code")
   if (!code) {
-    logt("login", "Missing the code query parameter.")
+    log("login", "Missing the code query parameter.")
     return null
   }
-  logt("login", `code: ${code}`)
+  log("login", `code: ${code}`)
 
   // Get the user information and store it in local storage.
   const userInfo = await getUserInfo(code)
@@ -113,7 +113,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   // Get the user details from AWS congnito. The code comes from
   // cognito login UI.
 
-  logt("login", "getUserInfo")
+  log("login", "getUserInfo")
 
   // Fetch the user information.
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
@@ -137,17 +137,17 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
     if (!response.ok) {
       // You can only use the code once, so this error happens when
       // you reload a page with state=loggedIn.
-      logt("login", `Fetching user info failed. Code already used? status: ${response.status}`)
+      log("login", `Fetching user info failed. Code already used? status: ${response.status}`)
       return null
     }
   }
   catch (error) {
-    logt("login", `Fetch user info error: ${error}`)
+    log("login", `Fetch user info error: ${error}`)
     return null
   }
 
   const data = await response.json()
-  logt("login", `token keys: ${Object.keys(data)}`)
+  log("login", `token keys: ${Object.keys(data)}`)
   const access_token = data["access_token"]
 
   // Get the user info from from cognito using the access token.
@@ -157,7 +157,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   userInfoheaders.append("Authorization", `Bearer ${access_token}`)
   const userInfoResponse = await fetch(userInfoUrl, {"headers": userInfoheaders})
   const info = await userInfoResponse.json()
-  logt("login", `user info from cognito: ${JSON.stringify(info)}`)
+  log("login", `user info from cognito: ${JSON.stringify(info)}`)
   return {
     givenName: info["given_name"],
     familyName: info["family_name"],
@@ -170,15 +170,15 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
 
 function storeUserInfo(userInfo: UserInfo) {
   // Store the user information in local storage.
-  logt("login", "store user info")
+  log("login", "store user info")
   const userInfoJson = JSON.stringify(userInfo)
-  logt("login", userInfoJson)
+  log("login", userInfoJson)
   localStorage.setItem('userInfo', userInfoJson);
 }
 
 function removeUserInfo() {
   // Remove the user information in local storage.
-  logt("login", "remove user info")
+  log("login", "remove user info")
   localStorage.removeItem("userInfo")
   // localStorage.clear() // todo: remove this so we can store other things.
 }
@@ -213,7 +213,7 @@ function showUserInformation(userInfo: UserInfo) {
   let adminStr = ""
   if (userInfo.admin == "true")
     adminStr = " (admin)"
-  logt("login", `${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
+  log("login", `${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
 
   get("given-name").textContent = userInfo.givenName
   get("family-name").textContent = userInfo.familyName
@@ -226,7 +226,7 @@ function showUserInformation(userInfo: UserInfo) {
 
 function hideUserInformation(element: Element) {
   // Hide the user information.
-  logt("login", "hide user information")
+  log("login", "hide user information")
 
   get("user-info").style.display = 'none'
 }
@@ -234,7 +234,7 @@ function hideUserInformation(element: Element) {
 function logout() {
   // Logout the user. Remove the user details from local storage and
   // tell cognito to logout the user.
-  logt("login", "logout")
+  log("login", "logout")
   removeUserInfo()
   // hideUserInformation(get("user-info"))
   updateLoginUI()

@@ -19,17 +19,22 @@ const showTags = {
   "win": 0,
 }
 
-function logt(tags: string, message: string) {
-  // Log the message to the console if it is enabled.
-  // tags is a space separated list of tags.
+function log(tag: string, message: string) {
+  // Log the message to the console if the tag is enabled.
+  // Tag is the file of the caller.
 
-  const parts = tags.split(" ")
-  for (const tag of parts) {
-    if (showTags.hasOwnProperty(tag)) {
-      const msg = `${tag}: ${message}`
-      console.log(msg)
-      return
-    }
+  // Since we are logging everything through this function, the
+  // console shows this address for all logging. It would be nice if
+  // it showed the caller.  I tried a few things. Chrome will make
+  // links to the code if you specify the full link. This is works but
+  // is too noisy. "new Error().stack" returns file and line info.
+  // console.log("https://collections.flenniken.net/js/index.js:569:9")
+  // You can use console.warn and that works but the formatting is for
+  // warnings.
+
+  if (showTags.hasOwnProperty(tag)) {
+    const msg = `${tag}: ${message}`
+    console.log(msg)
   }
 }
 
@@ -59,7 +64,7 @@ class Timer {
   seconds() {
     return (performance.now() - this.start) / 1000.0
   }
-  logt(tags: string, message: string) {
-    logt(tags, `${three(this.seconds())}s ----- ${message}`)
+  log(tags: string, message: string) {
+    log(tags, `${three(this.seconds())}s ----- ${message}`)
   }
 }

@@ -19,7 +19,7 @@ const cacheUrlPrefix = "/images/"
 
 function logsw(message: string) {
   // Log the service worker message to the console.
-  logt("sw", "👷 " + message)
+  log("sw", "👷 " + message)
 }
 
 self.addEventListener("install", (event: Event) => {

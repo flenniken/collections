@@ -40,15 +40,15 @@ function registerServerWorker() {
 
   // Listen for messages sent from the worker and log them.
   navigator.serviceWorker.addEventListener("message", (event) => {
-    logt("index",`Worker msg received: ${event.data}`)
+    log("index",`Worker msg received: ${event.data}`)
   })
 
-  logt("index","Register the service worker javascript file sw.js.");
+  log("index","Register the service worker javascript file sw.js.");
   navigator.serviceWorker.register("sw.js");
 
   // Log when the service worker is ready.
   navigator.serviceWorker.ready.then((registration) => {
-    logt("index", "Service worker ready.");
+    log("index", "Service worker ready.");
     // Test send a message to the service worker. The worker should
     // send the message back for logging.
     registration.active?.postMessage(
@@ -111,8 +111,8 @@ async function enoughSpace(collection: IndexCollection) {
   // collection.
 
   const sizeString = humanFileSize(collection.totalSize)
-  logt("index",`Collection ${collection.collection} size: ${sizeString}`)
-  logt("index",await getUsageQuotaString())
+  log("index",`Collection ${collection.collection} size: ${sizeString}`)
+  log("index",await getUsageQuotaString())
 
   const estimate = await navigator.storage.estimate()
   if (!estimate.usage || !estimate.quota)
@@ -196,7 +196,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const readyRequest = new Request(`c${cNum}-ready`)
   const readyResponse = await cache.match(readyRequest);
   if (readyResponse) {
-    logt("index","The collection is completely cached.")
+    log("index","The collection is completely cached.")
     return
   }
 
@@ -204,18 +204,18 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const downloadTimer = new Timer()
 
   const urls = getCollectionUrls(cNum)
-  downloadTimer.logt("index",`Download collection ${cNum} which has ${urls.length} files.`)
+  downloadTimer.log("index",`Download collection ${cNum} which has ${urls.length} files.`)
 
   try {
     await downloadUrls(urls)
   } catch (error) {
-    downloadTimer.logt("index",`error: ${error}`)
-    downloadTimer.logt("index","Failed downloading all images.")
+    downloadTimer.log("index",`error: ${error}`)
+    downloadTimer.log("index","Failed downloading all images.")
     return
   }
 
   // Successfully downloaded all the images.
-  downloadTimer.logt("index","Images downloaded and cached.")
+  downloadTimer.log("index","Images downloaded and cached.")
 
   setCollectionState(cNum, "withImages")
 }
@@ -295,7 +295,7 @@ async function setCollectionState(cNum: number, collectionState: string) {
     await cache.put(c2ReadyRequest, c2ReadyResponse)
 
     // const text = await readyResponse.text()
-    logt("index",`Collection ${cNum} is ready: ${text}`);
+    log("index",`Collection ${cNum} is ready: ${text}`);
   } else if (collectionState == "withoutImages") {
     await cache.delete(c2ReadyRequest)
   }
@@ -307,20 +307,20 @@ function showHideAdminUI(pageId: string) {
   const parent = get(pageId)
   forClasses(parent, "admin", (element) => {
     if (isAdmin())
-      logt("index","admin")
+      log("index","admin")
     else
-      logt("index","regular user")
+      log("index","regular user")
     element.style.display = isAdmin() ? "block" : "none"
 
   })
 }
 
 async function handleLoad() {
-  logt("index","Window load event")
+  log("index","Window load event")
 
-  logt("index",`window.location.search: "${window.location.search}"`)
+  log("index",`window.location.search: "${window.location.search}"`)
   const state = getSearchParam("state")
-  logt("index", `state: "${state}"`)
+  log("index", `state: "${state}"`)
 
   // The state is not passed back for the logout endpoint with logout_uri.
   // When the user logs out skip all the setup.
@@ -328,14 +328,14 @@ async function handleLoad() {
   //   return
 
   const [availW, availH] = getAvailableWidthHeight()
-  logt("index",`Available width and height: (${availW}, ${availH})`)
+  log("index",`Available width and height: (${availW}, ${availH})`)
 
   installBanner()
 
   // Show the admin icons when an admin is logged in.
   showHideAdminUI("index")
 
-  logt("index","Download shared collection files.")
+  log("index","Download shared collection files.")
   const sharedCollectionUrls = [
     "js/image.js",
     "js/thumbnails.js",
@@ -356,7 +356,7 @@ async function handleLoad() {
       setCollectionState(cNum, "withImages")
 
     } else {
-      logt("index",`Collection ${cNum} is not cached yet.`);
+      log("index",`Collection ${cNum} is not cached yet.`);
       setCollectionState(cNum, "withoutImages")
     }
   })
@@ -375,30 +375,30 @@ function installBanner() {
 
   if (window.matchMedia("(display-mode: standalone)").matches) {
     runningFromIcon = true
-    logt("index", "Running from the desktop icon.")
+    log("index", "Running from the desktop icon.")
     return
   }
 
   // On an iPhone, when installing is allowed, we want to show a banner when the
   // user has not installed it yet.
 
-  logt("index",`navigator.platform: ${navigator.platform}`)
+  log("index",`navigator.platform: ${navigator.platform}`)
   if (navigator.platform != "iPhone") {
     return
   }
 
   if (!("GestureEvent" in window)) {
-    logt("index", "not running safari")
+    log("index", "not running safari")
     return
   }
 
-  logt("index", "show install banner")
+  log("index", "show install banner")
   get("install-banner").style.display = "block"
 }
 
 addEventListener("message", (event) => {
   // Listen for messages sent from the client and echo them here.
-  logt("index", `Message received: ${event.data}`)
+  log("index", `Message received: ${event.data}`)
 })
 
 // onmessage = (e) => {
@@ -409,17 +409,17 @@ addEventListener("message", (event) => {
 // }
 
 function handleResize() {
-  logt("index", "resize event")
+  log("index", "resize event")
 }
 
 function refreshPage() {
-  logt("index", "refresh")
+  log("index", "refresh")
   location.reload()
 }
 
 function about() {
-  logt("index", "about")
-  logt("index", "not implemented")
+  log("index", "about")
+  log("index", "not implemented")
 }
 
 async function removeCollection(cNum: number) {
@@ -428,7 +428,7 @@ async function removeCollection(cNum: number) {
 
 Are you sure you want to delete this collection's images from the cache?`
   if (confirm(message) == true) {
-    logt("index", `remove collection ${cNum} from the app cache`)
+    log("index", `remove collection ${cNum} from the app cache`)
     const urls = getCollectionUrls(cNum)
     const cache = await openCreateCache()
 
@@ -436,27 +436,27 @@ Are you sure you want to delete this collection's images from the cache?`
 
     urls.forEach( (url) => {
       cache.delete(url).then((response) => {
-        logt("index", `removed ${url}`)
+        log("index", `removed ${url}`)
       });
     })
 
   } else {
-    logt("index", "Nothing removed")
+    log("index", "Nothing removed")
   }
 }
 
 function viewThumbnails(cNum: number) {
-  logt("index", `view thumbnails for collection ${cNum}`)
+  log("index", `view thumbnails for collection ${cNum}`)
   window.location.assign(`pages/thumbnails-${cNum}.html`)
 }
 
 function viewCollection(cNum: number) {
-  logt("index", `view collection ${cNum}`)
+  log("index", `view collection ${cNum}`)
   window.location.assign(`pages/image-${cNum}.html`)
 }
 
 async function clearAppCache() {
-  logt("index", "clearAppCache")
+  log("index", "clearAppCache")
   const quota = await getUsageQuotaString()
   const message = `${quota}
 
@@ -468,7 +468,7 @@ Are you sure you want to delete all the photos and files from the cache?`
 
 async function deleteCache() {
   // Delete the application cache.
-  logt("index", "deleted")
+  log("index", "deleted")
   await caches.delete(appCacheName)
   refreshPage()
 }
@@ -489,7 +489,7 @@ async function getUsageQuotaString() {
 
 async function logAppCache() {
   // Log the contents of the application cache.
-  logt("index", "Application Cache")
+  log("index", "Application Cache")
 
   const cache = await openCreateCache()
 
@@ -504,12 +504,12 @@ async function logAppCache() {
     urls.sort()
 
     urls.forEach((url) => {
-      logt("index", `key: ${url}`)
+      log("index", `key: ${url}`)
     })
-    logt("index", `The cache contains ${urls.length} items.`)
+    log("index", `The cache contains ${urls.length} items.`)
 
     getUsageQuotaString().then((message) => {
-      logt("index", message)
+      log("index", message)
     })
   })
 }

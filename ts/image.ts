@@ -78,30 +78,30 @@ const startTimer = new Timer()
 function handleDOMContentLoaded() {
   // The DOM has loaded.
   // Setup global variables and size the containers and images.
-  startTimer.logt("image", "DOMContentLoaded event")
-  logt("image", `The collection contains ${cJson.images.length} images.`)
+  startTimer.log("image", "DOMContentLoaded event")
+  log("image", `The collection contains ${cJson.images.length} images.`)
 
   area = get("area")
 
   imageIndex = getFirstImage()
-  logt("image", `First image: ${imageIndex + 1}`)
+  log("image", `First image: ${imageIndex + 1}`)
 
-  startTimer.logt("image", "setAvailableArea")
+  startTimer.log("image", "setAvailableArea")
   setAvailableArea()
 
-  startTimer.logt("image", "sizeImages")
+  startTimer.log("image", "sizeImages")
   sizeImages(imageIndex)
 }
 
 async function handleLoad() {
   // The whole page has loaded including styles, images and other resources.
-  startTimer.logt("image", "load event")
+  startTimer.log("image", "load event")
 
   // Show the admin icons when an admin is logged in.
   // showAdminIcons("image")
 
   topHeaderHeight = cssNum("--top-header-height")
-  logt("image", `topHeaderHeight: ${topHeaderHeight}`)
+  log("image", `topHeaderHeight: ${topHeaderHeight}`)
 
   // Watch the touchstart event on the containers for double touch.
   const containers = area!.querySelectorAll(".container")
@@ -120,7 +120,7 @@ async function handleLoad() {
   document.body.style.visibility = "visible"
   document.body.style.opacity = "1"
 
-  startTimer.logt("image", "load Done")
+  startTimer.log("image", "load Done")
 }
 
 function getFirstImage() {
@@ -128,9 +128,9 @@ function getFirstImage() {
   // image query parameter.
 
   // Get the image query string.
-  logt("image", `window.location.search: ${window.location.search}`)
+  log("image", `window.location.search: ${window.location.search}`)
   const queryStr = getSearchParam("image")
-  logt("image", `Image query string: "${queryStr}"`)
+  log("image", `Image query string: "${queryStr}"`)
 
   // Set the first image index.
   let imageIx = 0
@@ -150,7 +150,7 @@ function setAvailableArea() {
   // globals, availWidth and availHeight.
   const [availW, availH] = getAvailableWidthHeight()
   if (availW == availWidth && availH == availHeight) {
-    logt("image", `Available size is the same: ${availWidth} x ${availHeight}`)
+    log("image", `Available size is the same: ${availWidth} x ${availHeight}`)
     return false
   }
   availWidth = availW
@@ -161,7 +161,7 @@ function setAvailableArea() {
   // Size the image area to the available screen area.
   area!.style.width = `${availWidth}px`
   // area!.style.height = `${availHeight}px`
-  logt("image", `Available screen size: ${availWidth} x ${availHeight}`)
+  log("image", `Available screen size: ${availWidth} x ${availHeight}`)
   return true
 }
 
@@ -181,8 +181,8 @@ function sizeImages(firstImageIx: number) {
 
   let zoomPoints: CJson.ZoomPoint[]
   if (!(zoom_w_h in cJson.zoomPoints)) {
-    logt("image", "No zoom points for this size, create new zoom points.")
-    logt("image", `Existing zoom points: ${Object.keys(cJson.zoomPoints)}`)
+    log("image", "No zoom points for this size, create new zoom points.")
+    log("image", `Existing zoom points: ${Object.keys(cJson.zoomPoints)}`)
 
     zoomPoints = createZoomPoints()
 
@@ -194,7 +194,7 @@ function sizeImages(firstImageIx: number) {
   }
 
   leftEdges.length = 0
-  logt("image", `Image zoom points for ${availWidth} x ${availHeight}`)
+  log("image", `Image zoom points for ${availWidth} x ${availHeight}`)
   cJson.images.forEach((image, imageIx) => {
     if (image.width < availWidth || image.height < availHeight) {
       logError("small images are not supported")
@@ -222,7 +222,7 @@ function sizeImages(firstImageIx: number) {
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
 
     // Log the zoom point.
-    logt("image", `i${imageIx+1}: ${image.width} x ${image.height}, ` +
+    log("image", `i${imageIx+1}: ${image.width} x ${image.height}, ` +
                 `scale: ${two(zoomPoint.scale)}, ` +
                 `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
 
@@ -231,8 +231,8 @@ function sizeImages(firstImageIx: number) {
 
   // Scroll the current image into view.
   area!.scrollLeft = leftEdges[firstImageIx]
-  logt("image", `area!.scrollLeft: ${area!.scrollLeft}`)
-  logt("image", `leftEdges: ${leftEdges}`)
+  log("image", `area!.scrollLeft: ${area!.scrollLeft}`)
+  log("image", `leftEdges: ${leftEdges}`)
 }
 
 function defaultZoomPoints() {
@@ -251,7 +251,7 @@ function defaultZoomPoints() {
     }
     const zoomPoint = {"scale": scale, "tx": 0, "ty": 0}
     zoomPoints.push(zoomPoint)
-    logt("image", `Zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
+    log("image", `Zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
   })
   return zoomPoints
 }
@@ -287,18 +287,18 @@ function createZoomPoints() {
     }
   })
   if (closestKey == "") {
-    logt("image", "No closest key")
+    log("image", "No closest key")
     return defaultZoomPoints()
   }
 
-  logt("image", `Closest zoompoint key: ${closestKey}`)
+  log("image", `Closest zoompoint key: ${closestKey}`)
   const closestZoomPoints = cJson.zoomPoints[closestKey]
   cJson.images.forEach((image, imageIx) => {
     const closestZoomPoint = closestZoomPoints[imageIx]
 
     // The new scale is based on the closest scale.
     const scale = closestZoomPoint.scale / closestWidth * availWidth
-    // logt("image", `closest scale: ${two(closestZoomPoint.scale)}, new scale: ${two(scale)}`)
+    // log("image", `closest scale: ${two(closestZoomPoint.scale)}, new scale: ${two(scale)}`)
 
     const tx = availWidth * (closestZoomPoint.tx / closestWidth)
     const ty = availHeight * (closestZoomPoint.ty / closestHeight)
@@ -367,7 +367,7 @@ function preventSwipe(event: Event) {
     const margin = 20
     const left = margin
     const right = window.innerWidth - margin
-    // logt("image", `position: ${clientX}, left: ${left}, right: ${right}`)
+    // log("image", `position: ${clientX}, left: ${left}, right: ${right}`)
     if (clientX < left || clientX > right) {
       // Sometimes preventDefault doesn't prevent swiping.
       event.preventDefault();
@@ -384,7 +384,7 @@ function handleTouchStart(event: TouchEvent) {
   // Log the current image. See handleContainerTouchStart for zoom
   // and pan.
 
-  logt("image", `Touched image: ${imageIndex+1}`)
+  log("image", `Touched image: ${imageIndex+1}`)
   preventSwipe(event)
 }
 
@@ -440,7 +440,7 @@ function handleContainerTouchStart(event: Event) {
   }
 
   const image = cJson.images[imageIx]
-  logt("image", `i${imageIx+1}: touchstart: c: (${two(zpan.start.cx)}, ${two(zpan.start.cy)}) ` +
+  log("image", `i${imageIx+1}: touchstart: c: (${two(zpan.start.cx)}, ${two(zpan.start.cy)}) ` +
               `d: ${two(zpan.start.distance)}, scale: ${two(zpan.start.scale)}, ` +
               `t: (${two(zpan.start.tx)}, ${two(zpan.start.ty)})`)
 }
@@ -448,14 +448,14 @@ function handleContainerTouchStart(event: Event) {
 function handleRestoreImage(event: Event) {
   // Restore an image position and scale to it's original zoom point.
 
-  logt("image", "Restore image to its zoom point.")
+  log("image", "Restore image to its zoom point.")
   const imageIx = imageIndex
 
   // Get the original zoom point.
   let zoomPoint = getZoomPoint(imageIx, cJson)
   const origZP = getZoomPoint(imageIx, cJsonOriginal)
-  logt("image", `Zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
-  logt("image", `Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
+  log("image", `Zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
+  log("image", `Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
 
   // Animate the image to its original zoom point.
   const img = get(`i${imageIx+1}`)
@@ -470,7 +470,7 @@ function handleRestoreImage(event: Event) {
   animation.onfinish = (event) => {
     // Restore the current zoom point and set the finish size and
     // position.
-    logt("image", "Restore image finished")
+    log("image", "Restore image finished")
     zoomPoint.scale = origZP.scale;
     zoomPoint.tx = origZP.tx;
     zoomPoint.ty = origZP.ty;
@@ -506,7 +506,7 @@ function handleTouchMove(event: TouchEvent) {
   const clientX1 = event.touches[1].clientX
   const clientY0 = event.touches[0].clientY
   const clientY1 = event.touches[1].clientY
-  // logt("image", `touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
+  // log("image", `touchmove: client0: (${clientX0}, ${clientY0}) client1: (${clientX1}, ${clientY1})`)
 
   const image = cJson.images[imageIx]
   const zoomPoint = getZoomPoint(imageIx)
@@ -572,7 +572,7 @@ function handleTouchMove(event: TouchEvent) {
 }
 
 function handleTouchCancel(event: TouchEvent) {
-  logt("image", "touchcancel")
+  log("image", "touchcancel")
   handleTouchEnd(event)
 }
 
@@ -585,7 +585,7 @@ function handleTouchEnd(event: TouchEvent) {
     const imageIx = imageIndex
     const image = cJson.images[imageIx]
     const zoomPoint = getZoomPoint(imageIx)
-    logt("image", `i${imageIx+1}: touchend: c: (${two(zpan.current!.cx)}, ${two(zpan.current!.cy)}) ` +
+    log("image", `i${imageIx+1}: touchend: c: (${two(zpan.current!.cx)}, ${two(zpan.current!.cy)}) ` +
               `d: ${two(zpan.current!.distance)}, scale: ${two(zoomPoint.scale)}, ` +
               `t: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   }
@@ -604,9 +604,9 @@ function logJson() {
   }
 
   // Log the current json.
-  logt("image", JSON.stringify(cJson, replacer, 2))
+  log("image", JSON.stringify(cJson, replacer, 2))
 
-  // logt("image", "Copy json to the clipboard");
+  // log("image", "Copy json to the clipboard");
   // navigator.clipboard.writeText(msg);
 }
 
@@ -618,26 +618,26 @@ function animatePosition(start: number, finish: number, framesPerSec: number,
   // callback for each position and call allDone when finished.
 
   const maxFrames = maxDuration * framesPerSec;
-  // logt("image", `maxFrames: ${maxFrames} = maxDuration: ${maxDuration} * framesPerSec: ${framesPerSec}`)
+  // log("image", `maxFrames: ${maxFrames} = maxDuration: ${maxDuration} * framesPerSec: ${framesPerSec}`)
 
   // Move at the same rate no matter the distance. Use the ratio of
   // max frames to max distance equal to the ratio of the frames to
   // the distance.
   const distance = Math.abs(finish - start)
   const frames = (distance * maxFrames) / maxDistance;
-  // logt("image", `frames: ${two(frames)} = (distance: ${two(distance)} * maxFrames: ${two(maxFrames)}) / maxDistance: ${two(maxDistance)}`)
+  // log("image", `frames: ${two(frames)} = (distance: ${two(distance)} * maxFrames: ${two(maxFrames)}) / maxDistance: ${two(maxDistance)}`)
 
   // Get the positions to animate.
   let distancesIndex = 0;
   const frameDistances = distanceList(start, finish, frames);
-  // logt("image", `frameDistances: [${frameDistances}]`)
+  // log("image", `frameDistances: [${frameDistances}]`)
 
   // Determine the delay between each of the animations in seconds.
   const delay = 1 / framesPerSec;
 
-  // logt("image", `frames: ${two(frames)}, distance: ${two(distance)}, delay: ${two(delay)} seconds`)
+  // log("image", `frames: ${two(frames)}, distance: ${two(distance)}, delay: ${two(delay)} seconds`)
 
-  logt("image", `Animate positions [${frameDistances}] one per ${two(delay)} seconds`);
+  log("image", `Animate positions [${frameDistances}] one per ${two(delay)} seconds`);
 
   // Animate to the new position.
   const annimationId = setInterval(animateInterval, delay * 1000);
@@ -675,25 +675,25 @@ let centerElement = null
 function handleResize() {
   // When the phone orientation changes, update the image area and
   // size the images.
-  logt("image", "resize event")
+  log("image", "resize event")
 
   // Skip the resize events until the area object is set.
   if (area === null) {
-    logt("image", "Wait for DOM elements to exist and be sized.")
+    log("image", "Wait for DOM elements to exist and be sized.")
     return
   }
 
   const start = new Timer()
-  start.logt("image", "resize")
+  start.log("image", "resize")
 
   const changed = setAvailableArea()
   if (changed) {
-    logt("image", `on image: ${imageIndex+1}`)
-    start.logt("image", "sizeImages")
+    log("image", `on image: ${imageIndex+1}`)
+    start.log("image", "sizeImages")
     sizeImages(imageIndex)
   }
 
-  start.logt("image", "resize  done")
+  start.log("image", "resize  done")
 }
 
 let scrollStopId = 0
@@ -707,9 +707,9 @@ function handleScroll() {
   if (scrollStopId != 0)
     return
 
-  logt("image", "scroll started")
-  logt("image", `leftEdges: ${leftEdges}`)
-  logt("image", `area.scrollLeft: ${area!.scrollLeft}`)
+  log("image", "scroll started")
+  log("image", `leftEdges: ${leftEdges}`)
+  log("image", `area.scrollLeft: ${area!.scrollLeft}`)
 
   scrollStopId = setInterval(() => {
     // If the current scroll position is on a left edge, we know
@@ -718,7 +718,7 @@ function handleScroll() {
     if (imageIx != -1) {
       // Set the image index and stop the interval checking.
       imageIndex = imageIx
-      logt("image", `scolling stopped on image: ${imageIndex + 1}`)
+      log("image", `scolling stopped on image: ${imageIndex + 1}`)
       clearInterval(scrollStopId);
       scrollStopId = 0
     }
@@ -728,5 +728,5 @@ function handleScroll() {
 function handleScrollEnd() {
   // When the scrollend event is supported by all browsers, we can do
   // away with the handleScroll method.
-  logt("image", "The scrollEnd event exists.")
+  log("image", "The scrollEnd event exists.")
 }
