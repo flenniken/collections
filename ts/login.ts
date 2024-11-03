@@ -199,10 +199,15 @@ function hasLoggedIn(): boolean {
   return (localStorage.getItem("userInfo")) ? true : false
 }
 
-function isAdmin(): boolean {
-  // Return true when the user has logged in and is an admin.
-  const userInfo = fetchUserInfo()
-  if (userInfo != null && userInfo.admin)
+function isAdmin(userInfo?: UserInfo): boolean {
+  // Return true when the user has logged in and is an admin. UserInfo
+  // is fetched when not passed in.
+  let uinfo
+  if (typeof userInfo === 'undefined')
+    uinfo = fetchUserInfo()
+  else
+    uinfo = userInfo
+  if (uinfo != null && uinfo.admin == 'true')
     return true
   return false
 }
@@ -211,13 +216,13 @@ function showUserInformation(userInfo: UserInfo) {
   // Show the user name and a logout button on the page.
 
   let adminStr = ""
-  if (userInfo.admin == "true")
+  if (isAdmin(userInfo))
     adminStr = " (admin)"
   log("login", `${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
 
   get("given-name").textContent = userInfo.givenName
   get("family-name").textContent = userInfo.familyName
-  get("admin").style.display = (userInfo.admin == "true") ? "inline-block" : "none"
+  get("admin").style.display = isAdmin(userInfo) ? "inline-block" : "none"
   get("user-info").style.display = "block"
 
   // Note: the user info is hidden when the user clicks it, see

@@ -297,12 +297,7 @@ function showHideAdminUI(pageId: string) {
   // in.
   const parent = get(pageId)
   forClasses(parent, "admin", (element) => {
-    if (isAdmin())
-      log("index","admin")
-    else
-      log("index","regular user")
     element.style.display = isAdmin() ? "block" : "none"
-
   })
 }
 
