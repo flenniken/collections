@@ -41,3 +41,12 @@ function getAvailableWidthHeight() {
   }
   return [availW, availH]
 }
+
+function getSearchParam(param: string): string {
+  // Return the given param from the window search params.
+  const searchParams = new URLSearchParams(window.location.search)
+  const value = searchParams.get(param)
+  if (!value)
+    return ""
+  return value
+}

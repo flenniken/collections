@@ -129,9 +129,8 @@ function getFirstImage() {
 
   // Get the image query string.
   logt("image", `window.location.search: ${window.location.search}`)
-  const searchParams = new URLSearchParams(window.location.search)
-  const queryStr = searchParams.get("image")
-  logt("image", `Image query string: ${queryStr}`)
+  const queryStr = getSearchParam("image")
+  logt("image", `Image query string: "${queryStr}"`)
 
   // Set the first image index.
   let imageIx = 0

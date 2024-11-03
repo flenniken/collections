@@ -318,6 +318,15 @@ function showHideAdminUI(pageId: string) {
 async function handleLoad() {
   logt("index","Window load event")
 
+  logt("index",`window.location.search: "${window.location.search}"`)
+  const state = getSearchParam("state")
+  logt("index", `state: "${state}"`)
+
+  // The state is not passed back for the logout endpoint with logout_uri.
+  // When the user logs out skip all the setup.
+  // if (state == "cognitoLogout")
+  //   return
+
   const [availW, availH] = getAvailableWidthHeight()
   logt("index",`Available width and height: (${availW}, ${availH})`)
 
@@ -352,17 +361,13 @@ async function handleLoad() {
     }
   })
 
-  // After the user logs in call loggedIn.
-  logt("index",`window.location.search: ${window.location.search}`)
-  const searchParams = new URLSearchParams(window.location.search)
-  const state = searchParams.get("state")
-  // The state is loggedInTest when login-flow is used so we don't
-  // call loggedIn and use up the code.
-  if (state && state == "loggedIn") {
+  // After the user logs in call loggedIn.  The state is loggedInTest
+  // when login-flow is used so we don't call loggedIn and use up the
+  // code.
+  if (state == "loggedIn") {
     loggedIn()
     return
   }
-
 }
 
 function installBanner() {

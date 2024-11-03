@@ -36,12 +36,14 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <span id="menu-name">Collections</span>
     <img class="icon left" src="icons/icon-512.png"
       onclick="about()" alt="about">
-    <img id="login-or-out" class="icon right" src="icons/user.svg"
-      onclick="loginOrOut()" alt="log in out">
+    <img id="login-me-in" class="icon right" src="icons/user.svg"
+      onclick="logMeIn()" alt="login">
     <span id="first-letter" class="right"
-      onclick="loginOrOut()" title="log in out">S</span>
-    <div id="user-info">
-      <span id="given-name"></span> <span id="family-name"></span>
+      onclick="logMeIn()" title="login">S</span>
+    <div id="user-info" onclick="hideUserInformation(this)">
+      <span id="given-name"></span>
+      <span id="family-name"></span>
+      <span id="admin">(admin)</span>
       <br>
       <input id="logout" type="button" value="Logout" onclick="logout()">
     </div>

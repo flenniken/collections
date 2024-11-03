@@ -15,18 +15,6 @@ window.onload = function() {
 
   // Update the login state on load.
   updateLoginUI()
-
-  // Define on click event handler on the document.
-  document.onclick = function(event: Event) {
-    // Hide the user info if the user clicks something besides the
-    // login buttons. The button will handle show / hide themself.
-    const loginIds = ['logout', 'login-or-out', 'first-letter']
-    const id = (<HTMLElement>event.target).id
-    logt("login", `on click target id: ${id}`)
-    if (loginIds.includes(id))
-      return
-    hideUserInformation()
-  }
 }
 
 function getFirstLetter() {
@@ -41,37 +29,25 @@ function updateLoginUI() {
   // Update the UI to reflect the current login state.
   if (hasLoggedIn()) {
     get("first-letter").textContent = getFirstLetter()
-    get("login-or-out").style.display = "none"
+    get("login-me-in").style.display = "none"
     get("first-letter").style.display = "flex"
   }
   else {
-    get("login-or-out").style.display = "block"
+    get("login-me-in").style.display = "block"
     get("first-letter").style.display = "none"
   }
   showHideAdminUI("index")
 }
 
-function loginOrOut() {
-  // Login or logout the user.
-  logt("login", "loginOrOut")
+function logMeIn() {
+  // Login or show the user information.
+  logt("login", "logMeIn")
 
-  // If logged in, show the user name and logout button, else login.
-  if (hasLoggedIn()) {
-    logt("login", "Already logged in.")
-    if (get("user-info").style.display != 'block') {
-      const userInfo = fetchUserInfo()
-      if (userInfo == null) {
-        logt("login", "The user is not logged in.")
-        return
-      }
-      showUserInformation(userInfo)
-    }
-    else
-      hideUserInformation()
-  }
-  else {
+  const userInfo = fetchUserInfo()
+  if (userInfo)
+    showUserInformation(userInfo)
+  else
     logIn()
-  }
 }
 
 function logIn() {
@@ -96,7 +72,13 @@ function cognitoLogout() {
   logt("login", "cognito logout")
 
   // todo: use template to add the info from the docker cognito-config.jsonfile.
-  const logoutUrl = "https://pool42613626.auth.us-west-2.amazoncognito.com/logout?client_id=59nnrgfelhidaqhdkrdcnocait&state=cognitoLogout&logout_uri=https://collections.flenniken.net/index.html"
+  const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
+  const client_id = "59nnrgfelhidaqhdkrdcnocait"
+  const logout_uri = "https://collections.flenniken.net/index.html"
+  // The state is not passed back when you use the logout_uri, just redirect_url.
+  // const state = "cognitoLogout"
+
+  const logoutUrl = `${domain}/logout?client_id=${client_id}&logout_uri=${logout_uri}`
   logt("login", logoutUrl)
 
   window.location.assign(logoutUrl)
@@ -109,8 +91,7 @@ async function loggedIn() {
   logt("login", "loggedIn")
 
   // Get the code from the url query parameters.
-  const searchParams = new URLSearchParams(window.location.search)
-  const code = searchParams.get("code")
+  const code = getSearchParam("code")
   if (!code) {
     logt("login", "Missing the code query parameter.")
     return null
@@ -204,7 +185,8 @@ function removeUserInfo() {
 
 function fetchUserInfo() {
   // Return the user info from local storage or return null when it
-  // doesn't exist.
+  // doesn't exist. The existence of user info means the user is
+  // logged in.
   const userInfoJson = localStorage.getItem('userInfo')
   if (userInfoJson == null)
     return null
@@ -235,14 +217,17 @@ function showUserInformation(userInfo: UserInfo) {
 
   get("given-name").textContent = userInfo.givenName
   get("family-name").textContent = userInfo.familyName
+  get("admin").style.display = (userInfo.admin == "true") ? "inline-block" : "none"
   get("user-info").style.display = "block"
-  // Note: the user info is hidden when the user clicks
-  // something besides logout, see onload.
+
+  // Note: the user info is hidden when the user clicks it, see
+  // hideUserInformation.
 }
 
-function hideUserInformation() {
-  // Hide the user name and logout button.
-  logt("login", "hide user details")
+function hideUserInformation(element: Element) {
+  // Hide the user information.
+  logt("login", "hide user information")
+
   get("user-info").style.display = 'none'
 }
 
@@ -251,7 +236,7 @@ function logout() {
   // tell cognito to logout the user.
   logt("login", "logout")
   removeUserInfo()
-  hideUserInformation()
+  // hideUserInformation(get("user-info"))
   updateLoginUI()
   cognitoLogout()
 }
