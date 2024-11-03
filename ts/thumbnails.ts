@@ -74,13 +74,12 @@ function sizeImages() {
   log("thumbnails", `Thumbnail width: ${thumbnailW}`)
 
   const thumbnailWPx = `${thumbnailW}px`
-  var thumbnails = document.getElementsByClassName("thumbnail");
-  Array.prototype.forEach.call(thumbnails, function(thumbnail, ix) {
+  forClasses(document, "thumbnail", (thumbnail) => {
     thumbnail.style.width = thumbnailWPx
     thumbnail.style.height = thumbnailWPx
     thumbnail.style.minWidth = thumbnailWPx
     thumbnail.style.minHeight = thumbnailWPx
-  });
+  })
 
   // If more than 2 thumbnails fit the width of the screen, center
   // the thumbnails.

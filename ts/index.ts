@@ -233,15 +233,6 @@ async function openCreateCache(): Promise<Cache> {
   return cache
 }
 
-type ForClassesCallback = (element: HTMLElement) => void;
-
-function forClasses(parent: Element, className: string, callback: ForClassesCallback) {
-  const elements = parent.getElementsByClassName(className);
-  for (let ix = 0; ix < elements.length; ix++) {
-    callback(<HTMLElement>elements[ix])
-  }
-}
-
 async function setCollectionState(cNum: number, collectionState: string) {
   // Show or hide the UI elements that show the whether the collection is
   // ready to view.

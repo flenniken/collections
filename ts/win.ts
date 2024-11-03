@@ -1,6 +1,6 @@
-// Shared code concatenated with the some of other ts files. The
-// window and document objects are used here. See all.ts for shared
-// code not using the window or document objects.
+// Shared code concatenated with the some of other ts files. The DOM
+// types for example window and document objects are used here. See
+// all.ts for shared code not using the DOM.
 
 function get(id: string) {
   // Get the dom element with the given id. Generate an exception
@@ -49,4 +49,16 @@ function getSearchParam(param: string): string {
   if (!value)
     return ""
   return value
+}
+
+type ForClassesCallback = (element: HTMLElement) => void;
+
+function forClasses(parent: Element | Document,
+    className: string, callback: ForClassesCallback) {
+  // Call the given function for the parent's child elements with the
+  // given class.
+  const elements = parent.getElementsByClassName(className);
+  for (let ix = 0; ix < elements.length; ix++) {
+    callback(<HTMLElement>elements[ix])
+  }
 }
