@@ -1,4 +1,4 @@
-// Shared code concatenated with the some of other ts files. The DOM
+// Shared code concatenated with some of other ts files. The DOM
 // types for example window and document objects are used here. See
 // all.ts for shared code not using the DOM.
 
