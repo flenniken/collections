@@ -46,9 +46,6 @@ Tasks:
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
 
-const allts = "ts/all.ts"
-const wints = "ts/win.ts"
-const logints = "ts/login.ts"
 
 const target = "es6"
 
@@ -100,19 +97,29 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
     .pipe(gulp.dest(destDir));
 }
 
-// Concatenate all.ts to all the ts files and win.ts to all except sw
-// which doesn't have access to the DOM window or document objects.
+// Each of the four resulting js files are made from multiple ts files
+// that are concatenated together.  The all.ts file is contactenated
+// with all four.  The win.ts file is concatenated with all except
+// sw.ts which doesn't have access to the DOM, window or document
+// objects.
+const image_ts = ["ts/all.ts", "ts/win.ts", "ts/image.ts"]
+const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/thumbnails.ts"]
+const index_ts = ["ts/all.ts", "ts/win.ts", "ts/login.ts", "ts/download.ts", "ts/index.ts"]
+const sw_ts = ["ts/all.ts", 'ts/sw.ts']
 
+// image page
 gulp.task('i', function () {
-  return ts2js([allts, wints, "ts/image.ts"], 'image.js', "dist/js", null)
+  return ts2js(image_ts, 'image.js', "dist/js", null)
 });
 
+// thumbnails page
 gulp.task('t', function () {
-  return ts2js([allts, wints, 'ts/thumbnails.ts'], 'thumbnails.js', "dist/js", null)
+  return ts2js(thumbnails_ts, 'thumbnails.js', "dist/js", null)
 });
 
+// index page
 gulp.task('x', function () {
-  return ts2js([allts, wints, logints, "ts/index.ts"], 'index.js', "dist/js", null)
+  return ts2js(index_ts, 'index.js', "dist/js", null)
 });
 
 gulp.task('sw', function () {
@@ -125,7 +132,7 @@ gulp.task('sw', function () {
   }
   // Store sw.js in the root so it has control of all files in the
   // root and subfolders below.
-  return ts2js([allts, 'ts/sw.ts'], 'sw.js', "dist", options)
+  return ts2js(sw_ts, 'sw.js', "dist", options)
 });
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
@@ -374,10 +381,10 @@ gulp.task("watch", function(cb) {
 
   const gs = gulp.series
 
-  gulp.watch([allts, wints, "ts/image.ts"], gs(["i"]));
-  gulp.watch([allts, wints, "ts/thumbnails.ts"], gs(["t"]));
-  gulp.watch([allts, wints, "ts/index.ts"], gs(["x"]));
-  gulp.watch([allts, "ts/sw.ts"], gs(["sw"]));
+  gulp.watch(image_ts, gs(["i"]));
+  gulp.watch(thumbnails_ts, gs(["t"]));
+  gulp.watch(index_ts, gs(["x"]));
+  gulp.watch(sw_ts, gs(["sw"]));
 
   gulp.watch("pages/collections.css", gs(["css"]));
 
