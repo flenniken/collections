@@ -6,7 +6,7 @@
 // images.
 const appCacheName = "collections-v1"
 
-// Each log message has a tag that categories it. Currently tags are
+// Each log message has a tag that categorizes it. Currently tags are
 // named after the file the where the log message is used. You can
 // enable or disable log messages by adding or removing the tag from
 // the showTags object.
@@ -17,6 +17,7 @@ const showTags = {
   "image": 0,
   // "sw": 0,
   "win": 0,
+  "download": 0,
 }
 
 function log(tag: string, message: string) {

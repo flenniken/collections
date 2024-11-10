@@ -63,8 +63,8 @@ async function enoughSpace(collection: IndexCollection) {
   // collection.
 
   const sizeString = humanFileSize(collection.totalSize)
-  log("index",`Collection ${collection.collection} size: ${sizeString}`)
-  log("index",await getUsageQuotaString())
+  log("download",`Collection ${collection.collection} size: ${sizeString}`)
+  log("download",await getUsageQuotaString())
 
   const estimate = await navigator.storage.estimate()
   if (!estimate.usage || !estimate.quota)
@@ -148,7 +148,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const readyRequest = new Request(`c${cNum}-ready`)
   const readyResponse = await cache.match(readyRequest);
   if (readyResponse) {
-    log("index","The collection is completely cached.")
+    log("download","The collection is completely cached.")
     return
   }
 
@@ -156,18 +156,18 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const downloadTimer = new Timer()
 
   const urls = getCollectionUrls(cNum)
-  downloadTimer.log("index",`Download collection ${cNum} which has ${urls.length} files.`)
+  downloadTimer.log("download",`Download collection ${cNum} which has ${urls.length} files.`)
 
   try {
     await downloadUrls(urls)
   } catch (error) {
-    downloadTimer.log("index",`error: ${error}`)
-    downloadTimer.log("index","Failed downloading all images.")
+    downloadTimer.log("download",`error: ${error}`)
+    downloadTimer.log("download","Failed downloading all images.")
     return
   }
 
   // Successfully downloaded all the images.
-  downloadTimer.log("index","Images downloaded and cached.")
+  downloadTimer.log("download","Images downloaded and cached.")
 
   setCollectionState(cNum, "withImages")
 }
