@@ -38,7 +38,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 </head>
 <body id="index">
   <div class="top-menu">
-    <span id="menu-name">Collections</span>
+    <span id="menu-name" onclick="about()">Collections</span>
     <img class="icon left" src="icons/icon-512.png"
       onclick="about()" alt="about">
     <img id="login-me-in" class="icon right" src="icons/user.svg"
@@ -56,11 +56,25 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       <img id="close-about" class="icon right" src="icons/xclose.svg"
         alt="close about box" onclick="hideAboutBox(this)">
       <p>
-        Collections is a curated collection of photos.
-        For the user guide and source code see:
-        <a href="https://github.com/flenniken/collections" target="_blank">collections</a>
+You view my best photos with this app. Photos are grouped into
+collections where each collection is a trip, photo shoot, or
+related topic. You can read about each photo and collection with
+the associated descriptions.
+      </p>
+      <p>
+To learn how to use the app read the user guide (readme) on
+github.  Developers can learn how to build and modify the source
+there too.
+      </p>
+      <ul>
+        <li>
+          <a href="https://github.com/flenniken/collections" target="_blank">github collections</a>
+        &mdash; user guide and source code
+        </li>
+      </ul>
+      <p>
 <!--$ nextline g.totalCollections = html(string(s.totalCollections), "body") -->
-        There are <span id="collection-count">{g.totalCollections}</span> collections.
+        There are <span id="collection-count">{g.totalCollections}</span> total collections.
       </p>
     </div>
   </div>
