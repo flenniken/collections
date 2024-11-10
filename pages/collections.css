@@ -144,6 +144,8 @@
 #index #about-box {
   border: solid blue;
   display: none;
+  margin-top: 1em;
+  padding-left: 10px;
 }
 
 #thumbnails {

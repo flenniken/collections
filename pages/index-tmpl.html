@@ -1,6 +1,11 @@
 <!--$ # You build the index.html page from this template and the -->
 <!--$ # index.json file with the gulpfile index task. -->
 
+<!--$ # The svg icons, MIT licensed, come from: -->
+<!--$ # https://github.com/n3r4zzurr0/svg-spinners/ -->
+<!--$ # https://www.svgrepo.com/collection/interface-set/ -->
+<!--$ # https://iconduck.com/icons/ -->
+
 <!--$ replace t.content = o.header -->
 <!DOCTYPE html>
 <html lang="en">
@@ -43,17 +48,19 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <div id="user-info" onclick="hideUserInformation(this)">
       <span id="given-name"></span>
       <span id="family-name"></span>
-      <span id="admin">(admin)</span>
+      <span id="admin"></span>
       <br>
       <input id="logout" type="button" value="Logout" onclick="logout()">
     </div>
-    <div id="about-box" onclick="hideAboutBox(this)">
-      <p>Collections is a curated collection of photos.
-      For the user guide and source code see:
-      <a href="https://github.com/flenniken/collections" target="_blank">collections</a>
+    <div id="about-box">
+      <img id="close-about" class="icon right" src="icons/xclose.svg"
+        alt="close about box" onclick="hideAboutBox(this)">
       <p>
+        Collections is a curated collection of photos.
+        For the user guide and source code see:
+        <a href="https://github.com/flenniken/collections" target="_blank">collections</a>
 <!--$ nextline g.totalCollections = html(string(s.totalCollections), "body") -->
-      <p>There are <span id="collection-count">{g.totalCollections}</span> collections.
+        There are <span id="collection-count">{g.totalCollections}</span> collections.
       </p>
     </div>
   </div>
@@ -99,10 +106,6 @@ Screen".</p>
       </div>
     </div>
 <!--$ endblock -->
-<!--$ # The icons, MIT licensed, come from: -->
-<!--$ # https://github.com/n3r4zzurr0/svg-spinners/ -->
-<!--$ # https://www.svgrepo.com/collection/interface-set/ -->
-<!--$ # https://iconduck.com/icons/ -->
   </div>
   <div class="bottom-menu">
     <img class="icon right" src="icons/trash-can.svg"
