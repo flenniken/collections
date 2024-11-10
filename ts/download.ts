@@ -24,6 +24,7 @@ interface IndexCollection {
 interface IndexJson {
   // The index.json typescript definition.
   siteTitle: string
+  totalCollections: number
   collections: IndexCollection[]
 }
 

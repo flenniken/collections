@@ -47,6 +47,15 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       <br>
       <input id="logout" type="button" value="Logout" onclick="logout()">
     </div>
+    <div id="about-box" onclick="hideAboutBox(this)">
+      <p>Collections is a curated collection of photos.
+      For the user guide and source code see:
+      <a href="https://github.com/flenniken/collections" target="_blank">collections</a>
+      <p>
+<!--$ nextline g.totalCollections = html(string(s.totalCollections), "body") -->
+      <p>There are <span id="collection-count">{g.totalCollections}</span> collections.
+      </p>
+    </div>
   </div>
   <div id="install-banner">
     <h3>Note</h3>

@@ -221,7 +221,16 @@ function refreshPage() {
 
 function about() {
   log("index", "about")
-  log("index", "not implemented")
+  get("about-box").style.display = 'block'
+}
+
+function hideAboutBox(element: Element) {
+  // Hide the about box from the page.
+  log("index", "hide about box")
+
+  // Get the number of collections.
+
+  get("about-box").style.display = 'none'
 }
 
 async function removeCollection(cNum: number) {

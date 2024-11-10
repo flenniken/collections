@@ -141,7 +141,10 @@
   margin-right: 5px;
 }
 
-
+#index #about-box {
+  border: solid blue;
+  display: none;
+}
 
 #thumbnails {
   margin: 0;
