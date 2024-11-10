@@ -196,74 +196,59 @@ collections to be a public static website without a backend server
 (other than AWS).
 
 Users login with an email and a password. You add and remove users
-manually.
+manually. Admin users see debugging controls in the UI.
 
-Admin users see debugging controls in the UI.
+AWS Cognito allows you to create multiple user pools for application
+login. You will create one for Collections.
 
-You run two scripts, cognito and login-flow, for working with
-cognito.
+To setup login you perform the following steps:
 
-## Cognito Script
+* Create Admin Email
+* Create IAM User
+* Create User Pool
+* Create Config File
+* Create a User
+* Test Login Flow
 
-You use the cognito script to create and maintain user access.
+Each step is described below.
 
-You can see the available options by running it without any options:
+## Create Admin Email
 
-~~~
-# from docker container
-scripts/cognito
+You login to your AWS console and create an SES email of the admin of
+Collections. Verify the email. When you create the pool this email
+will be used.
 
-usage: PROG [-h] [-t] [-p] [-s pool-name] [-c pool-name] [-w pool-name] [-l pool-name]
-            [-u pool-name] [-e pool-name user-id]
-
-This script is for setting up the cognito login system and managing users.
-
-options:
-  -h, --help            show this help message and exit
-  -t, --test            run all or one internal unit tests. You can run just one like this: cognito
-                        -t TestCognito.test_poolNamesToIds
-  -p, --printPools      print the pool names.
-  -s pool-name, --showPoolSettings pool-name
-                        show the pool settings for the given pool.
-  -c pool-name, --createPool pool-name
-                        create an AWS Cognito pool with the given name. Use the console to delete
-                        it.
-  -w pool-name, --writeCognitoConfig pool-name
-                        write the ~/.aws/cognito-config file containing pool information needed by
-                        the website and login-flow script
-  -l pool-name, --listUsers pool-name
-                        list the pool users.
-  -u pool-name, --createUser pool-name
-                        create a new pool user.
-  -e pool-name user-id, --editUser pool-name user-id
-                        edit an existing pool user. Get the user id from listUsers.
-~~~
-
-The cognito script communicates with AWS Cognito through an IAM user
-with the correct permissions.
+todo: more detail needed.  How does this email get used when the pool is created?
 
 ## Create IAM User
 
-You need to create an IAM user with the correct permissions.  To do
-this you login to your AWS account console and select the IAM
-service. Click the plus sign to add a new user and give it cognito
-power user permissions, and SES readonly permissions
-(AmazonCognitoPowerUser, AmazonSESReadOnlyAccess).  Save the
-credentials somewhere safe. You need the credentials when you create
-a new docker image.
+You create an AWS IAM user in the AWS console so you can create the
+Cognito user pool with the cognito script. It's also used to test
+login with the login-flow script.
+
+* login to the AWS console
+* select the IAM service
+* click the plus sign and add a new user
+
+Give the user cognito power user permissions, and SES readonly
+permissions (AmazonCognitoPowerUser, AmazonSESReadOnlyAccess).
+
+Save the credentials somewhere safe. You need the credentials when
+you create a new docker image.
 
 Put the credentials on the docker container with the aws command line
-as shown below.
+configure command:
 
 ~~~
 # from docker container
 aws configure
 ~~~
 
-## Create Pool
+## Create User Pool
 
-You create a new user pool with cognito as shown below. In the
-example we name the pool “collections-pool”.
+An AWS Cognito user pool maintains the users of Collections.
+You create the user pool with the cognito script as shown below. In the
+example it creates the user pool called “collections-pool”.
 
 ~~~
 # from docker container
@@ -272,24 +257,42 @@ scripts/cognito —c collections-pool
 
 ## Create Config File
 
-The config file is used by the website and the login-flow script so
-they know how to communicate with the AWS Cognito user pool.
+The config file is used by the website build process so the resulting
+Collection's code knows how to communicate with the user pool.
 
-You create the config file with cognito as shown below. It reads the
-pool information from AWS.
+You create the config file with the cognito script as shown below. It
+reads the "collections-pool" information from AWS and writes it to a
+file.
 
 ~~~
 # docker container
 scripts/cognito —w collections-pool
+
+Wrote the cognito config file. View it with:
+
+  cat /home/coder/.aws/cognito-config | jqless
+~~~
+
+The file looks something like this:
+
+~~~
+{
+  "client_id": "asdfasdfasdfasdfasdfasdfad",
+  "redirect_uri": "https://collections.flenniken.net/index.html",
+  "logout_uri": "https://collections.flenniken.net/index.html",
+  "scope": "openid profile",
+  "domain": "https://pool42613626.auth.us-west-2.amazoncognito.com"
+}
 ~~~
 
 # Create or Edit User
 
-You create a new user with the cognito command from the docker
-container.  For example, to add a user to the “collections” pool do
-the following:
+You create a new Collections user with the cognito command from the
+docker container.  For example, to add a user to the
+"collections-pool" do the following:
 
 ~~~
+# from docker container
 scripts/cognito -u collections-pool
 ~~~
 
@@ -302,7 +305,7 @@ scripts/cognito -u collections-pool
 
 This command will add a new user after prompting for their information.
 
-Enter email address, e.g. steve.Flenniken@gmail.com
+Enter email address, e.g. steve.flenniken@gmail.com
 email?: tom.bombadil@gmail.com
 Enter given name, e.g. Steve
 given name?: Tom
@@ -356,8 +359,8 @@ You use the AWS console to disable or delete a user
 
 ## Login-flow Script
 
-You use login-flow script to manually step through and debug and test
-the website login process and decode tokens.
+You use login-flow script to manually step through the login process
+for debugging and testing.  You can view decoded tokens.
 
 ~~~
 # docker container
