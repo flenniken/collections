@@ -44,11 +44,7 @@ Tasks:
 * get-images -- Download the collection images from collections.flenniken.net.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
-* other -- See the system aliases for starting a debug server, compiling when
-    files change and other commands.
 `
-
-
 const target = "es6"
 
 gulp.task("default", function(cb){

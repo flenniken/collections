@@ -1,6 +1,6 @@
 # Aliases used in the Collections docker container.
 
-# Show the current folder in the prompt.
+# Show the platform and current folder in the prompt.
 PS1='(debian)\w $ '
 
 # Allow aliases to work with sudo, i.e.: "sudo ll".
@@ -11,10 +11,12 @@ alias ll='ls -l'
 
 # Run jq to format and color json then pipe that to less.
 # Use it as a pipe:  cat my.json | jqless
-alias jqless='jq -C | less -R'
+alias jqless='jq -C | less -RF'
 
+# Run the gulp command.
 alias g='gulp'
+
+# Watch for source file changes and automatically build them.
 alias gw='g watch &'
-alias gr='g run-server &'
 
 echo "Nginx now serving files on http://localhost:8000/index.html"
