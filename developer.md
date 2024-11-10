@@ -189,6 +189,18 @@ dist
 
 [⬇ ────────](#Contents)
 
+# Login
+
+As you login, your name, token, expire date and other login details
+are stored in local storage. Existence of this data, tells whether you
+are logged in or not.
+
+When you log out, the login local data is deleted and you are logged
+out of cognito.
+
+Admin users see the debugging refresh and airplane icons at the bottom
+of the index page and the airplane on the image page.
+
 # Login Setup
 
 Collections uses the AWS Cognito service to handle login.  This allows
@@ -460,6 +472,7 @@ When making changes to the image page test them with these steps:
 * [Build All](#build-all)
 * [Build Tasks](#build-tasks)
 * [Build Folder](#build-folder)
+* [Login](#login)
 * [Login Setup](#login-setup)
 * [Test Tips](#test-tips)
 * [Test Touch](#test-touch)
