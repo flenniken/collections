@@ -62,8 +62,8 @@ The environment has a few aliases defined for common commands:
 (debian)~/collections $ alias
 
 alias g='gulp'
-alias gr='g run-server &'
 alias gw='g watch &'
+alias jqless='jq -C | less -RF'
 alias ll='ls -l'
 alias ls='ls --color=auto'
 alias sudo='sudo '
@@ -119,9 +119,6 @@ Type g to see all the tasks:
 ~~~
 (debian)~/collections $ g
 
-[23:47:42] Using gulpfile ~/collections/gulpfile.js
-[23:47:42] Starting 'default'...
-
 Tasks:
 * ts -- Compile and minimize ts files to dist/js.
     i -- Compile image.ts
@@ -130,23 +127,23 @@ Tasks:
     sw -- Compile sw.ts
 * pages -- Create all the pages from templates.
     index -- Create the main index page.
-    thumbnails -- Create the thumbnails page.
-    image -- Create the image page.
+    thumbnails1 -- Create the thumbnails page for collection 1.
+    thumbnails2 -- Create the thumbnails page for collection 2.
+    image1 -- Create the image page for collection 1.
+    image2 -- Create the image page for collection 2.
 * vpages -- Validate all the html files.
     vindex -- Validate index html
-    vthumbnails -- Validate thumbnails html
-    vimage -- Validate image html
+    vthumbnails1 -- Validate thumbnails html for collection 1.
+    vthumbnails2 -- Validate thumbnails html for collection 2.
+    vimage1 -- Validate image html for collection 1.
+    vimage2 -- Validate image html for collection 2.
 * css -- Minimize the collection.css file.
-* syncronize -- Syncronize the template's replace blocks with header.tea.
-* run-server -- (alias gr) Run a test server exposing the dist folder on port
-    8000. You can run it in the background with alias gr.
-    Access files in your browser with: http://localhost:8000/index.html
+* syncronize -- Syncronize the template's replace blocks with header.tea content.
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
+* get-images -- Download the collection images from collections.flenniken.net.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
-
-[23:47:42] Finished 'default' after 1.64 ms
 ~~~
 
 [⬇ ────────](#Contents)
@@ -396,20 +393,21 @@ The basic flow:
 
 How to develop on Chrome, Safari or xcode simulator.
 
-For Chrome you start a local server on the dist folder (gr) and work
-in a phone view. You enable the mouse to simulate touch, see Test
-Touch. You set up at least two phone views for a “iPhone 14 Pro Max”,
-portrait 430 x 933 and landscape 932 x 430.
+For Chrome you use the local server that’s running in the docker
+container at http://localhost:8000 and work in a phone view. You
+enable the mouse to simulate touch, see Test Touch. You set up at
+least two phone views for a “iPhone 14 Pro Max”, portrait 430 x 933
+and landscape 932 x 430.
 
 For Safari you plug your iphone into your mac and debug remotely, see
 Test on iphone.
 
 For xcode simulator, you get it by installing xcode.  Launch it and
-run an iphone 14 max. Like chrome you run the code on a localhost
-server (gr) and reference a localhost url. You can test the install
-process and two finger touching. It’s also good for making screenshots
-that include the bezel. You can see the console log in desktop safari
-like you do when debugging a plugged in iphone.
+run an iphone 14 max.  Like chrome you use the local server that’s
+running in the docker container at http://localhost:8000. You can test
+the install process and two finger touching. It’s also good for making
+screenshots that include the bezel. You can see the console log in
+desktop safari like you do when debugging a plugged in iphone.
 
 [⬇ ────────](#Contents)
 
