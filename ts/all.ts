@@ -24,15 +24,6 @@ function log(tag: string, message: string) {
   // Log the message to the console if the tag is enabled.
   // Tag is the file of the caller.
 
-  // Since we are logging everything through this function, the
-  // console shows this address for all logging. It would be nice if
-  // it showed the caller.  I tried a few things. Chrome will make
-  // links to the code if you specify the full link. This is works but
-  // is too noisy. "new Error().stack" returns file and line info.
-  // console.log("https://collections.flenniken.net/js/index.js:569:9")
-  // You can use console.warn and that works but the formatting is for
-  // warnings.
-
   if (showTags.hasOwnProperty(tag)) {
     const msg = `${tag}: ${message}`
     console.log(msg)

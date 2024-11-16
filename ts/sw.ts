@@ -28,8 +28,9 @@ self.addEventListener("install", (event: Event) => {
 
 async function openCreateCache(): Promise<Cache> {
   // Open or create the application cache and return it. When the
-  // application cache is not supported or cannot be open or created
+  // application cache is not supported or cannot be opened or created
   // generate an exception.
+
   let cache: Cache
   cache = await caches.open(appCacheName);
   if (!cache)

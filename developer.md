@@ -162,17 +162,25 @@ dist
 |-- collections.webmanifest
 |-- favicon.ico
 |-- icons
+|   |-- 6-dots-rotate.svg
+|   |-- airplane.svg
+|   |-- camera.svg
+|   |-- download.svg
 |   |-- icon-128.png
-|   |-- icon-168.png
-|   |-- icon-192.png
-|   |-- icon-256.png
 |   ...
 |-- images
-|   |-- 1-p.jpg
-|   |-- 1-t.jpg
-|   |-- 2-p.jpg
-|   |-- 2-t.jpg
+|   |-- c1-1-p.jpg
+|   |-- c1-1-t.jpg
+|   |-- c1-2-p.jpg
+|   |-- c1-2-t.jpg
+|   |-- c1-3-p.jpg
+|   |-- c1-3-tin.jpg
 |   ...
+|   |-- c2-7-t.jpg
+|   |-- c2-8-p.jpg
+|   |-- c2-8-t.jpg
+|   |-- c2-9-p.jpg
+|   `-- c2-9-t.jpg
 |-- index.html
 |-- js
 |   |-- image.js
@@ -180,7 +188,9 @@ dist
 |   `-- thumbnails.js
 |-- pages
 |   |-- image-1.html
-|   `-- thumbnails-1.html
+|   |-- image-2.html
+|   |-- thumbnails-1.html
+|   `-- thumbnails-2.html
 `-- sw.js
 ~~~
 
@@ -221,13 +231,14 @@ To setup login you perform the following steps:
 
 Each step is described below.
 
+[⬇ ────────](#Contents)
+
 ## Create Admin Email
 
 You login to your AWS console and create an SES email of the admin of
-Collections. Verify the email. When you create the pool this email
-will be used.
+Collections. Verify the email.
 
-todo: more detail needed.  How does this email get used when the pool is created?
+[⬇ ────────](#Contents)
 
 ## Create IAM User
 
@@ -242,9 +253,6 @@ login with the login-flow script.
 Give the user cognito power user permissions, and SES readonly
 permissions (AmazonCognitoPowerUser, AmazonSESReadOnlyAccess).
 
-Save the credentials somewhere safe. You need the credentials when
-you create a new docker image.
-
 Put the credentials on the docker container with the aws command line
 configure command:
 
@@ -252,6 +260,11 @@ configure command:
 # from docker container
 aws configure
 ~~~
+
+Save the credentials somewhere safe. You need the credentials if
+you create a new docker image.
+
+[⬇ ────────](#Contents)
 
 ## Create User Pool
 
@@ -263,6 +276,8 @@ example it creates the user pool called “collections-pool”.
 # from docker container
 scripts/cognito —c collections-pool
 ~~~
+
+[⬇ ────────](#Contents)
 
 ## Create Config File
 
@@ -293,6 +308,8 @@ The file looks something like this:
   "domain": "https://pool42613626.auth.us-west-2.amazoncognito.com"
 }
 ~~~
+
+[⬇ ────────](#Contents)
 
 # Create or Edit User
 
@@ -366,6 +383,8 @@ Password: unchanged
 
 You use the AWS console to disable or delete a user
 
+[⬇ ────────](#Contents)
+
 ## Login-flow Script
 
 You use login-flow script to manually step through the login process
@@ -389,9 +408,9 @@ The basic flow:
 
 [⬇ ────────](#Contents)
 
-# Test Tips
+# How to Test
 
-How to develop on Chrome, Safari or xcode simulator.
+You can test on Chrome, Safari or xcode simulator.
 
 For Chrome you use the local server that’s running in the docker
 container at http://localhost:8000 and work in a phone view. You
@@ -442,7 +461,7 @@ To debug:
 
 [⬇ ────────](#Contents)
 
-# Test Procedure
+# Image Page Tests
 
 When making changes to the image page test them with these steps:
 
@@ -472,12 +491,11 @@ When making changes to the image page test them with these steps:
 * [Build Folder](#build-folder)
 * [Login](#login)
 * [Login Setup](#login-setup)
-* [Test Tips](#test-tips)
+* [How to Test](#how-to-test)
 * [Test Touch](#test-touch)
 * [Test on iphone](#test-on-iphone)
-* [Test Procedure](#test-procedure)
+* [Image Page Tests](#image-page-tests)
 
 # Other
 
 * [Readme](readme.md) &mdash; tells what Collections is and how to use it on your iphone.
-
