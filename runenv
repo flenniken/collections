@@ -100,7 +100,9 @@ function listMe() {
 
 function syncMe() {
   ## Rsync dist folder to collections.flenniken.net web folder.
-  rsync -a --delete --progress dist/ 1and1:collections/
+  ## todo: remove this
+  echo "sync from the docker container"
+  # rsync -a --delete --progress dist/ 1and1:collections/
 }
 
 # Verify we are running in the root

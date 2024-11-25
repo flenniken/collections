@@ -13,7 +13,7 @@ ENV coder_env=debian
 # Install the needed apps and libraries.
 RUN apt-get update && apt-get -qy install less man sudo tree curl \
   wget nano git jq libpcre3 libpcre3-dev rsync nginx \
-  python3-requests python3-jwt unzip python3-boto3
+  python3-requests python3-jwt unzip python3-boto3 dnsutils
 
 # Install glow for viewing markdown at the command line.
 # https://github.com/charmbracelet/glow
