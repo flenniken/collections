@@ -1,0 +1,206 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+
+"""
+This script is deploys the modified collections files to s3 and
+invalidates them in the cloudfront cache.
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+import sys
+import argparse
+import traceback
+import sys
+import signal
+import unittest
+import urllib.parse
+from collections import namedtuple
+import json
+import requests
+import jwt
+import subprocess
+import sys
+import textwrap
+import random
+import string
+import botocore
+
+import boto3
+from datetime import datetime, timezone
+from getpass import getpass
+
+class DeployException(Exception):
+  """ An exception we plan for. """
+  pass
+
+def listS3():
+  print("not implemented")
+  
+def sync():
+  print("not implemented")
+
+def listModified():
+  print("not implemented")
+
+def getBotoClient(serviceName='s3'):
+  """
+  Return the boto3 client for the given AWS service. Services names
+  like 'cognito-idp', 'ses', 'sts', etc.
+  """
+  configFilename = "/home/coder/.aws/config"
+  credsFilename = "/home/coder/.aws/credentials"
+  if not os.path.exists(configFilename) or not os.path.exists(credsFilename):
+     raise DeployException("""\
+
+Before this script can access your aws s3 bucket, you need an
+AWS account and an IAM user with with the correct permissions.
+See the docs for how to setup the IAM user.
+""")
+  return boto3.client(serviceName)
+
+def printDict(name, d):
+  lines = []
+  formatDict(name, d, 0, lines)
+  print('\n'.join(lines))
+
+def formatDict(name, d, indent=0, lines=[]):
+  """
+  Format a dictionary recursively and append lines to the lines
+  parameter.
+  """
+  spaces = " " * indent
+  spaces2 = spaces + "  "
+  if len(d) == 0:
+    lines.append(f"{spaces}{name} " + "{}")
+  else:
+    lines.append(f"{spaces}{name}")
+  for k, v in d.items():
+    if isinstance(v, datetime):
+      value = formatDateTime(v)
+    elif isinstance(v, dict):
+      ind = indent + 2
+      formatDict(k+":", v, ind, lines)
+      continue
+    elif isinstance(v, list):
+      spaces4 = spaces2 + "  "
+      lines.append("%s%s: [" % (spaces2, k))
+      for item in v:
+        if isinstance(item, dict):
+          ind = indent + 4
+          formatDict("{", item, ind, lines)
+          lines.append(spaces4 + "}")
+        else:
+          lines.append("%s%s" % (spaces4, item))
+      lines.append("%s]" % (spaces2))
+      continue
+    else:
+      value = repr(v)
+    lines.append("%s%s: %s" % (spaces2, k, value))
+
+def process(args):
+  if args.listS3:
+    listS3()
+  elif args.sync:
+    sync()
+  elif args.listModified:
+    listModified()
+  else:
+    raise DeployException(f"""No implementation for args:
+{args}
+""")
+
+def parseCommandLine():
+  """
+  Parse the command line arguments.
+  """
+  if len(sys.argv) == 1:
+    # When there are no arguments provided, show the help information.
+    sys.argv.append("-h")
+  else:
+    # When -t is provided, change argv so unittest does not see it.
+    # You can run one test by providing the test name as an argument.
+    # deploy -t TestModule.test_me
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ['-t', '--test']:
+        sys.argv.pop(ix+1)
+        args = argparse.Namespace(test = True)
+        return args
+
+  # Use this module's comment at the top of the file for the
+  # description.
+  parser = argparse.ArgumentParser(
+  prog='PROG', formatter_class=argparse.RawDescriptionHelpFormatter,
+  description=textwrap.dedent(__doc__))
+
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run all or one internal unit tests. You can run just one like this:  deploy -t TestModule.test_me")
+
+  parser.add_argument("-l", "--listS3", action='store_true',
+    help="list the collections files in S3 ")
+
+  parser.add_argument("-s", "--sync", action='store_true',
+    help="copy the modified files to S3 and invalidates them in the cloudfront cache")
+
+  parser.add_argument("-m", "--listModified", action='store_true',
+    help="list the modified files")
+
+  args = parser.parse_args(sys.argv[1:])
+  return args
+
+def signalHandler(sig, frame):
+  """ Handle ctrl-C """
+  sys.exit(1)
+
+def main(args):
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    process(args)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except DeployException as ex:
+    print(str(ex))
+  except Exception as ex:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0 # success
+
+
+class TestClients:
+  def __init__(self):
+    self.s3Client = getBotoClient('s3')
+    self.sesClient = getBotoClient('cloudfront')
+
+tc = None
+
+def setUpModule():
+  # Get the boto clients we test. This method is called once by the
+  # test suite. The code is here to avoid a runtime error in the
+  # shutdown phase.
+  global tc
+  tc = TestClients()
+
+def tearDownModule():
+  pass
+
+class TestModule(unittest.TestCase):
+
+  def test_me(self):
+    self.assertTrue(1)
+
+  def test_listUsers(self):
+    return
+    listUsers("collections-pool", tc.cognitoClient)
+
+if __name__ == '__main__':
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)
