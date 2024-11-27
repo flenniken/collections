@@ -27,13 +27,10 @@ Each collection has a title, thumbnail, description, and post date.
 You can scroll through the list. When you reach the bottom there is a
 more indicator.
 
-You login and out with the circle icon in the upper righthand side of
-the index page.  You see your first initial when logged in, otherwise
-you see a person.
-
-You login by clicking the person icon and entering your email and
-password. When you are logged in and you click the icon, you see your
-name and the logout button.
+You login with your email and password by clicking the circle icon in
+the upper righthand side of the index page. You see your first initial
+when logged in, otherwise you see a person. When you are logged in and
+you click the icon, you see your name and the logout button.
 
 You must be logged in to download and view new collections. You can
 continue to view already downloaded collections when not logged in.

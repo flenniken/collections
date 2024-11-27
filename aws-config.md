@@ -67,7 +67,7 @@ Used on the collections docker container.
 * click "Create access key" link on the upper right
 * select "Command Line Interface (CLI)", check confirm, press next
 * press "Create access key"
-* add the credentials to the docker container with the following command. 
+* add the credentials to the docker container with the following command.
 
 ~~~
 # from docker container
@@ -87,7 +87,7 @@ need the credentials again if you create a new docker image.
 The credentials are stored in the credentials file:
 
 ~~~
-cat ~/.aws/credentials 
+cat ~/.aws/credentials
 
 [default]
 aws_access_key_id = xxxxxxxxxxx
@@ -106,7 +106,7 @@ The region is stored in the aws config file.  In the example the
 us-west-2 region is being used:
 
 ~~~
-cat ~/.aws/config 
+cat ~/.aws/config
 
 [default]
 region = us-west-2
@@ -158,7 +158,7 @@ For the region I used us-west-2. For the name I used sflennikco. It is
 best to not use a name with dots. This is a global name so simple
 names will be taken.
 
-The console will show you the new bucket.  
+The console will show you the new bucket.
 
 Verify you created it in the correct region.  For the sflennikco
 bucket run:
@@ -229,7 +229,7 @@ Get a certificate using the aws certificate manager console.  Use your
 domain and its collections subdomain. For example, sflennik.com and
 collections.sflennik.com.
 
-Click Create Records and wait a minute or so for it to be created. 
+Click Create Records and wait a minute or so for it to be created.
 
 You will connect collections.sflennik.com subdomain to the CloudFront
 distribution you are about to create.
@@ -267,14 +267,14 @@ distribution". Specify the fields labeled:
 * Origin access
 * Alternate domain name (CNAME) - optional
 * Custom SSL certificate -- optional
-* Default Root object -- optional 
+* Default Root object -- optional
 * Web Application Firewall (WAF)
 * Price class
 
 Enter your bucket domain in the Origin Domain field. For the
 sflennikco bucket enter:
 
-~~~ 
+~~~
 sflennikco.s3.us-west-2.amazonaws.com
 ~~~
 
@@ -355,7 +355,7 @@ aws cloudfront list-origin-access-controls | jqless
   "SigningBehavior": "always",
   "OriginAccessControlOriginType": "s3"
   ...
-  
+
 aws s3api get-bucket-policy --bucket sflennikco | jq -r .Policy | jq
 
 {
@@ -385,6 +385,235 @@ collections.sflennik.com domain enter:
 
 * https://collections.sflennik.com
 
+[⬇ ────────](#Contents)
+
+# SES Admin Email
+
+In the AWS SES console create two identities, one for the collections
+admin and one for yourself.
+
+~~~
+collections.sflennik.com
+steve.flenniken@gmail.com
+~~~
+
+Create an identity for collections.sflennik.com.
+
+* go to the AWS SES console
+* click Configuration > Identities in the left panel
+* click the "Create Identity" button
+* in the section "Identity type" select Domain
+* in the Domain editbox enter "collections.sflennik.com"
+* in the Tags section click "Add new tag" and enter key "collections"
+  and value "Collections admin email".
+* click "Create Identity" button at the bottom of the page.
+* click the button to automatically add DNS records to Route53.
+
+Note: It takes a minute or so to verify the identity.
+
+Create an identity for yourself used for testing.
+
+* click the "Create Identity" button
+* in the section "Identity type" select Email
+* in the Domain editbox enter "steve.flenniken@gmail.com"
+* in the Tags section click "Add new tag" and enter key "collections" and value "My email as a test destination".
+* click "Create Identity" button at the bottom of the page.
+
+Note: you well get an email and you click a link it to verify the
+identity.
+
+Verify the collections.sflennik.com email by sending from it to yourself.
+
+* click Configuration > Identities in the left panel
+* click collections.sflennik.com
+* click "Send test email"
+* enter "admin" in the "From-address" editbox
+* for Scenario select Custom
+* for "Custom recipient" enter steve.flenniken@gmail.com
+* for Subject enter "test message from SES"
+* for Body enter "testing"
+* click "Send email"
+* make sure you get the email
+
+Verity the sflenni.com DNS records exist.
+
+~~~
+aws route53 list-resource-record-sets \
+  --hosted-zone-id Z0529194UJ7ON89LPSGU \
+  | grep sflennik.com
+
+  "Name": "sflennik.com.",
+  "Name": "sflennik.com.",
+  "Name": "sflennik.com.",
+  "Name": "_1ea5c2c57b77f24b333bda95c117ff0d.sflennik.com.",
+  "Name": "collections.sflennik.com.",
+  "Name": "_2e6e3dc1983aa3586ffbf629530096ef.collections.sflennik.com.",
+  "Name": "_dmarc.collections.sflennik.com.",
+  "Name": "ghhudi4my7okvirxpndfritfl6isbvil._domainkey.collections.sflennik.com.",
+  "Name": "muwrvw6jnt7er5cqxnt3f64ccg7lrht3._domainkey.collections.sflennik.com.",
+  "Name": "raqvkjw5bexcyjao7xpjczdtybbnjeil._domainkey.collections.sflennik.com.",
+~~~
+
+[⬇ ────────](#Contents)
+
+# Create User Pool
+
+An AWS Cognito user pool maintains the collection's users.
+
+Create the Cognito user pool called collections-pool by running the
+cognito script as shown below.
+
+~~~
+# from docker container
+scripts/cognito -c collections-pool
+
+Choose the SES email to use when sending mail to users.
+0: exit
+1: steve.flenniken@gmail.com
+Number?: 1
+
+What friendly name should be used with the email?
+Example: Steve Flenniken
+Name?: Steve Flenniken
+
+Enter your domain name where collections is hosted.
+Example: collections.flenniken.net
+Domain?: collections.sflennik.com
+~~~
+
+Verify the collections-pool exists:
+
+~~~
+scripts/cognito -p
+
+collections-pool
+~~~
+
+Verify the collections-pool settings:
+
+~~~
+scripts/cognito -s collections-pool | less
+
+  ...
+  redirect_uri: 'https://collections.sflennik.com/index.html'
+  logout_uri: 'https://collections.sflennik.com/index.html'
+  ...
+~~~
+
+[⬇ ────────](#Contents)
+
+# Create Config File
+
+The config file is used by the website build process so the resulting
+Collection's code knows how to communicate with the user pool.
+
+You create the config file with the cognito script as shown below. It
+reads the "collections-pool" information from AWS and writes it to a
+file.
+
+~~~
+# docker container
+scripts/cognito -w collections-pool
+
+Wrote the cognito config file. View it with:
+
+  cat /home/coder/.aws/cognito-config | jqless
+~~~
+
+The file looks something like this:
+
+~~~
+{
+  "client_id": "47ahgb3e4jqhk86o7gugvbglf8",
+  "redirect_uri": "https://collections.sflennik.com/index.html",
+  "logout_uri": "https://collections.sflennik.com/index.html",
+  "scope": "openid profile",
+  "domain": "https://pool18672788.auth.us-west-2.amazoncognito.com"
+}
+~~~
+
+[⬇ ────────](#Contents)
+
+# Create First Users
+
+Create a normal user and an admin user for yourself using the cognito
+script.
+
+~~~
+# from docker container
+scripts/cognito -u collections-pool
+~~~
+
+Create normal user as shown below.  Save the password in your password manager.
+
+~~~
+# from docker container
+scripts/cognito -u collections-pool
+
+This command will add a new user after prompting for their information.
+
+Enter email address, e.g. steve.flenniken@gmail.com
+email?: steve.flenniken@gmail.com
+Enter given name, e.g. Steve
+given name?: Steve
+Enter family name, e.g. Flenniken
+family name?: Flenniken
+Is the user an admin, True or False?: False
+password?:
+~~~
+
+Create normal user as shown below.  Save the password in your password manager.
+
+Note: The "+admin" allows you to have a unique email address that
+goes to the same place as the previous email.
+
+~~~
+scripts/cognito -u collections-pool
+
+email?: steve.flenniken+admin@gmail.com
+given name?: Steve
+family name?: Flenniken
+Is the user an admin, True or False?: True
+password?:
+~~~
+
+Verify by listing the users in the pool:
+
+~~~
+scripts/cognito -l collections-pool
+
+email: steve.flenniken+admin@gmail.com
+first: Steve
+last: Flenniken
+id: 0801f3d0-8041-70db-6366-c3161ab7589f
+status: FORCE_CHANGE_PASSWORD
+created: 2024-11-27 22:52:22 UTC
+admin: true
+
+email: steve.flenniken@gmail.com
+first: Steve
+last: Flenniken
+id: 0861d3e0-00a1-7058-ad19-4d7b1880d276
+status: CONFIRMED
+created: 2024-11-27 22:49:10 UTC
+admin: false
+~~~
+
+# Build and Deploy
+
+~~~
+g all
+scripts/deploy
+~~~
+
+# View a Collection
+
+* in your browser go to collections.sflennik.com
+* login as your normal test user
+* download the first collection
+* view the thumbnails
+* view the images
+
 # Contents
 
 * [Overview](#overview)
@@ -394,6 +623,10 @@ collections.sflennik.com domain enter:
 * [Register a domain](#register-a-domain)
 * [Create CloudFront Distribution](#create-cloudfront-distribution)
 * [Allow CloudFront S3 Access](#allow-cloudfront-s3-access)
+* [SES Admin Email](#ses-admin-email)
+* [Create User Pool](#create-user-pool)
+* [Create Config File](#create-config-file)
+* [Create First Users](#create-first-users)
 
 # Other
 

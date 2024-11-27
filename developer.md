@@ -208,106 +208,12 @@ out of cognito.
 Admin users see the debugging refresh and airplane icons at the bottom
 of the index page and the airplane on the image page.
 
-# Login Setup
-
 Collections uses the AWS Cognito service to handle login.  This allows
 collections to be a public static website without a backend server
 (other than AWS).
 
 Users login with an email and a password. You add and remove users
 manually. Admin users see debugging controls in the UI.
-
-AWS Cognito allows you to create multiple user pools for application
-login. You will create one for Collections.
-
-To setup login you perform the following steps:
-
-* Create Admin Email
-* Create IAM User
-* Create User Pool
-* Create Config File
-* Create a User
-* Test Login Flow
-
-Each step is described below.
-
-[⬇ ────────](#Contents)
-
-## Create Admin Email
-
-You login to your AWS console and create an SES email of the admin of
-Collections. Verify the email.
-
-[⬇ ────────](#Contents)
-
-## Create IAM User
-
-You create an AWS IAM user in the AWS console so you can create the
-Cognito user pool with the cognito script. It's also used to test
-login with the login-flow script.
-
-* login to the AWS console
-* select the IAM service
-* click the plus sign and add a new user
-
-Give the user cognito power user permissions, and SES readonly
-permissions (AmazonCognitoPowerUser, AmazonSESReadOnlyAccess).
-
-Put the credentials on the docker container with the aws command line
-configure command:
-
-~~~
-# from docker container
-aws configure
-~~~
-
-Save the credentials somewhere safe. You need the credentials if
-you create a new docker image.
-
-[⬇ ────────](#Contents)
-
-## Create User Pool
-
-An AWS Cognito user pool maintains the users of Collections.
-You create the user pool with the cognito script as shown below. In the
-example it creates the user pool called “collections-pool”.
-
-~~~
-# from docker container
-scripts/cognito —c collections-pool
-~~~
-
-[⬇ ────────](#Contents)
-
-## Create Config File
-
-The config file is used by the website build process so the resulting
-Collection's code knows how to communicate with the user pool.
-
-You create the config file with the cognito script as shown below. It
-reads the "collections-pool" information from AWS and writes it to a
-file.
-
-~~~
-# docker container
-scripts/cognito —w collections-pool
-
-Wrote the cognito config file. View it with:
-
-  cat /home/coder/.aws/cognito-config | jqless
-~~~
-
-The file looks something like this:
-
-~~~
-{
-  "client_id": "asdfasdfasdfasdfasdfasdfad",
-  "redirect_uri": "https://collections.flenniken.net/index.html",
-  "logout_uri": "https://collections.flenniken.net/index.html",
-  "scope": "openid profile",
-  "domain": "https://pool42613626.auth.us-west-2.amazoncognito.com"
-}
-~~~
 
 [⬇ ────────](#Contents)
 
