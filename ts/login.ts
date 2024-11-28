@@ -13,7 +13,7 @@ interface UserInfo {
 }
 
 interface Settings {
-  // The typescript definition of settings information.
+  // The typescript definition of aws settings.
   domain: string
   client_id: string
   url: string
@@ -21,6 +21,10 @@ interface Settings {
   redirect_uri: string
   logout_uri: string
 }
+
+// The settings are defined in the index.html file from data in the
+// settings.json file.
+var settings: Settings
 
 // todo: which load function runs first, this one or index.ts one?
 window.onload = function() {
@@ -70,7 +74,7 @@ function logIn() {
 
   log("login", "login")
 
-  const s = get_settings()
+  const s = settings
   const state = "loggedIn"
   const response_type = "code&scope=openid%20profile"
 
@@ -89,7 +93,7 @@ function cognitoLogout() {
   // The state is not passed back when you use the logout_uri, just redirect_url.
   // const state = "cognitoLogout"
 
-  const s = get_settings()
+  const s = settings
   const logoutUrl = `${s.domain}/logout?client_id=${s.client_id}&logout_uri=${s.logout_uri}`
   log("login", logoutUrl)
 
@@ -123,20 +127,6 @@ async function processCognitoLogin() {
   }
 }
 
-function get_settings(): Settings {
-  // todo: use template to fill this in.
-
-  const domain = "https://pool18672788.auth.us-west-2.amazoncognito.com"
-  return {
-    domain: "https://pool18672788.auth.us-west-2.amazoncognito.com",
-    client_id: "47ahgb3e4jqhk86o7gugvbglf8",
-    url: `${domain}/oauth2/token`,
-    userInfoUrl: `${domain}/oauth2/userInfo`,
-    redirect_uri: "https://collections.sflennik.com/index.html",
-    logout_uri: "https://collections.sflennik.com/index.html",
-  }
-}
-
 async function getUserInfo(code: string): Promise<UserInfo | null> {
   // Get the user information from AWS congnito given the cognito
   // login code.
@@ -146,7 +136,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   // Fetch the user information from cognito.
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
 
-  const s = get_settings()
+  const s = settings
 
   // Why is there a redirect parameter in this post?
   const bodyText = `grant_type=authorization_code&client_id=${s.client_id}&redirect_uri=${s.redirect_uri}&code=${code}`

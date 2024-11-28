@@ -1,7 +1,8 @@
 // Main code file for the index page. The login.ts and download.ts
 // files are concatenated with this file.
 
-// The indexJson comes from the index.html file.
+// The indexJson is defined in the index.html file from data in the
+// index.json file.
 var indexJson: IndexJson
 
 // Whether the app was started by clicking a desktop icon or not.

@@ -778,16 +778,18 @@ def poolNamesToIds(cognitoClient=None):
 
 def writeCognitoConfig(poolName):
   """
-  Write the cognito config file: ~/.aws/cognito-config for the
+  Write the cognito config file: ~/.aws/settings.json for the
   given the pool name and domain prefix.
   """
   settings = getPoolSettings(poolName)
   config = settings['config']
 
-  # Write the cognito config file: ~/.aws/cognito-config.
-  filename = "/home/coder/.aws/cognito-config"
+  # Write the cognito config file: ~/.aws/settings.json.
+  filename = "/home/coder/.aws/settings.json"
   with open(filename, 'w') as fp:
-    fp.write(json.dumps(config))
+    jstr = json.dumps(config)
+    text = '{"settings":' + jstr + "}"
+    fp.write(text)
 
   print(f"""\
 Wrote the cognito config file. View it with:
@@ -969,7 +971,7 @@ def parseCommandLine():
     help="create an AWS Cognito pool with the given name. Use the console to delete it.")
 
   parser.add_argument("-w", "--writeCognitoConfig", metavar="pool-name",
-    help="""write the ~/.aws/cognito-config file containing pool information
+    help="""write the ~/.aws/settings.json file containing pool information
 needed by the website and login-flow script""")
 
   parser.add_argument("-l", "--listUsers", metavar='pool-name',

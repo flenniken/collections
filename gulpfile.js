@@ -203,6 +203,7 @@ statictea \
   -t pages/index-tmpl.html \
   -s pages/index.json \
   -o pages/header.tea \
+  -s /home/coder/.aws/settings.json
   -r dist/index.html
 */
   log("Compiling index template.")
@@ -210,6 +211,7 @@ statictea \
     "-t", "pages/index-tmpl.html",
     "-s", "pages/index.json",
     "-o", "pages/header.tea",
+    "-s", "/home/coder/.aws/settings.json",
     "-r", "dist/index.html",
   ]
   return child_process.spawn("statictea", parameters, {stdio: "inherit"});

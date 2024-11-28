@@ -19,7 +19,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       content="black-translucent">
 <!--$ endblock -->
 <!--$ nextline -->
-<!--$ : g.siteTitle = html(s.siteTitle, "body") -->
+<!--$ : g.siteTitle = html(s.indexJson.siteTitle, "body") -->
   <title>{g.siteTitle}</title>
   <meta name="description"
     content="Flenniken.net Collections">
@@ -32,8 +32,11 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <link rel="manifest" href="collections.webmanifest">
   <script src="js/index.js" defer></script>
   <script>
-//$ nextline json = string(s, "json")
-  var indexJson = {json}
+//$ block indexJson = string(s.indexJson, "json")
+//$ : settings = string(s.settings, "json")
+  var indexJson = {indexJson}
+  var settings = {settings}
+//$ endblock
 </script>
 </head>
 <body id="index">
@@ -73,7 +76,7 @@ there too.
         </li>
       </ul>
       <p>
-<!--$ nextline g.totalCollections = html(string(s.totalCollections), "body") -->
+<!--$ nextline g.totalCollections = html(string(s.indexJson.totalCollections), "body") -->
         There are <span id="collection-count">{g.totalCollections}</span> total collections.
       </p>
     </div>
@@ -89,8 +92,8 @@ Screen".</p>
   </div>
   <div class="collections">
 <!--$ block -->
-<!--$ : t.repeat = len(s.collections) -->
-<!--$ : c = s.collections[t.row] -->
+<!--$ : t.repeat = len(s.indexJson.collections) -->
+<!--$ : c = s.indexJson.collections[t.row] -->
 <!--$ : num = c.collection -->
 <!--$ : cid = format("c{num}") -->
 <!--$ : src = c.thumbnail -->
