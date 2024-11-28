@@ -12,6 +12,16 @@ interface UserInfo {
   token: string
 }
 
+interface Settings {
+  // The typescript definition of settings information.
+  domain: string
+  client_id: string
+  url: string
+  userInfoUrl: string
+  redirect_uri: string
+  logout_uri: string
+}
+
 // todo: which load function runs first, this one or index.ts one?
 window.onload = function() {
 
@@ -60,16 +70,11 @@ function logIn() {
 
   log("login", "login")
 
-  // todo: use template to add the info from the docker cognito-config.jsonfile.
-  // login-flow -l shows this url
-
-  const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
-  const client_id = "59nnrgfelhidaqhdkrdcnocait"
+  const s = get_settings()
   const state = "loggedIn"
   const response_type = "code&scope=openid%20profile"
-  const redirect_uri = "https://collections.flenniken.net/index.html"
 
-  const loginUrl = `${domain}/oauth2/authorize?client_id=${client_id}&state=${state}&response_type=${response_type}&redirect_uri=${redirect_uri}`
+  const loginUrl = `${s.domain}/oauth2/authorize?client_id=${s.client_id}&state=${state}&response_type=${response_type}&redirect_uri=${s.redirect_uri}`
   log("login", loginUrl)
 
   // Login by jumping to the AWS cognito UI.
@@ -81,14 +86,11 @@ function cognitoLogout() {
 
   log("login", "cognito logout")
 
-  // todo: use template to add the info from the docker cognito-config.jsonfile.
-  const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
-  const client_id = "59nnrgfelhidaqhdkrdcnocait"
-  const logout_uri = "https://collections.flenniken.net/index.html"
   // The state is not passed back when you use the logout_uri, just redirect_url.
   // const state = "cognitoLogout"
 
-  const logoutUrl = `${domain}/logout?client_id=${client_id}&logout_uri=${logout_uri}`
+  const s = get_settings()
+  const logoutUrl = `${s.domain}/logout?client_id=${s.client_id}&logout_uri=${s.logout_uri}`
   log("login", logoutUrl)
 
   window.location.assign(logoutUrl)
@@ -121,6 +123,20 @@ async function processCognitoLogin() {
   }
 }
 
+function get_settings(): Settings {
+  // todo: use template to fill this in.
+
+  const domain = "https://pool18672788.auth.us-west-2.amazoncognito.com"
+  return {
+    domain: "https://pool18672788.auth.us-west-2.amazoncognito.com",
+    client_id: "47ahgb3e4jqhk86o7gugvbglf8",
+    url: `${domain}/oauth2/token`,
+    userInfoUrl: `${domain}/oauth2/userInfo`,
+    redirect_uri: "https://collections.sflennik.com/index.html",
+    logout_uri: "https://collections.sflennik.com/index.html",
+  }
+}
+
 async function getUserInfo(code: string): Promise<UserInfo | null> {
   // Get the user information from AWS congnito given the cognito
   // login code.
@@ -129,22 +145,18 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
 
   // Fetch the user information from cognito.
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
-  // todo: use template to fill this in.
-  const domain = "https://pool42613626.auth.us-west-2.amazoncognito.com"
-  const url = `${domain}/oauth2/token`
-  const client_id = "59nnrgfelhidaqhdkrdcnocait"
-  const redirect_uri = "https://collections.flenniken.net/index.html"
 
-  // why is there a redirect parameter in this post?
-  // todo: use template to fill in this
-  const bodyText = `grant_type=authorization_code&client_id=${client_id}&redirect_uri=${redirect_uri}&code=${code}`
+  const s = get_settings()
+
+  // Why is there a redirect parameter in this post?
+  const bodyText = `grant_type=authorization_code&client_id=${s.client_id}&redirect_uri=${s.redirect_uri}&code=${code}`
 
   // Post url to get the access token.
   let response
   const headers = new Headers();
   headers.append("Content-Type", "application/x-www-form-urlencoded");
   try {
-    response = await fetch(url, {
+    response = await fetch(s.url, {
       "method": "POST",
       "body": bodyText,
       "headers": headers,
@@ -165,11 +177,10 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   const access_token = data["access_token"]
 
   // Get the user info from from cognito using the access token.
-  const userInfoUrl = `${domain}/oauth2/userInfo`
   const userInfoheaders = new Headers()
   userInfoheaders.append("Content-Type", "application/json")
   userInfoheaders.append("Authorization", `Bearer ${access_token}`)
-  const userInfoResponse = await fetch(userInfoUrl, {"headers": userInfoheaders})
+  const userInfoResponse = await fetch(s.userInfoUrl, {"headers": userInfoheaders})
   const info = await userInfoResponse.json()
   log("login", `user info from cognito: ${JSON.stringify(info)}`)
   return {

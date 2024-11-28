@@ -141,7 +141,6 @@ Tasks:
 * syncronize -- Syncronize the template's replace blocks with header.tea content.
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
-* get-images -- Download the collection images from collections.flenniken.net.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 ~~~

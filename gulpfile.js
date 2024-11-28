@@ -41,7 +41,6 @@ Tasks:
 * syncronize -- Syncronize the template's replace blocks with header.tea content.
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
-* get-images -- Download the collection images from collections.flenniken.net.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
@@ -323,48 +322,6 @@ gulp.task("css", function (cb) {
 })
 
 gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2", "image1", "image2"));
-
-function getDownloadUrls() {
-  // Return a list of urls to download. Skip files that have already
-  // been downloaded.
-
-  // Note: the image.txt file is checked in.  It was created from this:
-  /*
-  cd ~/code/collections
-  find pages -name \*.json \
-    | grep -v '/\.' \
-    | xargs sed -nE 's@^.*images/(.*)".*$@\1@p' \
-    | sort | uniq \
-    > images.txt
-  */
-
-  // Read the image names in the text file and return a list.
-  const data = fs.readFileSync("images.txt", "utf8")
-  const names = data.split("\n");
-
-  let urls = []
-  names.forEach( (name) => {
-    name = name.trim()
-    if (name != "") {
-      const destination = `dist/images/${name}`
-      log(destination)
-      if (!fs.existsSync(destination)) {
-        url = `https://collections.flenniken.net/collections-images/${name}`
-        if (url)
-          urls.push(url)
-      }
-    }
-  })
-  return urls
-}
-
-gulp.task("get-images", function (cb) {
-  log("Download missing images from the collections.flenniken.net site to the images folder.")
-  const urls = getDownloadUrls()
-  if (urls.length == 0)
-    log("All images already downloaded.")
-  return download(urls).pipe(gulp.dest('dist/images'));
-});
 
 gulp.task('readme', function () {
   const parameters = [

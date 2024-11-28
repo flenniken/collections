@@ -98,13 +98,6 @@ function listMe() {
   fi
 }
 
-function syncMe() {
-  ## Rsync dist folder to collections.flenniken.net web folder.
-  ## todo: remove this
-  echo "sync from the docker container"
-  # rsync -a --delete --progress dist/ 1and1:collections/
-}
-
 # Verify we are running in the root
 # folder by looking for the Docker
 # file.
@@ -130,10 +123,7 @@ case $option in
   r | run)
     runMe
     ;;
-  s | sync)
-    syncMe
-    ;;
   *)
-    echo "options: run (r),  delete (d),  list (l), sync (s)."
+    echo "options: run (r),  delete (d),  list (l)."
     ;;
 esac

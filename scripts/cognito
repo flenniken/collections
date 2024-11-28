@@ -468,7 +468,7 @@ def createPool(poolName, cognitoClient=None):
   yourDomain = input("""\
 
 Enter your domain name where collections is hosted.
-Example: collections.flenniken.net
+Example: collections.sflennik.com
 Domain?: """)
   if yourDomain == '':
     raise CognitoException("Stopping create pool.")
@@ -1145,7 +1145,7 @@ name:
   def test_get_email_identity(self):
     return
     response = tc.sesv2Client.get_email_identity(
-        EmailIdentity='collections@flenniken.net'
+        EmailIdentity='collections@sflennik.com'
     )
     printDict("get_email_identity", response)
 

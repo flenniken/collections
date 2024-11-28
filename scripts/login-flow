@@ -93,10 +93,12 @@ def getCognitoParameters(filename=None):
     if not os.path.exists(filename):
       content = """\
 {
-  "domain": "https://collections.auth.us-west-2.amazoncognito.com",
-  "client_id": "1h1emkd4pof3vacle2albgj2qn&",
-  "redirect_uri": "https://collections.flenniken.net/index.html",
-  "logout_uri": "https://collections.flenniken.net/index.html",
+  domain: "https://pool18672788.auth.us-west-2.amazoncognito.com",
+  client_id: "47ahgb3e4jqhk86o7gugvbglf8",
+  url: `${domain}/oauth2/token`,
+  userInfoUrl: `${domain}/oauth2/userInfo`,
+  redirect_uri: "https://collections.sflennik.com/index.html",
+  logout_uri: "https://collections.sflennik.com/index.html",
   "scope": "openid profile"
 }
     """

@@ -477,7 +477,7 @@ Example: Steve Flenniken
 Name?: Steve Flenniken
 
 Enter your domain name where collections is hosted.
-Example: collections.flenniken.net
+Example: collections.sflennik.com
 Domain?: collections.sflennik.com
 ~~~
 
@@ -608,7 +608,7 @@ scripts/deploy
 
 # View a Collection
 
-* in your browser go to collections.sflennik.com
+* in your browser go to https://collections.sflennik.com
 * login as your normal test user
 * download the first collection
 * view the thumbnails
