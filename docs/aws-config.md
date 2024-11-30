@@ -1,6 +1,6 @@
 # AWS Config
 
-[![icon](docs/rounded-icon.png)](#)
+[![icon](rounded-icon.png)](#)
 
 This page tells you how to configure AWS services that collections
 uses.

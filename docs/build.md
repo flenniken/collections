@@ -1,5 +1,7 @@
 # Build
 
+[![icon](rounded-icon.png)](#)
+
 Collections is written in typescript and there is a build step.
 
 You use the provided docker build environment to develop

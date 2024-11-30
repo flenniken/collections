@@ -1,5 +1,7 @@
 # Test
 
+[![icon](rounded-icon.png)](#)
+
 This page tells how to test and debug Collections.
 
 [⬇](#Contents) (table of contents at the bottom)

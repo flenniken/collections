@@ -1,5 +1,7 @@
 # Overviews
 
+[![icon](rounded-icon.png)](#)
+
 This page has general overviews about how the code works and why it is
 done the way it is.
 
