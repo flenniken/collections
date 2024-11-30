@@ -1,6 +1,6 @@
 # Developer Topics
 
-[![icon](docs/rounded-icon.png)](#)
+[![icon](rounded-icon.png)](#)
 
 This page links to documents that tell you how to setup, build and
 develop Collections as well as code overviews.
