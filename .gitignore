@@ -1,4 +1,5 @@
 .DS_Store
+logs/
 save/
 tmp/
 dist/js/

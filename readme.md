@@ -118,4 +118,4 @@ https://collections.sflennik.com
 
 # Other
 
-* [Developer Topics](developer.md) &mdash; how to build and develop Collections.
+* [Developer Topics](docs/developer.md) &mdash; how to build and develop Collections.
