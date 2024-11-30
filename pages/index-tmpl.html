@@ -58,16 +58,15 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <div id="about-box">
       <img id="close-about" class="icon right" src="icons/xclose.svg"
         alt="close about box" onclick="hideAboutBox(this)">
+      <h3>Collections by Steve Flenniken</h3>
       <p>
-You view my best photos with this app. Photos are grouped into
-collections where each collection is a trip, photo shoot, or
-related topic. You can read about each photo and collection with
-the associated descriptions.
+Look at each photo in portrait and landscape orientation. Scroll
+down to read the descriptions.
       </p>
       <p>
-To learn how to use the app read the user guide (readme) on
-github.  Developers can learn how to build and modify the source
-there too.
+For more information on how to use the app read the user guide
+(readme) on github. Developers can learn how to build and modify
+the source there too.
       </p>
       <ul>
         <li>
@@ -77,7 +76,7 @@ there too.
       </ul>
       <p>
 <!--$ nextline g.totalCollections = html(string(s.indexJson.totalCollections), "body") -->
-        There are <span id="collection-count">{g.totalCollections}</span> total collections.
+        There are <span id="collection-count">{g.totalCollections}</span> collections.
       </p>
     </div>
   </div>
