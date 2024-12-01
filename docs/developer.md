@@ -9,7 +9,3 @@ develop Collections as well as code overviews.
 * [AWS Config](aws-config.md) — how to setup AWS services.
 * [Test](test.md) — how to develop, test and debug.
 * [Overviews](overviews.md) — high level overviews of the code.
-
-# Other
-
-* [Readme](../readme.md) &mdash; tells what Collections is and how to use it on your iphone.

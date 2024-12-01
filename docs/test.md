@@ -85,7 +85,7 @@ When making changes to the image page test them with these steps:
 ## Login-flow Script
 
 You use login-flow script to manually step through the login process
-for debugging and testing.  You can view decoded tokens.
+for debugging and testing.  You can view and decode tokens.
 
 ~~~
 # docker container
@@ -110,8 +110,3 @@ The basic flow:
 * [Test on iphone](#test-on-iphone) -- how to test on an iphone connected with a wire.
 * [Image Page Tests](#image-page-tests) -- how to run regression tests for the image page.
 * [Login-flow Script](#login-flow-script) -- how to debug the login process and look at tokens.
-
-# Other
-
-* [Developer](developer.md) &mdash; how to setup, build and develop Collections.
-* [Readme](../readme.md) &mdash; tells what Collections is and how to use it on your iphone.

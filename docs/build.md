@@ -106,8 +106,9 @@ You build the app in the docker container with the gulp app by typing
 
 # Build Tasks
 
-You use gulp tasks in the container to compile the typescript to
-javascript, to minimize it and to process the html templates.
+While developing it is sometime useful to run a single task. There are
+individual gulp tasks to compile typescript files, to build templates,
+to validate html and to minimize css.
 
 Type g to see all the tasks:
 
@@ -144,9 +145,9 @@ Tasks:
 
 # Build Folder
 
-The dist folder contains the app files and nothing else.  The static
-resources are checked in to this folder. The compiled resources are
-put here.
+The dist folder contains the distribution files that get deployed and
+nothing else.  The static resources are checked in to this folder. The
+compiled resources are put here.
 
 ~~~
 (debian)~/collections $ tree dist
@@ -194,8 +195,3 @@ dist
 * [Build All](#build-all) -- how to build all.
 * [Build Tasks](#build-tasks) -- how to build individual files: html, js, css, readme, etc.
 * [Build Folder](#build-folder) -- talks about the build folder.
-
-# Other
-
-* [Developer](developer.md) &mdash; how to setup, build and develop Collections.
-* [Readme](../readme.md) &mdash; tells what Collections is and how to use it on your iphone.

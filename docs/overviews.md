@@ -100,12 +100,22 @@ You use the AWS console to disable or delete a user
 
 [⬇ ────────](#Contents)
 
+# Deplog
+
+The deplog script copies the changed files to S3 and invalidates them.
+
+The CloudFront cache control setting determine how long the file is
+pulled from the cloudfront cache. The default is 24 hours. Once the
+time has expired, cloudfront looks in S3 for new content.
+
+You can issue CloudFront invalidation requests every time your site is
+updated so the new files are removed from the cache.  The deploy
+script does this.
+
+[⬇ ────────](#Contents)
+
 # Contents
 
 * [Login](#login) -- how the login process works.
 * [Create or Edit User](#create-or-edit-user) -- how to create a new user or edit an existing one.
-
-# Other
-
-* [Developer](developer.md) &mdash; how to setup, build and develop Collections.
-* [Readme](../readme.md) &mdash; tells what Collections is and how to use it on your iphone.
+* [Deploy](#deplog) -- how to deploy and and invalidate files and how the cloudfront cache works.

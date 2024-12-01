@@ -67,6 +67,11 @@ Used on the collections docker container.
 * click "Create access key" link on the upper right
 * select "Command Line Interface (CLI)", check confirm, press next
 * press "Create access key"
+
+* determine your region. You can see the available regions in the
+console dropdown in the upper right hand side of the window.
+e.g. us-west-2.
+
 * add the credentials to the docker container with the following command.
 
 ~~~
@@ -75,7 +80,7 @@ aws configure
 
 AWS Access Key ID [None]: xxxxxxxxxxx
 AWS Secret Access Key [None]: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-Default region name [None]:
+Default region name [None]: us-west-2
 Default output format [None]:
 ~~~
 
@@ -92,14 +97,6 @@ cat ~/.aws/credentials
 [default]
 aws_access_key_id = xxxxxxxxxxx
 aws_secret_access_key = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-~~~
-
-Specify your AWS region by running "aws configure" again. You can see
-the available regions in the console dropdown in the upper right hand
-side of the window.
-
-~~~
-aws configure
 ~~~
 
 The region is stored in the aws config file.  In the example the
@@ -272,7 +269,7 @@ distribution". Specify the fields labeled:
 * Price class
 
 Enter your bucket domain in the Origin Domain field. For the
-sflennikco bucket enter:
+sflennikco bucket and the region us-west-2 enter:
 
 ~~~
 sflennikco.s3.us-west-2.amazonaws.com
@@ -389,15 +386,16 @@ collections.sflennik.com domain enter:
 
 # SES Admin Email
 
-In the AWS SES console create two identities, one for the collections
-admin and one for yourself.
+AWS Email identities are needed for the cognito login system. One is
+for your subdomain and one is for the admin’s email.  You create the
+identities using the AWS SES console.  I created identities for:
 
 ~~~
 collections.sflennik.com
 steve.flenniken@gmail.com
 ~~~
 
-Create an identity for collections.sflennik.com.
+To create an identity for the collections.sflennik.com domain:
 
 * go to the AWS SES console
 * click Configuration > Identities in the left panel
@@ -405,24 +403,26 @@ Create an identity for collections.sflennik.com.
 * in the section "Identity type" select Domain
 * in the Domain editbox enter "collections.sflennik.com"
 * in the Tags section click "Add new tag" and enter key "collections"
-  and value "Collections admin email".
+  and value "Collections subdomain identity".
 * click "Create Identity" button at the bottom of the page.
 * click the button to automatically add DNS records to Route53.
 
 Note: It takes a minute or so to verify the identity.
 
-Create an identity for yourself used for testing.
+Create an identity for the collections admin (yourself):
 
 * click the "Create Identity" button
 * in the section "Identity type" select Email
-* in the Domain editbox enter "steve.flenniken@gmail.com"
-* in the Tags section click "Add new tag" and enter key "collections" and value "My email as a test destination".
+* in the Domain editbox enter your address e.g. steve.flennike@gmail.com
+* in the Tags section click "Add new tag" and enter key "collections"
+  and value "Collections admin email".
 * click "Create Identity" button at the bottom of the page.
 
-Note: you well get an email and you click a link it to verify the
+Note: you will get an email containing a link you click to verify the
 identity.
 
-Verify the collections.sflennik.com email by sending from it to yourself.
+Verify the collections.sflennik.com domain by sending an email from it
+to yourself.
 
 * click Configuration > Identities in the left panel
 * click collections.sflennik.com
@@ -458,7 +458,7 @@ aws route53 list-resource-record-sets \
 
 # Create User Pool
 
-An AWS Cognito user pool maintains the collection's users.
+An AWS Cognito user pool maintains the website's users.
 
 Create the Cognito user pool called collections-pool by running the
 cognito script as shown below.
@@ -627,7 +627,3 @@ scripts/deploy
 * [Create User Pool](#create-user-pool)
 * [Create Config File](#create-config-file)
 * [Create First Users](#create-first-users)
-
-# Other
-
-* [Readme](readme.md) &mdash; tells what Collections is and how to use it on your iphone.
