@@ -711,7 +711,7 @@ function handleScroll() {
   log("image", `leftEdges: ${leftEdges}`)
   log("image", `area.scrollLeft: ${area!.scrollLeft}`)
 
-  scrollStopId = setInterval(() => {
+  scrollStopId = window.setInterval(() => {
     // If the current scroll position is on a left edge, we know
     // scrolling has stopped, set the imageIndex to the current image.
     const imageIx = leftEdges.indexOf(area!.scrollLeft)

@@ -195,6 +195,47 @@ gulp.task("vthumbnails2", function (cb) {
 gulp.task("vpages", gulp.parallel(
   "vindex", "vthumbnails1", "vthumbnails2", "vimage1", "vimage2"));
 
+function compareContents(sourceFilename, destFilename) {
+  // Return true when two files contain the same bytes. The source
+  // file is required but the destination can be missing. Both files
+  // are read into memory then compared.
+
+  // Return false when the destination file is missing.
+  if (!fs.existsSync(destFilename)) {
+    return false
+  }
+  const sourceContent = fs.readFileSync(sourceFilename)
+  const destContent = fs.readFileSync(destFilename)
+  return sourceContent.equals(destContent)
+}
+
+function runStaticteaTask(parameters, tmpFilename, distFilename, cb) {
+  // Run a statictea task and copy the result to the dist folder when it
+  // changes.
+
+  const child = child_process.spawn("statictea", parameters, {stdio: "inherit"});
+
+  child.on('exit', (code) => {
+    // Error out when statictea returns a non-zero return code.
+    if (code !== 0)
+      throw new Error("statictea template error")
+
+    // Copy the template result to the dist folder when it is
+    // different than before.
+    if (compareContents(tmpFilename, distFilename))
+      // log(`${path.basename(distFilename)} is unchanged.`)
+      log(`${distFilename} is unchanged.`)
+    else {
+      fs.copyFile(tmpFilename, distFilename, (err) => {
+        if (err)
+          throw err
+        log("Copied file to dist folder.")
+      })
+    }
+    cb()
+  })
+}
+
 gulp.task("index", function (cb) {
   // Create the main index page from the index template.
 
@@ -204,7 +245,7 @@ statictea \
   -s pages/index.json \
   -o pages/header.tea \
   -s /home/coder/.aws/settings.json
-  -r dist/index.html
+  -r tmp/index.html
 */
   log("Compiling index template.")
   const parameters = [
@@ -212,24 +253,22 @@ statictea \
     "-s", "pages/index.json",
     "-o", "pages/header.tea",
     "-s", "/home/coder/.aws/settings.json",
-    "-r", "dist/index.html",
+    "-r", "tmp/index.html",
   ]
-  return child_process.spawn("statictea", parameters, {stdio: "inherit"});
+  runStaticteaTask(parameters, "tmp/index.html", "dist/index.html", cb)
 })
 
 gulp.task("thumbnails1", function (cb) {
   // Create the thumbnails page for collection 1.
-  thumbnailsPage(1)
-  cb()
+  thumbnailsPage(1, cb)
 })
 
 gulp.task("thumbnails2", function (cb) {
   // Create the thumbnails page for collection 2.
-  thumbnailsPage(2)
-  cb()
+  thumbnailsPage(2, cb)
 })
 
-function thumbnailsPage(collectionNumber) {
+function thumbnailsPage(collectionNumber, cb) {
   // Create the thumbnails page for the given collection.
 
 /*
@@ -242,39 +281,30 @@ statictea \
 
   const num = collectionNumber
   log(`Compiling the thumbnails template for collection ${num}.`)
-  const result_filename = `dist/pages/thumbnails-${num}.html`
+  const tmpFilename = `tmp/thumbnails-${num}.html`
+  const distFilename = `dist/pages/thumbnails-${num}.html`
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
     "-s", `pages/collection-${num}.json`,
     "-o", "pages/header.tea",
-    "-r", result_filename,
+    "-r", tmpFilename,
   ]
-  const statictea = child_process.spawn("statictea", parameters, {stdio: "inherit"});
-
-  statictea.on('close', (code) => {
-    if (code !== 0) {
-      log(`statictea process exited with code ${code}`);
-      fs.rmSync(result_filename)
-      error() // todo: fail more elegantly.
-    }
-  });
-
-  return 0
+  runStaticteaTask(parameters, tmpFilename, distFilename, cb)
 }
 
 gulp.task("image1", function (cb) {
   // Create the image page for collection 1.
-  imagePage(1)
+  imagePage(1, cb)
   cb()
 })
 
 gulp.task("image2", function (cb) {
   // Create the image page for collection 2.
-  imagePage(2)
+  imagePage(2, cb)
   cb()
 })
 
-function imagePage(collectionNumber) {
+function imagePage(collectionNumber, cb) {
   // Create the image page for the given collection.
 
 /*
@@ -287,13 +317,15 @@ statictea \
 
   const num = collectionNumber
   log(`Compiling image template for collection ${collectionNumber}.`)
+  const tmpFilename = `tmp/image-${num}.html`
+  const distFilename = `dist/pages/image-${num}.html`
   const parameters = [
     "-t", "pages/image-tmpl.html",
     "-s", `pages/collection-${num}.json`,
     "-o", "pages/header.tea",
-    "-r", `dist/pages/image-${num}.html`,
+    "-r", tmpFilename,
   ]
-  return child_process.spawn("statictea", parameters, {stdio: "inherit"});
+  runStaticteaTask(parameters, tmpFilename, distFilename, cb)
 }
 
 gulp.task("syncronize", function (cb) {
