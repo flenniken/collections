@@ -19,4 +19,26 @@ alias g='gulp'
 # Watch for source file changes and automatically build them.
 alias gw='g watch &'
 
-echo "Nginx now serving files on http://localhost:8000/index.html"
+# Check that the configuration settings exist.
+
+blueWarning="\033[34mWarning\033[0m"
+if [[ ! -s "/home/coder/.aws" ]]; then
+  echo
+  echo -e "$blueWarning 1: aws command line credentials are missing."
+  echo "Run: 'aws configure' to set them. See docs/aws-config.md for more info by"
+  echo "running: glow docs/aws-config.md"
+fi
+
+if [[ ! -s "/home/coder/.aws/settings.json" ]]; then
+  echo
+  echo -e "$blueWarning 2: The settings.json file is missing. Run: scripts/cognito -w collections-pool"
+  echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
+fi
+
+if [[ ! -s "/home/coder/collections/dist/index.html" ]]; then
+  echo
+  echo -e "$blueWarning 3: The website index.html file is missing. Run: g all"
+  echo 'See docs/build.md for more info by running: glow docs/build.md'
+else
+  echo "Nginx now serving files. http://localhost:8000/index.html"
+fi

@@ -792,7 +792,7 @@ def writeCognitoConfig(poolName):
     fp.write(text)
 
   print(f"""\
-Wrote the cognito config file. View it with:
+Wrote the settings.json config file. View it with:
 
   cat {filename} | jqless
 """)
