@@ -29,9 +29,9 @@ if [[ ! -s "/home/coder/.aws" ]]; then
   echo "running: glow docs/aws-config.md"
 fi
 
-if [[ ! -s "/home/coder/.aws/settings.json" ]]; then
+if [[ ! -s "/home/coder/collections/env/cognito-settings.json" ]]; then
   echo
-  echo -e "$blueWarning 2: The settings.json file is missing. Run: scripts/cognito -w collections-pool"
+  echo -e "$blueWarning 2: The cognito-settings.json file is missing. Run: scripts/cognito -w collections-pool"
   echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
 fi
 

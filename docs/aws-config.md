@@ -515,9 +515,9 @@ file.
 # docker container
 scripts/cognito -w collections-pool
 
-Wrote the settings.json config file. View it with:
+Wrote the cognito-settings.json config file. View it with:
 
-  cat /home/coder/.aws/settings.json | jqless
+  cat env/cognito-settings.json | jqless
 ~~~
 
 The file looks something like this:

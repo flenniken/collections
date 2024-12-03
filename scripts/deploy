@@ -3,8 +3,8 @@
 # This is the help text shown with -h:
 
 """
-This script is deploys the modified collections files to s3 and
-invalidates them in the cloudfront cache.
+Deploy the modified website files to s3 and invalidate them in the
+cloudfront cache.
 """
 
 import os
@@ -30,23 +30,85 @@ import textwrap
 import random
 import string
 import botocore
-
 import boto3
 from datetime import datetime, timezone
 from getpass import getpass
+
+# todo: move this to a config file. env/aws-settings.json?
+bucket = "sflennikco"
 
 class DeployException(Exception):
   """ An exception we plan for. """
   pass
 
 def listS3():
-  print("not implemented")
-  
-def sync():
-  print("not implemented")
+  """ List the S3 files in the collection's bucket. """
 
+  # Python boto3 docs for S3:
+  # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3
+
+  s3Client = getBotoClient('s3')
+  response = s3Client.list_objects_v2(Bucket=bucket)
+  # print(json.dumps(response, default=str))
+
+  # "Contents": [
+  #   {
+  #     "Key": "collections.css",
+  #     "LastModified": "2024-11-23 20:19:33+00:00",
+  #     "ETag": "\"9a0da3be7efd0bff1fb5e94874eb5f16\"",
+  #     "Size": 2970,
+  #     "StorageClass": "STANDARD"
+  #   },
+
+  # List the S3 files.
+  for info in response.get("Contents"):
+    timeStr = str(info['LastModified'])[0:-6]
+    print(f"{timeStr} {info['Size']:8.0f} {info['Key']}")
+
+def sync():
+  """
+  Copy the modified website files to S3 and invalidate them in the
+  cloudfront cache.
+  """
+  modifiedFiles = getModifiedFiles()
+  for filename in modifiedFiles:
+    print(filename)
+    copyToS3(bucket, filename)
+    invalidateCloudFrontCache(filename)
+
+def copyToS3(bucketName, filename):
+  """
+  Copy
+  """
+  return
+
+def invalidateCloudFrontCache(filename):
+  """
+  Invalidate
+  """
+  return
+  
 def listModified():
-  print("not implemented")
+  """
+  List the modified website files.
+  """
+  modifiedFiles = getModifiedFiles()
+  for filename in modifiedFiles:
+    print(filename)
+
+def getModifiedFiles():
+  """
+  Return a list of the modified website files.
+  """
+  # sample output from the sync command:
+  # (dryrun) upload: dist/index.html to s3://sflennikco/index.html
+  # (dryrun) upload: dist/js/image.js to s3://sflennikco/js/image.js
+
+  command = f"aws s3 sync --dryrun dist s3://{bucket}"
+  command += "| awk '{print $3}'"
+  # print(command)
+  result = subprocess.run(command, shell=True, capture_output=True, text=True)
+  return result.stdout.split()
 
 def getBotoClient(serviceName='s3'):
   """
@@ -111,9 +173,7 @@ def process(args):
   elif args.listModified:
     listModified()
   else:
-    raise DeployException(f"""No implementation for args:
-{args}
-""")
+    raise DeployException("Invalid argument")
 
 def parseCommandLine():
   """
@@ -142,7 +202,7 @@ def parseCommandLine():
     help="run all or one internal unit tests. You can run just one like this:  deploy -t TestModule.test_me")
 
   parser.add_argument("-l", "--listS3", action='store_true',
-    help="list the collections files in S3 ")
+    help="list the first 1,000 collections files in S3 ")
 
   parser.add_argument("-s", "--sync", action='store_true',
     help="copy the modified files to S3 and invalidates them in the cloudfront cache")
@@ -194,9 +254,12 @@ class TestModule(unittest.TestCase):
   def test_me(self):
     self.assertTrue(1)
 
-  def test_listUsers(self):
-    return
-    listUsers("collections-pool", tc.cognitoClient)
+  def test_getModifiedFiles(self):
+    print(getModifiedFiles())
+
+  def test_listModified(self):
+    print("")
+    listModified()
 
 if __name__ == '__main__':
   args = parseCommandLine()

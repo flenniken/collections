@@ -79,8 +79,8 @@ def runJqLess(jsonText):
 def getCognitoParameters(filename=None):
   """
   Return a namedtuple containing the AWS Cognito parameters,
-  client_id etc. If you don't pass in the filename, the
-  /home/coder/.aws/settings.json file is used.
+  client_id etc. If you don't pass in the filename, the cognito-settings.json
+  file is used.
   """
   requiredParameters = ['domain', 'client_id', 'redirect_uri',
     'logout_uri', 'scope',]
@@ -89,7 +89,7 @@ def getCognitoParameters(filename=None):
   ## https://collections.auth.us-west-2.amazoncognito.com
 
   if filename is None:
-    filename = "/home/coder/.aws/settings.json"
+    filename = "/home/coder/collections/env/cognito-settings.json"
     if not os.path.exists(filename):
       content = """\
 {

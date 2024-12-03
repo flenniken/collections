@@ -23,7 +23,7 @@ interface Settings {
 }
 
 // The settings are defined in the index.html file from data in the
-// settings.json file.
+// cognito-settings.json file.
 var settings: Settings
 
 // todo: which load function runs first, this one or index.ts one?

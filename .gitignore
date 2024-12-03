@@ -10,4 +10,5 @@ dist/images/
 dist/collections.css
 working-images/
 tokens.json
+env/cognito-settings.json
 
