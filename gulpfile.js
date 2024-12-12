@@ -84,14 +84,26 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
     }
   }
 
+  const tmpPath = `tmp/${destFile}`
+  const destPath = `${destDir}/${destFile}`
+
   return gulp.src(srcList)
     .pipe(using({prefix:'File size:', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
     .pipe(using({prefix:'Compiled', filesize:true, color: "blue"}))
-    // Make a copy of the typescript js in the tmp folder for inspection.
     .pipe(gulp.dest("tmp"))
     .pipe(gulpif(minimize, uglify()))
-    .pipe(gulp.dest(destDir));
+    .pipe(gulpif(
+      // Only pipe to dest if files are different
+      file => {
+        const unchanged = compareContents(tmpPath, destPath);
+        if (unchanged) {
+          log(`${destPath} is unchanged.`);
+        }
+        return !unchanged;
+      },
+      gulp.dest(destDir)
+    ));
 }
 
 // Each of the four resulting js files are made from multiple ts files

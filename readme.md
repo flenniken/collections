@@ -2,13 +2,14 @@
 
 [![icon](docs/rounded-icon.png)](#)
 
-Collections is a progressive web app for viewing a curated collections
-of photos on an iphone. It runs in a browser but looks a lot like a
+You use Collections to privately share your photos with your friends
+and family on an iphone.  It runs in a browser but looks a lot like a
 native app.
 
-Each collection contains the best photos of a photo shoot with a
-description about each one. Having associated text and good photos is
-intended to make the collection more meaningful and long lasting.
+Each collection contains photos related to a single topic, place, or
+event, with a description about each one. Having associated text and
+good photos is intended to make the collection more meaningful and
+long lasting.
 
 You navigate and view collections on three types of pages, the index
 page, the thumbnails page, and the image page.
