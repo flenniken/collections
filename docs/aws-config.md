@@ -53,8 +53,8 @@ aws-cli-collections-docker
 AmazonS3FullAccess
 AmazonCognitoPowerUser
 AmazonSESReadOnlyAccess
-CloudFrontReadOnlyAccess
 AmazonRoute53ReadOnlyAccess
+CloudFrontFullAccess
 ~~~
 
 * Enter a tag for the user with key "info" and value:
