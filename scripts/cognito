@@ -319,6 +319,26 @@ admin: {admin}""")
     }
   )
 
+def disableUser(poolName, userId, cognitoClient=None):
+  """
+  Disable a user in the given cognito user pool.
+  """
+  if cognitoClient is None:
+    cognitoClient = getBotoClient()
+  pools = poolNamesToIds(cognitoClient)
+  if poolName not in pools:
+    raise CognitoException("The user pool doesn't exist.")
+
+  try:
+    response = cognitoClient.admin_disable_user(
+      UserPoolId=pools[poolName],
+      Username=userId
+    )
+    print("The user has been disabled.")
+  except botocore.exceptions.ClientError as error:
+    if error.response['Error']['Code'] == 'UserNotFoundException':
+      raise CognitoException("The user doesn't exist.")
+    raise error
 
 def getBotoClient(serviceName='cognito-idp'):
   """
@@ -959,6 +979,10 @@ def process(args):
     poolName = args.editUser[0][0]
     userId = args.editUser[0][1]
     editUser(poolName, userId)
+  elif args.disableUser:
+    poolName = args.disableUser[0][0]
+    userId = args.disableUser[0][1]
+    disableUser(poolName, userId)
   elif args.printPools:
     printPools()
   elif args.showPoolSettings:
@@ -1020,6 +1044,10 @@ needed by the website and scripts""")
   parser.add_argument("-e", "--editUser", nargs=2, action="append", type=str,
     metavar=("pool-name", "user-id"),
     help="edit an existing pool user. Get the user id from listUsers.")
+
+  parser.add_argument("-d", "--disableUser", nargs=2, action="append", type=str,
+    metavar=("pool-name", "user-id"),
+    help="disable an existing pool user. Get the user id from listUsers.")
 
   args = parser.parse_args(sys.argv[1:])
   return args
