@@ -39,6 +39,9 @@ from getpass import getpass
 # collections.
 appName = "CollectionsClient"
 
+# The name of the cognito user pool for collections.
+collectionsPool = "collections-pool"
+
 class CognitoException(Exception):
   """ An exception we plan for. """
   pass
@@ -108,30 +111,18 @@ def listUsers(poolName, cognitoClient=None):
   )
   users = response['Users']
 
-  # print("id enabled admin status first last email created")
-
   for user in users:
     a = convertToKeyValue(user['Attributes'])
     print(f"""\
 
+id: {user['Username']}
 email: {a['email']}
 first: {a['given_name']}
 last: {a['family_name']}
-id: {user['Username']}
+admin: {a['custom:admin']}
 status: {user['UserStatus']}
-created: {formatDateTime(user['UserCreateDate'])}
-admin: {a['custom:admin']}""")
-
-
-#     # Print a user per line.
-#     print(f"\
-# {user['Username']} \
-# {a['custom:admin']} \
-# {user['UserStatus']} \
-# {a['given_name']} \
-# {a['family_name']} \
-# {a['email']} \
-# {formatDateTime(user['UserCreateDate'])}")
+enabled: {user['Enabled']}
+created: {formatDateTime(user['UserCreateDate'])}""")
 
 def createUser(poolName, cognitoClient=None):
   """
@@ -478,7 +469,7 @@ def createPool(poolName, cognitoClient=None):
   # Make sure the pool name doesn't already exist.
   pools = poolNamesToIds(cognitoClient)
   if poolName in pools:
-    raise CognitoException("The user pool already exists.")
+    raise CognitoException(f"The {collectionsPool} already exists.")
 
   # Return a dictionary of the email configuration settings needed by
   # the new pool. Look up the SES emails and use the one that is
@@ -839,6 +830,7 @@ def writeAwsSettings(poolName):
     raise CognitoException("Could not find the S3 bucket associated with the CloudFront distribution.")
 
   # Combine Cognito, CloudFront and S3 settings
+  settings["pool_name"] = poolName
   settings["distribution_id"] = distribution_id
   settings["bucket_name"] = bucket_name
   awsSettings = {"settings": settings}
@@ -972,25 +964,21 @@ def process(args):
   """
   """
   if args.listUsers:
-    listUsers(args.listUsers)
+    listUsers(collectionsPool)
   elif args.createUser:
-    createUser(args.createUser)
+    createUser(collectionsPool)
   elif args.editUser:
-    poolName = args.editUser[0][0]
-    userId = args.editUser[0][1]
-    editUser(poolName, userId)
+    editUser(collectionsPool, args.editUser)
   elif args.disableUser:
-    poolName = args.disableUser[0][0]
-    userId = args.disableUser[0][1]
-    disableUser(poolName, userId)
+    disableUser(collectionsPool, args.disableUser)
   elif args.printPools:
     printPools()
   elif args.showPoolSettings:
-    showPoolSettings(args.showPoolSettings)
+    showPoolSettings(collectionsPool)
   elif args.createPool:
-    createPool(args.createPool)
+    createPool(collectionsPool)
   elif args.writeAwsSettings:
-    writeAwsSettings(args.writeAwsSettings)
+    writeAwsSettings(collectionsPool)
   else:
     raise CognitoException(f"""No implementation for args:
 {args}
@@ -1023,30 +1011,28 @@ def parseCommandLine():
     help="run all or one internal unit tests. You can run just one like this:  cognito -t TestCognito.test_poolNamesToIds")
 
   parser.add_argument("-p", "--printPools", action='store_true',
-    help="print the pool names.")
+    help="print the pool names")
 
-  parser.add_argument("-s", "--showPoolSettings", metavar="pool-name",
-    help="show the pool settings for the given pool.")
+  parser.add_argument("-s", "--showPoolSettings", action="store_true",
+    help="show the pool settings")
 
-  parser.add_argument("-c", "--createPool", metavar="pool-name",
-    help="create an AWS Cognito pool with the given name. Use the console to delete it.")
+  parser.add_argument("-c", "--createPool", action="store_true",
+    help='create the "collections-pool". Use the console to delete it.')
 
-  parser.add_argument("-w", "--writeAwsSettings", metavar="pool-name",
+  parser.add_argument("-w", "--writeAwsSettings", action="store_true",
     help="""write the aws-settings.json file containing aws information
 needed by the website and scripts""")
 
-  parser.add_argument("-l", "--listUsers", metavar='pool-name',
-    help="list the pool users.")
+  parser.add_argument("-l", "--listUsers", action="store_true",
+    help="list the pool users")
 
-  parser.add_argument("-u", "--createUser", metavar='pool-name',
-    help="create a new pool user.")
+  parser.add_argument("-u", "--createUser", action="store_true",
+    help="create a new pool user")
 
-  parser.add_argument("-e", "--editUser", nargs=2, action="append", type=str,
-    metavar=("pool-name", "user-id"),
+  parser.add_argument("-e", "--editUser", metavar="user-id",
     help="edit an existing pool user. Get the user id from listUsers.")
 
-  parser.add_argument("-d", "--disableUser", nargs=2, action="append", type=str,
-    metavar=("pool-name", "user-id"),
+  parser.add_argument("-d", "--disableUser", metavar="user-id",
     help="disable an existing pool user. Get the user id from listUsers.")
 
   args = parser.parse_args(sys.argv[1:])
