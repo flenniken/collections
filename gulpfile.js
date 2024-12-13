@@ -8,7 +8,6 @@ const cleanCSS = require("gulp-clean-css");
 const using = require('gulp-using');
 const gulpif = require('gulp-if');
 const ts = require('gulp-typescript');
-const download = require('gulp-download2')
 const fs = require("fs");
 
 // Minimize the javascript.

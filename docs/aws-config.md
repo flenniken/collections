@@ -57,7 +57,7 @@ AmazonRoute53ReadOnlyAccess
 CloudFrontFullAccess
 ~~~
 
-* Enter a tag for the user with key "info" and value:
+* Enter a tag for the user with key "collections" and value:
 ~~~
 Used on the collections docker container.
 ~~~
@@ -147,7 +147,7 @@ aws route53 list-hosted-zones
 
 # Create S3 Bucket
 
-Create a S3 bucket in the AWS console to for the website files.
+Create a S3 bucket in the AWS console for the website files.
 Specify the region and the bucket name.  Use the defaults for the rest
 of the settings.
 

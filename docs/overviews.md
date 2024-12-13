@@ -100,7 +100,7 @@ You use the AWS console to disable or delete a user
 
 [⬇ ────────](#Contents)
 
-# Deplog
+# Deploy
 
 The deplog script copies the changed files to S3 and invalidates them.
 
@@ -118,4 +118,4 @@ script does this.
 
 * [Login](#login) -- how the login process works.
 * [Create or Edit User](#create-or-edit-user) -- how to create a new user or edit an existing one.
-* [Deploy](#deplog) -- how to deploy and and invalidate files and how the cloudfront cache works.
+* [Deploy](#deploy) -- how to deploy and and invalidate files and how the cloudfront cache works.
