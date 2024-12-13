@@ -256,7 +256,7 @@ statictea \
   -t pages/index-tmpl.html \
   -s pages/index.json \
   -o pages/header.tea \
-  -s env/cognito-settings.json
+  -s env/aws-settings.json
   -r tmp/index.html
 */
   log("Compiling index template.")
@@ -264,7 +264,7 @@ statictea \
     "-t", "pages/index-tmpl.html",
     "-s", "pages/index.json",
     "-o", "pages/header.tea",
-    "-s", "env/cognito-settings.json",
+    "-s", "env/aws-settings.json",
     "-r", "tmp/index.html",
   ]
   runStaticteaTask(parameters, "tmp/index.html", "dist/index.html", cb)

@@ -776,23 +776,60 @@ def poolNamesToIds(cognitoClient=None):
     d[userPoolName] = userPoolId
   return d
 
-def writeCognitoConfig(poolName):
+def writeAwsSettings(poolName):
   """
-  Write the config file, cognito-settings.json, for the given the pool
-  name and domain prefix.
+  Write the config file, aws-settings.json, for the given pool
+  name. Includes Cognito, CloudFront, and S3 settings.
   """
-  settings = getPoolSettings(poolName)
-  config = settings['config']
+  poolSettings = getPoolSettings(poolName)
+  settings = poolSettings['config']
 
-  # Write the config file: cognito-settings.json
-  filename = "/home/coder/collections/env/cognito-settings.json"
+  # Get CloudFront distributions.
+  cloudfront = getBotoClient('cloudfront')
+  response = cloudfront.list_distributions()
+  distributions = response.get('DistributionList', {}).get('Items', [])
+
+  # Find the distribution id for the CloudFront distribution. Look for
+  # the matching domain name in the distribution aliases.
+  redirect_uri = settings['redirect_uri']
+  distribution = None
+  distribution_id = None
+  for dist in distributions:
+    aliases = dist.get('Aliases', {}).get('Items', [])
+    for alias in aliases:
+      if alias in redirect_uri:
+        print(f"dist['Id'] = {dist['Id']}")
+        distribution_id = dist['Id']
+        distribution = dist
+        break
+  if not distribution:
+    raise CognitoException("Could not find the CloudFront distribution for the cognito domain.")
+
+  # Find the S3 bucket name for the CloudFront distribution.
+  bucket_name = None
+  origins = distribution.get('Origins', {}).get('Items', [])
+  for origin in origins:
+    if origin.get('S3OriginConfig'):
+      domain_name = origin.get('DomainName', '')
+      # print(f"domain_name: {domain_name}")
+      # domain_name: sflennikco.s3.us-west-2.amazonaws.com
+      bucket_name = domain_name.split('.')[0]
+      break
+  if not bucket_name:
+    raise CognitoException("Could not find the S3 bucket associated with the CloudFront distribution.")
+
+  # Combine Cognito, CloudFront and S3 settings
+  settings["distribution_id"] = distribution_id
+  settings["bucket_name"] = bucket_name
+  awsSettings = {"settings": settings}
+
+  # Write the config file: aws-settings.json
+  filename = "/home/coder/collections/env/aws-settings.json"
   with open(filename, 'w') as fp:
-    jstr = json.dumps(config)
-    text = '{"settings":' + jstr + "}"
-    fp.write(text)
+    json.dump(awsSettings, fp, indent=2)
 
   print(f"""\
-Wrote the cognito-settings.json config file. View it with:
+Wrote the aws-settings.json config file. View it with:
 
   cat {filename} | jqless
 """)
@@ -928,8 +965,8 @@ def process(args):
     showPoolSettings(args.showPoolSettings)
   elif args.createPool:
     createPool(args.createPool)
-  elif args.writeCognitoConfig:
-    writeCognitoConfig(args.writeCognitoConfig)
+  elif args.writeAwsSettings:
+    writeAwsSettings(args.writeAwsSettings)
   else:
     raise CognitoException(f"""No implementation for args:
 {args}
@@ -970,9 +1007,9 @@ def parseCommandLine():
   parser.add_argument("-c", "--createPool", metavar="pool-name",
     help="create an AWS Cognito pool with the given name. Use the console to delete it.")
 
-  parser.add_argument("-w", "--writeCognitoConfig", metavar="pool-name",
-    help="""write the cognito-settings.json file containing pool information
-needed by the website and login-flow script""")
+  parser.add_argument("-w", "--writeAwsSettings", metavar="pool-name",
+    help="""write the aws-settings.json file containing aws information
+needed by the website and scripts""")
 
   parser.add_argument("-l", "--listUsers", metavar='pool-name',
     help="list the pool users.")

@@ -34,21 +34,24 @@ import boto3
 from datetime import datetime, timezone
 from getpass import getpass
 
-# todo: move this to a config file. env/aws-settings.json?
-bucket = "sflennikco"
-
 class DeployException(Exception):
   """ An exception we plan for. """
   pass
 
-def listS3():
+def getAwsSettings():
+  """ Get the aws settings from the env/aws-settings.json file. """
+  with open('/home/coder/collections/env/aws-settings.json', 'r') as file:
+    return json.load(file)
+
+def listS3(bucket_name):
   """ List the S3 files in the collection's bucket. """
 
   # Python boto3 docs for S3:
   # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3
 
   s3Client = getBotoClient('s3')
-  response = s3Client.list_objects_v2(Bucket=bucket)
+
+  response = s3Client.list_objects_v2(Bucket=bucket_name)
   # print(json.dumps(response, default=str))
 
   # "Contents": [
@@ -65,50 +68,75 @@ def listS3():
     timeStr = str(info['LastModified'])[0:-6]
     print(f"{timeStr} {info['Size']:8.0f} {info['Key']}")
 
-def sync():
+def sync(bucket_name, distribution_id):
   """
   Copy the modified website files to S3 and invalidate them in the
   cloudfront cache.
   """
-  modifiedFiles = getModifiedFiles()
-  for filename in modifiedFiles:
-    print(filename)
-    copyToS3(bucket, filename)
-    invalidateCloudFrontCache(filename)
+  modifiedFiles = syncModifiedFiles(bucket_name)
+  if modifiedFiles:
+    paths = []
+    for filename in modifiedFiles:
+      assert(filename.startswith("dist"))
+      # remove the leading "dist", leaving /index.htm for example.
+      paths.append(filename[4:])
+    invalidateCloudFrontCache(distribution_id, paths)
+    for path in paths:
+      print(path)
 
-def copyToS3(bucketName, filename):
+def invalidateCloudFrontCache(distribution_id, paths):
   """
-  Copy
+  Invalidate the cloudfront distribution cache for the given list
+  of filenames.
   """
-  return
+  cloudfront = getBotoClient('cloudfront')
 
-def invalidateCloudFrontCache(filename):
-  """
-  Invalidate
-  """
-  return
+  # Invalidate a list of filenames. Names start with a slash.
+  response = cloudfront.create_invalidation(
+    DistributionId=distribution_id,
+    InvalidationBatch={
+      'Paths': {
+        'Quantity': len(paths),
+        'Items': paths
+      },
+      'CallerReference': str(datetime.now().timestamp())
+    }
+  )
   
-def listModified():
+def listModified(bucket_name):
   """
   List the modified website files.
   """
-  modifiedFiles = getModifiedFiles()
+  modifiedFiles = syncModifiedFiles(bucket_name, dryrun=True)
   for filename in modifiedFiles:
     print(filename)
 
-def getModifiedFiles():
+def syncModifiedFiles(bucket_name, dryrun=False):
   """
-  Return a list of the modified website files.
+  Sync the modified website files and return the files that needed
+  to be synced.  If dryrun is true, the files are not synced but the
+  modified files are still returned. The modified files are in the
+  dist folder, e.g. dist/index.html
   """
   # sample output from the sync command:
   # (dryrun) upload: dist/index.html to s3://sflennikco/index.html
   # (dryrun) upload: dist/js/image.js to s3://sflennikco/js/image.js
 
-  command = f"aws s3 sync --dryrun dist s3://{bucket}"
-  command += "| awk '{print $3}'"
+  if dryrun:
+    command = f"aws s3 sync --no-progress --dryrun dist s3://{bucket_name}" + " | awk '{print $3}'"
+  else:
+    command = f"aws s3 sync --no-progress dist s3://{bucket_name}" + " | awk '{print $2}'"
   # print(command)
   result = subprocess.run(command, shell=True, capture_output=True, text=True)
-  return result.stdout.split()
+  text = result.stdout
+
+  # Return a list of the modified filenames.
+  filenames = []
+  lines = text.split('\n')
+  for line in lines:
+    if line:
+      filenames.append(line)
+  return filenames
 
 def getBotoClient(serviceName='s3'):
   """
@@ -166,14 +194,23 @@ def formatDict(name, d, indent=0, lines=[]):
     lines.append("%s%s: %s" % (spaces2, k, value))
 
 def process(args):
-  if args.listS3:
-    listS3()
-  elif args.sync:
-    sync()
-  elif args.listModified:
-    listModified()
-  else:
-    raise DeployException("Invalid argument")
+  """ Handle the command specified. """
+
+  if args.sync or args.listS3 or args.listModified:
+    awsSettings = getAwsSettings()
+    settings = awsSettings['settings']
+    bucket_name = settings['bucket_name']
+    if args.listS3:
+      listS3(bucket_name)
+      return
+    elif args.sync:
+      sync(bucket_name, settings['distribution_id'])
+      return
+    elif args.listModified:
+      listModified(bucket_name)
+      return
+
+  raise DeployException("Invalid argument")
 
 def parseCommandLine():
   """
@@ -205,7 +242,7 @@ def parseCommandLine():
     help="list the first 1,000 collections files in S3 ")
 
   parser.add_argument("-s", "--sync", action='store_true',
-    help="copy the modified files to S3 and invalidates them in the cloudfront cache")
+    help="copy the modified files to S3 and invalidate them in the cloudfront cache")
 
   parser.add_argument("-m", "--listModified", action='store_true',
     help="list the modified files")
@@ -253,13 +290,6 @@ class TestModule(unittest.TestCase):
 
   def test_me(self):
     self.assertTrue(1)
-
-  def test_getModifiedFiles(self):
-    print(getModifiedFiles())
-
-  def test_listModified(self):
-    print("")
-    listModified()
 
 if __name__ == '__main__':
   args = parseCommandLine()
