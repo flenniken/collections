@@ -109,7 +109,7 @@ The cognito file is missing: {filename}.
 
 Either run:
 
-  scripts/cognito --writeCognitoConfig collections-pool
+  scripts/cognito -w
 
 Or create it by hand using this template:
 

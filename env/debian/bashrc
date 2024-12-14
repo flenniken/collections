@@ -31,7 +31,7 @@ fi
 
 if [[ ! -s "/home/coder/collections/env/aws-settings.json" ]]; then
   echo
-  echo -e "$blueWarning 2: The aws-settings.json file is missing. Run: scripts/cognito -w collections-pool"
+  echo -e "$blueWarning 2: The aws-settings.json file is missing. Run: scripts/cognito -w"
   echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
 fi
 

@@ -28,75 +28,12 @@ manually. Admin users see debugging controls in the UI.
 
 # Create or Edit User
 
-You create a new Collections user with the cognito command from the
-docker container.  For example, to add a user to the
-"collections-pool" do the following:
+You create or edit a Collections user with the aws cognito console.
 
-~~~
-# from docker container
-scripts/cognito -u collections-pool
-~~~
-
-The command will prompt for the needed information. Below is an
-example:
-
-~~~
-# from docker container
-scripts/cognito -u collections-pool
-
-This command will add a new user after prompting for their information.
-
-Enter email address, e.g. steve.flenniken@gmail.com
-email?: tom.bombadil@gmail.com
-Enter given name, e.g. Steve
-given name?: Tom
-Enter family name, e.g. Flenniken
-family name?: Bombadil
-Is the user an admin, True or False?: True
-password?:
-~~~
-
-If you want to edit an existing user, list the users to find the
-user’s id then use the -e option to edit them.
-
-Find user, for example Tom Bombadil:
-
-~~~
-# from docker container
-scripts/cognito -l collections-pool | less
-
-...
-email: tom.bombadil@gmail.com
-first: Tom
-last: Bombadil
-id: 0861b3f0-e041-707e-bb34-4a03ac172325
-status: CONFIRMED
-created: 2024-10-04 20:45:39 UTC
-admin: true
-...
-~~~
-
-Edit user Tom bombadil:
-
-~~~
-# from docker container
-scripts/cognito -e collections-pool  0861b3f0-e041-707e-bb34-4a03ac172325
-
-Type in the new user settings or type enter to leave as is.
-tom.bombadil@gmail.com, email?:
-Tom, given name?: Thomas
-Bombadil, family name?:
-true, admin (True or False)?:
-password?(use blank to leave as is):
-
-email: tom.bombadil@gmail.com
-first: Thomas
-last: Bombadil
-admin: true
-Password: unchanged
-~~~
-
-You use the AWS console to disable or delete a user
+todo:
+* temp password user must change on login
+* you can delete or disable users
+* there are options for verifying a users email
 
 [⬇ ────────](#Contents)
 

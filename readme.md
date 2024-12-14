@@ -21,17 +21,15 @@ page, the thumbnails page, and the image page.
 [![Index Page](docs/index.png)](#)
 
 The index page shows the sorted list of available collections with the
-most recent collection on top.
+most recent collection on top. You can scroll through the list.
 
 Each collection has a title, thumbnail, description, and post date.
 
-You can scroll through the list. When you reach the bottom there is a
-more indicator.
-
 You login with your email and password by clicking the circle icon in
 the upper righthand side of the index page. You see your first initial
-when logged in, otherwise you see a person. When you are logged in and
-you click the icon, you see your name and the logout button.
+when logged in, otherwise you see a person's outline. When you are
+logged in and you click the icon, you see your name and the logout
+button.
 
 You must be logged in to download and view new collections. You can
 continue to view already downloaded collections when not logged in.
@@ -90,13 +88,9 @@ and tapping the thumbnail or index icon.
 
 # Run Collections
 
-Since Collections is a PWA you can install the app's icon on your
-iphone's home screen then tap it to run.
-
-You can also run it from a URL in a browser but this is not
-recommended. For the best experience run it from the installed
-icon. You get a full screen experience and this is the tested path so
-it works better.
+You can install the app's icon on your iphone's home screen then tap
+it to run.  This is the recommended way to run Collections because it
+looks better and the photos can use the whole screen.
 
 You install the app’s icon on your home screen following these steps:
 

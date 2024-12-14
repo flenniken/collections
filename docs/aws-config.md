@@ -18,6 +18,8 @@ for hosting the site files.
   only open to friends and family
 * Route53 and Certificate Manager connect the website to your custom
   domain with secure access
+* IAM allows you to run scripts to deploy, run setup and to inspect
+  aws settings.
 
 In the following sections we configure each aws service and validate
 after each step. If you run into a problem, it should be easier to fix
@@ -267,6 +269,7 @@ distribution". Specify the fields labeled:
 * Default Root object -- optional
 * Web Application Firewall (WAF)
 * Price class
+* Redirect HTTP to HTTPS
 
 Enter your bucket domain in the Origin Domain field. For the
 sflennikco bucket and the region us-west-2 enter:
@@ -293,8 +296,13 @@ protections" because it is cheaper.
 For the "Price class" field select "Use only North America and Europe"
 because it is cheaper and faster to deploy.
 
-Push the "Create Distribution" button at the bottom of the page and wait
-for it to deploy.  It will take a few minutes.
+Push the "Create Distribution" button at the bottom of the page and
+wait for it to deploy.  It will take a few minutes.
+
+Under the Behaviors tab check the collections line and push the Edit
+button.  For the "Viewer protocol policy" select "Redirect HTTP to
+HTTPS" then save.
+
 
 [⬇ ────────](#Contents)
 
@@ -413,7 +421,7 @@ Create an identity for the collections admin (yourself):
 
 * click the "Create Identity" button
 * in the section "Identity type" select Email
-* in the Domain editbox enter your address e.g. steve.flennike@gmail.com
+* in the Domain editbox enter your address e.g. steve.flenniken@gmail.com
 * in the Tags section click "Add new tag" and enter key "collections"
   and value "Collections admin email".
 * click "Create Identity" button at the bottom of the page.
@@ -465,7 +473,7 @@ cognito script as shown below.
 
 ~~~
 # from docker container
-scripts/cognito -c collections-pool
+scripts/cognito -c
 
 Choose the SES email to use when sending mail to users.
 0: exit
@@ -492,7 +500,7 @@ collections-pool
 Verify the collections-pool settings:
 
 ~~~
-scripts/cognito -s collections-pool | less
+scripts/cognito -s | less
 
   ...
   redirect_uri: 'https://collections.sflennik.com/index.html'
@@ -513,7 +521,7 @@ file.
 
 ~~~
 # docker container
-scripts/cognito -w collections-pool
+scripts/cognito -w
 
 Wrote the aws-settings.json config file. View it with:
 
@@ -524,11 +532,16 @@ The file looks something like this:
 
 ~~~
 {
-  "client_id": "47ahgb3e4jqhk86o7gugvbglf8",
-  "redirect_uri": "https://collections.sflennik.com/index.html",
-  "logout_uri": "https://collections.sflennik.com/index.html",
-  "scope": "openid profile",
-  "domain": "https://pool18672788.auth.us-west-2.amazoncognito.com"
+  "settings": {
+    "client_id": "47ahgb3e4jqhk86o7gugvbglf8",
+    "redirect_uri": "https://collections.sflennik.com/index.html",
+    "logout_uri": "https://collections.sflennik.com/index.html",
+    "scope": "openid profile",
+    "domain": "https://pool18672788.auth.us-west-2.amazoncognito.com",
+    "pool_name": "collections-pool",
+    "distribution_id": "EHLMG1T8SOX48",
+    "bucket_name": "sflennikco"
+  }
 }
 ~~~
 
@@ -536,51 +549,25 @@ The file looks something like this:
 
 # Create First Users
 
-Create a normal user and an admin user for yourself using the cognito
-script.
+Create a normal user and an admin user using the cognito
+console.
 
-~~~
-# from docker container
-scripts/cognito -u collections-pool
-~~~
+Note: You can use the plus sign in emails so you to have multiple
+unique email addresses that go to the same place.
 
-Create normal user as shown below.  Save the password in your password manager.
+I used:
 
-~~~
-# from docker container
-scripts/cognito -u collections-pool
+* steve.flenniken@gmail.com
+* steve.flenniken+admin@gmail.com
 
-This command will add a new user after prompting for their information.
+todo add steps
 
-Enter email address, e.g. steve.flenniken@gmail.com
-email?: steve.flenniken@gmail.com
-Enter given name, e.g. Steve
-given name?: Steve
-Enter family name, e.g. Flenniken
-family name?: Flenniken
-Is the user an admin, True or False?: False
-password?:
-~~~
-
-Create normal user as shown below.  Save the password in your password manager.
-
-Note: The "+admin" allows you to have a unique email address that
-goes to the same place as the previous email.
-
-~~~
-scripts/cognito -u collections-pool
-
-email?: steve.flenniken+admin@gmail.com
-given name?: Steve
-family name?: Flenniken
-Is the user an admin, True or False?: True
-password?:
-~~~
+Save the passwords for the two users in your password manager.
 
 Verify by listing the users in the pool:
 
 ~~~
-scripts/cognito -l collections-pool
+scripts/cognito -l
 
 email: steve.flenniken+admin@gmail.com
 first: Steve
@@ -601,15 +588,19 @@ admin: false
 
 # Build and Deploy
 
+Build everything and deploy to to S3:
+
 ~~~
+# from docker container
+cd ~/collections
 g all
-scripts/deploy
+scripts/deploy -s
 ~~~
 
 # View a Collection
 
 * in your browser go to https://collections.sflennik.com
-* login as your normal test user
+* login
 * download the first collection
 * view the thumbnails
 * view the images
