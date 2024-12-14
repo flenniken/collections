@@ -49,6 +49,26 @@ You can issue CloudFront invalidation requests every time your site is
 updated so the new files are removed from the cache.  The deploy
 script does this.
 
+# Service Worker
+
+The sw.ts is a Service Worker implementation that manages file
+caching.  This enables the app to work offline and provides better
+performance.
+
+The service worker intercepts all HTTP/HTTPS requests, implements this
+caching logic, and maintains its own application cache separate from
+the browser's default cache.
+
+It handles two main types of files differently:
+
+* For image files (except the index page thumbnails), it checks the
+cache first and only fetches from the network if not found in the
+cache. This optimizes image loading and enables offline access.
+
+* For all other files (html, js, icons, etc.), it tries the network
+first to ensure fresh content, falling back to cached versions when
+offline.
+
 [⬇ ────────](#Contents)
 
 # Contents
@@ -56,3 +76,4 @@ script does this.
 * [Login](#login) -- how the login process works.
 * [Create or Edit User](#create-or-edit-user) -- how to create a new user or edit an existing one.
 * [Deploy](#deploy) -- how to deploy and and invalidate files and how the cloudfront cache works.
+* [Service Worker](#service-worker) -- how the sw.ts file caches files for performance and fresh connect.
