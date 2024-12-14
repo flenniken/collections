@@ -12,14 +12,17 @@ interface UserInfo {
   token: string
 }
 
+// See aws_settings.json
 interface Settings {
   // The typescript definition of aws settings.
-  domain: string
   client_id: string
-  url: string
-  userInfoUrl: string
   redirect_uri: string
   logout_uri: string
+  scope: string
+  domain: string
+  pool_name: string
+  distribution_id: string
+  bucket_name: string
 }
 
 // The settings are defined in the index.html file from data in the
@@ -135,8 +138,10 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
 
   // Fetch the user information from cognito.
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
+  // the /oauth2/userInfo endpoint
 
   const s = settings
+  const tokenUrl = `${s.domain}/oauth2/token`
 
   // Why is there a redirect parameter in this post?
   const bodyText = `grant_type=authorization_code&client_id=${s.client_id}&redirect_uri=${s.redirect_uri}&code=${code}`
@@ -146,7 +151,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   const headers = new Headers();
   headers.append("Content-Type", "application/x-www-form-urlencoded");
   try {
-    response = await fetch(s.url, {
+    response = await fetch(tokenUrl, {
       "method": "POST",
       "body": bodyText,
       "headers": headers,
@@ -167,10 +172,11 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   const access_token = data["access_token"]
 
   // Get the user info from from cognito using the access token.
+  const userInfoUrl = `${s.domain}/oauth2/userInfo`
   const userInfoheaders = new Headers()
   userInfoheaders.append("Content-Type", "application/json")
   userInfoheaders.append("Authorization", `Bearer ${access_token}`)
-  const userInfoResponse = await fetch(s.userInfoUrl, {"headers": userInfoheaders})
+  const userInfoResponse = await fetch(userInfoUrl, {"headers": userInfoheaders})
   const info = await userInfoResponse.json()
   log("login", `user info from cognito: ${JSON.stringify(info)}`)
   return {

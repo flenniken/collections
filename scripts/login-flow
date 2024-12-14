@@ -91,6 +91,7 @@ def getCognitoParameters(filename=None):
   if filename is None:
     filename = "/home/coder/collections/env/aws-settings.json"
     if not os.path.exists(filename):
+      # todo: remove this default.
       content = """\
 {
   domain: "https://pool18672788.auth.us-west-2.amazoncognito.com",
