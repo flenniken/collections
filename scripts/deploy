@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 # This is the help text shown with -h:
-
 """
 Deploy the modified website files to s3 and invalidate them in the
 cloudfront cache.
@@ -19,20 +18,12 @@ import traceback
 import sys
 import signal
 import unittest
-import urllib.parse
-from collections import namedtuple
 import json
-import requests
-import jwt
 import subprocess
 import sys
 import textwrap
-import random
-import string
-import botocore
 import boto3
-from datetime import datetime, timezone
-from getpass import getpass
+from datetime import datetime
 
 class DeployException(Exception):
   """ An exception we plan for. """
@@ -43,17 +34,22 @@ def getAwsSettings():
   with open('/home/coder/collections/env/aws-settings.json', 'r') as file:
     return json.load(file)
 
-def listS3(bucket_name):
-  """ List the S3 files in the collection's bucket. """
+def listS3(s3Client, bucket_name):
+  """ List the first 1000 S3 files in the collection's bucket. """
+
+  fileInfo = getFileInfo(s3Client, bucket_name)
+  for info in fileInfo:
+    timeStr = str(info['LastModified'])[0:-6]
+    print(f"{timeStr} {info['Size']:8.0f} {info['Key']}")
+
+def getFileInfo(s3Client, bucket_name):
+  """ Get information about the first 1000 files in the given bucket. """
 
   # Python boto3 docs for S3:
-  # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3
-
-  s3Client = getBotoClient('s3')
+  # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html
 
   response = s3Client.list_objects_v2(Bucket=bucket_name)
   # print(json.dumps(response, default=str))
-
   # "Contents": [
   #   {
   #     "Key": "collections.css",
@@ -62,37 +58,35 @@ def listS3(bucket_name):
   #     "Size": 2970,
   #     "StorageClass": "STANDARD"
   #   },
-
-  # List the S3 files.
+  fileInfo = []
   for info in response.get("Contents"):
-    timeStr = str(info['LastModified'])[0:-6]
-    print(f"{timeStr} {info['Size']:8.0f} {info['Key']}")
+    fileInfo.append(info)
+  return fileInfo
 
-def sync(bucket_name, distribution_id):
+def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   """
   Copy the modified website files to S3 and invalidate them in the
   cloudfront cache.
   """
-  modifiedFiles = syncModifiedFiles(bucket_name)
-  if modifiedFiles:
-    paths = []
-    for filename in modifiedFiles:
-      assert(filename.startswith("dist"))
-      # remove the leading "dist", leaving /index.htm for example.
-      paths.append(filename[4:])
-    invalidateCloudFrontCache(distribution_id, paths)
-    for path in paths:
-      print(path)
+  modifiedFiles = getModifiedFiles(s3Client, bucket_name, sync=True)
+  invalidateCloudFrontCache(cloudfrontClient, distribution_id, modifiedFiles)
 
-def invalidateCloudFrontCache(distribution_id, paths):
+def invalidateCloudFrontCache(cloudfrontClient, distribution_id, modifiedFiles):
   """
   Invalidate the cloudfront distribution cache for the given list
   of filenames.
   """
-  cloudfront = getBotoClient('cloudfront')
+  if not modifiedFiles:
+    return
+
+  paths = []
+  for filename in modifiedFiles:
+    assert(filename.startswith("dist"))
+    # remove the leading "dist", leaving /index.htm for example.
+    paths.append(filename[4:])
 
   # Invalidate a list of filenames. Names start with a slash.
-  response = cloudfront.create_invalidation(
+  response = cloudfrontClient.create_invalidation(
     DistributionId=distribution_id,
     InvalidationBatch={
       'Paths': {
@@ -102,30 +96,27 @@ def invalidateCloudFrontCache(distribution_id, paths):
       'CallerReference': str(datetime.now().timestamp())
     }
   )
-  
-def listModified(bucket_name):
+
+def listModified(s3Client, bucket_name):
   """
   List the modified website files.
   """
-  modifiedFiles = syncModifiedFiles(bucket_name, dryrun=True)
+  modifiedFiles = getModifiedFiles(s3Client, bucket_name, sync=False)
   for filename in modifiedFiles:
     print(filename)
 
-def syncModifiedFiles(bucket_name, dryrun=False):
+def getModifiedFiles(s3Client, bucket_name, sync=False):
   """
-  Sync the modified website files and return the files that needed
-  to be synced.  If dryrun is true, the files are not synced but the
-  modified files are still returned. The modified files are in the
-  dist folder, e.g. dist/index.html
+  Get the modified website files in the dist folder and optionally sync them to S3.
   """
   # sample output from the sync command:
   # (dryrun) upload: dist/index.html to s3://sflennikco/index.html
   # (dryrun) upload: dist/js/image.js to s3://sflennikco/js/image.js
 
-  if dryrun:
-    command = f"aws s3 sync --no-progress --dryrun dist s3://{bucket_name}" + " | awk '{print $3}'"
-  else:
+  if sync:
     command = f"aws s3 sync --no-progress dist s3://{bucket_name}" + " | awk '{print $2}'"
+  else:
+    command = f"aws s3 sync --no-progress --dryrun dist s3://{bucket_name}" + " | awk '{print $3}'"
   # print(command)
   result = subprocess.run(command, shell=True, capture_output=True, text=True)
   text = result.stdout
@@ -154,60 +145,23 @@ See the docs for how to setup the IAM user.
 """)
   return boto3.client(serviceName)
 
-def printDict(name, d):
-  lines = []
-  formatDict(name, d, 0, lines)
-  print('\n'.join(lines))
-
-def formatDict(name, d, indent=0, lines=[]):
-  """
-  Format a dictionary recursively and append lines to the lines
-  parameter.
-  """
-  spaces = " " * indent
-  spaces2 = spaces + "  "
-  if len(d) == 0:
-    lines.append(f"{spaces}{name} " + "{}")
-  else:
-    lines.append(f"{spaces}{name}")
-  for k, v in d.items():
-    if isinstance(v, datetime):
-      value = formatDateTime(v)
-    elif isinstance(v, dict):
-      ind = indent + 2
-      formatDict(k+":", v, ind, lines)
-      continue
-    elif isinstance(v, list):
-      spaces4 = spaces2 + "  "
-      lines.append("%s%s: [" % (spaces2, k))
-      for item in v:
-        if isinstance(item, dict):
-          ind = indent + 4
-          formatDict("{", item, ind, lines)
-          lines.append(spaces4 + "}")
-        else:
-          lines.append("%s%s" % (spaces4, item))
-      lines.append("%s]" % (spaces2))
-      continue
-    else:
-      value = repr(v)
-    lines.append("%s%s: %s" % (spaces2, k, value))
-
 def process(args):
-  """ Handle the command specified. """
+  """ Handle the command specified by the user. """
 
   if args.sync or args.listS3 or args.listModified:
     awsSettings = getAwsSettings()
     settings = awsSettings['settings']
+    s3Client = getBotoClient('s3')
     bucket_name = settings['bucket_name']
     if args.listS3:
-      listS3(bucket_name)
+      listS3(s3Client, bucket_name)
       return
     elif args.sync:
-      sync(bucket_name, settings['distribution_id'])
+      cloudfrontClient = getBotoClient('cloudfront')
+      syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, settings['distribution_id'])
       return
     elif args.listModified:
-      listModified(bucket_name)
+      listModified(s3Client, bucket_name)
       return
 
   raise DeployException("Invalid argument")
@@ -221,8 +175,8 @@ def parseCommandLine():
     sys.argv.append("-h")
   else:
     # When -t is provided, change argv so unittest does not see it.
-    # You can run one test by providing the test name as an argument.
-    # deploy -t TestModule.test_me
+    # You can run one test by providing the test name as an argument e.g.:
+    # scripts/deploy -t TestModule.test_me
     for ix, arg in enumerate(sys.argv[1:]):
       if arg in ['-t', '--test']:
         sys.argv.pop(ix+1)
@@ -236,7 +190,8 @@ def parseCommandLine():
   description=textwrap.dedent(__doc__))
 
   parser.add_argument("-t", "--test", action="store_true",
-    help="run all or one internal unit tests. You can run just one like this:  deploy -t TestModule.test_me")
+    help="""run all or one internal unit tests. You can run just one like this:
+    scripts/deploy -t TestModule.test_me""")
 
   parser.add_argument("-l", "--listS3", action='store_true',
     help="list the first 1,000 collections files in S3 ")
@@ -252,6 +207,7 @@ def parseCommandLine():
 
 def signalHandler(sig, frame):
   """ Handle ctrl-C """
+  print("\n")
   sys.exit(1)
 
 def main(args):
@@ -267,7 +223,6 @@ def main(args):
     print(traceback.format_exc())
     return 1
   return 0 # success
-
 
 class TestClients:
   def __init__(self):
@@ -290,6 +245,63 @@ class TestModule(unittest.TestCase):
 
   def test_me(self):
     self.assertTrue(1)
+
+  def test_getAwsSettings(self):
+    awsSettings = getAwsSettings()
+    self.assertTrue(awsSettings is not None)
+    self.assertTrue('settings' in awsSettings)
+    settings = awsSettings['settings']
+    # text = json.dumps(settings, indent=2, default=str)
+    # print(f"settings: {text}")
+    # settings: {
+    #   "settings": {
+    #     "client_id": "47ahgb3e4jqhk86o7gugvbglf8",
+    #     "redirect_uri": "https://collections.sflennik.com/index.html",
+    #     "logout_uri": "https://collections.sflennik.com/index.html",
+    #     "scope": "openid profile",
+    #     "domain": "https://pool18672788.auth.us-west-2.amazoncognito.com",
+    #     "pool_name": "collections-pool",
+    #     "distribution_id": "EHLMG1T8SOX48",
+    #     "bucket_name": "sflennikco"
+    #   }
+    # }
+
+    keys = ["client_id", "redirect_uri", "logout_uri", "scope", "domain", "pool_name", "distribution_id", "bucket_name"]
+    for key in keys:
+      if key not in settings:
+        print(f"missing key: {key}")
+      self.assertTrue(key in settings)
+    self.assertEqual(len(settings['client_id']), 26)
+    self.assertTrue(settings['redirect_uri'].startswith("https://"))
+    self.assertTrue(settings['redirect_uri'].endswith("/index.html"))
+    self.assertTrue(settings['logout_uri'].startswith("https://"))
+    self.assertTrue(settings['logout_uri'].endswith("/index.html"))
+    self.assertEqual(settings['scope'], "openid profile")
+    self.assertTrue(settings['domain'].startswith("https://pool"))
+    self.assertTrue(settings['domain'].endswith(".amazoncognito.com"))
+    self.assertEqual(settings['pool_name'], "collections-pool")
+    self.assertEqual(len(settings['distribution_id']), 13)
+
+  def test_getFileInfo(self):
+    awsSettings = getAwsSettings()
+    settings = awsSettings['settings']
+    result = getFileInfo(tc.s3Client, settings['bucket_name'])
+    # print(json.dumps(result, indent=2, default=str))
+    self.assertTrue(len(result) <= 1000)
+    for info in result:
+      # print(info['Key'])
+      assert('Key' in info)
+      assert('LastModified' in info)
+      assert('Size' in info)
+      assert('StorageClass' in info)
+      assert('ETag' in info)
+      self.assertEqual(info['StorageClass'], "STANDARD")
+
+  def test_getModifiedFiles(self):
+    awsSettings = getAwsSettings()
+    settings = awsSettings['settings']
+    modifiedFiles = getModifiedFiles(tc.s3Client, settings['bucket_name'], sync=True)
+    # print(f"modifiedFiles: {modifiedFiles}")
 
 if __name__ == '__main__':
   args = parseCommandLine()
