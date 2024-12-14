@@ -100,10 +100,10 @@ async function fetchRemote(cache: Cache, request: Request,
   return response;
 }
 
-const urlPrefix = "http://localhost:8000"
 function sUrl(url: string) {
   // Shorten the url by removing the http://localhost:8000 part.
 
+  const urlPrefix = "http://localhost:8000"
   if (url.startsWith(urlPrefix))
     return url.substring(urlPrefix.length)
   return url

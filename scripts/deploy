@@ -66,26 +66,32 @@ def getFileInfo(s3Client, bucket_name):
 def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   """
   Copy the modified website files to S3 and invalidate them in the
-  cloudfront cache.
+  cloudfront cache. Print the S3 files invalidated.
   """
   modifiedFiles = getModifiedFiles(s3Client, bucket_name, sync=True)
-  invalidateCloudFrontCache(cloudfrontClient, distribution_id, modifiedFiles)
 
-def invalidateCloudFrontCache(cloudfrontClient, distribution_id, modifiedFiles):
+  # Invalidate and print the modified files on S3. Strip off the
+  # leading "dist" from the modified files to match the location on
+  # S3.
+  paths = []
+  for filename in modifiedFiles:
+    assert(filename.startswith("dist"))
+    # Remove the leading "dist", leaving /index.htm for example.
+    path = filename[4:]
+    paths.append(path)
+    print(path)
+
+  invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths)
+
+def invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths):
   """
   Invalidate the cloudfront distribution cache for the given list
   of filenames.
   """
-  if not modifiedFiles:
+  if not paths:
     return
 
-  paths = []
-  for filename in modifiedFiles:
-    assert(filename.startswith("dist"))
-    # remove the leading "dist", leaving /index.htm for example.
-    paths.append(filename[4:])
-
-  # Invalidate a list of filenames. Names start with a slash.
+  # Invalidate a list of filenames on S3.
   response = cloudfrontClient.create_invalidation(
     DistributionId=distribution_id,
     InvalidationBatch={
@@ -158,7 +164,8 @@ def process(args):
       return
     elif args.sync:
       cloudfrontClient = getBotoClient('cloudfront')
-      syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, settings['distribution_id'])
+      syncModifiedFiles(s3Client, bucket_name, cloudfrontClient,
+        settings['distribution_id'])
       return
     elif args.listModified:
       listModified(s3Client, bucket_name)
