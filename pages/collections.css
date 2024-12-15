@@ -256,3 +256,10 @@
 .admin {
   display: none;
 }
+
+#about-box .icon {
+  width: 2em;
+  float: none;
+  margin-left: -14px;
+  margin-top: -4px;
+}

@@ -9,6 +9,7 @@ const using = require('gulp-using');
 const gulpif = require('gulp-if');
 const ts = require('gulp-typescript');
 const fs = require("fs");
+const path = require("path");
 
 // Minimize the javascript.
 const minimize = false
@@ -234,13 +235,12 @@ function runStaticteaTask(parameters, tmpFilename, distFilename, cb) {
     // Copy the template result to the dist folder when it is
     // different than before.
     if (compareContents(tmpFilename, distFilename))
-      // log(`${path.basename(distFilename)} is unchanged.`)
       log(`${distFilename} is unchanged.`)
     else {
       fs.copyFile(tmpFilename, distFilename, (err) => {
         if (err)
           throw err
-        log("Copied file to dist folder.")
+        log(`Copied ${path.basename(tmpFilename)} to dist folder.`)
       })
     }
     cb()
