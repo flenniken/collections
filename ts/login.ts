@@ -9,7 +9,7 @@ interface UserInfo {
   userId: string
   // todo: make this a boolean?
   admin: string // either "true" or "false"
-  token: string
+  // token: string
 }
 
 // See aws_settings.json
@@ -70,6 +70,18 @@ function logMeIn() {
     logIn()
 }
 
+function storeFakeUserInfo() {
+  // Store fake user info in local storage.
+  const userInfo = {
+    givenName: "Local",
+    familyName: "Tester",
+    email: "local.tester@example.com",
+    userId: "local.tester",
+    admin: "false",
+  }
+  storeUserInfo(userInfo)
+}
+
 function logIn() {
   // Login the user using the AWS cognito login UI.  After the user
   // logs in it will jump to the index page URL passing state=loggedIn
@@ -77,10 +89,15 @@ function logIn() {
 
   log("login", "login")
 
+  if (window.location.hostname == "localhost") {
+    storeFakeUserInfo()
+    updateLoginUI()
+    return
+  }
+
   const s = settings
   const state = "loggedIn"
   const response_type = "code&scope=openid%20profile"
-
   const loginUrl = `${s.domain}/oauth2/authorize?client_id=${s.client_id}&state=${state}&response_type=${response_type}&redirect_uri=${s.redirect_uri}`
   log("login", loginUrl)
 
@@ -90,6 +107,11 @@ function logIn() {
 
 function cognitoLogout() {
   // Log out of cognito.
+
+  if (window.location.hostname == "localhost") {
+    log("login", "fake cognito logout on localhost")
+    return
+  }
 
   log("login", "cognito logout")
 
@@ -185,7 +207,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
     email: info["email"],
     userId: info["username"],
     admin: info["custom:admin"],
-    token: "",
+    // token: "",
   }
 }
 
