@@ -13,6 +13,18 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       content="black-translucent">
 """
 
-# Check that if the settings are passed in they have at least 7 elements.
-# If the settings change edit "interface Settings" in login.ts.
-if( (exists(s, "settings") and len(s.settings) < 7), warning("invalid aws-settings.json"))
+u.checkSettings = func(settings: dict) int
+  ## Check that the aws setting dictionary contains the expected keys.
+  s1 = settings.client_id
+  s2 = settings.redirect_uri
+  s3 = settings.logout_uri
+  s4 = settings.scope
+  s5 = settings.domain
+  s6 = settings.pool_name
+  s7 = settings.distribution_id
+  s8 = settings.bucket_name
+  # echo("settings look good")
+  return(0)
+
+# If the settings are passed in, check them.
+if( (exists(s, "settings")), u.checkSettings(s.settings))
