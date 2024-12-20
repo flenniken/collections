@@ -24,19 +24,18 @@ collections to be a public static website without a backend server
 (other than AWS).
 
 Users login with an email and a password. You add and remove users
-manually. Admin users see debugging controls in the UI.
+manually.
 
 [⬇ ────────](#Contents)
 
 # Service Worker
 
-The sw.ts is a Service Worker implementation that manages file
-caching.  This enables the app to work offline and provides better
-performance.
+The sw typescript file is a Service Worker implementation that manages
+file caching.  This enables the app to work offline and provides
+better performance.
 
-The service worker intercepts all HTTP/HTTPS requests, implements this
-caching logic, and maintains its own application cache separate from
-the browser's default cache.
+The service worker intercepts all HTTP/HTTPS requests and maintains
+its own application cache separate from the browser's default cache.
 
 It handles two main types of files differently:
 
@@ -55,11 +54,12 @@ offline.
 The TypeScript code is divided into small, modular files that are
 concatenated during compilation to produce three main JavaScript
 files: index.js, thumbnails.js, and images.js (one for each of
-Collection's pages). This modular approach keeps related code in
-focused, manageable files that are easier to understand and
-maintain. The concatenation into larger JavaScript files reduces HTTP
-requests and improves page load performance compared to serving many
-smaller files.
+Collection's pages).
+
+This modular approach keeps related code in focused, manageable files
+that are easier to understand and maintain. The concatenation into
+larger JavaScript files reduces HTTP requests and improves page load
+performance compared to serving many smaller files.
 
 # Contents
 
