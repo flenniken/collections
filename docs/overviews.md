@@ -26,28 +26,7 @@ collections to be a public static website without a backend server
 Users login with an email and a password. You add and remove users
 manually. Admin users see debugging controls in the UI.
 
-# Create or Edit User
-
-You create or edit a Collections user with the aws cognito console.
-
-todo:
-* temp password user must change on login
-* you can delete or disable users
-* there are options for verifying a users email
-
 [⬇ ────────](#Contents)
-
-# Deploy
-
-The deplog script copies the changed files to S3 and invalidates them.
-
-The CloudFront cache control setting determine how long the file is
-pulled from the cloudfront cache. The default is 24 hours. Once the
-time has expired, cloudfront looks in S3 for new content.
-
-You can issue CloudFront invalidation requests every time your site is
-updated so the new files are removed from the cache.  The deploy
-script does this.
 
 # Service Worker
 
@@ -71,9 +50,19 @@ offline.
 
 [⬇ ────────](#Contents)
 
+# Typescript Files
+
+The TypeScript code is divided into small, modular files that are
+concatenated during compilation to produce three main JavaScript
+files: index.js, thumbnails.js, and images.js (one for each of
+Collection's pages). This modular approach keeps related code in
+focused, manageable files that are easier to understand and
+maintain. The concatenation into larger JavaScript files reduces HTTP
+requests and improves page load performance compared to serving many
+smaller files.
+
 # Contents
 
 * [Login](#login) -- how the login process works.
-* [Create or Edit User](#create-or-edit-user) -- how to create a new user or edit an existing one.
-* [Deploy](#deploy) -- how to deploy and and invalidate files and how the cloudfront cache works.
 * [Service Worker](#service-worker) -- how the sw.ts file caches files for performance and fresh connect.
+* [Typescript Files](#typescript-files) -- how the typescript is divided into small modular files.
