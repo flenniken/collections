@@ -58,8 +58,42 @@ retrieving user information from Cognito's endpoints. All tokens are
 persisted in a JSON file, allowing for subsequent operations like
 token refresh and revocation.
 
+# Http Logging
+
+You can turn on http request logging. CloudFront will copy log files
+to your bucket.  It costs a little so it is off by default.
+
+You turn it on in the cloud front console. Look for "Standard log
+destinations" and log to your bucket e.g. sflennikco using the
+Partitioning "/log".
+
+You need to wait about a minute after making a request before logs
+appear.
+
+Copy the logs locally to analyze them:
+
+~~~
+# from docker container
+cd ~/collections
+aws s3 sync s3://slennikco/logs logs
+~~~
+
+33 fields appear on each log line and it’s hard to read. You can view
+the data one field per line using the following command:
+
+~~~
+# from container
+file= EHLMG1T8SOX48.2024-11-23-21.e30560f4.gz # variable
+zcat logs/$file\
+  | awk '{for(i=1; i<=NF; i++) {printf "%20s: %s\n", f[i], $i}; \
+  {print "\n"}}\
+  /#Fields: / {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}' \
+  | less
+~~~
+
 # Contents
 
 * [Create or Edit User](#create-or-edit-user) -- how to create a new user or edit an existing one.
 * [Deploy](#deploy) -- how to deploy and and invalidate files and how the cloudfront cache works.
-* [Login-flow Script](#login-flow-script) -- authentication testing tool
+* [Login-flow Script](#login-flow-script) -- authentication testing tool.
+* [Http Logging](#http-logging) -- how to turn on http request logging.
