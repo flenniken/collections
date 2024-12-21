@@ -32,6 +32,8 @@ You can use the deploy script to list the modified files without
 copying them with the -m option. You can also list the collections s3
 bucket contents with the -l option.
 
+[⬇ ────────](#Contents)
+
 # Create or Edit User
 
 You create or edit a Collections user with the aws cognito console.
@@ -40,6 +42,8 @@ todo:
 * temp password user must change on login
 * you can delete or disable users
 * there are options for verifying a users email
+
+[⬇ ────────](#Contents)
 
 # Login-flow Script
 
@@ -57,6 +61,8 @@ tokens, inspecting JWT tokens (access, ID, and refresh tokens), and
 retrieving user information from Cognito's endpoints. All tokens are
 persisted in a JSON file, allowing for subsequent operations like
 token refresh and revocation.
+
+[⬇ ────────](#Contents)
 
 # Http Logging
 
