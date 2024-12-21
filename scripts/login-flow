@@ -76,62 +76,60 @@ def runJqLess(jsonText):
   except KeyboardInterrupt:
     pass
 
-def getCognitoParameters(filename=None):
+def getAwsParameters(filename=None):
   """
-  Return a namedtuple containing the AWS Cognito parameters,
-  client_id etc. If you don't pass in the filename, the aws-settings.json
-  file is used.
+  Return a namedtuple containing the aws settings.  If you don't
+  pass in the filename, the aws-settings.json file is used.
   """
-  requiredParameters = ['domain', 'client_id', 'redirect_uri',
-    'logout_uri', 'scope',]
 
-  ## cognito domain:
-  ## https://collections.auth.us-west-2.amazoncognito.com
+  # edit me when [aws_settings.json] changes
+  requiredParameters = [
+    'client_id',
+    'redirect_uri',
+    'logout_uri',
+    'scope',
+    'domain',
+    'redirect_uri_local',
+    'logout_uri_local',
+    'pool_name',
+    'distribution_id',
+    'bucket_name',
+  ]
+
+  if filename and not os.path.exists(filename):
+      raise LoginFlowException(f"""\
+The aws settings file is missing. You can create it by running: scripts/cognito -w""")
 
   if filename is None:
     filename = "/home/coder/collections/env/aws-settings.json"
-    if not os.path.exists(filename):
-      # todo: remove this default.
-      content = """\
-{
-  domain: "https://pool18672788.auth.us-west-2.amazoncognito.com",
-  client_id: "47ahgb3e4jqhk86o7gugvbglf8",
-  url: `${domain}/oauth2/token`,
-  userInfoUrl: `${domain}/oauth2/userInfo`,
-  redirect_uri: "https://collections.sflennik.com/index.html",
-  logout_uri: "https://collections.sflennik.com/index.html",
-  "scope": "openid profile"
-}
-    """
-
-      raise LoginFlowException(f"""\
-The cognito file is missing: {filename}.
-
-Either run:
-
-  scripts/cognito -w
-
-Or create it by hand using this template:
-
-{content}
-""")
-
 
   # Read the Cognito parameters from the file.
-  cognitoParameters = readJsonFile(filename)
+  awsSettings = readJsonFile(filename)
+
+  if "settings" not in awsSettings:
+    raise LoginFlowException("Aws settings is missing the settings parameter.")
+
+  settings = awsSettings['settings']
 
   # Make sure all the parameters we need exist.
   for parameter in requiredParameters:
-    if parameter not in cognitoParameters:
-      raise LoginFlowException(f"Missing cognito config parameter: {parameter}.")
+    if parameter not in settings:
+      raise LoginFlowException(f"Missing aws settings parameter: {parameter}.")
 
-  CognitoParameters = namedtuple('CognitoParameters', cognitoParameters)
-  return CognitoParameters(
-    domain=cognitoParameters["domain"],
-    client_id=cognitoParameters["client_id"],
-    redirect_uri=cognitoParameters["redirect_uri"],
-    logout_uri=cognitoParameters["logout_uri"],
-    scope=cognitoParameters["scope"],
+  AwsParameters = namedtuple('AwsParameters', settings)
+
+  # edit me when [aws_settings.json] changes
+  return AwsParameters(
+    client_id=settings["client_id"],
+    redirect_uri=settings["redirect_uri"],
+    logout_uri=settings["logout_uri"],
+    scope=settings["scope"],
+    domain=settings["domain"],
+    redirect_uri_local=settings["redirect_uri_local"],
+    logout_uri_local=settings["logout_uri_local"],
+    pool_name=settings["pool_name"],
+    distribution_id=settings["distribution_id"],
+    bucket_name=settings["bucket_name"],
   )
 
 def showLoginUrl():
@@ -140,7 +138,7 @@ def showLoginUrl():
 
 Enter the following url into your browser to login.  After logging in
 it will redirect to the redirect_uri which will contain a code and a
-state of "loggedIn". You have a few minutes to use the code to get
+state of "loggedInTest". You have a few minutes to use the code to get
 tokens with the -g option.
 
 {url}
@@ -151,8 +149,8 @@ def getLoginUrl():
   """
   Return the login url.
   """
-  params = getCognitoParameters()
-  return f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedIn41Test&\
+  params = getAwsParameters()
+  return f"{params.domain}/oauth2/authorize?client_id={params.client_id}&state=loggedInTest&\
 response_type=code&scope={urllib.parse.quote(params.scope)}\
 &redirect_uri={params.redirect_uri}"
 
@@ -160,7 +158,7 @@ def getLogoutUrl():
   """
   Return the logout url.
   """
-  params = getCognitoParameters()
+  params = getAwsParameters()
   return f"{params.domain}/logout?client_id={params.client_id}&state=loggedOut&\
 logout_uri={params.logout_uri}"
 
@@ -231,7 +229,7 @@ def getUserInfo():
   # https://docs.aws.amazon.com/cognito/latest/developerguide/token-endpoint.html
 
   # Create the token url.
-  params = getCognitoParameters()
+  params = getAwsParameters()
   url = f"{params.domain}/oauth2/userInfo"
   print(f"url: '{url}'")
 
@@ -259,7 +257,7 @@ def getTokens(code=None, refresh=False):
     refresh_token = readJsonKey(tokenFilename, "refresh_token")
 
   # Create the token url.
-  params = getCognitoParameters()
+  params = getAwsParameters()
   url = f"{params.domain}/oauth2/token"
 
   # Post to the token url.
@@ -323,7 +321,7 @@ def revokeTokens():
   the refresh token in the tokens.json file.
   """
   # Create the token url.
-  params = getCognitoParameters()
+  params = getAwsParameters()
   url = f"{params.domain}/oauth2/revoke"
   print(f"url: '{url}'")
 
@@ -357,9 +355,9 @@ def showTokens():
 def process(args):
   """
   """
-  if args.login:
+  if args.showLoginUrl:
     showLoginUrl()
-  elif args.logout:
+  elif args.showLogoutUrl:
     showLogoutUrl()
   elif args.getTokens:
     getTokens(code=args.getTokens, refresh=False)
@@ -399,9 +397,9 @@ def parseCommandLine():
 
   parser.add_argument("-t", "--test", action="store_true",
     help="run internal unit tests. Use alone to run all tests.")
-  parser.add_argument("-l", "--login", action="store_true",
+  parser.add_argument("-l", "--showLoginUrl", action="store_true",
     help="show the login url (oauth2/authorize endpoint)")
-  parser.add_argument("-o", "--logout", action="store_true",
+  parser.add_argument("-o", "--showLogoutUrl", action="store_true",
     help="show the logout url (logout endpoint)")
   parser.add_argument("-g", "--getTokens", metavar="code",
     help=f"get the cognito tokens (oauth2/token endpoint) and write them to {tokenFilename}. Specify a login code.")
@@ -458,42 +456,70 @@ class TestLoginFlow(unittest.TestCase):
     self.assertTrue("/logout?client_id=" in url)
     self.assertTrue("state=loggedOut" in url)
 
-  def test_getCognitoParameters(self):
-    filename = "tmp/test_getCognitoParameters.txt"
-    content = """{\
-"domain": "the domain",
-"client_id": "the client_id",
-"redirect_uri": "the redirect_uri",
-"logout_uri": "the logout_uri",
-"scope": "the scope"
+  def test_getAwsParameters(self):
+    # Test happy path.
+    filename = "tmp/test_getAwsParameters.txt"
+
+    # edit me when [aws_settings.json] changes
+    content = """\
+{
+  "settings": {
+    "client_id": "the client_id",
+    "redirect_uri": "the redirect_uri",
+    "logout_uri": "the logout_uri",
+    "scope": "the scope",
+    "domain": "the domain",
+    "redirect_uri_local": "the redirect_uri_local",
+    "logout_uri_local": "the logout_uri_local",
+    "pool_name": "the pool_name",
+    "distribution_id": "the distribution_id",
+    "bucket_name": "the bucket_name"
+  }
 }
 """
     createFile(filename, content)
-    params = getCognitoParameters(filename)
+    params = getAwsParameters(filename)
     os.remove(filename)
 
     # print("Cognito Parameters:")
     # for name, value in params._asdict().items():
     #   print(f"{name}: {value}")
-    self.assertEqual(params.domain, "the domain")
+
+    # edit me when [aws_settings.json] changes
     self.assertEqual(params.client_id, "the client_id")
     self.assertEqual(params.redirect_uri, "the redirect_uri")
     self.assertEqual(params.logout_uri, "the logout_uri")
     self.assertEqual(params.scope, "the scope")
+    self.assertEqual(params.domain, "the domain")
+    self.assertEqual(params.redirect_uri_local, "the redirect_uri_local")
+    self.assertEqual(params.logout_uri_local, "the logout_uri_local")
+    self.assertEqual(params.pool_name, "the pool_name")
+    self.assertEqual(params.distribution_id, "the distribution_id")
+    self.assertEqual(params.bucket_name, "the bucket_name")
 
-  def test_getCognitoParameters_error1(self):
+  def test_getAwsParameters_error1(self):
     with self.assertRaises(LoginFlowException) as context:
-      params = getCognitoParameters("missing")
-    self.assertEqual(str(context.exception), "The json file doesn't exist: 'missing'.")
+      params = getAwsParameters("missing")
+    expected = "The aws settings file is missing. You can create it by running: scripts/cognito -w"
+    self.assertEqual(str(context.exception), expected)
 
-  def test_getCognitoParameters_error(self):
-    filename = "tmp/test_getCognitoParameters_error.txt"
+  def test_getAwsParameters_error(self):
+    filename = "tmp/test_getAwsParameters_error.txt"
     content = """{"domain": "the domain"}"""
     createFile(filename, content)
     with self.assertRaises(LoginFlowException) as context:
-      params = getCognitoParameters(filename)
+      params = getAwsParameters(filename)
     os.remove(filename)
-    self.assertEqual(str(context.exception), "Missing cognito config parameter: client_id.")
+    self.assertEqual(str(context.exception), "Aws settings is missing the settings parameter.")
+
+  def test_getAwsParameters_error2(self):
+    filename = "tmp/test_getAwsParameters_error.txt"
+    content = """{"settings": "asdf"}"""
+    createFile(filename, content)
+    with self.assertRaises(LoginFlowException) as context:
+      params = getAwsParameters(filename)
+    os.remove(filename)
+    self.assertEqual(str(context.exception), "Missing aws settings parameter: client_id.")
 
   def test_readJsonKey(self):
     content = """\

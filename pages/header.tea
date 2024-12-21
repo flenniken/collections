@@ -13,6 +13,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
       content="black-translucent">
 """
 
+# edit me when [aws_settings.json] changes
 u.checkSettings = func(settings: dict) int
   ## Check that the aws setting dictionary contains the expected keys.
   s1 = settings.client_id
@@ -20,9 +21,11 @@ u.checkSettings = func(settings: dict) int
   s3 = settings.logout_uri
   s4 = settings.scope
   s5 = settings.domain
-  s6 = settings.pool_name
-  s7 = settings.distribution_id
-  s8 = settings.bucket_name
+  s6 = settings.redirect_uri_local
+  s7 = settings.logout_uri_local
+  s8 = settings.pool_name
+  s9 = settings.distribution_id
+  sa = settings.bucket_name
   # echo("settings look good")
   return(0)
 

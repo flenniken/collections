@@ -125,11 +125,6 @@ async function handleLoad() {
   const state = getSearchParam("state")
   log("index", `state: "${state}"`)
 
-  // The state is not passed back for the logout endpoint with logout_uri.
-  // When the user logs out skip all the setup.
-  // if (state == "cognitoLogout")
-  //   return
-
   const [availW, availH] = getAvailableWidthHeight()
   log("index",`Available width and height: (${availW}, ${availH})`)
 
@@ -164,11 +159,10 @@ async function handleLoad() {
     }
   })
 
-  // After the user logs in call processCognitoLogin.  The state is
-  // loggedInTest when the login-flow script is used so we don't call
-  // processCognitoLogin and use up the code.
-  if (state == "loggedIn") {
-    processCognitoLogin()
+  // If the user just logged in (state starts with loggedIn), set the
+  // UI for a logged in user.
+  if (state.startsWith("loggedIn")) {
+    processCognitoLogin(state)
     return
   }
 }

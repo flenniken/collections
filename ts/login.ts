@@ -12,14 +12,16 @@ interface UserInfo {
   // token: string
 }
 
-// See aws_settings.json
+// See aws_settings.json. It is created in the cognito.py file.
 interface Settings {
-  // The typescript definition of aws settings.
+  // The typescript definition of [aws_settings.json].
   client_id: string
   redirect_uri: string
   logout_uri: string
   scope: string
   domain: string
+  redirect_uri_local: string
+  logout_uri_local: string
   pool_name: string
   distribution_id: string
   bucket_name: string
@@ -82,23 +84,36 @@ function storeFakeUserInfo() {
   storeUserInfo(userInfo)
 }
 
+function getRedirectUriAndState() {
+  // Return the redirect_uri and state for use with cognito.
+  let state: string
+  let redirect_uri: string
+  if (window.location.hostname == "localhost") {
+    state = "loggedInLocal"
+    redirect_uri =  settings.redirect_uri_local
+  }
+  else {
+    state = "loggedInNormal"
+    redirect_uri = settings.redirect_uri
+  }
+  return [redirect_uri, state]
+}
+
 function logIn() {
   // Login the user using the AWS cognito login UI.  After the user
-  // logs in it will jump to the index page URL passing state=loggedIn
-  // and processCognitoLogin will be called.
+  // logs in it will jump to the index page URL passing the state
+  // variable.  The state variable determines what happens next. See
+  // processCognitoLogin.
 
   log("login", "login")
 
-  if (window.location.hostname == "localhost") {
-    storeFakeUserInfo()
-    updateLoginUI()
-    return
-  }
-
   const s = settings
-  const state = "loggedIn"
-  const response_type = "code&scope=openid%20profile"
-  const loginUrl = `${s.domain}/oauth2/authorize?client_id=${s.client_id}&state=${state}&response_type=${response_type}&redirect_uri=${s.redirect_uri}`
+
+  const [redirect_uri, state] = getRedirectUriAndState()
+
+  const loginUrl = `${s.domain}/oauth2/authorize?client_id=${s.client_id}` +
+    `&state=${state}&response_type=code&scope=openid%20profile` +
+    `&redirect_uri=${redirect_uri}`
   log("login", loginUrl)
 
   // Login by jumping to the AWS cognito UI.
@@ -108,30 +123,42 @@ function logIn() {
 function cognitoLogout() {
   // Log out of cognito.
 
-  if (window.location.hostname == "localhost") {
-    log("login", "fake cognito logout on localhost")
-    return
-  }
+  const s = settings
+
+  let logout_uri = ""
+  if (window.location.hostname == "localhost")
+    logout_uri = s.logout_uri_local
+  else
+    logout_uri = s.logout_uri
 
   log("login", "cognito logout")
 
   // The state is not passed back when you use the logout_uri, just redirect_url.
-  // const state = "cognitoLogout"
 
-  const s = settings
-  const logoutUrl = `${s.domain}/logout?client_id=${s.client_id}&logout_uri=${s.logout_uri}`
+  const logoutUrl = `${s.domain}/logout?client_id=${s.client_id}&logout_uri=${logout_uri}`
   log("login", logoutUrl)
 
   window.location.assign(logoutUrl)
 }
 
-async function processCognitoLogin() {
-  // The user just logged in. Get the user information and store it in
-  // local storage. This is called after the cognito login dialog
+
+async function processCognitoLogin(state: string) {
+  // Handle logging in.  This is called after the cognito login dialog
   // successfully logs in.
+  log("login", "processCognitoLogin, state: ${state}")
 
-  log("login", "processCognitoLogin")
-
+  if (state == "loggedInTest") {
+    // Don't eat the code when logging in from from login-flow.
+    log("login", "Login from login-flow.")
+    return
+  }
+  else if (state == "loggedInNormal" || state == "loggedInLocal") {
+  }
+  else {
+    log("login", "Unknown login state")
+    return
+  }
+  
   // Get the code from the url query parameters.
   const code = getSearchParam("code")
   if (!code) {
@@ -162,11 +189,10 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   // https://docs.aws.amazon.com/cognito/latest/developerguide/userinfo-endpoint.html
   // the /oauth2/userInfo endpoint
 
-  const s = settings
-  const tokenUrl = `${s.domain}/oauth2/token`
-
-  // Why is there a redirect parameter in this post?
-  const bodyText = `grant_type=authorization_code&client_id=${s.client_id}&redirect_uri=${s.redirect_uri}&code=${code}`
+  const tokenUrl = `${settings.domain}/oauth2/token`
+  const [redirect_uri, state] = getRedirectUriAndState()
+  const bodyText = `grant_type=authorization_code&client_id=${settings.client_id}` +
+    `&redirect_uri=${redirect_uri}&code=${code}`
 
   // Post url to get the access token.
   let response
@@ -194,7 +220,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
   const access_token = data["access_token"]
 
   // Get the user info from from cognito using the access token.
-  const userInfoUrl = `${s.domain}/oauth2/userInfo`
+  const userInfoUrl = `${settings.domain}/oauth2/userInfo`
   const userInfoheaders = new Headers()
   userInfoheaders.append("Content-Type", "application/json")
   userInfoheaders.append("Authorization", `Bearer ${access_token}`)

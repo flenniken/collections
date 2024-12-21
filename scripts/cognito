@@ -461,7 +461,8 @@ Name?: """
 
 def createPool(poolName, cognitoClient=None):
   """
-  Create a pool with the given name. Prompt for other parameters when needed.
+  Create a pool with the given name. Prompt for other parameters
+  when needed.
   """
   if cognitoClient is None:
     cognitoClient = getBotoClient()
@@ -690,10 +691,12 @@ Domain?: """)
       "COGNITO"
     ],
     CallbackURLs=[
-      f"https://{yourDomain}/index.html"
+      f"https://{yourDomain}/index.html",
+      "http://localhost:8000/index.html"
     ],
     LogoutURLs=[
-      f"https://{yourDomain}/index.html"
+      f"https://{yourDomain}/index.html",
+      "http://localhost:8000/index.html"
     ],
     # DefaultRedirectURI='string',
     AllowedOAuthFlows=[
@@ -829,6 +832,9 @@ def writeAwsSettings(poolName):
   if not bucket_name:
     raise CognitoException("Could not find the S3 bucket associated with the CloudFront distribution.")
 
+  # Search for [aws_settings.json] to find all the places you need to
+  # change when you change the settings file.
+
   # Combine Cognito, CloudFront and S3 settings
   settings["pool_name"] = poolName
   settings["distribution_id"] = distribution_id
@@ -885,6 +891,19 @@ def poolAppNameToId(userPoolId, cognitoClient=None):
     clients[clientName] = clientId
   return clients
 
+def getCallbacks(callbackURLs):
+  """
+  Return the https and http urls in the given list.
+  """
+  https_url = ""
+  http_url = ""
+  for callbackUrl in callbackURLs:
+    if "https:" in callbackUrl:
+      https_url = callbackUrl
+    elif "http:" in callbackUrl:
+      http_url = callbackUrl
+  return https_url, http_url
+
 def getPoolSettings(poolName, cognitoClient=None):
   """
   Return the pool setting in a dictionary. The config key contains
@@ -920,17 +939,21 @@ def getPoolSettings(poolName, cognitoClient=None):
   userPoolClient = response['UserPoolClient']
   assert userPoolClient['ClientName'] == appName
 
-  # Verify there is one redirect uri.
+  # Get the redirect urls.
   callbackURLs = userPoolClient['CallbackURLs']
-  if len(callbackURLs) != 1:
-    raise CognitoException(f"Expected one redirect_uri but got: {len(callbackURLs)}")
-  redirect_uri = callbackURLs[0]
+  redirect_uri, redirect_uri_local = getCallbacks(callbackURLs)
+  if not redirect_uri:
+    raise CognitoException("Missing the redirect_uri url.")
+  if not redirect_uri_local:
+    raise CognitoException("Missing the redirect_uri_local url.")
 
-  # Verify there is one callback uri.
+  # Get the logout urls.
   logoutURLs = userPoolClient['LogoutURLs']
-  if len(logoutURLs) != 1:
-    raise CognitoException(f"Expected one logout_uri but got: {len(logoutURLs)}")
-  logout_uri = logoutURLs[0]
+  logout_uri, logout_uri_local = getCallbacks(logoutURLs)
+  if not logout_uri:
+    raise CognitoException("Missing the logout_uri url.")
+  if not logout_uri_local:
+    raise CognitoException("Missing the logout_uri_local url.")
 
   userPool = settings['UserPool']
   if 'Domain' not in userPool:
@@ -949,13 +972,16 @@ def getPoolSettings(poolName, cognitoClient=None):
   domain = f"https://{domainPrefix}.auth.{region}.amazoncognito.com"
 
   # Assign the config dictionary and add it to the return settings for
-  # use by the congnito-config file.
+  # use by the aws_settings.json file.
+  # edit me when aws_settings.json changes
   config = {}
   config['client_id'] = userPoolClient['ClientId']
   config['redirect_uri'] = redirect_uri
   config['logout_uri'] = logout_uri
   config['scope'] = "openid profile"
   config['domain'] = domain
+  config['redirect_uri_local'] = redirect_uri_local
+  config['logout_uri_local'] = logout_uri_local
   settings['config'] = config
 
   return settings
@@ -1202,10 +1228,9 @@ name:
     )
     printDict("get_email_identity", response)
 
-  def test_getPoolSettings(self):
-    return
-    settings = getPoolSettings("collections-pool", tc.cognitoClient)
-    # printDict("pool settings", settings)
+  # def test_getPoolSettings(self):
+  #   settings = getPoolSettings("collections-pool", tc.cognitoClient)
+  #   printDict("pool settings", settings)
 
 if __name__ == '__main__':
   args = parseCommandLine()

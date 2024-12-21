@@ -260,19 +260,8 @@ class TestModule(unittest.TestCase):
     settings = awsSettings['settings']
     # text = json.dumps(settings, indent=2, default=str)
     # print(f"settings: {text}")
-    # settings: {
-    #   "settings": {
-    #     "client_id": "47ahgb3e4jqhk86o7gugvbglf8",
-    #     "redirect_uri": "https://collections.sflennik.com/index.html",
-    #     "logout_uri": "https://collections.sflennik.com/index.html",
-    #     "scope": "openid profile",
-    #     "domain": "https://pool18672788.auth.us-west-2.amazoncognito.com",
-    #     "pool_name": "collections-pool",
-    #     "distribution_id": "EHLMG1T8SOX48",
-    #     "bucket_name": "sflennikco"
-    #   }
-    # }
 
+    # [aws_settings.json]
     keys = ["client_id", "redirect_uri", "logout_uri", "scope", "domain", "pool_name", "distribution_id", "bucket_name"]
     for key in keys:
       if key not in settings:

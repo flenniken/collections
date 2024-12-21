@@ -528,7 +528,7 @@ Wrote the aws-settings.json config file. View it with:
   cat env/aws-settings.json | jqless
 ~~~
 
-The file looks something like this:
+The [aws-settings.json] file looks something like this:
 
 ~~~
 {
@@ -538,6 +538,8 @@ The file looks something like this:
     "logout_uri": "https://collections.sflennik.com/index.html",
     "scope": "openid profile",
     "domain": "https://pool18672788.auth.us-west-2.amazoncognito.com",
+    "redirect_uri_local": "http://localhost:8000/index.html",
+    "logout_uri_local": "http://localhost:8000/index.html",
     "pool_name": "collections-pool",
     "distribution_id": "EHLMG1T8SOX48",
     "bucket_name": "sflennikco"
