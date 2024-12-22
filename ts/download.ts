@@ -13,10 +13,6 @@ interface IndexCollection {
   // The number of images in the collection.
   iCount: number
 
-  // The number of the thumbnail image shared between the index and
-  // thumbnails pages.
-  tin: number
-
   // The total size the of the images in the collection in bytes.
   totalSize: number
 }
@@ -97,7 +93,7 @@ async function downloadCollection(cNum: number) {
   // Open or create the cache.
   const cache = await openCreateCache()
 
-  downloadCollectionImages(cache, cNum, collection.iCount, collection.tin)
+  downloadCollectionImages(cache, cNum, collection.iCount)
 }
 
 function getCollectionUrls(cNum: number): string[] {
@@ -113,10 +109,7 @@ function getCollectionUrls(cNum: number): string[] {
 
   for (let imageNum = 1; imageNum <= collection.iCount; imageNum++) {
     urls.push(`images/c${cNum}-${imageNum}-p.jpg`)
-    if (imageNum == collection.tin)
-      urls.push(`images/c${cNum}-${imageNum}-tin.jpg`)
-    else
-      urls.push(`images/c${cNum}-${imageNum}-t.jpg`)
+    urls.push(`images/c${cNum}-${imageNum}-t.jpg`)
   }
   urls.push(`pages/image-${cNum}.html`)
   urls.push(`pages/thumbnails-${cNum}.html`)
@@ -140,7 +133,7 @@ async function downloadUrls(urls: string[]) {
 }
 
 async function downloadCollectionImages(cache: Cache, cNum: number,
-    iCount: number, tin: number) {
+    iCount: number) {
   // Download the collection's images and cache them. When successful,
   // add a collection ready key to the cache.
 

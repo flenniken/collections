@@ -141,15 +141,14 @@ self.addEventListener("fetch", (event: Event) => {
   // the file type.
   fetchEvent.respondWith((async () => {
 
-    // Identify image files except the index page thumbnails that end
-    // with tin.jpg.
-    const isSpecialFile = url.includes(cacheUrlPrefix) && !url.endsWith("tin.jpg");
+    // Identify image files.
+    const isImageFile = url.includes(cacheUrlPrefix);
 
     const cache = await openCreateCache()
 
-    // For an image file except the index thumbnails, look for it in the
-    // cache first, then go to in internet.
-    if (isSpecialFile) {
+    // Look for an image file in the cache first then go to the
+    // internet.
+    if (isImageFile) {
 
       // Look for the file in the cache.
       const cacheReponse = await cacheMatch(cache, fetchEvent.request);

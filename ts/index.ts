@@ -98,7 +98,7 @@ async function setCollectionState(cNum: number, collectionState: string) {
   const c2ReadyRequest = new Request(`c${cNum}-ready`)
   if (collectionState == "withImages") {
     const collection = getCollection(cNum)
-    const text = `cNum: ${collection.iCount} tin: ${collection.tin}`
+    const text = `cNum: ${collection.iCount}`
     const c2ReadyResponse = new Response(text)
     await cache.put(c2ReadyRequest, c2ReadyResponse)
 

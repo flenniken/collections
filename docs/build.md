@@ -162,20 +162,32 @@ dist
 |   |-- camera.svg
 |   |-- download.svg
 |   |-- icon-128.png
-|   ...
+|   |-- icon-168.png
+|   |-- icon-192.png
+|   |-- icon-256.png
+|   |-- icon-32.png
+|   |-- icon-512.png
+|   |-- icon-64.png
+|   |-- icon-96.png
+|   |-- index.svg
+|   |-- refresh.svg
+|   |-- thumbnails.svg
+|   |-- trash-can.svg
+|   |-- user.svg
+|   `-- xclose.svg
 |-- images
 |   |-- c1-1-p.jpg
 |   |-- c1-1-t.jpg
 |   |-- c1-2-p.jpg
 |   |-- c1-2-t.jpg
 |   |-- c1-3-p.jpg
-|   |-- c1-3-tin.jpg
-|   ...
-|   |-- c2-7-t.jpg
-|   |-- c2-8-p.jpg
-|   |-- c2-8-t.jpg
-|   |-- c2-9-p.jpg
-|   `-- c2-9-t.jpg
+...
+|   |-- c1-8-p.jpg
+|   |-- c1-8-t.jpg
+|   |-- c2-1-p.jpg
+...
+|   |-- c2-16-p.jpg
+|   `-- c2-16-t.jpg
 |-- index.html
 |-- js
 |   |-- image.js
@@ -186,7 +198,10 @@ dist
 |   |-- image-2.html
 |   |-- thumbnails-1.html
 |   `-- thumbnails-2.html
-`-- sw.js
+|-- sw.js
+`-- tin
+    |-- c1-3-t.jpg
+    `-- c2-1-t.jpg
 ~~~
 
 # Contents

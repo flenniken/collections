@@ -103,10 +103,11 @@ in the image folder.
 Shown below are the first collection's image files.  Each file is
 named after its collection "c1" in this case.  The full resolution
 files end with "p.jpg".  The p stands for preview; preview of the
-original raw file. The thumbnail images end with "t.jpg" except for
-the one used in the index which ends with "tin.jpg". The middle number
-starts a 1 and it determines the position on the thumbnail page and
-the order on the image page.
+original raw file. The thumbnail images end with "t.jpg". The middle
+number starts a 1 and it determines the position on the thumbnail page
+and the order on the image page.
+
+The image files are not checked in.
 
 ~~~
 images
@@ -115,7 +116,7 @@ images
   c1-2-p.jpg
   c1-2-t.jpg
   c1-3-p.jpg
-  c1-3-tin.jpg
+  c1-3-t.jpg
   c1-4-p.jpg
   c1-4-t.jpg
   c1-5-p.jpg
@@ -126,6 +127,15 @@ images
   c1-7-t.jpg
   c1-8-p.jpg
   c1-8-t.jpg
+~~~
+
+The thumbnails used by the index page are duplicated in the tin
+(thumbnail index) folder.
+
+~~~
+tin
+  c1-3-t.jpg
+  c2-1-t.jpg
 ~~~
 
 Most of the image files are taken by me. The originals are iphone live
@@ -179,11 +189,11 @@ its own application cache separate from the browser's default cache.
 
 It handles two main types of files differently:
 
-* For image files (except the index page thumbnails), it checks the
-cache first and only fetches from the network if not found in the
-cache. This optimizes image loading and enables offline access.
+* For image files, it checks the cache first and only fetches from the
+network if not found in the cache. This optimizes image loading and
+enables offline access.
 
-* For all other files (html, js, icons, etc.), it tries the network
+* For all other files (html, js, icons, tin, etc.), it tries the network
 first to ensure fresh content, falling back to cached versions when
 offline.
 
