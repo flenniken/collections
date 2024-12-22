@@ -31,12 +31,7 @@ interface Settings {
 // aws-settings.json file.
 var settings: Settings
 
-// todo: which load function runs first, this one or index.ts one?
-window.onload = function() {
-
-  // Update the login state on load.
-  updateLoginUI()
-}
+window.addEventListener("load", updateLoginUI)
 
 function getFirstLetter() {
   // Return the user's first initial of their name.
