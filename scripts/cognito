@@ -97,7 +97,7 @@ def formatDateTime(dt):
 
 def listUsers(poolName, cognitoClient=None):
   """
-  List the users in the given cognito user pool.
+  List all users in the given cognito user pool.
   """
   if cognitoClient is None:
     cognitoClient = getBotoClient()
@@ -105,231 +105,40 @@ def listUsers(poolName, cognitoClient=None):
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")
 
-  response = cognitoClient.list_users(
-    UserPoolId=pools[poolName],
-    AttributesToGet=[ "email", "given_name", "family_name", 'custom:admin']
-  )
-  users = response['Users']
+  id = UserPoolId=pools[poolName]
 
+  # Initialize variables for pagination
+  pagination_token = None
+  users = []
+
+  # Keep fetching users until there are no more pages
+  while True:
+    # Build the request parameters
+    params = {
+      'UserPoolId': id,
+      'Limit': 60
+    }
+    if pagination_token:
+      params['PaginationToken'] = pagination_token
+
+    # Make the API call
+    response = cognitoClient.list_users(**params)
+
+    # Add users from this page to our list
+    users.extend(response['Users'])
+
+    # Check if there are more pages
+    pagination_token = response.get('PaginationToken')
+    if not pagination_token:
+      break
+
+  # Print all users
   for user in users:
     a = convertToKeyValue(user['Attributes'])
-    print(f"""\
-
-id: {user['Username']}
-email: {a['email']}
-first: {a['given_name']}
-last: {a['family_name']}
-admin: {a['custom:admin']}
-status: {user['UserStatus']}
-enabled: {user['Enabled']}
-created: {formatDateTime(user['UserCreateDate'])}""")
-
-def createUser(poolName, cognitoClient=None):
-  """
-  Create a new user in the given cognito user pool.
-  """
-  if cognitoClient is None:
-    cognitoClient = getBotoClient()
-  pools = poolNamesToIds(cognitoClient)
-  if poolName not in pools:
-    raise CognitoException("The user pool doesn't exist.")
-
-  stop = CognitoException("Stopping create user.")
-
-  print("""\
-This command will add a new user after prompting for their information.
-""")
-
-  email = input("Enter email address, e.g. steve.flenniken@gmail.com\nemail?: ")
-  if email == '':
-    raise stop
-  given_name = input("Enter given name, e.g. Steve\ngiven name?: ")
-  if given_name == '':
-    raise stop
-  family_name = input("Enter family name, e.g. Flenniken\nfamily name?: ")
-  if family_name == '':
-    raise stop
-  admin = inputBoolean("Is the user an admin, True or False?: ")
-  if admin is None:
-    raise stop
-  else:
-    admin = 'True' if admin else 'False'
-  password = getpass("password?: ")
-  if password == '':
-    raise stop
-
-  try:
-    response = cognitoClient.admin_create_user(
-      UserPoolId=pools[poolName],
-      Username=email,
-      UserAttributes=[
-        {
-          "Name": "given_name",
-           "Value": given_name
-        },
-        {
-          "Name": "family_name",
-           "Value": family_name
-        },
-        {
-          "Name": "email",
-           "Value": email
-        },
-        {
-          "Name": "email_verified",
-          "Value": "true"
-        },
-        {
-          "Name": "custom:admin",
-           "Value": admin
-        },
-      ],
-      DesiredDeliveryMediums=['EMAIL'])
-  except botocore.exceptions.ClientError as error:
-    if error.response['Error']['Code'] == 'UsernameExistsException':
-      raise CognitoException("The user already exists.")
-    else:
-      raise error
-
-  if password != '':
-    response = cognitoClient.admin_set_user_password(
-        UserPoolId=pools[poolName],
-        Username=email,
-        Password=password,
-        Permanent=True
-    )
-
-  # printDict("response", response)
-
-def inputBoolean(message):
-  """
-  Prompt for a True or False. Return True, False or None.
-  """
-  result = input(message)
-  if result == '':
-    return None
-  if result != "True" and result != "False":
-    raise CognitoException("Invalid True or False setting.")
-  if result == "True":
-    return True
-  return False
-
-def editUser(poolName, userId, cognitoClient=None):
-  """
-  Edit or delete a user in the given cognito user pool.
-  """
-  if cognitoClient is None:
-    cognitoClient = getBotoClient()
-  pools = poolNamesToIds(cognitoClient)
-  if poolName not in pools:
-    raise CognitoException("The user pool doesn't exist.")
-
-  response = cognitoClient.list_users(
-    UserPoolId=pools[poolName],
-    AttributesToGet=[ "email", "given_name", "family_name", 'custom:admin']
-  )
-  users = response['Users']
-
-  for user in users:
-    if user['Username'] == userId:
-      break;
-  else: # no break
-    raise CognitoException("The user doesn't exist.")
-
-  print("""\
-Type in the new user settings or type enter to leave as is.""")
-  a = convertToKeyValue(user['Attributes'])
-
-  email = input(f"{a['email']}, email?: ")
-  if email == '':
-    email = a['email']
-
-  given_name = input(f"{a['given_name']}, given name?: ")
-  if given_name == '':
-    given_name = a['given_name']
-
-  family_name = input(f"{a['family_name']}, family name?: ")
-  if family_name == '':
-    family_name = a['family_name']
-
-  # enabled = inputBoolean(f"{user['Enabled']}, enabled (True or False)?: ")
-  # if enabled is None:
-  #   enabled = user['Enabled']
-
-  admin = inputBoolean(f"{a['custom:admin']}, admin (True or False)?: ")
-  if admin is None:
-    admin = a['custom:admin']
-  else:
-    admin = "True" if admin else "False"
-  password = getpass("password?(use blank to leave as is): ")
-  if password != '':
-    try:
-      response = cognitoClient.admin_set_user_password(
-          UserPoolId=pools[poolName],
-          Username=email,
-          Password=password,
-          Permanent=True
-      )
-    except botocore.exceptions.ClientError as error:
-      raise CognitoException(error.response['Error']['Message'])
-
-  print(f"""\
-
-email: {email}
-first: {given_name}
-last: {family_name}
-admin: {admin}""")
-  if password != '':
-    print("Password: set")
-  else:
-    print("Password: unchanged")
-
-  response = cognitoClient.admin_update_user_attributes(
-    UserPoolId=pools[poolName],
-    Username=email,
-    UserAttributes=[
-      {
-        "Name": "given_name",
-         "Value": given_name
-      },
-      {
-        "Name": "family_name",
-         "Value": family_name
-      },
-      {
-        "Name": "email",
-         "Value": email
-      },
-      {
-        "Name": "custom:admin",
-         "Value": admin
-      },
-    ],
-    ClientMetadata={
-        'string': 'string'
-    }
-  )
-
-def disableUser(poolName, userId, cognitoClient=None):
-  """
-  Disable a user in the given cognito user pool.
-  """
-  if cognitoClient is None:
-    cognitoClient = getBotoClient()
-  pools = poolNamesToIds(cognitoClient)
-  if poolName not in pools:
-    raise CognitoException("The user pool doesn't exist.")
-
-  try:
-    response = cognitoClient.admin_disable_user(
-      UserPoolId=pools[poolName],
-      Username=userId
-    )
-    print("The user has been disabled.")
-  except botocore.exceptions.ClientError as error:
-    if error.response['Error']['Code'] == 'UserNotFoundException':
-      raise CognitoException("The user doesn't exist.")
-    raise error
+    given_name = a.get('given_name', "unknown")
+    family_name = a.get('family_name', "unknown")
+    email = a.get('email')
+    print(f"{given_name} {family_name} <{email}>")
 
 def getBotoClient(serviceName='cognito-idp'):
   """
@@ -991,12 +800,6 @@ def process(args):
   """
   if args.listUsers:
     listUsers(collectionsPool)
-  elif args.createUser:
-    createUser(collectionsPool)
-  elif args.editUser:
-    editUser(collectionsPool, args.editUser)
-  elif args.disableUser:
-    disableUser(collectionsPool, args.disableUser)
   elif args.printPools:
     printPools()
   elif args.showPoolSettings:
@@ -1051,15 +854,6 @@ needed by the website and scripts""")
 
   parser.add_argument("-l", "--listUsers", action="store_true",
     help="list the pool users")
-
-  parser.add_argument("-u", "--createUser", action="store_true",
-    help="create a new pool user")
-
-  parser.add_argument("-e", "--editUser", metavar="user-id",
-    help="edit an existing pool user. Get the user id from listUsers.")
-
-  parser.add_argument("-d", "--disableUser", metavar="user-id",
-    help="disable an existing pool user. Get the user id from listUsers.")
 
   args = parser.parse_args(sys.argv[1:])
   return args
