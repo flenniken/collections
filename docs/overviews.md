@@ -7,6 +7,143 @@ done the way it is.
 
 [⬇](#Contents) (table of contents at the bottom)
 
+# File Perspective
+
+The website from a file perspective.
+
+From a file perspective the website consists of an index page and a
+set of collection pages. A collection consists of a thumbnails page
+and an image page.
+
+Each image and thumbnails page is named with the collection’s number.
+Below we show the index file and the first two collections 1 and 2.
+
+~~~
+index.html
+pages
+    image-1.html
+    image-2.html
+    thumbnails-1.html
+    thumbnails-2.html
+~~~
+
+Each of the three type of pages has an associated js page and the all
+share the same css file and the same icons.
+
+~~~
+collections.css
+js
+    image.js
+    index.js
+    thumbnails.js
+icons
+    camera.svg
+    download.svg
+    …
+~~~
+
+Each html page is created from its statictea template and its json
+file. All templates share the same header tea file.
+
+index.html is made from:
+
+* index-tmpl.html
+* index.json
+* header.tea
+* aws-settings.json
+
+thumbnails-1.html is made from:
+
+* thumbnails-tmpl.html
+* collection-1.json
+* header.tea
+
+images-1.html is made from:
+
+* images-tmpl.html
+* collection-1.json
+* header.tea
+
+The js files are created from a set of type script files.
+
+index.js is made from:
+
+* index.ts
+* all.ts
+* win.ts
+* login.ts
+* download.ts
+
+thumbnails.js is made from:
+
+* thumbnails.ts
+* all.ts
+* win.ts
+
+image.js is made from:
+
+* image.ts
+* all.ts
+* win.ts
+
+sw.js is made from:
+
+* sw.ts
+* all.ts
+
+Most of the icons are svg files. They are MIT licensed files from the
+internet. The png icons come from the same Ocean Side beach image at
+different resolutions.
+
+Each collection consists 8, 10, 12, 14, or 16 full resolution jpg
+files at their original aspect ratio. Each image has an associated
+square 480 x 480 pixel jpg thumbnail.  The collection images are stored
+in the image folder.
+
+Shown below are the first collection's image files.  Each file is
+named after its collection "c1" in this case.  The full resolution
+files end with "p.jpg".  The p stands for preview; preview of the
+original raw file. The thumbnail images end with "t.jpg" except for
+the one used in the index which ends with "tin.jpg". The middle number
+starts a 1 and it determines the position on the thumbnail page and
+the order on the image page.
+
+~~~
+images
+  c1-1-p.jpg
+  c1-1-t.jpg
+  c1-2-p.jpg
+  c1-2-t.jpg
+  c1-3-p.jpg
+  c1-3-tin.jpg
+  c1-4-p.jpg
+  c1-4-t.jpg
+  c1-5-p.jpg
+  c1-5-t.jpg
+  c1-6-p.jpg
+  c1-6-t.jpg
+  c1-7-p.jpg
+  c1-7-t.jpg
+  c1-8-p.jpg
+  c1-8-t.jpg
+~~~
+
+Most of the image files are taken by me. The originals are iphone live
+photos, dng, jpg, and tiff files. They are processed in photoshop or
+camera raw to produce the website images.  The website treats the
+images as immutable.
+
+The index and image json files are currently created by hand.  The
+aws-settings.json file is created by the cognito script by querying
+AWS.
+
+The production files are stored locally in the dist folder. For
+production they’re stored in the AWS S3 flennikco bucket. AWS
+Cloudfront copies them as needed to its edge location caches around
+the world.
+
+[⬇ ────────](#Contents)
+
 # Login
 
 As you login, your name, token, expire date and other login details
@@ -66,6 +203,7 @@ performance compared to serving many smaller files.
 
 # Contents
 
+* [File Perspective](file-perspective) -- how the website is organized from a file perspective.
 * [Login](#login) -- how the login process works.
 * [Service Worker](#service-worker) -- how the sw.ts file caches files for performance and fresh connect.
 * [Typescript Files](#typescript-files) -- how the typescript is divided into small modular files.
