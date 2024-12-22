@@ -34,14 +34,45 @@ bucket contents with the -l option.
 
 [⬇ ────────](#Contents)
 
-# Create or Edit User
+# Create User
 
-You create or edit a Collections user with the aws cognito console.
+You add a new user using the AWS Cognito console in two steps, first
+create the user then set their name.
 
-todo:
-* temp password user must change on login
-* you can delete or disable users
-* there are options for verifying a users email
+Step 1:
+
+Create a user specifying their email address and a temporary
+password. In the console find the "Create user" button at this path:
+
+~~~
+Amazon Cognito > User pools > collections-pool > Users > Create user
+~~~
+
+* select "Send an email invitation"
+* add email: e.g. steve.Flenniken+steps@gmail.com
+* enter a temporary password: e.g. Password1$
+* push "Create user" button
+
+Step 2:
+
+Edit the user and set their name.
+
+* User attributes > Edit
+* click "Add Attribute"
+* in the Attribute Name editbox type "given_name"
+* in the Value edit box type name, e.g. "Steve"
+* Click add another
+* in the Attribute Name editbox type their "family_name"
+* in the Value edit box type their name, e.g. "Flenniken"
+* push the Save button
+
+The user will receive an email telling them their email address and
+password.  The password will expire if not used in 7 days.  The first
+time they login, they set a permanent password.
+
+Note: You can use the plus sign in emails for testing so multiple
+unique email addresses go to the same place. For example:
+steve.flenniken+testme@gmail.com
 
 [⬇ ────────](#Contents)
 
@@ -99,7 +130,7 @@ zcat logs/$file\
 
 # Contents
 
-* [Create or Edit User](#create-or-edit-user) -- how to create a new user or edit an existing one.
+* [Create User](#create-user) -- how to create a new user using the AWS console.
 * [Deploy](#deploy) -- how to deploy and and invalidate files and how the cloudfront cache works.
 * [Login-flow Script](#login-flow-script) -- authentication testing tool.
 * [Http Logging](#http-logging) -- how to turn on http request logging.
