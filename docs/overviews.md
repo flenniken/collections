@@ -156,9 +156,13 @@ the world.
 
 # Login
 
-As you login, your name, token, expire date and other login details
-are stored in local storage. Existence of this data, tells whether you
-are logged in or not.
+Anyone can view the index page; it is visible to the public.  However
+you need to be logged in to download a collection. Once you download a
+collection you can continue to view it when not logged in.
+
+As you login, your login details are stored in local
+storage. Existence of this data, tells whether you are logged in or
+not.
 
 When you log out, the login local data is deleted and you are logged
 out of cognito.
@@ -187,7 +191,7 @@ better performance.
 The service worker intercepts all HTTP/HTTPS requests and maintains
 its own application cache separate from the browser's default cache.
 
-It handles two main types of files differently:
+It handles image files differently then the other files:
 
 * For image files, it checks the cache first and only fetches from the
 network if not found in the cache. This optimizes image loading and

@@ -571,21 +571,8 @@ Verify by listing the users in the pool:
 ~~~
 scripts/cognito -l
 
-email: steve.flenniken+admin@gmail.com
-first: Steve
-last: Flenniken
-id: 0801f3d0-8041-70db-6366-c3161ab7589f
-status: FORCE_CHANGE_PASSWORD
-created: 2024-11-27 22:52:22 UTC
-admin: true
-
-email: steve.flenniken@gmail.com
-first: Steve
-last: Flenniken
-id: 0861d3e0-00a1-7058-ad19-4d7b1880d276
-status: CONFIRMED
-created: 2024-11-27 22:49:10 UTC
-admin: false
+Steve Flenniken <steve.flenniken+admin@gmail.com>
+Steve Flenniken <steve.flenniken@gmail.com>
 ~~~
 
 # Build and Deploy

@@ -58,7 +58,7 @@ You go back to the index page by scrolling to the bottom and tapping
 the index icon.
 
 Tapping a camera icon shows the first photo full size on the image
-page.  Tapping the index icon takes you to the index page.
+page.
 
 [⬇ ────────](#Contents)
 

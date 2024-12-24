@@ -3,8 +3,8 @@
 # This is the help text shown with -h:
 
 """
-This script is for setting up the cognito login system and managing users.
-
+This script is for setting up collections login system, listing
+users and creating the aws-settings.json file.
 """
 
 import os
