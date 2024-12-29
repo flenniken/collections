@@ -14,3 +14,7 @@ tokens.json
 env/aws-settings.json
 .vscode/
 __pycache__/
+pyjwt-layer.zip
+env/lambda/python/
+pyjwt-layer-3.11.zip
+

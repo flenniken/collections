@@ -4,6 +4,10 @@
 # happens. It responds to the User Access event (not the Origin access
 # event) which happens early in the request process.
 
+# On a Mac a good way to get this code into lambda is to copy it to
+# the clipboard then paste it in to the lambda code window:
+#   pbcopy < scripts/validateImageRequest.py
+
 import json
 import jwt
 import time
@@ -11,8 +15,7 @@ from jwt import PyJWKClient
 
 # You can get the client id, region and user pool id with the cognito
 # script:
-#
-# scripts/cognito -s | grep 'client_id\|Id'
+#   scripts/cognito -s | grep 'client_id\|Id'
 
 client_id = '47ahgb3e4jqhk86o7gugvbglf8'
 region = "us-west-2"

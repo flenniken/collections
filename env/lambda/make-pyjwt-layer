@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Create a zip file of the pyjwt python module for use in AWS lambda.
+
+# Variable: Specify the version of python being used in the
+# collection's container. In lambda specify the same version number.
+#
+# python3 --version
+#
+# Python 3.11.2
+version=3.11
+
+cd ~/collections/env/lambda
+
+# If the zip file exists, stop.
+zipfile=pyjwt-layer-$version.zip
+if [ -s "$zipfile" ]; then
+  echo "The zip file already exists: env/lambda/$zipfile"
+  echo "If you want to make it again, delete the existing file."
+  exit
+fi
+
+# If the python directory exists, delete it.
+if [ -s "python" ]; then
+  echo "Remove existing directory"
+  rm -rf python
+fi
+
+# Install the pyjwt module.
+echo "Install the pyjwt module"
+installpath=python/lib/python$version/site-packages
+mkdir -p $installpath
+pip3 install pyjwt -t $installpath > /dev/null
+
+# Zip up the module.
+echo "Create env/lambda/$zipfile"
+zip -r $zipfile python > /dev/null
