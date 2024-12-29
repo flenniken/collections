@@ -1,6 +1,12 @@
 // Handle downloading collections.  This file is concatenated with the
 // index.ts file.
 
+function assert(condition: any, msg?: string): asserts condition {
+  if (!condition) {
+    throw new Error(msg || 'Assertion failed');
+  }
+}
+
 interface IndexCollection {
   // The typescript definition of an index.json collection.
   collection: number
@@ -32,10 +38,11 @@ interface IndexJson {
 // JavaScript, CSS, and images) made by the browser following page
 // navigation.
 
-function fetchOk(url: string) {
+function fetchOk(url: string, options: RequestInit) {
   // Like fetch but it throws and error when the response status is
   // not in the range 200 - 299.
-  return fetch(url).then((response) => {
+
+  return fetch(url, options).then((response) => {
 
     if (!response.ok) {
       throw new Error(`Fetch failed with status: ${response.status}`);
@@ -120,12 +127,23 @@ function getCollectionUrls(cNum: number): string[] {
 async function downloadUrls(urls: string[]) {
   // Download the given urls in parallel.
 
+  // Add the access token to the headers for user authentication on an
+  // AWS lambda function.
+
+  const userInfo = fetchUserInfo()
+  if (!userInfo) {
+    throw new Error("No user info found.")
+  }
+  const headers = new Headers();
+  headers.set("auth", userInfo.access_token);
+
   // Start fetching all images at once.
   let promises: Promise<Response>[] = []
   urls.forEach( (url) => {
     // The service worker's fetch event is called for each fetch call.
     // Caching is handled by the worker.
-    promises.push(fetchOk(url))
+
+    promises.push(fetchOk(url, { headers: headers }))
   })
 
   // Wait for all images to get downloaded and cached.

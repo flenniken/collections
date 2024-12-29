@@ -13,3 +13,4 @@ working-images/
 tokens.json
 env/aws-settings.json
 .vscode/
+__pycache__/

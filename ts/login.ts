@@ -9,7 +9,7 @@ interface UserInfo {
   userId: string
   // todo: make this a boolean?
   admin: string // either "true" or "false"
-  // token: string
+  access_token: string
 }
 
 // See aws_settings.json. It is created in the cognito.py file.
@@ -65,18 +65,6 @@ function logMeIn() {
     showUserInformation(userInfo)
   else
     logIn()
-}
-
-function storeFakeUserInfo() {
-  // Store fake user info in local storage.
-  const userInfo = {
-    givenName: "Local",
-    familyName: "Tester",
-    email: "local.tester@example.com",
-    userId: "local.tester",
-    admin: "false",
-  }
-  storeUserInfo(userInfo)
 }
 
 function getRedirectUriAndState() {
@@ -228,7 +216,7 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
     email: info["email"],
     userId: info["username"],
     admin: info["custom:admin"],
-    // token: "",
+    access_token: access_token,
   }
 }
 

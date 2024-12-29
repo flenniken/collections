@@ -36,6 +36,7 @@ import subprocess
 import sys
 import textwrap
 import pprint
+from validateImageRequest import validateImageRequest, client_id, region, userPoolId
 
 # The token file created by the -g option. Used by some of the other options.
 tokenFilename = "tmp/tokens.json"
@@ -208,18 +209,19 @@ def readJsonKey(filename, key):
 
 def getDecodeToken(tokenFilename, tokenName):
   """
-  Read the given json file and return the specified token's decoded json.
+  Read the given json file and return the specified token's
+  decoded json as a dictionary.
   """
   token = readJsonKey(tokenFilename, tokenName)
   return decodeToken(token)
 
 def decodeToken(tokenString):
-  # Decode the token string and return json.
+  # Decode the token string and return a dictionary.
   try:
-    jdata = jwt.decode(tokenString, algorithms=["RS256"], options={"verify_signature": False})
+    data = jwt.decode(tokenString, algorithms=["RS256"], options={"verify_signature": False})
   except Exception as ex:
     raise LoginFlowException(f"Unable to decode the token. jwt returns:\n{str(ex)}")
-  return(jdata)
+  return(data)
 
 def getUserInfo():
   """
@@ -436,6 +438,8 @@ def main(args):
     return 1
   return 0 # success
 
+test_access_token = "eyJraWQiOiJIam1tNjFrdnVqOUs0eEZSSWZYeFdDdmhqSE5OeHk0OUN3U1BmYkJaVXIwPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIwODYxZDNlMC0wMGExLTcwNTgtYWQxOS00ZDdiMTg4MGQyNzYiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl80Y3ptbEpDNXgiLCJ2ZXJzaW9uIjoyLCJjbGllbnRfaWQiOiI0N2FoZ2IzZTRqcWhrODZvN2d1Z3ZiZ2xmOCIsIm9yaWdpbl9qdGkiOiI4ZDg2YTcwNS1kYjYxLTRmNTktOTk2YS05ZjM2YzUyNDI3NGUiLCJldmVudF9pZCI6IjVmOGM2YjQ5LWM4ODQtNDA1Ni1hZTE5LThmNWQ5M2UxNTE5OSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUiLCJhdXRoX3RpbWUiOjE3MzQ3Mzg3OTcsImV4cCI6MTczNDc0MjczNywiaWF0IjoxNzM0NzM5MTM3LCJqdGkiOiJhZmFmMjhiYS1mYWE2LTRjN2ItOWVkMS0wMmZkZDAxMzYwYmEiLCJ1c2VybmFtZSI6IjA4NjFkM2UwLTAwYTEtNzA1OC1hZDE5LTRkN2IxODgwZDI3NiJ9.o0zsflXnEuzQEw4yDvwWHW2DND8LuA_qGPEqWfuQcVCrPL2ng4wJSktq0tFToEoVVv8-YGjusVYvO_SaWpb0MIVNrL03BjKoZRK3_gJIV3ISCPoqg1-53vbk2RrNluRyJYSOJKokyGCGE7sdWiMctS-fzPHgeNxyznRix7dVOeYfg0DlmaNTfB5ztQwfi77Aoba0zNMvRx7v21dMMA2KeqEGL7aMhsSnQ58LzicvFJhnZDayVsBMxUoolIlBVWBlaf4XB90gDBgqc5TWua0VUlQJNRcCLOCrzs-ccDe3BqkA8Smj4c-P_cmW9frdPVXzA9R8tR3XTL9IeguXTgBeag"
+
 class TestLoginFlow(unittest.TestCase):
 
   def test_me(self):
@@ -560,10 +564,7 @@ class TestLoginFlow(unittest.TestCase):
     self.assertEqual(str(context.exception), "The key 'notkey' doesn't exist in the json data.")
 
   def test_getDecodeToken(self):
-    content = """{
-    "access_token": "eyJraWQiOiJieEtvVmw5K2hBKzRpV1IrWUtCdFVsbVNheVNPUklCUzZNRFhoYWQ4dHVrPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIyODkxOTNiMC0xMDAxLTcwMTYtNGQzNC1iNjMxYzY5M2RkYTEiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl9MbTJsdTZvY1giLCJ2ZXJzaW9uIjoyLCJjbGllbnRfaWQiOiIxaDFlbWtkNHBvZjN2YWNsZTJhbGJnajJxbiIsIm9yaWdpbl9qdGkiOiIwZDM1ZTFlNy05YWVmLTRhNDgtODBhYi02NDc2YjQ4MzVjNmUiLCJldmVudF9pZCI6IjBkZGIzMmY4LTRmMTUtNGM2ZC1hM2I1LTliZmUzYTIzMmRjZiIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUiLCJhdXRoX3RpbWUiOjE3MTY1ODEyNzIsImV4cCI6MTcxNjU4NDg3MiwiaWF0IjoxNzE2NTgxMjcyLCJqdGkiOiJjNzMxNjE5MC1kNjAzLTQyMGItOTM5Yy0zZTFiNjVlZDU3OGQiLCJ1c2VybmFtZSI6IjI4OTE5M2IwLTEwMDEtNzAxNi00ZDM0LWI2MzFjNjkzZGRhMSJ9.ygyyNnJlDDlY3KKYJu9-yfkI3F2PFVGy44_oIMlWFcPiS7b-IHuDeBpBMlkRhYG_PD4h7HIRp-39UQuuC0gJX4Z3nRIFg49lj4i3h-dsx3gsgNjFPG-MGwWZYJoALK_2PiEqyq4zOl_3Szy5CPRXOXqIwvMKhTtz6l9Saaa-y5zSL_TygF1Y5ZRHiWfGDKIwCdZD5asjuwZa6ZT2FiD-3dARN2OngH7CX9omohcrUPSwyhedFMtKbA4AeCW8y_hhHQFcc_PoI4S80DXBvECzcKvc_GQUPx2fCwGxfE__i57iZVzzhZKrtqXc9Ndoy_ka4T7jVa60DQ_-Jb51rprRVg"
-}
-"""
+    content = '{"access_token": "' + test_access_token + '"}'
     filename = "tmp/getDecodeToken.json"
     createFile(filename, content)
     data = getDecodeToken(filename, "access_token")
@@ -646,6 +647,28 @@ NGItumhDXKXoHvjwD-5s2qiJQ2xHDptw"
     self.assertEqual(str(context.exception), """\
 Unable to decode the token. jwt returns:
 Not enough segments""")
+
+  def test_validateImageRequest1(self):
+    url = "not-an-image"
+    self.assertEqual(validateImageRequest(url, None), "")
+
+  def test_validateImageRequest2(self):
+    url = "image/c1-1-p.jpg"
+    self.assertEqual(validateImageRequest(url, 5), 'Access token not a string.')
+
+  def test_validateImageRequest3(self):
+    url = "image/c1-1-p.jpg"
+    self.assertEqual(validateImageRequest(url, "a"*5555), 'Access token is too big.')
+
+  def test_validateImageRequest4(self):
+    url = "image/c1-1-p.jpg"
+    self.assertEqual(validateImageRequest(url, test_access_token), "Token has expired.")
+
+  def test_constants(self):
+    params = getAwsParameters()
+    self.assertEqual(client_id, params.client_id)
+    self.assertTrue(region in params.domain)
+    self.assertTrue(region in userPoolId)
 
 if __name__ == '__main__':
   args = parseCommandLine()
