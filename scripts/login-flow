@@ -36,7 +36,8 @@ import subprocess
 import sys
 import textwrap
 import pprint
-from validateImageRequest import validateImageRequest, client_id, region, userPoolId
+from validateImageRequest import validateImageRequest, client_id, region, \
+  userPoolId, lambda_handler_client
 
 # The token file created by the -g option. Used by some of the other options.
 tokenFilename = "tmp/tokens.json"
@@ -438,6 +439,41 @@ def main(args):
     return 1
   return 0 # success
 
+# todo: make the test code into it's own module? boto3 is only needed when testing.
+import boto3
+
+def getBotoClient(serviceName='s3'):
+  """
+  Return the boto3 client for the given AWS service. Services names
+  like 'cognito-idp', 'ses', 'sts', etc.
+  """
+  configFilename = "/home/coder/.aws/config"
+  credsFilename = "/home/coder/.aws/credentials"
+  if not os.path.exists(configFilename) or not os.path.exists(credsFilename):
+     raise DeployException("""\
+
+Before this script can access your aws s3 bucket, you need an
+AWS account and an IAM user with with the correct permissions.
+See the docs for how to setup the IAM user.
+""")
+  return boto3.client(serviceName)
+
+class TestClients:
+  def __init__(self):
+    self.cognitoIdpClient = getBotoClient('cognito-idp')
+
+tc = None
+
+def setUpModule():
+  # Get the boto clients we test. This method is called once by the
+  # test suite. The code is here to avoid a runtime error in the
+  # shutdown phase.
+  global tc
+  tc = TestClients()
+
+def tearDownModule():
+  pass
+
 test_access_token = "eyJraWQiOiJIam1tNjFrdnVqOUs0eEZSSWZYeFdDdmhqSE5OeHk0OUN3U1BmYkJaVXIwPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIwODYxZDNlMC0wMGExLTcwNTgtYWQxOS00ZDdiMTg4MGQyNzYiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl80Y3ptbEpDNXgiLCJ2ZXJzaW9uIjoyLCJjbGllbnRfaWQiOiI0N2FoZ2IzZTRqcWhrODZvN2d1Z3ZiZ2xmOCIsIm9yaWdpbl9qdGkiOiI4ZDg2YTcwNS1kYjYxLTRmNTktOTk2YS05ZjM2YzUyNDI3NGUiLCJldmVudF9pZCI6IjVmOGM2YjQ5LWM4ODQtNDA1Ni1hZTE5LThmNWQ5M2UxNTE5OSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUiLCJhdXRoX3RpbWUiOjE3MzQ3Mzg3OTcsImV4cCI6MTczNDc0MjczNywiaWF0IjoxNzM0NzM5MTM3LCJqdGkiOiJhZmFmMjhiYS1mYWE2LTRjN2ItOWVkMS0wMmZkZDAxMzYwYmEiLCJ1c2VybmFtZSI6IjA4NjFkM2UwLTAwYTEtNzA1OC1hZDE5LTRkN2IxODgwZDI3NiJ9.o0zsflXnEuzQEw4yDvwWHW2DND8LuA_qGPEqWfuQcVCrPL2ng4wJSktq0tFToEoVVv8-YGjusVYvO_SaWpb0MIVNrL03BjKoZRK3_gJIV3ISCPoqg1-53vbk2RrNluRyJYSOJKokyGCGE7sdWiMctS-fzPHgeNxyznRix7dVOeYfg0DlmaNTfB5ztQwfi77Aoba0zNMvRx7v21dMMA2KeqEGL7aMhsSnQ58LzicvFJhnZDayVsBMxUoolIlBVWBlaf4XB90gDBgqc5TWua0VUlQJNRcCLOCrzs-ccDe3BqkA8Smj4c-P_cmW9frdPVXzA9R8tR3XTL9IeguXTgBeag"
 
 class TestLoginFlow(unittest.TestCase):
@@ -650,25 +686,32 @@ Not enough segments""")
 
   def test_validateImageRequest1(self):
     url = "not-an-image"
-    self.assertEqual(validateImageRequest(url, None), "")
-
-  def test_validateImageRequest2(self):
-    url = "image/c1-1-p.jpg"
-    self.assertEqual(validateImageRequest(url, 5), 'Access token not a string.')
+    self.assertEqual(validateImageRequest(tc.cognitoIdpClient, url, None), "")
 
   def test_validateImageRequest3(self):
-    url = "image/c1-1-p.jpg"
-    self.assertEqual(validateImageRequest(url, "a"*5555), 'Access token is too big.')
+    url = "images/c1-1-p.jpg"
+    self.assertEqual(validateImageRequest(tc.cognitoIdpClient, url, "a"*5555),
+      'Not authorized.')
 
   def test_validateImageRequest4(self):
-    url = "image/c1-1-p.jpg"
-    self.assertEqual(validateImageRequest(url, test_access_token), "Token has expired.")
+    url = "images/c1-1-p.jpg"
+    self.assertEqual(validateImageRequest(tc.cognitoIdpClient, url, test_access_token),
+      "Not authorized.")
 
   def test_constants(self):
+    # Test that that constants used in the module match the current settings.
     params = getAwsParameters()
     self.assertEqual(client_id, params.client_id)
     self.assertTrue(region in params.domain)
     self.assertTrue(region in userPoolId)
+
+  def test_lambda_handler(self):
+    access_token = readJsonKey(tokenFilename, "access_token")
+    event = {"Records": [{"cf": {"request": {"method": "GET", "uri": "/images/some-resource", "querystring": "", "headers": {"host": [{"key": "Host", "value": "d1234abcd.cloudfront.net"}], "user-id": [{"key": "user-id", "value": "valid-user-id"}], "user-agent": [{"key": "User-Agent", "value": "Mozilla/5.0"}], "auth": [{"key": "auth", "value": access_token}], "accept": [{"key": "Accept", "value": "text/html"}]}, "clientIp": "203.0.113.1"}}}]}
+    client = tc.cognitoIdpClient
+    request = lambda_handler_client(client, event, None)
+    print(request)
+
 
 if __name__ == '__main__':
   args = parseCommandLine()

@@ -135,6 +135,7 @@ def getModifiedFiles(s3Client, bucket_name, sync=False):
       filenames.append(line)
   return filenames
 
+# todo: share this code
 def getBotoClient(serviceName='s3'):
   """
   Return the boto3 client for the given AWS service. Services names

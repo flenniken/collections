@@ -5,9 +5,7 @@
 # event) which happens early in the request process.
 
 import json
-import jwt
-import time
-from jwt import PyJWKClient
+import boto3
 
 # You can get the client id, region and user pool id with the cognito
 # script:
@@ -22,14 +20,6 @@ userPoolId = "us-west-2_4czmlJC5x"
 # cryptographic keys that are used to verify the authenticity and
 # integrity of JSON Web Tokens (JWTs)
 
-def getCognitoJwksUrls():
-  """
-  Return the cognito issuer and jwks urls for the user pool.
-  """
-  issuer = f"https://cognito-idp.{region}.amazonaws.com/{userPoolId}"
-  jwksUrl = f"{issuer}/.well-known/jwks.json"
-  return issuer, jwksUrl
-
 def lambda_handler(event, context):
   """
   Verify that image requests are made by logged in users.
@@ -41,7 +31,10 @@ def lambda_handler(event, context):
   The context parameter is an object that tells about the running
   environment.
   """
+  client = boto3.client('cognito-idp')
+  return lambda_handler_client(client, event, context)
 
+def lambda_handler_client(client, event, context):
   # You can log by printing. You can see logging when using the lambda
   # testing tab, however, requests from the internet are not logged
   # unless you enable it in cloudfront.
@@ -59,7 +52,7 @@ def lambda_handler(event, context):
 
   # If the user is not logged in, deny access.
   try:
-    message = validateImageRequest(url, access_token)
+    message = validateImageRequest(client, url, access_token)
   except Exception as ex:
     print(str(ex))
     message = "Raised an unexpected exception."
@@ -73,37 +66,41 @@ def lambda_handler(event, context):
 
   return request
 
-def validateImageRequest(url, access_token):
+def validateImageRequest(client, url, access_token):
   """
   Verify that image requests are made by logged in users. Return
   an empty string when valid, else return a message telling what went
   wrong. It may raise an exception for expected cases.
   """
   # Allow all non-image requests.
-  if "image/" not in url:
+  if "images/" not in url:
     return ""
 
-  # If the access_token is valid, assume the user is logged in.
-
-  if not isinstance(access_token, str):
-    return "Access token not a string."
-  if len(access_token) > 5000:
-    return "Access token is too big."
-
-  # Get who issued the access token and the key used to sign it.
-  issuer, jwksUrl = getCognitoJwksUrls()
-  jwkClient = jwt.PyJWKClient(jwksUrl)
-  signing_key = jwkClient.get_signing_key_from_jwt(access_token)
-
+  # If the access token can be used to get user info, then it is valid.
   try:
-    # Decode and validate the access token.
-    decoded_token = jwt.decode(access_token, signing_key.key,
-      algorithms=["RS256"], audience=client_id, issuer=issuer)
-  except jwt.ExpiredSignatureError:
-    return("Token has expired.")
-  except jwt.InvalidSignatureError:
-    return("Invalid token signature.")
-  except jwt.InvalidTokenError:
-    return("Invalid token.")
+    response = client.get_user(AccessToken=access_token)
+    if response:
+      print(response)
+    if 'Username' not in response:
+      return "Invalid user"
+
+  except client.exceptions.NotAuthorizedException:
+    return "Not authorized."
+  except client.exceptions.UserNotFoundException:
+    return "User not found."
+  except client.exceptions.ResourceNotFoundException:
+    return "Resource not found."
+  except client.exceptions.InvalidParameterException:
+    return "Invalid parameter."
+  except client.exceptions.TooManyRequestsException:
+    return "Too many requests."
+  except client.exceptions.PasswordResetRequiredException:
+    return "Password reset required."
+  except client.exceptions.UserNotConfirmedException:
+    return "User not confirmed."
+  except client.exceptions.InternalErrorException:
+    return "Internal error."
+  except client.exceptions.ForbiddenException:
+    return "Forbidden."
 
   return ""
