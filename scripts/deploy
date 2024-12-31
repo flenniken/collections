@@ -263,7 +263,7 @@ class TestModule(unittest.TestCase):
     # print(f"settings: {text}")
 
     # [aws_settings.json]
-    keys = ["client_id", "redirect_uri", "logout_uri", "scope", "domain", "pool_name", "distribution_id", "bucket_name"]
+    keys = ["client_id", "redirect_uri", "logout_uri", "scope", "domain", "pool_name", "distribution_id", "bucket_name", "userPoolId"]
     for key in keys:
       if key not in settings:
         print(f"missing key: {key}")

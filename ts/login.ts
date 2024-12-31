@@ -25,6 +25,7 @@ interface Settings {
   pool_name: string
   distribution_id: string
   bucket_name: string
+  userPoolId: string
 }
 
 // The settings are defined in the index.html file from data in the

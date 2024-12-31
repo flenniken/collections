@@ -648,6 +648,7 @@ def writeAwsSettings(poolName):
   settings["pool_name"] = poolName
   settings["distribution_id"] = distribution_id
   settings["bucket_name"] = bucket_name
+  settings["userPoolId"] = poolSettings["UserPool"]["Id"]
   awsSettings = {"settings": settings}
 
   # Write the config file: aws-settings.json

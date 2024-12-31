@@ -32,6 +32,7 @@ from collections import namedtuple
 import json
 import requests
 import jwt
+from jwt import PyJWKClient
 import subprocess
 import sys
 import textwrap
@@ -96,6 +97,7 @@ def getAwsParameters(filename=None):
     'pool_name',
     'distribution_id',
     'bucket_name',
+    'userPoolId',
   ]
 
   if filename and not os.path.exists(filename):
@@ -132,6 +134,7 @@ The aws settings file is missing. You can create it by running: scripts/cognito 
     pool_name=settings["pool_name"],
     distribution_id=settings["distribution_id"],
     bucket_name=settings["bucket_name"],
+    userPoolId=settings["userPoolId"],
   )
 
 def showLoginUrl():
@@ -347,6 +350,52 @@ def showDecodedToken(tokenName):
   jData = json.dumps(data)
   runJqLess(jData)
 
+def showDecodeAndValidate(tokenName):
+  tokenNames = ['access_token', 'id_token', 'refresh_token']
+  if tokenName not in tokenNames:
+    raise LoginFlowException(f"Invalid token name, specify one of: {tokenNames}.")
+  token = readJsonKey(tokenFilename, tokenName)
+  data = decodeAndValidate(token)
+  jData = json.dumps(data)
+  runJqLess(jData)
+
+
+def getCognitoJwksUrls(userPoolId):
+  """
+  Return the cognito issuer and jwks urls for the user pool.
+  """
+  # JWKS stands for JSON Web Key Set, which is a collection of public
+  # cryptographic keys that are used to verify the authenticity and
+  # integrity of JSON Web Tokens (JWTs)
+
+  region = userPoolId.split("_")[0]
+  issuer = f"https://cognito-idp.{region}.amazonaws.com/{userPoolId}"
+  jwksUrl = f"{issuer}/.well-known/jwks.json"
+  return issuer, jwksUrl
+
+def decodeAndValidate(token):
+  """
+  Decode and validate the access token using the jwt
+  module. Return the decoded information in a dictionary. Raise an
+  exception when the token cannot be decoded.
+  """
+  params = getAwsParameters()
+  issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
+  jwkClient = jwt.PyJWKClient(jwksUrl)
+  signing_key = jwkClient.get_signing_key_from_jwt(token)
+
+  # The access token does not have the aud claim. It seems you use the
+  # id token instead of the access token.
+  # jwt.exceptions.MissingRequiredClaimError: Token is missing the "aud" claim
+
+  try:
+    decoded_token = jwt.decode(token, signing_key.key,
+      algorithms=["RS256"], audience=params.client_id, issuer=issuer)
+  except Exception as ex:
+    raise LoginFlowException(str(ex))
+
+  return decoded_token
+
 def showTokens():
   """
   Show the token file.
@@ -368,6 +417,8 @@ def process(args):
     showTokens()
   elif args.decodeToken:
     showDecodedToken(args.decodeToken)
+  elif args.decodeAndValidate:
+    showDecodeAndValidate(args.decodeAndValidate)
   elif args.getUserInfo:
     getUserInfo()
   elif args.refreshTokens:
@@ -410,6 +461,9 @@ def parseCommandLine():
     help=f"show the {tokenFilename} file")
   parser.add_argument("-d", "--decodeToken", metavar='token',
     help=f"""decode a token from the {tokenFilename} file, specify id_token,
+    access_token, or refresh_token""")
+  parser.add_argument("-v", "--decodeAndValidate", metavar='token',
+    help=f"""decode and validate a token from the {tokenFilename} file, specify id_token,
     access_token, or refresh_token""")
   parser.add_argument("-u", "--getUserInfo", action="store_true",
     help=f"show the user information (oauth2/userInfo endpoint) given an access token in {tokenFilename}.")
@@ -513,7 +567,8 @@ class TestLoginFlow(unittest.TestCase):
     "logout_uri_local": "the logout_uri_local",
     "pool_name": "the pool_name",
     "distribution_id": "the distribution_id",
-    "bucket_name": "the bucket_name"
+    "bucket_name": "the bucket_name",
+    "userPoolId": "the user pool id"
   }
 }
 """
@@ -536,6 +591,7 @@ class TestLoginFlow(unittest.TestCase):
     self.assertEqual(params.pool_name, "the pool_name")
     self.assertEqual(params.distribution_id, "the distribution_id")
     self.assertEqual(params.bucket_name, "the bucket_name")
+    self.assertEqual(params.userPoolId, "the user pool id")
 
   def test_getAwsParameters_error1(self):
     with self.assertRaises(LoginFlowException) as context:
@@ -705,12 +761,30 @@ Not enough segments""")
     self.assertTrue(region in params.domain)
     self.assertTrue(region in userPoolId)
 
-  def test_lambda_handler(self):
-    access_token = readJsonKey(tokenFilename, "access_token")
-    event = {"Records": [{"cf": {"request": {"method": "GET", "uri": "/images/some-resource", "querystring": "", "headers": {"host": [{"key": "Host", "value": "d1234abcd.cloudfront.net"}], "user-id": [{"key": "user-id", "value": "valid-user-id"}], "user-agent": [{"key": "User-Agent", "value": "Mozilla/5.0"}], "auth": [{"key": "auth", "value": access_token}], "accept": [{"key": "Accept", "value": "text/html"}]}, "clientIp": "203.0.113.1"}}}]}
-    client = tc.cognitoIdpClient
-    request = lambda_handler_client(client, event, None)
-    print(request)
+  def test_getCognitoJwksUrls(self):
+    params = getAwsParameters()
+    issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
+    self.assertTrue(issuer.startswith("https://cognito-idp."))
+    self.assertTrue(jwksUrl.startswith("https://cognito-idp."))
+    self.assertTrue(jwksUrl.endswith("/.well-known/jwks.json"))
+
+  def test_decodeAndValidate(self):
+    token = readJsonKey(tokenFilename, "id_token")
+    try:
+      info = decodeAndValidate(token)
+      # print(info)
+    except LoginFlowException as ex:
+      if str(ex) == 'Signature has expired':
+        print("\nThe token in the token file has expired. You can generate a new one")
+      else:
+        raise ex
+
+  # def test_lambda_handler(self):
+  #   access_token = readJsonKey(tokenFilename, "access_token")
+  #   event = {"Records": [{"cf": {"request": {"method": "GET", "uri": "/images/some-resource", "querystring": "", "headers": {"host": [{"key": "Host", "value": "d1234abcd.cloudfront.net"}], "user-id": [{"key": "user-id", "value": "valid-user-id"}], "user-agent": [{"key": "User-Agent", "value": "Mozilla/5.0"}], "auth": [{"key": "auth", "value": access_token}], "accept": [{"key": "Accept", "value": "text/html"}]}, "clientIp": "203.0.113.1"}}}]}
+  #   client = tc.cognitoIdpClient
+  #   request = lambda_handler_client(client, event, None)
+  #   print(request)
 
 
 if __name__ == '__main__':
