@@ -536,7 +536,7 @@ The [aws-settings.json] file looks something like this:
     "client_id": "47ahgb3e4jqhk86o7gugvbglf8",
     "redirect_uri": "https://collections.sflennik.com/index.html",
     "logout_uri": "https://collections.sflennik.com/index.html",
-    "scope": "openid profile",
+    "scope": "openid profile aws.cognito.signin.user.admin",
     "domain": "https://pool18672788.auth.us-west-2.amazoncognito.com",
     "redirect_uri_local": "http://localhost:8000/index.html",
     "logout_uri_local": "http://localhost:8000/index.html",

@@ -37,8 +37,7 @@ import subprocess
 import sys
 import textwrap
 import pprint
-from validateImageRequest import validateImageRequest, client_id, region, \
-  userPoolId, lambda_handler_client
+from validateImageRequest import validateImageRequest, lambda_handler_client
 
 # The token file created by the -g option. Used by some of the other options.
 tokenFilename = "tmp/tokens.json"
@@ -46,10 +45,6 @@ tokenFilename = "tmp/tokens.json"
 class LoginFlowException(Exception):
   """ An exception we plan for. """
   pass
-
-def printError(*args, **kwargs):
-  """ Print message to standard error. """
-  print(*args, file=sys.stderr, **kwargs)
 
 def createFile(filename, content):
   """
@@ -311,6 +306,7 @@ You can use the following options to look at and use the tokens.
     cat {tokenFilename} | jqless
 
   -d -- decode one of the tokens in the file. Similar to jwt.io.
+  -v -- decode and validate one of the tokens in the file. Similar to jwt.io.
 
   -u -- use the access_token in the file to get the user information
    from cognito. You have about an hour before the access_token
@@ -528,8 +524,6 @@ def setUpModule():
 def tearDownModule():
   pass
 
-test_access_token = "eyJraWQiOiJIam1tNjFrdnVqOUs0eEZSSWZYeFdDdmhqSE5OeHk0OUN3U1BmYkJaVXIwPSIsImFsZyI6IlJTMjU2In0.eyJzdWIiOiIwODYxZDNlMC0wMGExLTcwNTgtYWQxOS00ZDdiMTg4MGQyNzYiLCJpc3MiOiJodHRwczpcL1wvY29nbml0by1pZHAudXMtd2VzdC0yLmFtYXpvbmF3cy5jb21cL3VzLXdlc3QtMl80Y3ptbEpDNXgiLCJ2ZXJzaW9uIjoyLCJjbGllbnRfaWQiOiI0N2FoZ2IzZTRqcWhrODZvN2d1Z3ZiZ2xmOCIsIm9yaWdpbl9qdGkiOiI4ZDg2YTcwNS1kYjYxLTRmNTktOTk2YS05ZjM2YzUyNDI3NGUiLCJldmVudF9pZCI6IjVmOGM2YjQ5LWM4ODQtNDA1Ni1hZTE5LThmNWQ5M2UxNTE5OSIsInRva2VuX3VzZSI6ImFjY2VzcyIsInNjb3BlIjoib3BlbmlkIHByb2ZpbGUiLCJhdXRoX3RpbWUiOjE3MzQ3Mzg3OTcsImV4cCI6MTczNDc0MjczNywiaWF0IjoxNzM0NzM5MTM3LCJqdGkiOiJhZmFmMjhiYS1mYWE2LTRjN2ItOWVkMS0wMmZkZDAxMzYwYmEiLCJ1c2VybmFtZSI6IjA4NjFkM2UwLTAwYTEtNzA1OC1hZDE5LTRkN2IxODgwZDI3NiJ9.o0zsflXnEuzQEw4yDvwWHW2DND8LuA_qGPEqWfuQcVCrPL2ng4wJSktq0tFToEoVVv8-YGjusVYvO_SaWpb0MIVNrL03BjKoZRK3_gJIV3ISCPoqg1-53vbk2RrNluRyJYSOJKokyGCGE7sdWiMctS-fzPHgeNxyznRix7dVOeYfg0DlmaNTfB5ztQwfi77Aoba0zNMvRx7v21dMMA2KeqEGL7aMhsSnQ58LzicvFJhnZDayVsBMxUoolIlBVWBlaf4XB90gDBgqc5TWua0VUlQJNRcCLOCrzs-ccDe3BqkA8Smj4c-P_cmW9frdPVXzA9R8tR3XTL9IeguXTgBeag"
-
 class TestLoginFlow(unittest.TestCase):
 
   def test_me(self):
@@ -656,7 +650,8 @@ class TestLoginFlow(unittest.TestCase):
     self.assertEqual(str(context.exception), "The key 'notkey' doesn't exist in the json data.")
 
   def test_getDecodeToken(self):
-    content = '{"access_token": "' + test_access_token + '"}'
+    token = readJsonKey(tokenFilename, "access_token")
+    content = '{"access_token": "' + token + '"}'
     filename = "tmp/getDecodeToken.json"
     createFile(filename, content)
     data = getDecodeToken(filename, "access_token")
@@ -677,7 +672,7 @@ class TestLoginFlow(unittest.TestCase):
         print(f"missing key: 'key'")
         self.assertTrue(false)
 
-    self.assertEqual(data['scope'], "openid profile")
+    self.assertEqual(data['scope'], "aws.cognito.signin.user.admin openid profile")
 
   def test_readJsonFile(self):
     filename = "tmp/test_readJsonFile.json"
@@ -749,18 +744,6 @@ Not enough segments""")
     self.assertEqual(validateImageRequest(tc.cognitoIdpClient, url, "a"*5555),
       'Not authorized.')
 
-  def test_validateImageRequest4(self):
-    url = "images/c1-1-p.jpg"
-    self.assertEqual(validateImageRequest(tc.cognitoIdpClient, url, test_access_token),
-      "Not authorized.")
-
-  def test_constants(self):
-    # Test that that constants used in the module match the current settings.
-    params = getAwsParameters()
-    self.assertEqual(client_id, params.client_id)
-    self.assertTrue(region in params.domain)
-    self.assertTrue(region in userPoolId)
-
   def test_getCognitoJwksUrls(self):
     params = getAwsParameters()
     issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
@@ -774,17 +757,90 @@ Not enough segments""")
       info = decodeAndValidate(token)
       # print(info)
     except LoginFlowException as ex:
-      if str(ex) == 'Signature has expired':
-        print("\nThe token in the token file has expired. You can generate a new one")
-      else:
-        raise ex
+      self.assertEqual(str(ex), 'Signature has expired')
 
-  # def test_lambda_handler(self):
-  #   access_token = readJsonKey(tokenFilename, "access_token")
-  #   event = {"Records": [{"cf": {"request": {"method": "GET", "uri": "/images/some-resource", "querystring": "", "headers": {"host": [{"key": "Host", "value": "d1234abcd.cloudfront.net"}], "user-id": [{"key": "user-id", "value": "valid-user-id"}], "user-agent": [{"key": "User-Agent", "value": "Mozilla/5.0"}], "auth": [{"key": "auth", "value": access_token}], "accept": [{"key": "Accept", "value": "text/html"}]}, "clientIp": "203.0.113.1"}}}]}
-  #   client = tc.cognitoIdpClient
-  #   request = lambda_handler_client(client, event, None)
-  #   print(request)
+  def test_get_user(self):
+    token = readJsonKey(tokenFilename, "access_token")
+    client = tc.cognitoIdpClient
+    try:
+      response = client.get_user(AccessToken=token)
+    except client.exceptions.NotAuthorizedException as ex:
+      expected = "An error occurred (NotAuthorizedException) when calling the GetUser operation: Access Token has expired"
+      self.assertEqual(str(ex), expected)
+    else:
+      # jData = json.dumps(response, indent=2)
+      # print(jData)
+      self.assertTrue("Username" in response)
+
+  def test_validateImageRequestGood(self):
+    token = readJsonKey(tokenFilename, "access_token")
+    url = "images/someimage"
+    client = tc.cognitoIdpClient
+    message = validateImageRequest(client, url, token)
+    self.assertTrue(message == "" or message == 'Not authorized.')
+
+  def test_lambda_handler(self):
+    token = readJsonKey(tokenFilename, "access_token")
+    client = tc.cognitoIdpClient
+    event = {
+      "Records": [
+        {
+          "cf": {
+            "request": {
+              "method": "GET",
+              "uri": "images/someimage",
+              "querystring": "",
+              "headers": {
+                "host": [
+                  {
+                    "key": "Host",
+                    "value": "d1234abcd.cloudfront.net"
+                  }
+                ],
+                "user-id": [
+                  {
+                    "key": "user-id",
+                    "value": "adsdf"
+                  }
+                ],
+                "user-agent": [
+                  {
+                    "key": "User-Agent",
+                    "value": "Mozilla/5.0"
+                  }
+                ],
+                "auth": [
+                  {
+                    "key": "auth",
+                    "value": token
+                  }
+                ],
+                "accept": [
+                  {
+                    "key": "Accept",
+                    "value": "text/html"
+                  }
+                ]
+              },
+              "clientIp": "203.0.113.1"
+            }
+          }
+        }
+      ]
+    }
+
+    # print("event")
+    # print(json.dumps(event, indent=2))
+    # print("")
+
+    request = lambda_handler_client(client, event, None)
+    # print(request)
+    expected403 = {'status': '403', 'statusDescription': 'Forbidden',
+      'body': 'Unauthorized access.'}
+    if 'status' in request:
+      self.assertEqual(request, expected403)
+    else:
+      self.assertEqual(request['uri'], 'images/someimage')
 
 
 if __name__ == '__main__':

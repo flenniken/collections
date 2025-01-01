@@ -96,7 +96,7 @@ function logIn() {
   const [redirect_uri, state] = getRedirectUriAndState()
 
   const loginUrl = `${s.domain}/oauth2/authorize?client_id=${s.client_id}` +
-    `&state=${state}&response_type=code&scope=openid%20profile` +
+    `&state=${state}&response_type=code&scope=${s.scope}` +
     `&redirect_uri=${redirect_uri}`
   log("login", loginUrl)
 

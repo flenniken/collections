@@ -273,7 +273,7 @@ class TestModule(unittest.TestCase):
     self.assertTrue(settings['redirect_uri'].endswith("/index.html"))
     self.assertTrue(settings['logout_uri'].startswith("https://"))
     self.assertTrue(settings['logout_uri'].endswith("/index.html"))
-    self.assertEqual(settings['scope'], "openid profile")
+    self.assertEqual(settings['scope'], "openid profile aws.cognito.signin.user.admin")
     self.assertTrue(settings['domain'].startswith("https://pool"))
     self.assertTrue(settings['domain'].endswith(".amazoncognito.com"))
     self.assertEqual(settings['pool_name'], "collections-pool")

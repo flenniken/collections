@@ -1,24 +1,11 @@
 # Verify that image requests are made by logged in users.
 #
-# This AWS lambda handler is called when a CloudFront https request
-# happens. It responds to the User Access event (not the Origin access
-# event) which happens early in the request process.
+# This AWS lambda handler is called for a CloudFront User Access event
+# (not the Origin access event) which happens early in the request
+# process.
 
 import json
 import boto3
-
-# You can get the client id, region and user pool id with the cognito
-# script:
-#
-# scripts/cognito -s | grep 'client_id\|Id'
-
-client_id = '47ahgb3e4jqhk86o7gugvbglf8'
-region = "us-west-2"
-userPoolId = "us-west-2_4czmlJC5x"
-
-# JWKS stands for JSON Web Key Set, which is a collection of public
-# cryptographic keys that are used to verify the authenticity and
-# integrity of JSON Web Tokens (JWTs)
 
 def lambda_handler(event, context):
   """
@@ -35,6 +22,11 @@ def lambda_handler(event, context):
   return lambda_handler_client(client, event, context)
 
 def lambda_handler_client(client, event, context):
+  """
+  Verify that image requests are made by logged in users.
+
+  Return a requests dictionary.
+  """
   # You can log by printing. You can see logging when using the lambda
   # testing tab, however, requests from the internet are not logged
   # unless you enable it in cloudfront.
@@ -46,7 +38,7 @@ def lambda_handler_client(client, event, context):
   url = request['uri']
   headers = request['headers']
   if 'auth' in headers:
-    access_token = headers['user-id'][0]['value']
+    access_token = headers['auth'][0]['value']
   else:
     access_token = None
 
@@ -57,20 +49,20 @@ def lambda_handler_client(client, event, context):
     print(str(ex))
     message = "Raised an unexpected exception."
   if message:
-    print(message)
+    # print(message)
     return {
       'status': '403',
       'statusDescription': 'Forbidden',
       'body': 'Unauthorized access.',
     }
-
   return request
 
 def validateImageRequest(client, url, access_token):
   """
-  Verify that image requests are made by logged in users. Return
-  an empty string when valid, else return a message telling what went
-  wrong. It may raise an exception for expected cases.
+  Verify that image requests are made by logged in users.
+
+  Return an empty string when valid, else return a message telling
+  what went wrong. It may raise an exception for unexpected cases.
   """
   # Allow all non-image requests.
   if "images/" not in url:
@@ -79,11 +71,10 @@ def validateImageRequest(client, url, access_token):
   # If the access token can be used to get user info, then it is valid.
   try:
     response = client.get_user(AccessToken=access_token)
-    if response:
-      print(response)
+    # if response:
+    #   print(response)
     if 'Username' not in response:
-      return "Invalid user"
-
+      return "Invalid user."
   except client.exceptions.NotAuthorizedException:
     return "Not authorized."
   except client.exceptions.UserNotFoundException:
