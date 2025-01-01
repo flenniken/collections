@@ -30,10 +30,10 @@ import textwrap
 import random
 import string
 import botocore
-
 import boto3
 from datetime import datetime, timezone
 from getpass import getpass
+from boto_client import getBotoClient
 
 # The name of the application client of a pool created for
 # collections.
@@ -100,7 +100,7 @@ def listUsers(poolName, cognitoClient=None):
   List all users in the given cognito user pool.
   """
   if cognitoClient is None:
-    cognitoClient = getBotoClient()
+    cognitoClient = getBotoClient('cognito-idp')
   pools = poolNamesToIds(cognitoClient)
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")
@@ -139,24 +139,6 @@ def listUsers(poolName, cognitoClient=None):
     family_name = a.get('family_name', "unknown")
     email = a.get('email')
     print(f"{given_name} {family_name} <{email}>")
-
-def getBotoClient(serviceName='cognito-idp'):
-  """
-  Return the boto3 client for the given AWS service. Services names
-  like 'cognito-idp', 'ses', 'sts', etc.
-  """
-  configFilename = "/home/coder/.aws/config"
-  credsFilename = "/home/coder/.aws/credentials"
-  if not os.path.exists(configFilename) or not os.path.exists(credsFilename):
-     raise CognitoException("""\
-
-Before this script can access your aws cognito user pool, you need an
-AWS account and an IAM user with with AmazonCognitoPowerUser and
-AmazonSESReadOnlyAccess permissions.
-
-Once the IAM user exists run "aws configure" and specify the IAM
-user's credentials.  """)
-  return boto3.client(serviceName)
 
 def promptForEmailConfiguration(sesv2Client=None, stsClient=None):
   """
@@ -274,7 +256,7 @@ def createPool(poolName, cognitoClient=None):
   when needed.
   """
   if cognitoClient is None:
-    cognitoClient = getBotoClient()
+    cognitoClient = getBotoClient('cognito-idp')
 
   # Make sure the pool name doesn't already exist.
   pools = poolNamesToIds(cognitoClient)
@@ -588,7 +570,7 @@ def poolNamesToIds(cognitoClient=None):
   the pools.
   """
   if cognitoClient is None:
-    cognitoClient = getBotoClient()
+    cognitoClient = getBotoClient('cognito-idp')
 
   d = {}
   response = cognitoClient.list_user_pools(MaxResults=30)
@@ -684,7 +666,7 @@ def poolAppNameToId(userPoolId, cognitoClient=None):
   their id.
   """
   if cognitoClient is None:
-    cognitoClient = getBotoClient()
+    cognitoClient = getBotoClient('cognito-idp')
 
   # Get the pool's application clients.
   response = cognitoClient.list_user_pool_clients(
@@ -720,7 +702,7 @@ def getPoolSettings(poolName, cognitoClient=None):
   a dictionary for the cognito_config file.
   """
   if cognitoClient is None:
-    cognitoClient = getBotoClient()
+    cognitoClient = getBotoClient('cognito-idp')
 
   # If the pool has more than one application client, prompt for the one to use?
 
@@ -880,7 +862,7 @@ def main(args):
 
 class TestClients:
   def __init__(self):
-    self.cognitoClient = getBotoClient()
+    self.cognitoClient = getBotoClient('cognito-idp')
     self.sesClient = getBotoClient('ses')
     self.sesv2Client = getBotoClient('sesv2')
     self.stsClient = getBotoClient('sts')

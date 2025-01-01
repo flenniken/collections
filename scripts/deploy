@@ -24,15 +24,11 @@ import sys
 import textwrap
 import boto3
 from datetime import datetime
+from boto_client import getBotoClient, getAwsSettings
 
 class DeployException(Exception):
   """ An exception we plan for. """
   pass
-
-def getAwsSettings():
-  """ Get the aws settings from the env/aws-settings.json file. """
-  with open('/home/coder/collections/env/aws-settings.json', 'r') as file:
-    return json.load(file)
 
 def listS3(s3Client, bucket_name):
   """ List the first 1000 S3 files in the collection's bucket. """
@@ -134,23 +130,6 @@ def getModifiedFiles(s3Client, bucket_name, sync=False):
     if line:
       filenames.append(line)
   return filenames
-
-# todo: share this code
-def getBotoClient(serviceName='s3'):
-  """
-  Return the boto3 client for the given AWS service. Services names
-  like 'cognito-idp', 'ses', 'sts', etc.
-  """
-  configFilename = "/home/coder/.aws/config"
-  credsFilename = "/home/coder/.aws/credentials"
-  if not os.path.exists(configFilename) or not os.path.exists(credsFilename):
-     raise DeployException("""\
-
-Before this script can access your aws s3 bucket, you need an
-AWS account and an IAM user with with the correct permissions.
-See the docs for how to setup the IAM user.
-""")
-  return boto3.client(serviceName)
 
 def process(args):
   """ Handle the command specified by the user. """

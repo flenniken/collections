@@ -36,8 +36,9 @@ from jwt import PyJWKClient
 import subprocess
 import sys
 import textwrap
-import pprint
 from validateImageRequest import validateImageRequest, lambda_handler_client
+import boto3
+from boto_client import getBotoClient, getAwsParameters, readJsonFile
 
 # The token file created by the -g option. Used by some of the other options.
 tokenFilename = "tmp/tokens.json"
@@ -73,64 +74,6 @@ def runJqLess(jsonText):
     result = subprocess.run(['less', '-F', '-R', '-X', '-K'], input=utf8Bytes)
   except KeyboardInterrupt:
     pass
-
-def getAwsParameters(filename=None):
-  """
-  Return a namedtuple containing the aws settings.  If you don't
-  pass in the filename, the aws-settings.json file is used.
-  """
-
-  # edit me when [aws_settings.json] changes
-  requiredParameters = [
-    'client_id',
-    'redirect_uri',
-    'logout_uri',
-    'scope',
-    'domain',
-    'redirect_uri_local',
-    'logout_uri_local',
-    'pool_name',
-    'distribution_id',
-    'bucket_name',
-    'userPoolId',
-  ]
-
-  if filename and not os.path.exists(filename):
-      raise LoginFlowException(f"""\
-The aws settings file is missing. You can create it by running: scripts/cognito -w""")
-
-  if filename is None:
-    filename = "/home/coder/collections/env/aws-settings.json"
-
-  # Read the Cognito parameters from the file.
-  awsSettings = readJsonFile(filename)
-
-  if "settings" not in awsSettings:
-    raise LoginFlowException("Aws settings is missing the settings parameter.")
-
-  settings = awsSettings['settings']
-
-  # Make sure all the parameters we need exist.
-  for parameter in requiredParameters:
-    if parameter not in settings:
-      raise LoginFlowException(f"Missing aws settings parameter: {parameter}.")
-
-  AwsParameters = namedtuple('AwsParameters', settings)
-
-  # edit me when [aws_settings.json] changes
-  return AwsParameters(
-    client_id=settings["client_id"],
-    redirect_uri=settings["redirect_uri"],
-    logout_uri=settings["logout_uri"],
-    scope=settings["scope"],
-    domain=settings["domain"],
-    redirect_uri_local=settings["redirect_uri_local"],
-    logout_uri_local=settings["logout_uri_local"],
-    pool_name=settings["pool_name"],
-    distribution_id=settings["distribution_id"],
-    bucket_name=settings["bucket_name"],
-    userPoolId=settings["userPoolId"],
-  )
 
 def showLoginUrl():
   url = getLoginUrl()
@@ -176,26 +119,6 @@ out it will redirect to the logout_uri which will contain a state of
 {url}
 
 """)
-
-def readJsonFile(filename):
-  """
-  Read the given json file and return a dictionary.
-  """
-  if (not os.path.exists(filename)):
-    raise LoginFlowException(f"The json file doesn't exist: '{filename}'.")
-
-  try:
-    with open(filename) as fp:
-      fileData = fp.read()
-  except Exception as ex:
-    raise LoginFlowException("Unable to open the json file.")
-
-  try:
-    data = json.loads(fileData)
-  except Exception as ex:
-    raise LoginFlowException("Invalid json file data.")
-
-  return data
 
 def readJsonKey(filename, key):
   """
@@ -278,10 +201,6 @@ def getTokens(code=None, refresh=False):
     }
 
   print(f"/oauth2/token url: '{url}'")
-  # print("headers:")
-  # pprint.pp(headers)
-  # print("data:")
-  # pprint.pp(data)
 
   response = requests.post(url, data=data, headers=headers)
 
@@ -489,24 +408,6 @@ def main(args):
     return 1
   return 0 # success
 
-# todo: make the test code into it's own module? boto3 is only needed when testing.
-import boto3
-
-def getBotoClient(serviceName='s3'):
-  """
-  Return the boto3 client for the given AWS service. Services names
-  like 'cognito-idp', 'ses', 'sts', etc.
-  """
-  configFilename = "/home/coder/.aws/config"
-  credsFilename = "/home/coder/.aws/credentials"
-  if not os.path.exists(configFilename) or not os.path.exists(credsFilename):
-     raise DeployException("""\
-
-Before this script can access your aws s3 bucket, you need an
-AWS account and an IAM user with with the correct permissions.
-See the docs for how to setup the IAM user.
-""")
-  return boto3.client(serviceName)
 
 class TestClients:
   def __init__(self):
@@ -588,7 +489,7 @@ class TestLoginFlow(unittest.TestCase):
     self.assertEqual(params.userPoolId, "the user pool id")
 
   def test_getAwsParameters_error1(self):
-    with self.assertRaises(LoginFlowException) as context:
+    with self.assertRaises(Exception) as context:
       params = getAwsParameters("missing")
     expected = "The aws settings file is missing. You can create it by running: scripts/cognito -w"
     self.assertEqual(str(context.exception), expected)
@@ -597,7 +498,7 @@ class TestLoginFlow(unittest.TestCase):
     filename = "tmp/test_getAwsParameters_error.txt"
     content = """{"domain": "the domain"}"""
     createFile(filename, content)
-    with self.assertRaises(LoginFlowException) as context:
+    with self.assertRaises(Exception) as context:
       params = getAwsParameters(filename)
     os.remove(filename)
     self.assertEqual(str(context.exception), "Aws settings is missing the settings parameter.")
@@ -606,7 +507,7 @@ class TestLoginFlow(unittest.TestCase):
     filename = "tmp/test_getAwsParameters_error.txt"
     content = """{"settings": "asdf"}"""
     createFile(filename, content)
-    with self.assertRaises(LoginFlowException) as context:
+    with self.assertRaises(Exception) as context:
       params = getAwsParameters(filename)
     os.remove(filename)
     self.assertEqual(str(context.exception), "Missing aws settings parameter: client_id.")
@@ -629,17 +530,15 @@ class TestLoginFlow(unittest.TestCase):
     filename = "tmp/readJsonKey_error.json"
     createFile(filename, """{"name": "Steve",}""")
 
-    with self.assertRaises(LoginFlowException) as context:
+    with self.assertRaises(json.decoder.JSONDecodeError) as context:
       value = readJsonKey(filename, "name")
 
     os.remove(filename)
 
-    self.assertEqual(str(context.exception), "Invalid json file data.")
-
   def test_readJsonKey_error2(self):
-    with self.assertRaises(LoginFlowException) as context:
+    with self.assertRaises(FileNotFoundError) as context:
       value = readJsonKey("missingfile", "name")
-    self.assertEqual(str(context.exception), """The json file doesn't exist: 'missingfile'.""")
+    self.assertEqual(str(context.exception), """[Errno 2] No such file or directory: 'missingfile'""")
 
   def test_readJsonKey_error3(self):
     filename = "tmp/readJsonKey_error3.json"
@@ -687,9 +586,8 @@ class TestLoginFlow(unittest.TestCase):
     os.remove(filename)
 
   def test_readJsonFile_error(self):
-    with self.assertRaises(LoginFlowException) as context:
+    with self.assertRaises(FileNotFoundError) as context:
       data = readJsonFile("missing")
-    self.assertEqual(str(context.exception), "The json file doesn't exist: 'missing'.")
 
   def test_readJsonFile_error2(self):
     filename = "tmp/test_readJsonFile_error2.json"
@@ -699,9 +597,8 @@ class TestLoginFlow(unittest.TestCase):
 }
 """
     createFile(filename, contents)
-    with self.assertRaises(LoginFlowException) as context:
+    with self.assertRaises(json.decoder.JSONDecodeError) as context:
       data = readJsonFile(filename)
-    self.assertEqual(str(context.exception), "Invalid json file data.")
     os.remove(filename)
 
   def test_decodeToken(self):
