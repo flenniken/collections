@@ -6,6 +6,7 @@
 
 import json
 import boto3
+# Lambda@edge doesn't support third party modules.
 
 def lambda_handler(event, context):
   """
@@ -42,7 +43,7 @@ def lambda_handler_client(client, event, context):
   else:
     access_token = None
 
-  # If the user is not logged in, deny access.
+  # For image requests deny access if the user is not logged in.
   try:
     message = validateImageRequest(client, url, access_token)
   except Exception as ex:
