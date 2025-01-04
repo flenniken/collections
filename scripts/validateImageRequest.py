@@ -5,8 +5,30 @@
 # process.
 
 import json
-import boto3
-# Lambda@edge doesn't support third party modules.
+import base64
+from datetime import datetime
+import json
+import requests
+from cryptography.hazmat.primitives.asymmetric import rsa, padding
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+# Lambda@edge doesn't support the importing libraries (layers) not
+# already part of its system, for example the jwt library.
+
+
+# Global variables can be used for caching because AWS Lambda reuses the same
+# container for multiple invocations. When the container is first started and
+# the handler is called, it's known as a "cold start". Subsequent calls to the
+# already running handler are known as "warm starts".
+
+# Cache the keys (jwks) so we only have to fetch them on a cold start
+# or when the keys change.
+cachedJwks = None
+
+region = "us-west-2"
+userPoolId = "us-west-2_4czmlJC5x"
+
+jwksUrl = f"https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json"
 
 def lambda_handler(event, context):
   """
@@ -18,13 +40,6 @@ def lambda_handler(event, context):
 
   The context parameter is an object that tells about the running
   environment.
-  """
-  client = boto3.client('cognito-idp')
-  return lambda_handler_client(client, event, context)
-
-def lambda_handler_client(client, event, context):
-  """
-  Verify that image requests are made by logged in users.
 
   Return a requests dictionary.
   """
@@ -43,14 +58,16 @@ def lambda_handler_client(client, event, context):
   else:
     access_token = None
 
-  # For image requests deny access if the user is not logged in.
+  # For image requests deny access if the user is not logged in. Do
+  # this by checking the url and by validating the access token.
   try:
-    message = validateImageRequest(client, url, access_token)
+    message = validateImageRequest(url, access_token)
+    if message:
+      print(message)
   except Exception as ex:
     print(str(ex))
-    message = "Raised an unexpected exception."
+    message = "Got an unexpected exception."
   if message:
-    # print(message)
     return {
       'status': '403',
       'statusDescription': 'Forbidden',
@@ -58,7 +75,7 @@ def lambda_handler_client(client, event, context):
     }
   return request
 
-def validateImageRequest(client, url, access_token):
+def validateImageRequest(url, access_token):
   """
   Verify that image requests are made by logged in users.
 
@@ -69,30 +86,89 @@ def validateImageRequest(client, url, access_token):
   if "images/" not in url:
     return ""
 
-  # If the access token can be used to get user info, then it is valid.
+  global cachedJwks
+  if cachedJwks:
+    jwks = cachedJwks
+  else:
+    print("No cached jwks, cold start.")
+    jwks = fetchJwks()
+    if jwks is None:
+      return "Unable to fetch the jwks."
+    cachedJwks = jwks
+
+  return validateAccessToken(jwks, access_token)
+
+def fetchJwks():
+  """
+  Fetch the Cognito signing keys (jwks) using https and return
+  them as a dictionary.
+  """
+  response = requests.get(jwksUrl)
+  if response.status_code != 200:
+    raise Exception("Unable to fetch the jwks.")
+  return response.json()
+
+def findJwksKey(kid, jwks):
+  """
+  Find a key in the jwks list given the key id. Return the key or
+  None when not found.
+  """
+  for k in jwks["keys"]:
+    if k['kid'] == kid:
+      return k
+  return None
+
+def base64_url_decode(data):
+  padding = '=' * (4 - len(data) % 4)
+  return base64.urlsafe_b64decode(data + padding)
+
+def validateAccessToken(jwks, token):
+  """
+  Validate the access token.
+
+  Return an empty string when valid, else return a message telling
+  what went wrong. It may raise an exception for unexpected cases.
+  """
+  header_b64, payload_b64, signature_b64 = token.split('.')
+  header = json.loads(base64_url_decode(header_b64).decode('utf-8'))
+  payload = json.loads(base64_url_decode(payload_b64).decode('utf-8'))
+  signature = base64_url_decode(signature_b64)
+
+  # The jwk keys get rotated about every 6 months. If the key is not
+  # found, fetch new ones and look again.
+  key = findJwksKey(header["kid"], jwks)
+  if key is None:
+    jwks = fetchJwks()
+    key = findJwksKey(header["kid"], jwks)
+    if key is None:
+      return "Signing key not found."
+    print("Keys rotated.")
+    global cachedJwks
+    cachedJwks = jwks
+
+  if header["alg"] != "RS256":
+    return "Unsupported header algorithm."
+  if key["alg"] != "RS256":
+    return "Unsupported key algorithm."
+
+  # Construct the RSA public key
+  n = int.from_bytes(base64_url_decode(key['n']), 'big')
+  e = int.from_bytes(base64_url_decode(key['e']), 'big')
+  public_key = rsa.RSAPublicNumbers(e, n).public_key()
+
+  # Verify the signature
   try:
-    response = client.get_user(AccessToken=access_token)
-    # if response:
-    #   print(response)
-    if 'Username' not in response:
-      return "Invalid user."
-  except client.exceptions.NotAuthorizedException:
-    return "Not authorized."
-  except client.exceptions.UserNotFoundException:
-    return "User not found."
-  except client.exceptions.ResourceNotFoundException:
-    return "Resource not found."
-  except client.exceptions.InvalidParameterException:
-    return "Invalid parameter."
-  except client.exceptions.TooManyRequestsException:
-    return "Too many requests."
-  except client.exceptions.PasswordResetRequiredException:
-    return "Password reset required."
-  except client.exceptions.UserNotConfirmedException:
-    return "User not confirmed."
-  except client.exceptions.InternalErrorException:
-    return "Internal error."
-  except client.exceptions.ForbiddenException:
-    return "Forbidden."
+    public_key.verify(
+      signature,
+      f"{header_b64}.{payload_b64}".encode('utf-8'),
+      padding.PKCS1v15(),
+      hashes.SHA256()
+    )
+  except Exception as e:
+    return "Invalid signature."
+
+  # Validate expiration
+  if payload.get('exp') < datetime.utcnow().timestamp():
+    return "Token expired."
 
   return ""
