@@ -37,7 +37,7 @@ import subprocess
 import sys
 import textwrap
 from validateImageRequest import validateImageRequest, fetchJwks, findJwksKey, \
-  base64_url_decode
+  base64_url_decode, userPoolId
 import boto3
 from boto_client import getBotoClient, getAwsParameters, readJsonFile
 from capture import capture
@@ -712,6 +712,14 @@ Not enough segments""")
     self.assertTrue(issuer.startswith("https://cognito-idp."))
     self.assertTrue(jwksUrl.startswith("https://cognito-idp."))
     self.assertTrue(jwksUrl.endswith("/.well-known/jwks.json"))
+
+  def test_userPoolId(self):
+    """
+    Make sure the validateImageRequest.py userPoolId setting
+    matches the aws_settings.json one.
+    """
+    params = getAwsParameters()
+    self.assertEqual(params.userPoolId, userPoolId)
 
   def test_decodeAndValidate(self):
     token = readJsonKey(tokenFilename, "id_token")

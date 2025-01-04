@@ -8,27 +8,25 @@ import json
 import base64
 from datetime import datetime
 import json
-import requests
+import urllib.request
 from cryptography.hazmat.primitives.asymmetric import rsa, padding
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 # Lambda@edge doesn't support the importing libraries (layers) not
 # already part of its system, for example the jwt library.
 
-
-# Global variables can be used for caching because AWS Lambda reuses the same
-# container for multiple invocations. When the container is first started and
-# the handler is called, it's known as a "cold start". Subsequent calls to the
-# already running handler are known as "warm starts".
+# Global variables can be used for caching because AWS Lambda reuses
+# the same container for multiple invocations. When the container is
+# first started and the handler is called, it's known as a "cold
+# start". Subsequent calls to the already running handler are known as
+# "warm starts".
 
 # Cache the keys (jwks) so we only have to fetch them on a cold start
 # or when the keys change.
 cachedJwks = None
 
-region = "us-west-2"
+# Get the userPoolId from aws_settings.json.
 userPoolId = "us-west-2_4czmlJC5x"
-
-jwksUrl = f"https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json"
 
 def lambda_handler(event, context):
   """
@@ -103,10 +101,12 @@ def fetchJwks():
   Fetch the Cognito signing keys (jwks) using https and return
   them as a dictionary.
   """
-  response = requests.get(jwksUrl)
-  if response.status_code != 200:
-    raise Exception("Unable to fetch the jwks.")
-  return response.json()
+  region = userPoolId.split("_")[0]
+  jwksUrl = f"https://cognito-idp.{region}.amazonaws.com/{userPoolId}/.well-known/jwks.json"
+  with urllib.request.urlopen(jwksUrl) as response:
+    if response.status != 200:
+      raise Exception("Unable to fetch the jwks.")
+    return json.loads(response.read().decode())
 
 def findJwksKey(kid, jwks):
   """
