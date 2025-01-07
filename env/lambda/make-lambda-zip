@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# Create a zip file for the AWS lambda@edge authentication code.  This
+# is needed for importing modules that don't come with the default
+# runtime.
+
+# Variable: Specify the version of python being used in the
+# collection's container. In lambda specify the same version number.
+#
+# python3 --version
+#
+# Python 3.11.2
+version=3.11
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+# This script follows the procedure documented here:
+# https://docs.aws.amazon.com/lambda/latest/dg/python-package.html
+
+handler=validateImageRequest.py
+
+cd ~/collections/env/lambda
+
+# If the zip file exists, stop.
+zipfile=lambda-auth-$version.zip
+if [ -s "$zipfile" ]; then
+  echo "The zip file already exists: env/lambda/$zipfile"
+  echo "If you want to make it again, delete the existing file."
+  exit
+fi
+
+echo "Copy $handler to the env/lambda folder."
+cp ~/collections/scripts/$handler .
+
+# If the package directory exists, delete it.
+if [ -s "package" ]; then
+  echo "Remove existing package directory"
+  rm -rf package
+fi
+
+# Note: the cryptography module depends on rust and other libs and is
+# about 15 MB. Here are the biggest files:
+#
+# find env/lambda/package/ -printf "%s %f\n" | sort -n | tail
+#
+# 76158 extensions.py
+# 90294 recompiler.cpython-311.pyc
+# 94108 c_parser.cpython-311.pyc
+# 110011 yacc.cpython-311.pyc
+# 119393 extensions.cpython-311.pyc
+# 137323 yacc.py
+# 196246 yacctab.cpython-311.pyc
+# 209738 yacctab.py
+# 1187880 _cffi_backend.cpython-311-aarch64-linux-gnu.so
+# 10400376 _rust.abi3.so
+#
+# The jwt module includes the cryptography module, incase you
+# are thinking it might be smaller.
+
+module=cryptography
+echo "Install the $module module in the package directory."
+
+pip install \
+  --platform manylinux2014_aarch64 \
+  --target=package \
+  --implementation cp \
+  --python-version 3.11 \
+  --only-binary=:all: --upgrade \
+  $module
+
+# For Lambda to run your code, the .py file containing your handler
+# code and all of your function's dependencies must be installed at
+# the root of the .zip file.
+
+echo "Create env/lambda/$zipfile."
+
+cd package
+zip -r ../$zipfile . > /dev/null
+
+cd ..
+zip $zipfile $handler > /dev/null

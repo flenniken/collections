@@ -37,7 +37,7 @@ import subprocess
 import sys
 import textwrap
 from validateImageRequest import validateImageRequest, fetchJwks, findJwksKey, \
-  base64_url_decode, userPoolId
+  base64_url_decode, userPoolId, lambda_handler
 import boto3
 from boto_client import getBotoClient, getAwsParameters, readJsonFile
 from capture import capture
@@ -692,20 +692,6 @@ Not enough segments""")
     # print(jdata)
     self.assertTrue("token_use" in payload)
 
-  def test_validateImageRequest1(self):
-    url = "not-an-image"
-    self.assertEqual(validateImageRequest(url, None), "")
-
-  def test_validateImageRequest3(self):
-    url = "images/c1-1-p.jpg"
-    # todo: test the logging print statements
-    with capture() as out:
-      with self.assertRaises(Exception) as context:
-        validateImageRequest(url, "a"*5555)
-    stdout, stderr = out
-    # print(stdout)
-    self.assertEqual(stdout, "No cached jwks, cold start.\n")
-
   def test_getCognitoJwksUrls(self):
     params = getAwsParameters()
     issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
@@ -742,18 +728,50 @@ Not enough segments""")
       # print(jData)
       self.assertTrue("Username" in response)
 
-  def test_validateImageRequestGood(self):
-    token = readJsonKey(tokenFilename, "access_token")
-    url = "images/someimage"
-    message = validateImageRequest(url, token)
-    if message == "" or message == 'Token expired.':
-      return
-    self.assertTrue(False, message)
+  # def test_validateImageRequest1(self):
+  #   url = "not-an-image"
+  #   self.assertEqual(validateImageRequest(url, None), "")
+
+  # def test_validateImageRequest3(self):
+  #   url = "images/c1-1-p.jpg"
+  #   with capture() as out:
+  #     with self.assertRaises(Exception) as context:
+  #       validateImageRequest(url, "a"*5555)
+  #   stdout, stderr = out
+  #   # print(stdout)
+  #   self.assertEqual(stdout, "No cached jwks, cold start.\n")
+
+  # def test_validateImageRequestGood(self):
+  #   token = readJsonKey(tokenFilename, "access_token")
+  #   url = "images/someimage"
+  #   message = validateImageRequest(url, token)
+  #   if message == "" or message == 'Token expired.':
+  #     return
+  #   self.assertTrue(False, message)
 
 
   def test_lambda_handler(self):
+    # Test lambda_handler.
+
+    eStdout = """\
+No cached jwks, cold start.
+No token passed.
+"""
+    self.run_lambda_handler("/notimage.html", eStdout=eStdout)
+
+    self.run_lambda_handler("/images/someimage.jpg", eStdout="No token passed.\n")
+
+    # This is the good case, it got past the signature validation.
     token = readJsonKey(tokenFilename, "access_token")
-    client = tc.cognitoIdpClient
+    self.run_lambda_handler("/images/someimage.jpg", auth=token, eStdout="Token expired.\n")
+
+
+  def run_lambda_handler(self, uri, auth="nothing", eRequest="nothing", eStdout=""):
+    """
+    Test the lambda_handler with the given event and verify that
+    it returns the expected return value and that it logs the given
+    message to stdout.
+    """
     event = {
       "Records": [
         {
@@ -781,12 +799,6 @@ Not enough segments""")
                     "value": "Mozilla/5.0"
                   }
                 ],
-                "auth": [
-                  {
-                    "key": "auth",
-                    "value": token
-                  }
-                ],
                 "accept": [
                   {
                     "key": "Accept",
@@ -801,22 +813,34 @@ Not enough segments""")
       ]
     }
 
-    # print("event")
-    # print(json.dumps(event, indent=2))
-    # print("")
+    request = event['Records'][0]["cf"]["request"]
+    headers = request["headers"]
+    if uri != "nothing":
+      request["uri"]: uri
+    if auth != "nothing":
+      headers["auth"] = [{"key": "auth", "value": auth}]
+    if eRequest == "nothing":
+      eRequest = {'status': '403', 'statusDescription': 'Forbidden', 'body':
+                  'Unauthorized access.'}
 
-    # todo call the handler
-    return
-
-    request = lambda_handler_client(client, event, None)
-    # print(request)
-    expected403 = {'status': '403', 'statusDescription': 'Forbidden',
-      'body': 'Unauthorized access.'}
-    if 'status' in request:
-      self.assertEqual(request, expected403)
-    else:
-      self.assertEqual(request['uri'], 'images/someimage')
-
+    with capture() as out:
+      request = lambda_handler(event, None)
+    stdout, stderr = out
+    failed = False
+    if request != eRequest:
+      message = f"""
+Unexpected request was returned::
+     got: {request}
+expected: {eRequest}
+"""
+      self.assertTrue(False, message)
+    if stdout != eStdout:
+      message = f"""
+Unexpected stdout message:
+     got: {stdout}
+expected: {eStdout}
+"""
+      self.assertTrue(False, message)
 
 if __name__ == '__main__':
   args = parseCommandLine()

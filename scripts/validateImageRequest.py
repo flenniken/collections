@@ -138,6 +138,9 @@ def validateAccessToken(jwks, token):
   Return an empty string when valid, else return a message telling
   what went wrong. It may raise an exception for unexpected cases.
   """
+  if token is None:
+    return "No token passed."
+
   header_b64, payload_b64, signature_b64 = token.split('.')
   header = json.loads(base64_url_decode(header_b64).decode('utf-8'))
   payload = json.loads(base64_url_decode(payload_b64).decode('utf-8'))
