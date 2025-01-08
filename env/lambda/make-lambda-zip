@@ -83,3 +83,5 @@ zip -r ../$zipfile . > /dev/null
 
 cd ..
 zip $zipfile $handler > /dev/null
+
+rm $handler

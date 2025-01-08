@@ -34,8 +34,9 @@ from cryptography.hazmat.primitives.serialization import load_pem_public_key
 # or when the keys change.
 cachedJwks = None
 
-# Get the userPoolId from aws_settings.json.
+# Get the userPoolId and client_id from aws_settings.json.
 userPoolId = "us-west-2_4czmlJC5x"
+client_id = "47ahgb3e4jqhk86o7gugvbglf8"
 
 def lambda_handler(event, context):
   """
@@ -180,6 +181,14 @@ def validateAccessToken(jwks, token):
     )
   except Exception as e:
     return "Invalid signature."
+
+  if payload.get('client_id') != client_id:
+    return "Invalid client id."
+
+  region = userPoolId.split("_")[0]
+  iss = f"https://cognito-idp.{region}.amazonaws.com/{userPoolId}"
+  if payload.get('iss') != iss:
+    return "Invalid iss."
 
   # Validate expiration
   if payload.get('exp') < datetime.utcnow().timestamp():
