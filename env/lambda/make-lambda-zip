@@ -25,12 +25,10 @@ handler=validateImageRequest.py
 
 cd ~/collections/env/lambda
 
-# If the zip file exists, stop.
+# If the zip file exists, delete it.
 zipfile=lambda-auth-$version.zip
 if [ -s "$zipfile" ]; then
-  echo "The zip file already exists: env/lambda/$zipfile"
-  echo "If you want to make it again, delete the existing file."
-  exit
+  rm $zipfile
 fi
 
 echo "Copy $handler to the env/lambda folder."

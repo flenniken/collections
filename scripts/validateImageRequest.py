@@ -142,10 +142,13 @@ def validateAccessToken(jwks, token):
   if token is None:
     return "No token passed."
 
-  header_b64, payload_b64, signature_b64 = token.split('.')
-  header = json.loads(base64_url_decode(header_b64).decode('utf-8'))
-  payload = json.loads(base64_url_decode(payload_b64).decode('utf-8'))
-  signature = base64_url_decode(signature_b64)
+  try:
+    header_b64, payload_b64, signature_b64 = token.split('.')
+    header = json.loads(base64_url_decode(header_b64).decode('utf-8'))
+    payload = json.loads(base64_url_decode(payload_b64).decode('utf-8'))
+    signature = base64_url_decode(signature_b64)
+  except:
+    return "Bad token."
 
   # The jwk keys get rotated about every 6 months. If the key is not
   # found, fetch new ones and look again.
