@@ -11,6 +11,10 @@
     return
   }
 
+  function logProgress(message) {
+    console.log("* " + message)
+  }
+
   const { getJwks, verifyJwt, handler, region,
   userPoolId, client_id } = require('./validateImageRequest');
   const fs = require('fs');
@@ -104,7 +108,7 @@ expected: ${expected}
     }
   }
 
-  console.log('Test that the file globals match the aws-settings.json.');
+  logProgress('Test that the file globals match the aws-settings.json.');
   const awsSettings = readJsonKey(awsSettingsFilename, 'settings')
   
   if (!userPoolId.startsWith(region))
@@ -113,12 +117,12 @@ expected: ${expected}
   gotExpected(userPoolId, awsSettings.userPoolId)
   gotExpected(client_id, awsSettings.client_id)
   
-  console.log('Test reading the access token.');
+  logProgress('Test reading the access token.');
   const access_token = readJsonKey(tokenFilename, "access_token")
   if (access_token.length < 100)
     error("The access token string is to short.")
 
-  console.log('Test getJwks.');
+  logProgress('Test getJwks.');
   try {
     const keys = await getJwks();
     // console.log('JWKS:', keys);
@@ -134,15 +138,15 @@ expected: ${expected}
   }
 
   let payload = null
-  console.log('Test verifyJwt without a token.');
+  logProgress('Test verifyJwt without a token.');
   payload = await testVerifyJwt(null, false, 'No token provided.')
 
-  console.log('Test verifyJwt with an expired access token.');
+  logProgress('Test verifyJwt with an expired access token.');
   payload = await testVerifyJwt(access_token, false, 'jwt expired')
   if (payload !== null)
     error('Returned a payload for an expired token.')
 
-  console.log('Test verifyJwt with an access token.');
+  logProgress('Test verifyJwt with an access token.');
   payload = await testVerifyJwt(access_token, true, 'jwt expired')
   if (payload === null)
     error('Did not return a payload for a valid token.')
@@ -161,19 +165,19 @@ expected: ${expected}
   const allow = true
   const forbidden = false
   
-  console.log('Test handler without an images url or a token.');
+  logProgress('Test handler without an images url or a token.');
   await testHandler("/test.html", null, normal, allow)
 
-  console.log('Test handler without an images url.');
+  logProgress('Test handler without an images url.');
   await testHandler("/test.html", access_token, normal, allow)
 
-  console.log('Test handler with an images url but no token.');
+  logProgress('Test handler with an images url but no token.');
   await testHandler("/images/test.html", null, normal, forbidden)
 
-  console.log('Test handler with an images url but and an expired token.');
+  logProgress('Test handler with an images url but and an expired token.');
   await testHandler("/images/test.html", access_token, normal, forbidden)
 
-  console.log('Test handler with an images url with a good token.');
+  logProgress('Test handler with an images url with a good token.');
   await testHandler("/images/test.html", access_token, ignoreExpiration, allow)
 
 

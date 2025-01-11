@@ -86,7 +86,10 @@ WORKDIR /home/coder/
 
 # Install node modules in the global space in the coder folder, the
 # parent of collections. This installs all modules specified in the
-# package.json file.
+# package.json file. The node modules are for the gulp build system
+# and for testing the lambda function.  The collections js doesn't use
+# them.
+
 COPY --chown=coder:coder package.json package.json
 RUN npm install
 

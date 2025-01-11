@@ -2,12 +2,14 @@ const https = require('https');
 const jwt = require('jsonwebtoken');
 const jwkToPem = require('jwk-to-pem');
 
+// Set these values from the values in aws-settings.json.
 const userPoolId = "us-west-2_4czmlJC5x"
 const client_id = '47ahgb3e4jqhk86o7gugvbglf8'
-const region = userPoolId.split("_")[0]
 
+const region = userPoolId.split("_")[0]
 const jwksUrl = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}/.well-known/jwks.json`;
 
+// Cache the keys (jwks) so we only have to fetch them on a cold start.
 jwks = null
 
 async function getJwks() {
@@ -33,13 +35,19 @@ async function verifyJwt(token, ignoreExpiration=false) {
   // console.log(header)
 
   // If we don't have the jwks, get and cache them.
-  if (jwks === null)
+  if (jwks === null) {
+    console.log("Cold start.")
     jwks = await getJwks();
+  }
 
   // Find the matching key
   const key = jwks.find((key) => key.kid === header.kid);
-  if (!key)
+  if (!key) {
+    // When the keys roll over there is a transition period where the
+    // old keys still exist. As long as this code gets a cold start in that
+    // period, the new keys get cached.
     throw new Error('Signing key not found.');
+  }
   // console.log(`key: ${JSON.stringify(key, null, 2)}`)
 
   if (key.kty != "RSA") {
@@ -62,8 +70,10 @@ async function verifyJwt(token, ignoreExpiration=false) {
   // Ignore expiration is used for testing. Lambda passes a context
   // object not a boolean, so ignoreExpiration will never be true
   // there.
-  if (ignoreExpiration === true)
+  if (ignoreExpiration === true) {
+    console.log("Ignoring token expiration for testing.")
     options['ignoreExpiration'] = ignoreExpiration
+  }
 
   // See https://www.npmjs.com/package/jsonwebtoken for docs.
   const payload = jwt.verify(token, pem, options)
@@ -99,7 +109,8 @@ async function handler(event, context) {
 
   } catch (err) {
 
-    // console.error(err.message);
+    console.error(err.message);
+
     return {
       'statusCode': '403',
       'statusDescription': 'Forbidden',
