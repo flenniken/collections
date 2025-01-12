@@ -91,18 +91,23 @@ expected: ${expected}
 
   async function testHandler(url, token, context, valid) {
     let event = makeEvent(url, token)
-    const request = event['Records'][0]['cf']['request']
-    // console.log(toString(event))
+    const request = event.Records[0].cf.request
     const response = await handler(event, context);
+    const uri = request.uri
 
     if (valid) {
-      gotExpected(response, request)
+      // The auth header should be gone from the request.
+      const expectedResponse = {
+        "uri": uri,
+        "headers": {}
+      }
+      gotExpected(toString(response), toString(expectedResponse))
     }
     else {
+      // Note: lambda@edge uses status and lambda uses statusCode!
       const errorResponse = {
-        "statusCode": "403",
-        "statusDescription": "Forbidden",
-        "body": "Unauthorized access."
+        "status": "401",
+        "statusDescription": "Unauthorized",
       }
       gotExpected(toString(response), toString(errorResponse))
     }

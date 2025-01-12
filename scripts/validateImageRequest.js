@@ -87,24 +87,28 @@ async function verifyJwt(token, ignoreExpiration=false) {
 async function handler(event, context) {
 
   // Get the request url and the access_token in the header.
-  const request = event['Records'][0]['cf']['request']
-  const url = request['uri']
-  //console.log('Request URL:', url);
+  const request = event.Records[0].cf.request;
+  const url = request.uri
+  const headers = request['headers']
 
   // Allow all non-image requests.
   if (!url.startsWith('/images/')) {
+    delete headers.auth
     return request
   }
 
-  const headers = request['headers']
   let access_token = null
   if (headers.auth)
     access_token = headers.auth[0].value
-  //console.log('access_token:', access_token);
 
   try {
 
     await verifyJwt(access_token, context);
+
+    console.log("passes authentication");
+
+    // Remove auth header.
+    delete headers.auth
     return request;
 
   } catch (err) {
@@ -112,9 +116,8 @@ async function handler(event, context) {
     console.error(err.message);
 
     return {
-      'statusCode': '403',
-      'statusDescription': 'Forbidden',
-      'body': 'Unauthorized access.',
+      'status': '401',
+      'statusDescription': 'Unauthorized',
     }
   }
 }

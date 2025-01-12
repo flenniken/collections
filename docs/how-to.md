@@ -98,21 +98,18 @@ token refresh and revocation.
 # Http Logging
 
 You can turn on http request logging. CloudFront will copy log files
-to your bucket.  It costs a little so it is off by default.
+to your bucket.  By default logs are delivered about once per hour.
 
 You turn it on in the cloud front console. Look for "Standard log
 destinations" and log to your bucket e.g. sflennikco using the
-Partitioning "/log".
-
-You need to wait about a minute after making a request before logs
-appear.
+Partitioning "/logs".
 
 Copy the logs locally to analyze them:
 
 ~~~
 # from docker container
 cd ~/collections
-aws s3 sync s3://slennikco/logs logs
+aws s3 sync s3://sflennikco/logs logs
 ~~~
 
 33 fields appear on each log line and it’s hard to read. You can view
@@ -120,8 +117,8 @@ the data one field per line using the following command:
 
 ~~~
 # from container
-file= EHLMG1T8SOX48.2024-11-23-21.e30560f4.gz # variable
-zcat logs/$file\
+file=logs/EHLMG1T8SOX48.2024-11-23-21.e30560f4.gz # variable
+zcat $file\
   | awk '{for(i=1; i<=NF; i++) {printf "%20s: %s\n", f[i], $i}; \
   {print "\n"}}\
   /#Fields: / {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}' \
