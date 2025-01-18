@@ -100,18 +100,24 @@ async function handler(event, context) {
   let access_token = null
   if (headers.auth)
     access_token = headers.auth[0].value
+  else {
+    console.log("No auth header. Create a Cloudfront Cache policy with auth.");
+    console.log(`Event: ${JSON.stringify(event, null, 2)}`);
+  }
 
   try {
+    const payload = await verifyJwt(access_token, context);
 
-    await verifyJwt(access_token, context);
-
-    console.log("passes authentication");
+    console.log(`Passes: user: ${payload.username} url: %{url}`);
 
     // Remove auth header.
     delete headers.auth
+
+    // console.log(`Return request: ${JSON.stringify(request, null, 2)}`);
     return request;
 
   } catch (err) {
+    console.log(`Fails: image: %{url}`);
 
     console.error(err.message);
 

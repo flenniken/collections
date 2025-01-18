@@ -15,7 +15,7 @@ const showTags = {
   "index": 0,
   "thumbnails": 0,
   "image": 0,
-  // "sw": 0,
+  "sw": 0,
   "win": 0,
   "download": 0,
 }

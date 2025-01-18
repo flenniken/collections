@@ -71,6 +71,9 @@ async function fetchRemote(cache: Cache, request: Request,
   //
   // When storeTwice is false, it fetches the file from the net and
   // stores it in the application cache but not the browser cache.
+  //
+  // If the reponse is not "ok", it throws the reponse status as a
+  // string.
 
   let options: any
   if (storeTwice) {
@@ -83,9 +86,7 @@ async function fetchRemote(cache: Cache, request: Request,
   var response = await fetch(request, options)
 
   if (!response.ok) {
-    const message = `An error has occured: ${response.status}`;
-    logsw(message)
-    throw new Error(message);
+    throw new Error(`${response.status}`);
   }
 
   // Add the file to the cache.
@@ -145,7 +146,7 @@ self.addEventListener("fetch", (event: Event) => {
     const isImageFile = url.includes(cacheUrlPrefix);
 
     const cache = await openCreateCache()
-
+    let statusStr  = "unknown"
     // Look for an image file in the cache first then go to the
     // internet.
     if (isImageFile) {
@@ -165,7 +166,10 @@ self.addEventListener("fetch", (event: Event) => {
         return result
       }
       catch (error) {
-        logsw("Special file not found.")
+        if (error instanceof Error) {
+          statusStr = `${error.message}`
+        }
+        logsw(`Special file not found: ${statusStr}.`)
       }
     }
     else {
@@ -182,7 +186,10 @@ self.addEventListener("fetch", (event: Event) => {
         return result
       }
       catch (error) {
-        logsw("Regular file not found on net.")
+        if (error instanceof Error) {
+          statusStr = `${error.message}`
+        }
+        logsw(`Regular file not found on net: ${statusStr}`)
       }
 
       // Look for the file in the cache.
@@ -194,7 +201,13 @@ self.addEventListener("fetch", (event: Event) => {
     }
 
     logsw(`Not found on net or cache: ${url}`);
-    return new Response(null, {status: 404});
+    let status = parseInt(statusStr)
+    if (isNaN(status)) {
+      logsw(`NaN statusStr: ${statusStr}`);
+      status = 404
+    }
+
+    return new Response(null, {status: status});
 
   })());
 });

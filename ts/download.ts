@@ -175,6 +175,11 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   } catch (error) {
     downloadTimer.log("download",`error: ${error}`)
     downloadTimer.log("download","Failed downloading all images.")
+
+    // It better to leave the spinning icon then quickly going back to
+    // the no image state. We don't want them to click download over
+    // and over. There is no visible error message. The spinning icon
+    // conveys the picture that something is wrong.
     return
   }
 
