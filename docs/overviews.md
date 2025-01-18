@@ -178,7 +178,7 @@ collections to be a public static website without a backend server
 (other than AWS).
 
 Users login with an email and a password. You add and remove users
-manually.
+manually with the AWS Cognito console.
 
 [⬇ ────────](#Contents)
 
@@ -217,7 +217,7 @@ performance compared to serving many smaller files.
 
 # Contents
 
-* [File Perspective](file-perspective) -- how the website is organized from a file perspective.
+* [File Perspective](#file-perspective) -- how the website is organized from a file perspective.
 * [Login](#login) -- how the login process works.
 * [Service Worker](#service-worker) -- how the sw.ts file caches files for performance and fresh connect.
 * [Typescript Files](#typescript-files) -- how the typescript is divided into small modular files.
