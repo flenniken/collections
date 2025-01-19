@@ -66,21 +66,27 @@ echo "Create $zipfile."
 
 zip -r $zipfile .
 
-# Lambda@edge has a limit of 1 MB for the total size of the
-# uncompressed zip files.  Here are the biggest files in the zip file:
-#
-# find env/lambda/js/ -printf "%s %f\n" | sort -n | tail
-#
-# ...
-# 14924 range.js
-# 15735 tests.js
-# 16732 node.js
-# 17008 hmac-drbg-nist.json
-# 17709 README.md
-# 18716 index.js
-# 19555 README.md
-# 22969 short.js
-# 24425 README.md
-# 32535 secp256k1.js
-# 87731 bn.js
-# 309174 lambda-js-18.19.0.zip
+maxzipsize=1048576
+# maxzipsize=48576 # for testing
+
+# Red Error.  Use with echo's -e option.
+redError="\e[31mError\e[0m"
+
+if [ $(stat -c %s "$zipfile") -lt $maxzipsize ]; then
+  echo "Success: created zip file:"
+  ls -l $zipfile
+else
+  echo
+
+  find $jsFolder -printf "%s %f\n" | sort -n | tail -20
+
+  echo
+  echo -e "$redError: the zip file is too big."
+
+cat << EOF
+Lambda@edge has a limit of $maxzipsize for the total size of the
+uncompressed zip file.  The list above shows the biggest files in
+the js folder: $jsFolder
+EOF
+
+fi

@@ -19,6 +19,12 @@ alias g='gulp'
 # Watch for source file changes and automatically build them.
 alias gw='g watch &'
 
+# Allow less to open compressed files as well as normal text files.
+export LESSOPEN="| /usr/bin/lesspipe %s"
+export LESSCLOSE="/usr/bin/lesspipe %s %s"
+
+
+
 # Check that the configuration settings exist.
 
 blueWarning="\033[34mWarning\033[0m"

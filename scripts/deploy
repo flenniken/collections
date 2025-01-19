@@ -15,16 +15,15 @@ if not os.environ.get("coder_env"):
 import sys
 import argparse
 import traceback
-import sys
 import signal
 import unittest
 import json
 import subprocess
-import sys
 import textwrap
 import boto3
 from datetime import datetime
 from boto_client import getBotoClient, getAwsSettings
+import time
 
 class DeployException(Exception):
   """ An exception we plan for. """
@@ -99,6 +98,28 @@ def invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths):
     }
   )
 
+def waitForDeployed(cloudfrontClient, distribution_id):
+  """
+  Wait for the cloudfront distribution to deploy.
+  """
+
+  showDeploying = True
+  while (1):
+    response = cloudfrontClient.get_distribution(Id=distribution_id)
+    distribution_status = response['Distribution']['Status']
+    if distribution_status == "Deployed":
+      if not showDeploying:
+        print("")
+      print("deployed")
+      break
+    if showDeploying:
+      print("deploying...", end="")
+      showDeploying = False
+    else:
+     print(".", end="")
+    sys.stdout.flush()
+    time.sleep(5)
+
 def listModified(s3Client, bucket_name):
   """
   List the modified website files.
@@ -134,24 +155,27 @@ def getModifiedFiles(s3Client, bucket_name, sync=False):
 def process(args):
   """ Handle the command specified by the user. """
 
-  if args.sync or args.listS3 or args.listModified:
-    awsSettings = getAwsSettings()
-    settings = awsSettings['settings']
-    s3Client = getBotoClient('s3')
-    bucket_name = settings['bucket_name']
-    if args.listS3:
-      listS3(s3Client, bucket_name)
-      return
-    elif args.sync:
-      cloudfrontClient = getBotoClient('cloudfront')
-      syncModifiedFiles(s3Client, bucket_name, cloudfrontClient,
-        settings['distribution_id'])
-      return
-    elif args.listModified:
-      listModified(s3Client, bucket_name)
-      return
+  awsSettings = getAwsSettings()
+  settings = awsSettings['settings']
+  bucket_name = settings['bucket_name']
+  distribution_id = settings['distribution_id']
 
-  raise DeployException("Invalid argument")
+  if args.listS3:
+    s3Client = getBotoClient('s3')
+    listS3(s3Client, bucket_name)
+  elif args.sync:
+    s3Client = getBotoClient('s3')
+    cloudfrontClient = getBotoClient('cloudfront')
+    syncModifiedFiles(s3Client, bucket_name, cloudfrontClient,
+      distribution_id)
+  elif args.listModified:
+    s3Client = getBotoClient('s3')
+    listModified(s3Client, bucket_name)
+  elif args.wait:
+    cloudfrontClient = getBotoClient('cloudfront')
+    waitForDeployed(cloudfrontClient, distribution_id)
+  else:
+    raise DeployException("Invalid argument")
 
 def parseCommandLine():
   """
@@ -188,6 +212,9 @@ def parseCommandLine():
 
   parser.add_argument("-m", "--listModified", action='store_true',
     help="list the modified files")
+
+  parser.add_argument("-w", "--wait", action='store_true',
+    help="wait for the distribution to deploy. Show status and return when deployed.")
 
   args = parser.parse_args(sys.argv[1:])
   return args

@@ -203,7 +203,7 @@ self.addEventListener("fetch", (event: Event) => {
     logsw(`Not found on net or cache: ${url}`);
     let status = parseInt(statusStr)
     if (isNaN(status)) {
-      logsw(`NaN statusStr: ${statusStr}`);
+      logsw(`statusStr is not a number: ${statusStr}`);
       status = 404
     }
 

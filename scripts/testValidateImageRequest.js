@@ -1,3 +1,5 @@
+"use strict";
+
 // Test the validateImageRequest.js file's functions.
 // Run from the collections container:
 //
@@ -16,7 +18,7 @@
   }
 
   const { getJwks, verifyJwt, handler, region,
-  userPoolId, client_id } = require('./validateImageRequest');
+          userPoolId, client_id, iss } = require('./validateImageRequest');
   const fs = require('fs');
 
   const tokenFilename = '/home/coder/collections/tmp/tokens.json'
