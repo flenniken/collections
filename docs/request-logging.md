@@ -15,7 +15,8 @@ bucket and there is no extra charge for standard logs.
 # Log Location
 
 We configured CloudFront to copy its edge logs to the
-`logs/cloudfront` in S3.
+`logs/cloudfront` in S3. It takes a few minutes for the logs to
+appear.
 
 You turn it on in the CloudFront console. Look for "Standard log
 destinations" and log to your bucket e.g. `sflennikco` using the
@@ -27,8 +28,17 @@ the edge location from the CloudFront x-edge-location field. The field
 starts with an airport code. For example for the location SEA900-P1
 you would look in the us-west-2 region. From there, you can manually
 copy them to S3 using the CloudWatch console.  Use "logs/lambda" as
-the prefix.  If you mistakenly use a leading slash, it will go to a S3
-folder called "/".
+the prefix.  If you mistakenly use a leading slash, it will go to the
+wrong location (to a S3 folder called "/").
+
+* open the CloudWatch Console the for the region closest to the edge.
+* click Logs → "Logs groups" in the left panel
+* select the log group, e.g. /aws/lambda/us-east-1.validateImageRequest
+* select all the logs by clicking "Log stream" checkbox
+* click Actions → "Export Data to Amazon S3"
+* configure the time range
+* select the bucket name (sflennikco) and enter "logs/lambda" for "S3 bucket prefix"
+* click Export
 
 The S3 folder structure:
 
@@ -43,108 +53,175 @@ Once the files are in S3, you can sync them locally for analysis:
 ~~~
 # from docker container
 cd ~/collections
-aws s3 sync s3://sflennikco/logs/cloudfront logs/cloudfront
+aws s3 sync s3://sflennikco/logs logs
 ~~~
 
 [⬇](#Contents)
 
+# Navigating the Logs
+
+Find the three latest cloudfront log files:
+
+~~~
+# from container
+find logs/cloudfront -type f \
+  | sort \
+  | tail -3
+
+logs/cloudfront/EHLMG1T8SOX48.2025-02-02-04.87bd7256.gz
+logs/cloudfront/EHLMG1T8SOX48.2025-02-02-21.3f9af430.gz
+logs/cloudfront/EHLMG1T8SOX48.2025-02-02-22.340b7ab0.gz
+~~~
+
+You can look at a log file with less:
+
+~~~
+less -S logs/cloudfront/EHLMG1T8SOX48.2025-02-02-22.340b7ab0.gz
+~~~
+
 # CloudFront Fields
 
-The following command displays the 39 fields contained in a CloudFront
+The following command displays the 39 fields contained in the latest CloudFront
 log file.  The output shows the field number, the field name, and the
 field value for the first line:
 
 ~~~
-file=logs/cloudfront/EHLMG1T8SOX48.2025-01-18-20.2f7f926e.gz
-
-zcat $file \
+find logs/cloudfront -type f \
+  | sort \
+  | tail -1 \
+  | xargs zcat \
   | awk '/^[0-9]/{for(i=1; i<=NF; i++) \
-  {printf "%-4s %20s: %s\n", i, f[i], $i}; \
-  {print "\n"};exit}\
-  /#Fields: / {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}'
+   {printf "%-4s %20s: %s\n", i, f[i], $i}; \
+   {print "\n"};exit}\
+   /#Fields: / {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}' \
+   | less
 
-1               timestamp: 1737232139
+1               timestamp: 1738535441
 2          DistributionId: EHLMG1T8SOX48
-3                    date: 2025-01-18
-4                    time: 20:28:59
+3                    date: 2025-02-02
+4                    time: 22:30:41
 5         x-edge-location: SEA900-P1
-6                sc-bytes: 392
+6                sc-bytes: 2562
 7                    c-ip: 67.160.57.33
 8               cs-method: GET
 9                cs(Host): d2jmpxl8sy7hj7.cloudfront.net
-10            cs-uri-stem: /js/thumbnails.js
-11              sc-status: 304
+10            cs-uri-stem: /pages/image-1.html
+11              sc-status: 200
 12            cs(Referer): https://collections.sflennik.com/sw.js
-13         cs(User-Agent): Mozilla/5.0%20(iPhone;%20CPU%20iPhone%20OS%2018_1_1%20like%20Mac%20OS%20X)%20AppleWebKit/605.1.15%20(KHTML,%20like%20Gecko)%20Version/18.1.1%20Mobile/15E148%20Safari/604.1
-14           cs-uri-query: -
+13         cs(User-Agent): Mozilla/5.0%20(Macintosh;%20Intel%20Mac%20OS%20X%2010_15_7)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/130.0.0.0%20Safari/537.36
+14           cs-uri-query: id=yFrj66VM&user=0861d3e0-00a1-7058-ad19-4d7b1880d276
 15             cs(Cookie): -
-16     x-edge-result-type: Hit
-17      x-edge-request-id: jWkr9PYh-StlIcOw_SE25A8F1zMmHMc_ecFPl-80bAQfeMeqIH1i3w==
+16     x-edge-result-type: Miss
+17      x-edge-request-id: tgmtZK2wqyr8ZGwFkBYXB2xzkk4xr3IDyDRrqeKFiG9dOIinPsZMug==
 18          x-host-header: collections.sflennik.com
 19            cs-protocol: https
-20               cs-bytes: 339
-21             time-taken: 0.596
+20               cs-bytes: 79
+21             time-taken: 0.500
 22        x-forwarded-for: -
 23           ssl-protocol: TLSv1.3
 24             ssl-cipher: TLS_AES_128_GCM_SHA256
-25   x-edge-response-result-type: Hit
+25   x-edge-response-result-type: Miss
 26    cs-protocol-version: HTTP/2.0
 27             fle-status: -
 28   fle-encrypted-fields: -
-29                 c-port: 62851
-30     time-to-first-byte: 0.596
-31   x-edge-detailed-result-type: Hit
-32        sc-content-type: -
+29                 c-port: 53251
+30     time-to-first-byte: 0.498
+31   x-edge-detailed-result-type: Miss
+32        sc-content-type: text/html
 33         sc-content-len: -
 34         sc-range-start: -
 35           sc-range-end: -
-36          timestamp(ms): 1737232139011
-37             origin-fbl: -
-38             origin-lbl: -
+36          timestamp(ms): 1738535441041
+37             origin-fbl: 0.051
+38             origin-lbl: 0.053
 39                    asn: 7922
 ~~~
 
 The fields are documented here:
 
-https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html
+* [Log Reference](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html) -- the cloudfront standard log reference.
 
 [⬇](#Contents)
 
 # Extract Fields
 
-You can extract key fields for all the log lines as show below. In the
-example it extracts fields 3, 4, 5, 11, 21, 31, 10, 20. Edit the
-numbers to view a different set.
+You can extract key fields from log lines as show below. In the
+example it extracts fields 3, 4, 5, 11, 14, 21, 31, 10, 20.  The
+numbers come from the last section.
+
+Note: you can edit the numbers to view a different set.
 
 ~~~
 find logs/cloudfront -type f \
   | xargs zcat \
-  | awk 'BEGIN {n = split("3, 4, 5, 11, 21, 31, 10, 20", \
+  | awk 'BEGIN {n = split("3 4 5 11 14 21 31 10 20", \
     list, " ") } \
     /^[0-9]/ {for(i=1; i<=n; i++) \
-    {printf "%s ", $list[i]}; print ""} \
-    /#Fields: / {for(i=1; i<=n; i++) \
-    {ix=list[i]+1;printf "%s ", $ix}; print ""}' \
+    {$14=substr($14,0,11); printf "%s ", $list[i]}; print ""}' \
+  | sort \
   | less
 
-date time x-edge-location sc-status time-taken x-edge-detailed-result-type cs-uri-stem cs-bytes 
-2025-01-18 20:28:59 SEA900-P1 304 0.596 Hit /js/thumbnails.js 339 
-2025-01-18 20:29:01 SEA900-P1 200 0.137 Miss /index.html 136 
-2025-01-18 20:29:01 SEA900-P1 304 0.024 Hit /js/index.js 88 
-2025-01-18 20:29:01 SEA900-P1 304 0.040 Hit /js/thumbnails.js 92 
-2025-01-18 20:29:01 SEA900-P1 304 0.051 Miss /js/image.js 995 
-2025-01-18 20:29:02 SEA900-P1 200 0.026 Hit /sw.js 27 
-2025-01-18 20:28:59 SEA900-P1 200 0.104 Miss /sw.js 240 
-2025-01-18 20:29:03 SEA900-P1 401 0.480 LambdaGeneratedResponse /images/c2-1-t.jpg 39 
-2025-01-18 20:29:03 SEA900-P1 401 0.609 LambdaGeneratedResponse /images/c2-2-p.jpg 39
+2025-02-02 21:10:40 SEA900-P1 401 - 0.054 LambdaGeneratedResponse /images/c1-2-p.jpg 60
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 0.500 Miss /pages/image-1.html 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 0.533 Miss /pages/thumbnails-1.html 83
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 0.880 Miss /images/c1-2-t.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.006 Miss /images/c1-7-t.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.019 Miss /images/c1-4-t.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.024 Miss /images/c1-5-t.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.028 Miss /images/c1-3-t.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.033 Miss /images/c1-6-t.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.088 Miss /images/c1-1-t.jpg 1235
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.096 Miss /images/c1-8-t.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.249 Miss /images/c1-7-p.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.256 Miss /images/c1-8-p.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.302 Miss /images/c1-2-p.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.305 Miss /images/c1-1-p.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.306 Miss /images/c1-6-p.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.313 Miss /images/c1-3-p.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.371 Miss /images/c1-4-p.jpg 79
+2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.373 Miss /images/c1-5-p.jpg 79
+2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.143 LambdaGeneratedResponse /images/c1-7-p.jpg 78
+2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.151 LambdaGeneratedResponse /images/c1-8-p.jpg 78
+2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.155 LambdaGeneratedResponse /images/c1-4-p.jpg 78
+2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.160 LambdaGeneratedResponse /images/c1-6-p.jpg 80
+2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.165 LambdaGeneratedResponse /images/c1-3-p.jpg 434
+2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.171 LambdaGeneratedResponse /images/c1-5-p.jpg 78
+~~~
+
+# Finding a Download.
+
+You can find a download by its id. When you click the Collections
+download button, a random base 62 number is added to the query
+parameters for each image request.  You can see this in your browser
+network tab.  The id was yFrj66VM for the download at 22:32 UTC.  You
+can find this id in the cloudfront logs, see above.
+
+~~~
+id: yFrj66VM
+user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
+~~~
+
+You can run the date command to get the UTC time value to help match up by time:
+
+~~~
+date
+
+Sun Feb  2 22:31:29 UTC 2025
 ~~~
 
 [⬇](#Contents)
 
 # Lambda Logs
 
-* todo: show the matching lambda log lines for the same request as above. pull from logs.  tie the request to the cloud front log with the request _id.
+There are a lot of lambda logs.  For the one download I found 161 log files:
 
+~~~
+find logs/lambda -type f \
+  | grep "2025-02-02" \
+  | wc -l
+
+161
+~~~
 
 The node js console.log messages from the Lambda function appear in
 the lambda logs mixed in with the system messages.  Each console
@@ -152,23 +229,14 @@ message starts with the text “MyData” so they are easy to extract:
 
 ~~~
 find logs/lambda -type f \
-  | xargs zcat -f \
-  | grep "MyData" \
-  | awk '{ printf "%s ", $1; for (i = 6; i <= NF; i++) \
-    printf "%s ", $i; print ""}' \
+  | grep "2025-02-02" \
+  | xargs zcat \
+  | grep "MyData:" \
+  | awk '{ printf "%s %-5s ", $1, $4; \
+    for (i = 5; i <= NF; i++) printf "%s ", $i; print ""}' \
   | less
-
-2025-01-18T20:58:54.425Z error: jwt expired 
-2025-01-18T20:58:53.915Z Cold start. 
-2025-01-18T20:58:54.377Z Failed: url: /images/c2-8-p.jpg 
-2025-01-18T20:58:54.377Z error: jwt expired 
-2025-01-18T20:58:53.879Z Cold start. 
-2025-01-18T20:58:54.395Z Failed: url: /images/c2-15-p.jpg 
-2025-01-18T20:58:54.395Z error: jwt expired 
-2025-01-18T20:58:53.496Z Cold start. 
-2025-01-18T20:58:53.960Z Failed: url: /images/c2-1-p.jpg 
-2025-01-18T20:58:53.961Z error: jwt expired 
 ~~~
+
 
 [⬇](#Contents)
 
@@ -178,12 +246,12 @@ You can analyze the logs to determine that the website is operating
 error free, to determine how fast it is and to determine usage
 patterns.
 
-* Error Free — how to verify error free requests. 
-* Cache Hits — how to verify caches are hit. 
-* Measure Download Speed — how to measure the download speed by file and by collections. 
-* Show Usage Statistics — how to show stats by users and overall. 
+* Error Free — how to verify error free requests.
+* Cache Hits — how to verify caches are hit.
+* Measure Download Speed — how to measure the download speed by file and by collections.
+* Show Usage Statistics — how to show stats by users and overall.
 
-See the sections below for the details. 
+See the sections below for the details.
 
 **Error Free**
 
@@ -232,7 +300,7 @@ file. The dl query field ties a collection downloads together. You can
 calculate the AWS total by subtracting the first and last times. You
 cannot sum the requests because they run in parallel.
 
-todo: 
+todo:
 
 * command showing the time to download an image
 * bytes per second
@@ -249,11 +317,11 @@ todo: show example
 
 # Contents
 
-* [Log Location](#log-location) — where the logs are located and how to copy them locally. 
-* [CloudFront Fields](#cloudfront-fields) — lists the fields and a link to their documentation. 
-* [Extract Fields](#extract-fields) — how to extract important fields. 
-* [Lambda Logs](#lambda-logs) — how to extract the console log lines and match them up with the Cloud front logs. 
-* [Analysis Tasks](#analysis-tasks) -- analyze website traffic. 
+* [Log Location](#log-location) — where the logs are located and how to copy them locally.
+* [CloudFront Fields](#cloudfront-fields) — lists the fields and a link to their documentation.
+* [Extract Fields](#extract-fields) — how to extract important fields.
+* [Lambda Logs](#lambda-logs) — how to extract the console log lines and match them up with the Cloud front logs.
+* [Analysis Tasks](#analysis-tasks) -- analyze website traffic.
 
 # todo
 
@@ -263,13 +331,13 @@ todo: Determine how long logs are retained in S3 and rotate them as necessary.
 
 todo: increase the cache duration.
 
-todo: Log the username and a random number by adding them to the image request query field. 
+todo: Log the username and a random number by adding them to the image request query field.
 
-todo: Username: Include the user’s GUID (36 digits).  For example: name= 6b29fc40-ca47-1067-b31d-00dd010662da. Validate the username in the Lambda function against the token. Collect user usage information with this. 
+todo: Username: Include the user’s GUID (36 digits).  For example: name= 6b29fc40-ca47-1067-b31d-00dd010662da. Validate the username in the Lambda function against the token. Collect user usage information with this.
 
 *todo: Random Number: Use an 8-digit Base62 random number to tie download events together for example: dl=abAB1234
 
-* how big is the token?
+* how big is the token? 1041
 
 If the total size of all request headers, including cookies, exceeds
 20 KB, or if the URL exceeds 8192 bytes, CloudFront can't parse the

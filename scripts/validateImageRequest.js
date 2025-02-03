@@ -15,6 +15,14 @@ const iss = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`
 // Cache the keys (jwks) so we only have to fetch them on a cold start.
 let jwks = null
 
+function myError(message) {
+  console.error("MyData: Error: " + message)
+}
+
+function myLog(message) {
+  console.log("MyData: " + message)
+}
+
 async function getJwks() {
   // Fetch the cognito public keys used to encrypt tokens.
   return new Promise((resolve, reject) => {
@@ -27,25 +35,43 @@ async function getJwks() {
   });
 }
 
-async function verifyJwt(token, ignoreExpiration=false) {
+function parseQueryString(qs) {
+  // Function to parse the request query string into an object.
+  if (qs == undefined)
+    return {}
+  const params = qs.split('&');
+  const result = {};
+  for (const param of params) {
+    if (param === "") continue
+    let [key, value] = param.split('=');
+    if (key === "" || value == "") continue
+    result[decodeURIComponent(key)] = value;
+  }
+  return result;
+}
+
+async function verifyJwt(token, ignoreExpiration) {
   // Verify the token is valid for our cognito user.
 
   if (!token) {
-    throw new Error('No token provided.');
+    throw new Error('Missing token.');
+  }
+  if (ignoreExpiration == undefined) {
+    throw new Error('Missing ignoreExpiration.');
   }
 
-  // Decode JWT header
+  // Decode JWT header.
   const { header } = jwt.decode(token, { complete: true });
   if (!header || !header.kid || !header.alg)
-    throw new Error('Invalid token');
-  // console.log(header)
+    throw new Error('Invalid token.');
 
   // If we don't have the keys (jwks), get and cache them.
   if (jwks === null) {
-    console.log("MyData: Cold start.")
+    myLog("Cold start.")
     jwks = await getJwks();
-  } else {
-    console.log("MyData: Warm start.")
+  }
+  else {
+    myLog("Warm start.")
   }
 
   // Find the key used to encrypt the token.
@@ -56,10 +82,9 @@ async function verifyJwt(token, ignoreExpiration=false) {
     // period, the new keys get cached.
     throw new Error('Signing key not found.');
   }
-  // console.log(`key: ${JSON.stringify(key, null, 2)}`)
 
   if (key.kty != "RSA") {
-    console.log(`MyData: key.kty: ${key.kty}`)
+    myLog(`Algorithm not supported. key.kty: ${key.kty}`)
     throw new Error('Algorithm not supported.');
   }
 
@@ -73,11 +98,9 @@ async function verifyJwt(token, ignoreExpiration=false) {
     issuer: iss,
   }
 
-  // Ignore expiration is used for testing. Lambda passes a context
-  // object not a boolean, so ignoreExpiration will never be true
-  // there.
+  // Ignore expiration when testing.
   if (ignoreExpiration === true) {
-    console.log("MyData: Ignoring token expiration for testing.")
+    myLog("Ignoring token expiration for testing.")
     options['ignoreExpiration'] = ignoreExpiration
   }
 
@@ -91,16 +114,69 @@ async function verifyJwt(token, ignoreExpiration=false) {
   return payload;
 }
 
+async function validateRequest(url, token, id, user, ignoreExpiration) {
+  // Return true when the request is valid.
+
+  // Allow all non-image requests.
+  if (!url.startsWith('/images/')) {
+    return true
+  }
+
+  // Make sure the id and user exist.
+  if (!id && !user) {
+    myError("No query parameters.");
+    return false
+  }
+  if (!user) {
+    myError("Missing user query parameter.")
+    return false
+  }
+  if (!id) {
+    myError("The id query parameter is missing.")
+    return false
+  }
+
+  // Make sure the token exists.
+  if (!token) {
+    // Most likely this is a direct request outside the website for an
+    // image.  If you get this, it could be because you need to allow
+    // auth header in Cloudfront Cache policy.
+    myError("No token in the auth header.")
+    return false
+  }
+
+  // Validate the token.
+  let payload = {}
+  try {
+    payload = await verifyJwt(token, ignoreExpiration);
+  }
+  catch (err) {
+    myError(`VerifyJwt: ${err.message}`);
+    return false
+  }
+
+  // Validate that the user name on the url is the same at the token
+  // user name.
+  if (user != payload.username) {
+    myError("Url user does not match the token user.")
+    myLog(`Url user: ${user} != token user: ${payload.username}`)
+    return false
+  }
+
+  return true
+}
+
 async function handler(event, context) {
   // Validate the request. For image requests make sure the user is
   // logged in.
 
-  // Make sure this code is handling the viewer request event.
+  // Make sure this code is handling the viewer request event not some
+  // other event.
   const cf = event.Records[0].cf
   if (cf.config && cf.config.eventType) {
     const eventType = cf.config.eventType
     if (eventType && eventType != "viewer-request") {
-      console.error(`MyData: this code is connected to the wrong event: ${eventType}`)
+      myError(`This code is connected to the wrong event: ${eventType}`)
       return {
         'status': '400',
         'statusDescription': 'Bad Request',
@@ -111,39 +187,28 @@ async function handler(event, context) {
   const request = cf.request;
   const url = request.uri
   const headers = request['headers']
+  const queryParams = parseQueryString(request.querystring);
 
-  // Allow all non-image requests.
-  if (!url.startsWith('/images/')) {
-    delete headers.auth
-    return request
-  }
+  myLog(`Trying id_url: ${queryParams.id} ${url}`);
 
-  // Get the access token from the auth header of the image request.
-  let access_token = null
+  // Get the access token from the auth header. It only exists on
+  // image requests.
+  let access_token = ""
   if (headers.auth)
     access_token = headers.auth[0].value
-  else {
-    console.log("MyData: No auth header. Create a Cloudfront Cache policy with auth.");
-    console.log(`MyData: Event: ${JSON.stringify(event, null, 2)}`);
-  }
 
-  // Validate the access token.
-  try {
-    const payload = await verifyJwt(access_token, context);
+  // todo: change this to false after testing.
+  const ignoreExpiration = true
 
-    console.log(`MyData: Passed: user: ${payload.username} url: ${url}`);
+  const ok = await validateRequest(url, access_token, queryParams.id,
+                                   queryParams.user, ignoreExpiration)
 
-    // Remove auth header.
-    delete headers.auth
-
-    // console.log(`MyData: Return request: ${JSON.stringify(request, null, 2)}`);
+  if (ok) {
+    myLog(`Passed: ${queryParams.id} ${url}`);
     return request;
-
-  } catch (err) {
-    console.log(`MyData: Failed: url: ${url}`);
-
-    console.error(`MyData: error: ${err.message}`);
-
+  }
+  else {
+    myError(`Failed: ${queryParams.id} ${url}`);
     return {
       'status': '401',
       'statusDescription': 'Unauthorized',
@@ -151,4 +216,5 @@ async function handler(event, context) {
   }
 }
 
-module.exports = { getJwks, verifyJwt, handler, region, userPoolId, client_id, iss };
+module.exports = { getJwks, verifyJwt, handler, region, userPoolId, client_id, iss,
+                   parseQueryString, validateRequest};

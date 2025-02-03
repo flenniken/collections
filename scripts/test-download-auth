@@ -1,0 +1,37 @@
+#!/bin/bash
+
+echo "Test authentication by downloading files with curl."
+
+redFail="\e[31mFail\e[0m"
+greenPass="\e[32mPass\e[0m"
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+gotExpected () {
+  got=$1
+  expected=$2
+  if [ "$got" == "$expected" ]; then
+    echo -e $greenPass
+  else
+    echo -e $redFail
+    echo "     got: " $got
+    echo "expected: " $expected
+  fi
+} 
+
+
+printf "Download camera.svg: "
+statusCode=$(curl -s --write-out %{http_code} --output /dev/null \
+                  https://collections.sflennik.com/icons/camera.svg)
+gotExpected $statusCode "200"
+
+# # Test that downloading an image without a token fails.
+printf "Download image without token: "
+statusCode=$(curl -s --write-out %{http_code} --output /dev/null \
+  https://collections.sflennik.com/images/c1-2-p.jpg)
+gotExpected $statusCode "401"
+

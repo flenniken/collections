@@ -101,24 +101,33 @@ def invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths):
 def waitForDeployed(cloudfrontClient, distribution_id):
   """
   Wait for the cloudfront distribution to deploy.
+
+  id=EHLMG1T8SOX48
+  aws cloudfront get-distribution --id $id --query 'Distribution.Status' --output text
   """
 
   showDeploying = True
+  count = 0
+  waitSeconds = 5
   while (1):
     response = cloudfrontClient.get_distribution(Id=distribution_id)
     distribution_status = response['Distribution']['Status']
     if distribution_status == "Deployed":
       if not showDeploying:
         print("")
-      print("deployed")
+      if count == 0:
+        print(f"deployed")
+      else:
+        print(f"deployed, waited: {count*waitSeconds} seconds")
       break
     if showDeploying:
-      print("deploying...", end="")
+      print("deploying", end="")
       showDeploying = False
     else:
      print(".", end="")
+     count += 1
     sys.stdout.flush()
-    time.sleep(5)
+    time.sleep(waitSeconds)
 
 def listModified(s3Client, bucket_name):
   """

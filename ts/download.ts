@@ -124,6 +124,17 @@ function getCollectionUrls(cNum: number): string[] {
   return urls
 }
 
+function getRandom8(): string {
+  // Return a random string of 8 alphanumeric characters (base62).
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length);
+    result += chars[randomIndex];
+  }
+  return result;
+}
+
 async function downloadUrls(urls: string[]) {
   // Download the given urls in parallel.
 
@@ -132,10 +143,13 @@ async function downloadUrls(urls: string[]) {
 
   const userInfo = fetchUserInfo()
   if (!userInfo) {
-    throw new Error("No user info found.")
+    throw new Error("No user information found.")
   }
   const headers = new Headers();
   headers.set("auth", userInfo.access_token);
+
+  // Generate an 8 character random number to identify this download.
+  const downloadId = getRandom8()
 
   // Start fetching all images at once.
   let promises: Promise<Response>[] = []
@@ -143,7 +157,8 @@ async function downloadUrls(urls: string[]) {
     // The service worker's fetch event is called for each fetch call.
     // Caching is handled by the worker.
 
-    promises.push(fetchOk(url, { headers: headers }))
+    const url2 = `${url}?id=${downloadId}&user=${userInfo.userId}`
+    promises.push(fetchOk(url2, { headers: headers }))
   })
 
   // Wait for all images to get downloaded and cached.
