@@ -15,13 +15,8 @@ const iss = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`
 // Cache the keys (jwks) so we only have to fetch them on a cold start.
 let jwks = null
 
-function myError(message) {
-  console.error("MyData: Error: " + message)
-}
-
-function myLog(message) {
-  console.log("MyData: " + message)
-}
+// Version number of this file.
+const version = "100"
 
 async function getJwks() {
   // Fetch the cognito public keys used to encrypt tokens.
@@ -67,11 +62,11 @@ async function verifyJwt(token, ignoreExpiration) {
 
   // If we don't have the keys (jwks), get and cache them.
   if (jwks === null) {
-    myLog("Cold start.")
+    console.log("Cold start.")
     jwks = await getJwks();
   }
   else {
-    myLog("Warm start.")
+    console.log("Warm start.")
   }
 
   // Find the key used to encrypt the token.
@@ -84,8 +79,7 @@ async function verifyJwt(token, ignoreExpiration) {
   }
 
   if (key.kty != "RSA") {
-    myLog(`Algorithm not supported. key.kty: ${key.kty}`)
-    throw new Error('Algorithm not supported.');
+    throw new Error(`Algorithm not supported. key.kty: ${key.kty}`);
   }
 
   // Convert the jwk key to a PEM public key.
@@ -100,7 +94,7 @@ async function verifyJwt(token, ignoreExpiration) {
 
   // Ignore expiration when testing.
   if (ignoreExpiration === true) {
-    myLog("Ignoring token expiration for testing.")
+    console.log("Ignoring token expiration for testing.")
     options['ignoreExpiration'] = ignoreExpiration
   }
 
@@ -124,15 +118,15 @@ async function validateRequest(url, token, id, user, ignoreExpiration) {
 
   // Make sure the id and user exist.
   if (!id && !user) {
-    myError("No query parameters.");
+    console.error("No query parameters.");
     return false
   }
   if (!user) {
-    myError("Missing user query parameter.")
+    console.error("Missing user query parameter.")
     return false
   }
   if (!id) {
-    myError("The id query parameter is missing.")
+    console.error("The id query parameter is missing.")
     return false
   }
 
@@ -141,7 +135,7 @@ async function validateRequest(url, token, id, user, ignoreExpiration) {
     // Most likely this is a direct request outside the website for an
     // image.  If you get this, it could be because you need to allow
     // auth header in Cloudfront Cache policy.
-    myError("No token in the auth header.")
+    console.error("No token in the auth header.")
     return false
   }
 
@@ -151,15 +145,16 @@ async function validateRequest(url, token, id, user, ignoreExpiration) {
     payload = await verifyJwt(token, ignoreExpiration);
   }
   catch (err) {
-    myError(`VerifyJwt: ${err.message}`);
+    console.error(`VerifyJwt: ${err.message}`);
     return false
   }
 
   // Validate that the user name on the url is the same at the token
   // user name.
   if (user != payload.username) {
-    myError("Url user does not match the token user.")
-    myLog(`Url user: ${user} != token user: ${payload.username}`)
+    console.error("Users do not match.")
+    console.log(`Url user: ${user}`)
+    console.log(`Token user: ${payload.username}`)
     return false
   }
 
@@ -176,7 +171,7 @@ async function handler(event, context) {
   if (cf.config && cf.config.eventType) {
     const eventType = cf.config.eventType
     if (eventType && eventType != "viewer-request") {
-      myError(`This code is connected to the wrong event: ${eventType}`)
+      console.error(`This code is connected to the wrong event: ${eventType}`)
       return {
         'status': '400',
         'statusDescription': 'Bad Request',
@@ -188,8 +183,9 @@ async function handler(event, context) {
   const url = request.uri
   const headers = request['headers']
   const queryParams = parseQueryString(request.querystring);
+  const id = queryParams.id
 
-  myLog(`Trying id_url: ${queryParams.id} ${url}`);
+  console.log(`Trying: ${version} ${url} ${queryParams.id}`);
 
   // Get the access token from the auth header. It only exists on
   // image requests.
@@ -204,11 +200,11 @@ async function handler(event, context) {
                                    queryParams.user, ignoreExpiration)
 
   if (ok) {
-    myLog(`Passed: ${queryParams.id} ${url}`);
+    console.log(`Passed: ${url} ${queryParams.id}`);
     return request;
   }
   else {
-    myError(`Failed: ${queryParams.id} ${url}`);
+    console.error(`Failed: ${url} ${queryParams.id}`);
     return {
       'status': '401',
       'statusDescription': 'Unauthorized',

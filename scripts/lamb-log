@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Extract information from the lambda logs.
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+find logs/lambda -type f \
+  | grep "2025-02-02" \
+  | xargs zcat \
+  | awk '\
+    / START RequestId: / \
+      {printf "%s %s %s ", \
+      substr($1, 0, 10), substr($1, 12, 12), substr($4, 0, 8); print "-----", $5, $6} \
+    /INFO/ \
+      {printf "%s %s %s ", \
+      substr($1, 0, 10), substr($1, 12, 12), substr($3, 0, 8); \
+      for (i = 5; i <= NF; i++) printf "%s ", $i; print ""} \
+    / REPORT RequestId: / \
+      {printf "%s %s %s ", \
+      substr($1, 0, 10), substr($1, 12, 12), substr($4, 0, 8); \
+      print $5, $6, $7} \
+    '
+
+
+    # / RequestId: / {printf "%s %s %s ", \
+    #   substr($1, 0, 10), substr($1, 12, 12), substr($4, 0, 8); \
+    #   for (i = 5; i <= NF; i++) printf "%s ", $i; print ""} \
