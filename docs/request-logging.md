@@ -146,7 +146,7 @@ The fields are documented here:
 # Extract Fields
 
 You can extract key fields from log lines as show below. In the
-example it extracts fields 3, 4, 5, 11, 14, 21, 31, 10, 20.  The
+example it extracts fields 3, 4, 5, 11, 14, 21, 31, 10.  The
 numbers come from the last section.
 
 Note: you can edit the numbers to view a different set.
@@ -154,38 +154,44 @@ Note: you can edit the numbers to view a different set.
 ~~~
 find logs/cloudfront -type f \
   | xargs zcat \
-  | awk 'BEGIN {n = split("3 4 5 11 14 21 31 10 20", \
+  | awk 'BEGIN {n = split("3 4 5 11 14 21 31 10", \
     list, " ") } \
     /^[0-9]/ {for(i=1; i<=n; i++) \
     {$14=substr($14,0,11); printf "%s ", $list[i]}; print ""}' \
   | sort \
   | less
 
-2025-02-02 21:10:40 SEA900-P1 401 - 0.054 LambdaGeneratedResponse /images/c1-2-p.jpg 60
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 0.500 Miss /pages/image-1.html 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 0.533 Miss /pages/thumbnails-1.html 83
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 0.880 Miss /images/c1-2-t.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.006 Miss /images/c1-7-t.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.019 Miss /images/c1-4-t.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.024 Miss /images/c1-5-t.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.028 Miss /images/c1-3-t.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.033 Miss /images/c1-6-t.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.088 Miss /images/c1-1-t.jpg 1235
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.096 Miss /images/c1-8-t.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.249 Miss /images/c1-7-p.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.256 Miss /images/c1-8-p.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.302 Miss /images/c1-2-p.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.305 Miss /images/c1-1-p.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.306 Miss /images/c1-6-p.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.313 Miss /images/c1-3-p.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.371 Miss /images/c1-4-p.jpg 79
-2025-02-02 22:30:41 SEA900-P1 200 id=yFrj66VM 1.373 Miss /images/c1-5-p.jpg 79
-2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.143 LambdaGeneratedResponse /images/c1-7-p.jpg 78
-2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.151 LambdaGeneratedResponse /images/c1-8-p.jpg 78
-2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.155 LambdaGeneratedResponse /images/c1-4-p.jpg 78
-2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.160 LambdaGeneratedResponse /images/c1-6-p.jpg 80
-2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.165 LambdaGeneratedResponse /images/c1-3-p.jpg 434
-2025-02-02 22:31:01 SEA900-P1 401 id=yFrj66VM 0.171 LambdaGeneratedResponse /images/c1-5-p.jpg 78
+date       time     location  status          seconds
+|          |        |         |   download    |     hit        url
+3          4        5         11  14          21    31         10
+---------  -------  --------  --  ----------  ----  ---------  ------------------
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.108 RefreshHit /images/c2-12-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.109 RefreshHit /images/c2-10-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.116 RefreshHit /images/c2-11-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.116 RefreshHit /images/c2-14-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.116 RefreshHit /images/c2-16-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.117 RefreshHit /images/c2-2-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.117 RefreshHit /images/c2-7-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.120 RefreshHit /images/c2-6-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.468 Miss /images/c2-9-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.476 RefreshHit /images/c2-1-p.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.480 RefreshHit /images/c2-7-p.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.789 RefreshHit /images/c2-12-p.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.795 RefreshHit /images/c2-11-p.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.795 RefreshHit /images/c2-15-t.jpg
+2025-02-05 01:15:07 SEA900-P1 200 id=UzCwQzMw 2.799 RefreshHit /images/c2-4-p.jpg
+2025-02-05 01:15:08 SEA900-P1 200 id=UzCwQzMw 3.095 RefreshHit /images/c2-9-p.jpg
+2025-02-05 01:15:08 SEA900-P1 200 id=UzCwQzMw 3.549 RefreshHit /images/c2-13-p.jpg
+2025-02-05 01:15:08 SEA900-P1 200 id=UzCwQzMw 3.556 RefreshHit /images/c2-10-p.jpg
+2025-02-05 01:15:08 SEA900-P1 200 id=UzCwQzMw 3.558 RefreshHit /images/c2-14-p.jpg
+2025-02-05 01:15:08 SEA900-P1 200 id=UzCwQzMw 3.560 RefreshHit /images/c2-5-p.jpg
+2025-02-05 01:15:08 SEA900-P1 200 id=UzCwQzMw 3.872 RefreshHit /images/c2-3-p.jpg
+2025-02-05 01:15:08 SEA900-P1 200 id=UzCwQzMw 3.872 RefreshHit /images/c2-6-p.jpg
+2025-02-05 01:15:09 SEA900-P1 200 id=UzCwQzMw 4.147 RefreshHit /images/c2-16-p.jpg
+2025-02-05 01:15:09 SEA900-P1 200 id=UzCwQzMw 4.245 RefreshHit /images/c2-15-p.jpg
+2025-02-05 18:02:19 TLV50-C2 200 - 1.053 Miss /
+2025-02-07 01:42:25 LAX54-P1 200 - 0.573 RefreshHit /
+2025-02-07 01:44:09 LAX54-P1 200 - 0.174 Hit /
 ~~~
 
 # Finding a Download.

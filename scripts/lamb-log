@@ -8,8 +8,16 @@ if [[ -z "${coder_env}" ]]; then
   exit
 fi
 
+# 2025-02-07T01:44:09.064Z START RequestId: 57f7dfb5-e844-469d-b615-b5b8202efbc4 Version: 28
+
+# 2025-02-07T01:44:09.178Z 2025-02-07T01:44:09.178Z	57f7dfb5-e844-469d-b615-b5b8202efbc4	INFO	Trying: 100 / undefined
+
+# 2025-02-07T01:44:09.198Z REPORT RequestId: 57f7dfb5-e844-469d-b615-b5b8202efbc4	Duration: 134.17 ms	Billed Duration: 135 ms	Memory Size: 128 MB	Max Memory Used: 80 MB
+
+# 2025-02-07T01:42:25.138Z END RequestId: 21cebdaa-57e1-4f31-844f-013f7b8ffe96
+
 find logs/lambda -type f \
-  | grep "2025-02-02" \
+  | grep "2025-02-05" \
   | xargs zcat \
   | awk '\
     / START RequestId: / \
@@ -22,10 +30,5 @@ find logs/lambda -type f \
     / REPORT RequestId: / \
       {printf "%s %s %s ", \
       substr($1, 0, 10), substr($1, 12, 12), substr($4, 0, 8); \
-      print $5, $6, $7} \
+      print $6, $7} \
     '
-
-
-    # / RequestId: / {printf "%s %s %s ", \
-    #   substr($1, 0, 10), substr($1, 12, 12), substr($4, 0, 8); \
-    #   for (i = 5; i <= NF; i++) printf "%s ", $i; print ""} \

@@ -15,9 +15,6 @@ const iss = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`
 // Cache the keys (jwks) so we only have to fetch them on a cold start.
 let jwks = null
 
-// Version number of this file.
-const version = "100"
-
 async function getJwks() {
   // Fetch the cognito public keys used to encrypt tokens.
   return new Promise((resolve, reject) => {
@@ -62,11 +59,11 @@ async function verifyJwt(token, ignoreExpiration) {
 
   // If we don't have the keys (jwks), get and cache them.
   if (jwks === null) {
-    console.log("Cold start.")
+    console.log("jwks: Cold start.")
     jwks = await getJwks();
   }
   else {
-    console.log("Warm start.")
+    console.log("jwks: Warm start.")
   }
 
   // Find the key used to encrypt the token.
@@ -94,7 +91,7 @@ async function verifyJwt(token, ignoreExpiration) {
 
   // Ignore expiration when testing.
   if (ignoreExpiration === true) {
-    console.log("Ignoring token expiration for testing.")
+    console.log("warning: Ignoring token expiration for testing.")
     options['ignoreExpiration'] = ignoreExpiration
   }
 
@@ -185,7 +182,8 @@ async function handler(event, context) {
   const queryParams = parseQueryString(request.querystring);
   const id = queryParams.id
 
-  console.log(`Trying: ${version} ${url} ${queryParams.id}`);
+  console.log(`url: ${url}`);
+  console.log(`id: ${queryParams.id}`);
 
   // Get the access token from the auth header. It only exists on
   // image requests.
@@ -200,11 +198,11 @@ async function handler(event, context) {
                                    queryParams.user, ignoreExpiration)
 
   if (ok) {
-    console.log(`Passed: ${url} ${queryParams.id}`);
+    console.log("auth: Passed");
     return request;
   }
   else {
-    console.error(`Failed: ${url} ${queryParams.id}`);
+    console.error("auth: Failed");
     return {
       'status': '401',
       'statusDescription': 'Unauthorized',
