@@ -9,4 +9,7 @@ develop Collections as well as code overviews.
 * [AWS Config](aws-config.md) — how to setup AWS services.
 * [Test](test.md) — how to develop, test and debug.
 * [How To](how-to.md) — how to manage users, deploy code, and other common tasks.
-* [Overviews](overviews.md) — high level overviews of the code.
+* [Build](build.md) — how to get the code, build and deploy
+* [Collection Maker](collection-maker.md) — how to make a new collection.
+* [Authenticate Image Requests](authenticate-image-requests.md) — how image requests are authenticated on the server.
+* [Request Logging](request-logging.md) — how you view https request logs for both cloudfront and lambda.

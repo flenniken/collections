@@ -146,7 +146,7 @@ async function validateRequest(url, token, id, user, ignoreExpiration) {
     return false
   }
 
-  // Validate that the user name on the url is the same at the token
+  // Validate that the user name on the url is the same as the token
   // user name.
   if (user != payload.username) {
     console.error("Users do not match.")

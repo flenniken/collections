@@ -1,21 +1,25 @@
 # Collection Maker
 
-How to create a new collection. 
+How to create a new collection.
 
-Follow these steps to create a new collection. 
+Follow these steps to create a new collection.
 
 # Manual Steps
 
 You used Adobe applications to find and edit images for a collection.
 
 * open Adobe Bridge
-* tag from 8 - 20 original images with the next collection number, e.g. c24 
+* tag from 8 - 20 original images with the next collection number, e.g. c24
 * edit them if needed
-* create a temp folder named after the collection, e.g. dist/local/24 
-* create full size jpgs of the originals in the local folder, leave the name the same except use the "-p.jpg" extension. 
-* make square 480 x 480 jpg thumbnails and put them in the folder with the extension "-t.jpg". 
+* create a temp folder named after the collection, e.g. dist/local/24
+* create full size jpgs of the originals in the local folder, leave the name the same except use the "-p.jpg" extension.
+* make square 480 x 480 jpg thumbnails and put them in the folder with the extension "-t.jpg".
 
-Hand edit the json file or do the steps in the sections that follow. 
+Hand edit the json file or do the steps in the sections that follow.
+
+Note: the following sections are plans for the future.
+
+[⬇](#Contents) (table of contents at the bottom)
 
 # Maker Script
 
@@ -27,16 +31,16 @@ You create a new cjson file by running the script and specifying the
 collection number:
 
 ~~~
-scripts/maker -m 24 
+scripts/maker -m 24
 ~~~
 
-It does the validate the files. If a problem is found, it stops so you
+It validate the files. If a problem is found, it stops so you
 can correct it. It validates:
 
-* that p files are greater than or equal to 933 x 933
+* that p files are greater than or equal to 933 x 933 pixels
 * that the t files are 480 x 480 pixels
 * that the files come in pairs
-* the collection number by looking at S3. It needs to be next and not exist.  If the collection already exists, go back and increment the tag in Adobe Bridge and start over. 
+* the collection number by looking at S3. It needs to be next and not exist.  If the collection already exists, go back and increment the tag in Adobe Bridge and start over.
 
 Once the files pass validation, it does the following:
 
@@ -44,6 +48,8 @@ Once the files pass validation, it does the following:
 * it creates a temp section in the cjson for the 20 images
 * it initially does not have any associated text and the order is arbitrary
 * it gets the image width, height, and byte size for the 20 images (40 when counting the thumbnails)
+
+[⬇](#Contents)
 
 # Maker Page
 
@@ -60,27 +66,29 @@ changes.  The dropdown choices come from `get-new-collections` api
 which returns the local image folders that have cjson files.  The
 cjson list comes from the `get-collection api`.
 
-Your edits change the cjson file. Every 10 seconds your changes are
-saved, if needed, by the `post-collection` api.
+Your edits change the cjson file. Your changes are saved
+automatically.
 
 The maker page ui:
 
-* on the left is a table of 2 columns and 8 rows. 
+* on the left is a table of boxes, 2 columns by 8 rows.
 * on the right are the 20 thumbnail images
-* you click on an image to put it in the next available box. 
-* you click on a box image to remove it
-* it lists the images not used so you can untag them. The not used images are the ones still in the temp json section
-* next to each box is an edit icon for editing the image title and description. 
-* at the bottom is a button to enter the collections title and description
+* you click on an image to put it in the next available box.
+* you click on a box image to move it to back with the temp images
+* you need to untag the images you don’t use (the remaining temp images) in Adobe Bridge.
+* next to each box is an edit icon for editing the image title and description.
+* at the bottom is a button to enter the collections title and description for the thumbnails page
 * at the top is a button to enter the collections title, description and post date for the index page. post date, e. g. 2025-01-26 and Jan 26, 2025
 
-* todo: add the index info to the collection json. the index page builder needs to be changed to make it from a set of collections. 
+* todo: add the index info to the collection json. the index page builder needs to be changed to make it from a set of collections.
 * todo: store the base name in the json data so you can match up with the original using the tag and the name. Use an unique id?
+
+[⬇](#Contents)
 
 # Deploy New Folder
 
 You deploy the files to S3 with the maker script using the -d option.
-You do this after when you are finished editing the collection.
+You do this after you finish editing the collection.
 
 ~~~
 scripts/maker -d 24
@@ -89,10 +97,12 @@ scripts/maker -d 24
 The -d option does the following:
 
 * it renames the image files locally to use the standard naming
-* it updates the local json file in the json folder with the new names 
+* it updates the local json file in the json folder with the new names
 * it copies the local image folder to S3 in the production location
 * it makes a copy of the index thumbnail to the tin folder on s3
 * it deletes the local collection folder
+
+[⬇](#Contents)
 
 # Build Collection Pages
 
@@ -100,20 +110,27 @@ After the cjson file and the image files have been deployed to S3
 (maker -d), you can run the gulp build command to create the
 collections thumbnails and image pages and to update the index page.
 
-* The pages are built based on the cjson file. 
-* Users do not see the new collection until you deploy. 
-* You test locally. 
+* The pages are built based on the cjson files.
+* Users do not see the new collection until you deploy.
+* You test locally.
+
+[⬇](#Contents)
 
 # Set Zoom Points
 
-You set the zoom points as well as test on you local machine before you deploy it to the world.
+You set the zoom points as well as test on your local machine before
+you deploy it to the world.
 
-You use the developer tools to set the width and height of the screen
-before setting the zoom points. For each full size image you zoom in
-and pan to set its zoom points in both orientations.
+You run the collections web app on your local machine and log in as an
+admin so the needed icons appears.  You use the developer tools to set
+the width and height of the screen before setting the zoom points. For
+each full size image you zoom in and pan to set its zoom points in
+both orientations.
 
-You save your zoom point changes with the admin icon. It saves the
+You save your zoom point changes with the admin save icon. It saves the
 zoom points in the json file with the `post-collection` api.
+
+[⬇](#Contents)
 
 # Deploy
 
@@ -154,7 +171,7 @@ pip install pillow
 Eventually it would be nice to allow users to edit the descriptions on
 the public pages.
 
-You could open it up first for admins. 
+You could open it up first for admins.
 
 **API**
 
@@ -178,7 +195,7 @@ dist/local/get-json
 dist/local/post-json
 ~~~
 
-* put the temp collection files there 
+* put the temp collection files there
 * put the server files there for get and post json
 * put the maker page there
 * write in typescript the maker js code
@@ -186,10 +203,10 @@ dist/local/post-json
 
 **todo**
 
-* Store json in the collections folder. Check them in in the project dist folder. 
-* store the html thumbnails and image pages there too. 
-* we could version the js files if necessary. Then the html pages to not need to need rebuilt. 
-* in the json file make a thumbnail and index section, for their information. 
+* Store json in the collections folder. Check them in in the project dist folder.
+* store the html thumbnails and image pages there too.
+* we could version the js files if necessary. Then the html pages to not need to need rebuilt.
+* in the json file make a thumbnail and index section, for their information.
 * exclude the maker.html page from the deploy sync
 * exclude the images in the images folder too?
 
@@ -203,4 +220,3 @@ dist/local/post-json
 * [Set Zoom Points](#set-zoom-points) -- how to set the zoom points.
 * [Deploy](#deploy) -- how to deploy the finished collection.
 * [Implementation Details](#implementation-details) -- details about writing the code.
-

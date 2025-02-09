@@ -32,6 +32,18 @@ You can use the deploy script to list the modified files without
 copying them with the -m option. You can also list the collections s3
 bucket contents with the -l option.
 
+You can tell when your code is deployed by using the -w option. It
+polls the distribution status and tells you when the code has been
+fully deployed.  It checks every five seconds and outputs a dot.
+
+~~~
+deploy —w
+
+deploying……
+deployed in 20 seconds
+~~~
+
+
 [⬇ ────────](#Contents)
 
 # Create User

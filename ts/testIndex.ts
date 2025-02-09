@@ -35,7 +35,7 @@
   function gotExpected(got, expected, message) {
     // Generate a console error when the got message doesn't equal the
     // expected message.
-    if (got != expected) {
+    if (got !== expected) {
       if (!message)
         message = ""
       error(`${message}

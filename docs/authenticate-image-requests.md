@@ -49,11 +49,11 @@ Here are the main steps for deploying a lambda edge function:
 * test locally
 * create zip file
 * upload zip file to lambda in us-east-1
-* edit IAM role to allow lambda and cloud front, trusted entities.
 * test in lambda
 * deploy to lambda edge
 * wait for deploy
 * test in production
+* verify code works by looking at the logs
 
 [⬇](#Contents)
 

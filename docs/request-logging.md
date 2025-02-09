@@ -37,7 +37,7 @@ wrong location (to a S3 folder called "/").
 * select all the logs by clicking "Log stream" checkbox
 * click Actions → "Export Data to Amazon S3"
 * configure the time range
-* select the bucket name (sflennikco) and enter "logs/lambda" for "S3 bucket prefix"
+* select the bucket name `sflennikco` and enter `logs/lambda` for "S3 bucket prefix"
 * click Export
 
 The S3 folder structure:
@@ -145,11 +145,12 @@ The fields are documented here:
 
 # Extract Fields
 
-You can extract key fields from log lines as show below. In the
-example it extracts fields 3, 4, 5, 11, 14, 21, 31, 10.  The
-numbers come from the last section.
+You can extract key fields from log lines to make reading and studying
+the information much easier.
 
-Note: you can edit the numbers to view a different set.
+In the example it extracts fields 3, 4, 5, 11, 14, 21, 31, 10.  The
+numbers are field numbers shown in the last section. Edit the numbers
+to view a different set.
 
 ~~~
 find logs/cloudfront -type f \
@@ -194,13 +195,22 @@ date       time     location  status          seconds
 2025-02-07 01:44:09 LAX54-P1 200 - 0.174 Hit /
 ~~~
 
-# Finding a Download.
+# Download ID
 
-You can find a download by its id. When you click the Collections
+You use the download id to match up a particular download with the
+Cloud front and lambda log lines.  When you click the Collections
 download button, a random base 62 number is added to the query
 parameters for each image request.  You can see this in your browser
-network tab.  The id was yFrj66VM for the download at 22:32 UTC.  You
-can find this id in the cloudfront logs, see above.
+network tab.  The id was yFrj66VM for the download at 22:32 UTC.
+
+Cloudfront logs the id in the cs-uri-query field, field number 14. See
+the string in the Cloudfront Fields section, for example yFrj66VM:
+
+~~~
+cs-uri-query: id=yFrj66VM&user=0861d3e0-00a1-7058-ad19-4d7b1880d276
+~~~
+
+You can find it in the browser too:
 
 ~~~
 id: yFrj66VM
@@ -276,8 +286,8 @@ find logs/cloudfront -type f \
 todo: show results
 ~~~
 
-You can look at just the 200 requests. Change the 200 to a different
-code to look at them:
+You can look at just the 200 requests as show in the next example.  If
+you want to look at a different code, change the 200 to your code:
 
 ~~~
 todo:
@@ -287,39 +297,6 @@ find logs/cloudfront -type f \
   | awk '{print $1,$2,$3}'
 ~~~
 
-**Cache Hits**
-
-For speed you want the caches to be hit. The x-edge-result-type field
-tells whether one of the important caches is hit.  The cloud front
-cache lasts a day by default. Images are immutable.
-
-The Lambda function caches the signing keys on a cold start.  You want
-most requests to use the cached keys. A cache hit is logged as a warm
-start.
-
-todo: show commands
-
-**Measure Download Speed**
-
-The time-taken field tells you how long it took for AWS to return the
-file. The dl query field ties a collection downloads together. You can
-calculate the AWS total by subtracting the first and last times. You
-cannot sum the requests because they run in parallel.
-
-todo:
-
-* command showing the time to download an image
-* bytes per second
-* seconds per collection
-
-The browser logs tell you the download time for a collection.
-
-todo: show example
-
-**Show Usage Statistics**
-
-* todo: show by user using the query name
-* todo: show users over time
 
 # Contents
 
@@ -329,22 +306,4 @@ todo: show example
 * [Lambda Logs](#lambda-logs) — how to extract the console log lines and match them up with the Cloud front logs.
 * [Analysis Tasks](#analysis-tasks) -- analyze website traffic.
 
-# todo
 
-todo: Real-Time Logs Logs can be tailed in the terminal. command?
-
-todo: Determine how long logs are retained in S3 and rotate them as necessary.
-
-todo: increase the cache duration.
-
-todo: Log the username and a random number by adding them to the image request query field.
-
-todo: Username: Include the user’s GUID (36 digits).  For example: name= 6b29fc40-ca47-1067-b31d-00dd010662da. Validate the username in the Lambda function against the token. Collect user usage information with this.
-
-*todo: Random Number: Use an 8-digit Base62 random number to tie download events together for example: dl=abAB1234
-
-* how big is the token? 1041
-
-If the total size of all request headers, including cookies, exceeds
-20 KB, or if the URL exceeds 8192 bytes, CloudFront can't parse the
-request completely and can't log the request.

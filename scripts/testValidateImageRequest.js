@@ -35,8 +35,7 @@
   }
 
   function readJsonKey(filename, key) {
-    // Read a json file which is a dictionary then return the give
-    // key's value.
+    // Read the json file and return the given key’s value.
     const data = fs.readFileSync(filename);
     const json = JSON.parse(data);
     return json[key];
@@ -46,7 +45,7 @@
     // Generate a console error when the got value doesn't equal the
     // expected value. When not equal the given message is printed
     // along with the got and expected values.
-    if (got != expected) {
+    if (got !== expected) {
       if (!message)
         message = ""
       error(`${message}
