@@ -66,7 +66,7 @@ alias sudo='sudo '
 
 You stop the environment by typing ctrl-d.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Build All
 
@@ -102,7 +102,7 @@ You build the app in the docker container with the gulp app by typing
 [01:35:44] Finished 'all' after 2.2 s
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Build Tasks
 
@@ -141,7 +141,7 @@ Tasks:
 * all -- Compile everything in parallel, tasks ts, pages and css.
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Build Folder
 

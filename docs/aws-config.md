@@ -31,7 +31,7 @@ docker container running.
 The examples uses the sflennik.com domain and the sflennikco bucket
 name.  Replace these with your names when running the examples.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Create IAM User
 
@@ -145,7 +145,7 @@ List AWS Route53 zones:
 aws route53 list-hosted-zones
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Create S3 Bucket
 
@@ -171,7 +171,7 @@ aws s3api get-bucket-location --bucket sflennikco # variable
 }
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Copy Website
 
@@ -211,7 +211,7 @@ aws s3 ls s3://sflennikco/icons/ # variable
 …
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Register a domain
 
@@ -252,7 +252,7 @@ aws route53 list-resource-record-sets \
   ...
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Create CloudFront Distribution
 
@@ -304,7 +304,7 @@ button.  For the "Viewer protocol policy" select "Redirect HTTP to
 HTTPS" then save.
 
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Allow CloudFront S3 Access
 
@@ -390,7 +390,7 @@ collections.sflennik.com domain enter:
 
 * https://collections.sflennik.com
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # SES Admin Email
 
@@ -462,7 +462,7 @@ aws route53 list-resource-record-sets \
   "Name": "raqvkjw5bexcyjao7xpjczdtybbnjeil._domainkey.collections.sflennik.com.",
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Create User Pool
 
@@ -508,7 +508,7 @@ scripts/cognito -s | less
   ...
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Create Config File
 
@@ -547,7 +547,7 @@ The [aws-settings.json] file looks something like this:
 }
 ~~~
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Create First Users
 

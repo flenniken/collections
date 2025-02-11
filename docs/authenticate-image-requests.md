@@ -5,10 +5,9 @@ Images can only be downloaded by logged in users.
 The server does the validation to prevent non-logged in users from
 downloading images with direct urls and from scripts.
 
-When the user downloads a collection, the code adds the user’s access
-token to the image https request for validation on the server. The
-access token comes from Cognito when the user logs in.
-
+When the user requests a collection the code adds the user’s access
+token to the image https requests. The images are only returned when
+the token id is valid for the user.
 
 [⬇](#Contents) (table of contents at the bottom)
 

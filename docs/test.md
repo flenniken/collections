@@ -26,7 +26,7 @@ the install process and two finger touching. It’s also good for making
 screenshots that include the bezel. You can see the console log in
 desktop safari like you do when debugging a plugged in iphone.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Test Touch
 
@@ -39,7 +39,7 @@ desktop by turning on a setting in the developers tools.
 * scroll down to the touch section and select "Force Enabled"
 * test by mousing over the web page.  The mouse cursor should be a small circle.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Test on iphone
 
@@ -57,7 +57,7 @@ To debug:
 * launch Safari on your mac
 * pull down the develop menu and select collections
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Image Page Tests
 
@@ -80,7 +80,7 @@ When making changes to the image page test them with these steps:
 * tap the thumbnails menu icon
 * tap the index menu icon
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 ## Login-flow Script
 

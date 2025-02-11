@@ -12,35 +12,15 @@ bucket and there is no extra charge for standard logs.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# Log Location
+# Gather Logs
 
 We configured CloudFront to copy its edge logs to the
-`logs/cloudfront` in S3. It takes a few minutes for the logs to
-appear.
+`logs/cloudfront` in S3. From there you can copy them locally.
 
-You turn it on in the CloudFront console. Look for "Standard log
-destinations" and log to your bucket e.g. `sflennikco` using the
-Partitioning `/logs/cloudfront`.
+Lambda logs can also be copied, though the process is manual. The
+destination is `logs/lambda`.
 
-Lambda logs can also be copied, though the process is manual.  You
-find them in the nearest region to the edge location.  You determine
-the edge location from the CloudFront x-edge-location field. The field
-starts with an airport code. For example for the location SEA900-P1
-you would look in the us-west-2 region. From there, you can manually
-copy them to S3 using the CloudWatch console.  Use "logs/lambda" as
-the prefix.  If you mistakenly use a leading slash, it will go to the
-wrong location (to a S3 folder called "/").
-
-* open the CloudWatch Console the for the region closest to the edge.
-* click Logs → "Logs groups" in the left panel
-* select the log group, e.g. /aws/lambda/us-east-1.validateImageRequest
-* select all the logs by clicking "Log stream" checkbox
-* click Actions → "Export Data to Amazon S3"
-* configure the time range
-* select the bucket name `sflennikco` and enter `logs/lambda` for "S3 bucket prefix"
-* click Export
-
-The S3 folder structure:
+The S3 and local folder structure:
 
 ~~~
 logs/
@@ -55,6 +35,28 @@ Once the files are in S3, you can sync them locally for analysis:
 cd ~/collections
 aws s3 sync s3://sflennikco/logs logs
 ~~~
+
+The Cloudfront log copy is configured in the console. Look for "Standard log
+destinations" and log to your bucket e.g. `sflennikco` using the
+Partitioning `/logs/cloudfront`.
+
+For lambda use use the console to manually copy them. You find the
+logs in the nearest region to the edge location.  You determine the
+edge location from the CloudFront x-edge-location field. The field
+starts with an airport code. For example for the location SEA900-P1
+you would look in the us-west-2 region. From there, you can manually
+copy them to S3 using the CloudWatch console.  Use "logs/lambda" as
+the prefix.  If you mistakenly use a leading slash, it will go to the
+wrong location (to a S3 folder called "/").
+
+* open the CloudWatch Console the for the region closest to the edge.
+* click Logs → "Logs groups" in the left panel
+* select the log group, e.g. /aws/lambda/us-east-1.validateImageRequest
+* select all the logs by clicking "Log stream" checkbox
+* click Actions → "Export Data to Amazon S3"
+* configure the time range
+* select the bucket name `sflennikco` and enter `logs/lambda` for "S3 bucket prefix"
+* click Export
 
 [⬇](#Contents)
 
@@ -198,10 +200,11 @@ date       time     location  status          seconds
 # Download ID
 
 You use the download id to match up a particular download with the
-Cloud front and lambda log lines.  When you click the Collections
-download button, a random base 62 number is added to the query
-parameters for each image request.  You can see this in your browser
-network tab.  The id was yFrj66VM for the download at 22:32 UTC.
+Cloud front and lambda log lines. When you click the Collections
+download button, the code generates a random base 62 number called the
+download id. This id is added as a query parameter to each image in
+the collection.  You can see this in your browser network tab.  The id
+was yFrj66VM for the download at 22:32 UTC.
 
 Cloudfront logs the id in the cs-uri-query field, field number 14. See
 the string in the Cloudfront Fields section, for example yFrj66VM:
@@ -229,30 +232,17 @@ Sun Feb  2 22:31:29 UTC 2025
 
 # Lambda Logs
 
-There are a lot of lambda logs.  For the one download I found 161 log files:
+The lambda function runs for each http request. The system logs when
+the function starts and at the end. The Lambda function console.log
+messages appear in the log. Each line contains a request id that
+groups the request’s log lines.
 
-~~~
-find logs/lambda -type f \
-  | grep "2025-02-02" \
-  | wc -l
-
-161
-~~~
+The lambda logs contain the download id so you can match the lambda
+lines with the cloudfront lines.
 
 The node js console.log messages from the Lambda function appear in
 the lambda logs mixed in with the system messages.  Each console
 message starts with the text “MyData” so they are easy to extract:
-
-~~~
-find logs/lambda -type f \
-  | grep "2025-02-02" \
-  | xargs zcat \
-  | grep "MyData:" \
-  | awk '{ printf "%s %-5s ", $1, $4; \
-    for (i = 5; i <= NF; i++) printf "%s ", $i; print ""}' \
-  | less
-~~~
-
 
 [⬇](#Contents)
 
@@ -300,7 +290,7 @@ find logs/cloudfront -type f \
 
 # Contents
 
-* [Log Location](#log-location) — where the logs are located and how to copy them locally.
+* [Gather Logs](#gather-logs) — how to find the logs and copy them locally.
 * [CloudFront Fields](#cloudfront-fields) — lists the fields and a link to their documentation.
 * [Extract Fields](#extract-fields) — how to extract important fields.
 * [Lambda Logs](#lambda-logs) — how to extract the console log lines and match them up with the Cloud front logs.

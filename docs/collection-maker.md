@@ -2,8 +2,6 @@
 
 How to create a new collection.
 
-Follow these steps to create a new collection.
-
 # Manual Steps
 
 You used Adobe applications to find and edit images for a collection.

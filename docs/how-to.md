@@ -43,8 +43,7 @@ deploying……
 deployed in 20 seconds
 ~~~
 
-
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Create User
 
@@ -86,7 +85,7 @@ Note: You can use the plus sign in emails for testing so multiple
 unique email addresses go to the same place. For example:
 steve.flenniken+testme@gmail.com
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Login-flow Script
 
@@ -105,37 +104,7 @@ retrieving user information from Cognito's endpoints. All tokens are
 persisted in a JSON file, allowing for subsequent operations like
 token refresh and revocation.
 
-[⬇ ────────](#Contents)
-
-# Http Logging
-
-You can turn on http request logging. CloudFront will copy log files
-to your bucket.  By default logs are delivered about once per hour.
-
-You turn it on in the cloud front console. Look for "Standard log
-destinations" and log to your bucket e.g. sflennikco using the
-Partitioning "/logs".
-
-Copy the logs locally to analyze them:
-
-~~~
-# from docker container
-cd ~/collections
-aws s3 sync s3://sflennikco/logs logs
-~~~
-
-33 fields appear on each log line and it’s hard to read. You can view
-the data one field per line using the following command:
-
-~~~
-# from container
-file=logs/EHLMG1T8SOX48.2024-11-23-21.e30560f4.gz # variable
-zcat $file\
-  | awk '{for(i=1; i<=NF; i++) {printf "%20s: %s\n", f[i], $i}; \
-  {print "\n"}}\
-  /#Fields: / {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}' \
-  | less
-~~~
+[⬇](#Contents)
 
 # Contents
 

@@ -43,7 +43,7 @@ The icons do the following:
 * ![download images](dist/icons/download.svg) download the collection's images
 * ![delete cached images](dist/icons/trash-can.svg) delete the collection's cached images
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Thumbnails Page
 
@@ -51,8 +51,8 @@ The icons do the following:
 
 The thumbnails page shows the collection’s thumbnails.
 
-Past the bottom of the thumbnails you see the collection's title and
-description which might be different description than on index page.
+Past the bottom of the thumbnails you see the collection's title and a
+more in depth description of the collection then on the index page.
 
 You go back to the index page by scrolling to the bottom and tapping
 the index icon.
@@ -60,7 +60,7 @@ the index icon.
 Tapping a camera icon shows the first photo full size on the image
 page.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Image Page
 
@@ -84,7 +84,7 @@ You scroll to the bottom to see a description of the image.
 You go back to the thumbnails or index page by scrolling to the bottom
 and tapping the thumbnail or index icon.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Run Collections
 

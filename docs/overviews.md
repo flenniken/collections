@@ -152,7 +152,7 @@ production they’re stored in the AWS S3 flennikco bucket. AWS
 Cloudfront copies them as needed to its edge location caches around
 the world.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Login
 
@@ -180,7 +180,7 @@ collections to be a public static website without a backend server
 Users login with an email and a password. You add and remove users
 manually with the AWS Cognito console.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Service Worker
 
@@ -201,7 +201,7 @@ enables offline access.
 first to ensure fresh content, falling back to cached versions when
 offline.
 
-[⬇ ────────](#Contents)
+[⬇](#Contents)
 
 # Typescript Files
 
