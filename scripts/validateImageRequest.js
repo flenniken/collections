@@ -68,7 +68,10 @@ async function verifyJwt(token, ignoreExpiration) {
 
   // Find the key used to encrypt the token.
   const key = jwks.find((key) => key.kid === header.kid);
-  if (!key) {
+  if (key) {
+    console.log(`key: ${key.kid}`)
+  }
+  else {
     // When the keys roll over there is a transition period where the
     // old keys still exist. As long as this code gets a cold start in that
     // period, the new keys get cached.
@@ -101,6 +104,14 @@ async function verifyJwt(token, ignoreExpiration) {
 
   if (payload.client_id != client_id)
     throw new Error('Wrong client_id.')
+
+  // Log the expire date when we are ignoring it.
+  if (ignoreExpiration === true) {
+    const expires = new Date(payload.exp * 1000)
+    const dateString = expires.toISOString()
+    const formattedString = dateString.replace(/[TZ]/g, ' ');
+    console.log(`Expires: ${formattedString}`);
+  }
 
   return payload;
 }
@@ -184,6 +195,7 @@ async function handler(event, context) {
 
   console.log(`url: ${url}`);
   console.log(`id: ${queryParams.id}`);
+  console.log(`user: ${queryParams.user}`);
 
   // Get the access token from the auth header. It only exists on
   // image requests.

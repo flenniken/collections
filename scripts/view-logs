@@ -72,23 +72,35 @@ if [ ! -s "requests-lines.txt" ]; then
   exit
 fi
 
-# Show the lines that match the request line ids.
+# Show the lines that match the request line ids. Sort by the order the
+# requests come in then by time so each request's lines are next to
+# each other.
 cat lambda-files.txt \
   | xargs zcat \
   | grep -F -f requests-lines.txt \
   | awk '\
     / START RequestId: / \
-      {printf "%s %s %s ", \
-      substr($1, 0, 10), substr($1, 12, 12), substr($4, 0, 8); print "-----", $5, $6} \
+      {id = substr($4, 0, 8); \
+      if (!(id in ids)) { ids[id] = NR};
+      printf "%4s %s %s %s\n", \
+      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; \
+      printf "%4s %s %s %s ", \
+      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; print $5, $6} \
     /INFO/ \
-      {printf "%s %s %s ", \
-      substr($1, 0, 10), substr($1, 12, 12), substr($3, 0, 8); \
+      {id = substr($3, 0, 8); \
+      if (!(id in ids)) { ids[id] = NR};
+      printf "%4s %s %s %s ", \
+      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; \
       for (i = 5; i <= NF; i++) printf "%s ", $i; print ""} \
     / REPORT RequestId: / \
-      {printf "%s %s %s ", \
-      substr($1, 0, 10), substr($1, 12, 12), substr($4, 0, 8); \
-      print $6, $7} \
-    '
+      {id = substr($4, 0, 8); \
+      if (!(id in ids)) { ids[id] = NR};
+      printf "%4s %s %s %s ", \
+      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; \
+      printf "%s %s\n", $6, $7} \
+    ' \
+  | sort -k1,1n -k3,3 \
+  | awk '{for (i = 2; i <= NF; i++) printf "%s ", $i; print ""}'
 
 rm -f requests-lines.txt
 rm -f lambda-files.txt
