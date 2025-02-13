@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# Copy the logs from s3 to here.
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+s3Bucket=sflennikco
+
+cd ~/collections
+aws s3 sync s3://$s3Bucket/logs logs

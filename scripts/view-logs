@@ -13,7 +13,7 @@ fi
 day=$1
 downloadId=$2
 
-usage="Specify the day and download id, i.e.: scripts/viewlogs 2025-02-05 UzCwQzMw"
+usage="Specify the day and download id, i.e.: scripts/view-logs 2025-02-05 UzCwQzMw"
 
 if [ "$day" == "" ] || [ "${#day}" != "10" ]; then
   echo "$usage"

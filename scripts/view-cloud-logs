@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# Show cloudfront log requests.
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+
+
+find logs/cloudfront -type f \
+  | xargs zcat \
+  | awk 'BEGIN {n = split("3 4 5 11 14 21 31 10", \
+    list, " ") } \
+    /^[0-9]/ {for(i=1; i<=n; i++) \
+    {$14=substr($14,0,11); printf "%s ", $list[i]}; print ""}' \
+  | sort
+
