@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Show cloudfront log requests.
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+echo "date       time     location status download  seconds  hit         url"
+echo "---------- -------- --------- --- ----------- ----- ---------- -----------------"
+
+find logs/cloudfront -type f \
+  | xargs zcat \
+  | awk '/^[0-9]/ {printf "%s %s %s %s %11s %s %10s %s\n", $3, $4, $5, $11, \
+     substr($14,0,11), $21, $31, $10}' \
+  | sort
+
