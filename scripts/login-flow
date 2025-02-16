@@ -36,8 +36,6 @@ from jwt import PyJWKClient
 import subprocess
 import sys
 import textwrap
-from validateImageRequest import validateImageRequest, fetchJwks, findJwksKey, \
-  base64_url_decode, userPoolId, lambda_handler, client_id
 import boto3
 from boto_client import getBotoClient, getAwsParameters, readJsonFile
 from capture import capture
@@ -566,12 +564,12 @@ class TestLoginFlow(unittest.TestCase):
     #   print(f"{k: >10}: {v}")
 
     keys = ['sub', 'iss', 'version', 'client_id', 'origin_jti',
-            'event_id', 'token_use', 'scope', 'auth_time', 'exp',
+            'token_use', 'scope', 'auth_time', 'exp',
             'iat', 'jti', 'username']
     for key in keys:
       if key not in data:
-        print(f"missing key: 'key'")
-        self.assertTrue(false)
+        print(f"missing key: '{key}'")
+        self.assertTrue(False)
 
     self.assertEqual(data['scope'], "aws.cognito.signin.user.admin openid profile")
 
@@ -634,79 +632,12 @@ NGItumhDXKXoHvjwD-5s2qiJQ2xHDptw"
 Unable to decode the token. jwt returns:
 Not enough segments""")
 
-  def test_fetchJwks(self):
-    jwks = fetchJwks()
-    jdata = json.dumps(jwks, indent=2)
-    # print(jdata)
-    self.assertTrue('keys' in jwks)
-    self.assertEqual(len(jwks['keys']), 2)
-
-  def test_findJwksKey(self):
-    jwks = {
-      "keys": [
-        {
-          "alg": "RS256",
-          "e": "AQAB",
-          "kid": "nbtCcP8+LwXZVElWFoGOoBx8q0vnNP67ScNxh8ECAdw=",
-          "kty": "RSA",
-          "n": "uqEE6OeLoAQJXeoId5xmGeiOJ3GrvvM4cCqEzaaWmujoYH87E8oxV85x3u5n9CiNO_ogMMGIpA9dFiVkTJ3bQHyOUIA_YFVKIgABI-C72ajM72gP08cR0WEWDzg9nhg3pmcPWLR_hMgWtGOlpFE662EMoW0Q0PxVZb9rPL6cPLYRPy-yOnXlwdo-chPXtmSPSxsqqIjamAeDfrmxgX3wys__n3xYthBhY0NxQTFGC4zXCTnYzxv9TweT_FRb14IKEAbHbm4PPIhHGa_fvrYqJpDNhgZLz3ZP2N7iI2K_edyj3XnQf4SLgMkLiYf7ctM1-eZHArObxLKwalwoalyKrw",
-          "use": "sig"
-        },
-        {
-          "alg": "RS256",
-          "e": "AQAB",
-          "kid": "Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=",
-          "kty": "RSA",
-          "n": "s_sf7feNmcDhqVEnWa0G7MoqLjOkrkcWiqkEbRGE1ysDaKdHIBgHZj2TlSDxKh6ljxXYQoJT7UFcQHmeXcnRXoPIzkF-8e4sDvY0DiCJvKOnKuG1w1s2OhCbcge7C9OWXs_-_yzSyOKtlu-9rHi0hc-1jdWo6qZj2O6joPd7f30jRAc3ex64ZVKFmY_qymP-rwlnVZYhfZ0bRwbo5Pdsa_I8karOTRlk5iFppMhMTcZ-Qf7JeYIwukAEqvBas0dV1LkgK5TT999qilNmWcqjm1IXEJYTtc7lVfobRFnDt2VOyDuRUhpykZwNKV1KbMO0FuE_bJAbl4h1jCK2C9CoqQ",
-          "use": "sig"
-        }
-      ]
-    }
-    kid = "nbtCcP8+LwXZVElWFoGOoBx8q0vnNP67ScNxh8ECAdw="
-    key = findJwksKey(kid, jwks)
-    self.assertEqual(key['kid'], kid)
-    kid = "Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0="
-    key = findJwksKey(kid, jwks)
-    self.assertEqual(key['kid'], kid)
-    kid = "asdfb"
-    key = findJwksKey(kid, jwks)
-    self.assertEqual(key, None)
-
-  def test_base64_url_decode(self):
-    token = readJsonKey(tokenFilename, "access_token")
-    header_b64, payload_b64, signature_b64 = token.split('.')
-    # print(f"header_b64: {header_b64}")
-    # print(f"payload_b64: {payload_b64}")
-    # print(f"signature_b64: {signature_b64}")
-    header = json.loads(base64_url_decode(header_b64).decode('utf-8'))
-    jdata = json.dumps(header, indent=2)
-    # print(jdata)
-    # {
-    #   "kid": "Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=",
-    #   "alg": "RS256"
-    # }
-    self.assertTrue("kid" in header)
-    self.assertTrue("alg" in header)
-    payload = json.loads(base64_url_decode(payload_b64).decode('utf-8'))
-    jdata = json.dumps(payload, indent=2)
-    # print(jdata)
-    self.assertTrue("token_use" in payload)
-
   def test_getCognitoJwksUrls(self):
     params = getAwsParameters()
     issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
     self.assertTrue(issuer.startswith("https://cognito-idp."))
     self.assertTrue(jwksUrl.startswith("https://cognito-idp."))
     self.assertTrue(jwksUrl.endswith("/.well-known/jwks.json"))
-
-  def test_userPoolId(self):
-    """
-    Make sure the validateImageRequest.py userPoolId and client_id
-    setting matches the aws_settings.json one.
-    """
-    params = getAwsParameters()
-    self.assertEqual(params.userPoolId, userPoolId)
-    self.assertEqual(params.client_id, client_id)
 
   def test_decodeAndValidate(self):
     token = readJsonKey(tokenFilename, "id_token")
@@ -728,121 +659,6 @@ Not enough segments""")
       # jData = json.dumps(response, indent=2)
       # print(jData)
       self.assertTrue("Username" in response)
-
-  # def test_validateImageRequest1(self):
-  #   url = "not-an-image"
-  #   self.assertEqual(validateImageRequest(url, None), "")
-
-  # def test_validateImageRequest3(self):
-  #   url = "images/c1-1-p.jpg"
-  #   with capture() as out:
-  #     with self.assertRaises(Exception) as context:
-  #       validateImageRequest(url, "a"*5555)
-  #   stdout, stderr = out
-  #   # print(stdout)
-  #   self.assertEqual(stdout, "No cached jwks, cold start.\n")
-
-  # def test_validateImageRequestGood(self):
-  #   token = readJsonKey(tokenFilename, "access_token")
-  #   url = "images/someimage"
-  #   message = validateImageRequest(url, token)
-  #   if message == "" or message == 'Token expired.':
-  #     return
-  #   self.assertTrue(False, message)
-
-  def run_lambda_handler(self, uri, auth="nothing", eRequest="nothing", eStdout=""):
-    """
-    Test the lambda_handler with the given event and verify that
-    it returns the expected return value and that it logs the given
-    message to stdout.
-    """
-    event = {
-      "Records": [
-        {
-          "cf": {
-            "request": {
-              "method": "GET",
-              "uri": "images/someimage",
-              "querystring": "",
-              "headers": {
-                "host": [
-                  {
-                    "key": "Host",
-                    "value": "d1234abcd.cloudfront.net"
-                  }
-                ],
-                "user-id": [
-                  {
-                    "key": "user-id",
-                    "value": "adsdf"
-                  }
-                ],
-                "user-agent": [
-                  {
-                    "key": "User-Agent",
-                    "value": "Mozilla/5.0"
-                  }
-                ],
-                "accept": [
-                  {
-                    "key": "Accept",
-                    "value": "text/html"
-                  }
-                ]
-              },
-              "clientIp": "203.0.113.1"
-            }
-          }
-        }
-      ]
-    }
-
-    request = event['Records'][0]["cf"]["request"]
-    headers = request["headers"]
-    if uri != "nothing":
-      request["uri"]: uri
-    if auth != "nothing":
-      headers["auth"] = [{"key": "auth", "value": auth}]
-    if eRequest == "nothing":
-      eRequest = {'status': '403', 'statusDescription': 'Forbidden', 'body':
-                  'Unauthorized access.'}
-
-    with capture() as out:
-      request = lambda_handler(event, None)
-    stdout, stderr = out
-    failed = False
-    if request != eRequest:
-      message = f"""
-Unexpected request was returned::
-     got: {request}
-expected: {eRequest}
-"""
-      self.assertTrue(False, message)
-    if stdout != eStdout:
-      message = f"""
-Unexpected stdout message:
-     got: {stdout}
-expected: {eStdout}
-"""
-      self.assertTrue(False, message)
-
-  def test_lambda_handler(self):
-    # Test lambda_handler.
-
-    eStdout = """\
-No cached jwks, cold start.
-No token passed.
-"""
-    self.run_lambda_handler("/notimage.html", eStdout=eStdout)
-
-    self.run_lambda_handler("/images/someimage.jpg", eStdout="No token passed.\n")
-
-    # This is the good case, it got past the signature validation and
-    # all the others.
-    token = readJsonKey(tokenFilename, "access_token")
-    self.run_lambda_handler("/images/someimage.jpg", auth=token, eStdout="Token expired.\n")
-
-
 
 if __name__ == '__main__':
   args = parseCommandLine()

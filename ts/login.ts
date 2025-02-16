@@ -271,6 +271,7 @@ function showUserInformation(userInfo: UserInfo) {
   log("login", `${userInfo.givenName} ${userInfo.familyName} is logged in.`)
   log("login", `admin: ${adminStr}`)
   log("login", `user id: ${userInfo.userId}`)
+  log("login", `email: ${userInfo.email}`)
 
   get("given-name").textContent = userInfo.givenName
   get("family-name").textContent = userInfo.familyName
