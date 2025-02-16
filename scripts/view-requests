@@ -16,4 +16,4 @@ find logs/cloudfront -type f \
      printf "%s %s %9s %s %8s %8s %8s %10s %s %s\n", \
      $3, $4, $5, $11, id, user, rid, hit, $21, $10}' \
   | sort
-
+# 3, 4, 5, 11, 14, 14, 17, 31, 21, 10

@@ -90,7 +90,7 @@ user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
 
 [⬇](#Contents)
 
-# CloudFront Fields
+# Show Fields
 
 Each line of the cloud front log contains 39 spaces separated
 fields. The following command shows the fields for the first line with
@@ -99,7 +99,13 @@ the name on the left and the value on the right:
 ~~~
 # from container
 cd ~/collections
-scripts/log-fields
+scripts/show-fields
+~~~
+
+You can pass a unique request id to view its details:
+
+~~~
+scripts/show-fields hf88XrNR
 ~~~
 
 Sample output:
@@ -154,10 +160,10 @@ The fields are documented here:
 
 # View Requests
 
-You use the view-requests command to see all the Cloudfront
-requests. It shows the important fields 3, 4, 5, 11, 14, 21, 31, 10
-from log lines, instead of all of them, to make reading and studying
-the information much easier.
+Run the view-requests command to see all the Cloudfront requests.  It
+shows the important fields 3, 4, 5, 11, 14, 14, 17, 31, 21, 10 from log lines,
+instead of all of them, to make reading and studying the information
+much easier.
 
 ~~~
 scripts/view-requests
@@ -184,6 +190,8 @@ The output columns:
 * 8: x-edge-detailed-result-type
 * 9: time-taken
 * 10: url
+
+[⬇](#Contents)
 
 # View Download
 
@@ -272,7 +280,7 @@ scripts/show-fields b3E8FoYg
 
 * [Gather Logs](#gather-logs) -— how to find the logs and copy them locally.
 * [Download ID](#download-id) -- how the download id ties together the Cloudfront and Lambda logs.
-* [CloudFront Fields](#cloudfront-fields) -— lists the Cloudfront log fields and a link to their documentation.
+* [Show Fields](#show-fields) -— lists the Cloudfront log fields and a link to their documentation.
 * [View Requests](#view-requests) -- how to view all the Cloudfront requests.
 * [View Download](#view-download) -- how to view a download's Cloudfront and Lambda logs.
 * [Lambda Logs](#lambda-logs) -- information about the log lines and how they are grouped.
