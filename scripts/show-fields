@@ -1,6 +1,7 @@
 #!/bin/bash
 
-# Show the Cloudfront log fields of the last http request.
+# Show the Cloudfront log fields of an http request.
+# Specify a request id or nothing to see the last request.
 
 # Make sure we're running inside the docker container.
 if [[ -z "${coder_env}" ]]; then
@@ -8,20 +9,37 @@ if [[ -z "${coder_env}" ]]; then
   exit
 fi
 
-echo "Show the Cloudfront log fields of the last http request."
+rid=$1
+
+if [ "$rid" == "" ]; then
+  echo "Show the Cloudfront log fields of the last http request."
+else
+  echo "Show the request with the given request id: $rid"
+fi
+
+echo ""
+echo "Number              Field  Value"
+echo "------        -----------  ----------"
+
+
+if [ "$rid" == "" ]; then
+  find logs/cloudfront -type f \
+    | sort \
+    | tail -1 \
+    | xargs zcat \
+    | awk '/^[0-9]/{for(i=1; i<=NF; i++) \
+     {printf "%-4s %20s  %s\n", i, f[i], $i}; \
+     {print "\n"};exit}\
+     /#Fields: / {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}'
+else
+  find logs/cloudfront -type f \
+    | xargs zgrep "$rid\|#Fields:" \
+    | awk '/hiw2IDCt/ {for(i=1; i<=NF; i++) \
+       {printf "%-4s %20s  %s\n", i, f[i], $i}}; \
+     /#Fields:/ {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}'
+fi
+
 echo ""
 echo "The cloudfront standard log reference:"
 echo "https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html"
 echo ""
-
-echo "Number              Field  Value"
-echo "------        -----------  ----------"
-
-find logs/cloudfront -type f \
-  | sort \
-  | tail -1 \
-  | xargs zcat \
-  | awk '/^[0-9]/{for(i=1; i<=NF; i++) \
-   {printf "%-4s %20s  %s\n", i, f[i], $i}; \
-   {print "\n"};exit}\
-   /#Fields: / {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}'

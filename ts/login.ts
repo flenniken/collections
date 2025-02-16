@@ -267,8 +267,10 @@ function isAdmin(userInfo?: UserInfo): boolean {
 function showUserInformation(userInfo: UserInfo) {
   // Show the user name and a logout button on the page.
 
-  const adminStr = isAdmin(userInfo) ? " (admin)" : ""
-  log("login", `${userInfo.givenName} ${userInfo.familyName}${adminStr} is logged in.`)
+  const adminStr = isAdmin(userInfo) ? "yes" : "no"
+  log("login", `${userInfo.givenName} ${userInfo.familyName} is logged in.`)
+  log("login", `admin: ${adminStr}`)
+  log("login", `user id: ${userInfo.userId}`)
 
   get("given-name").textContent = userInfo.givenName
   get("family-name").textContent = userInfo.familyName

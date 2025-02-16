@@ -8,12 +8,12 @@ if [[ -z "${coder_env}" ]]; then
   exit
 fi
 
-echo "date       time     location status download  seconds  hit         url"
-echo "---------- -------- --------- --- ----------- ----- ---------- -----------------"
-
 find logs/cloudfront -type f \
   | xargs zcat \
-  | awk '/^[0-9]/ {printf "%s %s %s %s %11s %s %10s %s\n", $3, $4, $5, $11, \
-     substr($14,0,11), $21, $31, $10}' \
+  | awk '/^[0-9]/ {id=substr($14,4,8); if (id == "") id="-"; \
+     user=substr($14,18,8); if (user == "") user="-";\
+     rid = substr($17, 0, 8); hit = substr($31, 0, 10); \
+     printf "%s %s %9s %s %8s %8s %8s %10s %s %s\n", \
+     $3, $4, $5, $11, id, user, rid, hit, $21, $10}' \
   | sort
 

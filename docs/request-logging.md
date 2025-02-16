@@ -5,8 +5,8 @@ Lambda@Edge. You use these to verify the website is fast and working
 correctly.
 
 CloudFront logs a significant amount of information for each
-request. We use standard logging which contains one line per
-request. By default, each line contains 39 fields.
+request. We use standard logging which contains one line per request
+and by default each line contains 39 fields.
 
 Normally standard logs are delivered within minutes to your Amazon S3
 bucket and there is no extra charge for standard logs.
@@ -43,7 +43,7 @@ The Cloudfront log copy to S3 is configured in the console. Look for
 "Standard log destinations" and log to your bucket e.g. `sflennikco`
 using the Partitioning `/logs/cloudfront`.
 
-For lambda you use the console to manually copy them to S3. You find
+For Lambda you use the console to manually copy them to S3. You find
 the logs in the nearest region to the edge location. You determine the
 edge location from the cloud-logs command. The location field starts
 with an airport code. For example for the location SEA900-P1 you would
@@ -68,8 +68,8 @@ leading slash, it will go to the wrong location (to a S3 folder called
 # Download ID
 
 You use the download id to match up a particular download with the
-Cloudfront and lambda log lines. When you click the Collections
-download button, the code generates an 8 digit random base 62 number
+Cloudfront and Lambda log lines. When you click the Collections
+download button the code generates an 8 digit random base 62 number
 called the download id. This id is added as a query parameter to each
 image request in the collection.  You can see this in your browser
 network tab.  The id is yFrj66VM in the example below.
@@ -92,8 +92,9 @@ user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
 
 # CloudFront Fields
 
-The following command displays the 39 Cloudfront log fields and their
-values from the last request.
+Each line of the cloud front log contains 39 spaces separated
+fields. The following command shows the fields for the first line with
+the name on the left and the value on the right:
 
 ~~~
 # from container
@@ -160,18 +161,34 @@ the information much easier.
 
 ~~~
 scripts/view-requests
-
-date       time     location status download  seconds  hit         url
----------- -------- --------- --- ----------- ----- ---------- -----------------
-2025-02-13 04:28:22 SEA900-P1 200 id=xrgpgk5H 0.188        Hit /images/c1-5-t.jpg
-2025-02-13 04:28:22 SEA900-P1 200 id=xrgpgk5H 0.191        Hit /images/c1-6-t.jpg
-2025-02-13 04:28:23 SEA900-P1 200 id=xrgpgk5H 0.425        Hit /images/c1-1-p.jpg
 ~~~
+
+Sample output with the columns numbered:
+
+~~~
+1          2        3         4   5        6        7              8    9     10
+2025-02-15 01:33:09 SEA900-P1 200 A9DxzhqT 0801f3d0 hf88XrNR       Miss 2.045 /images/c2-10-p.jpg
+2025-02-15 01:33:09 SEA900-P1 200 A9DxzhqT 0801f3d0 jRrwgvH9       Miss 1.997 /images/c2-12-p.jpg
+2025-02-15 01:33:09 SEA900-P1 200 A9DxzhqT 0801f3d0 sFaoR2C-       Miss 2.039 /images/c2-9-p.jpg
+~~~
+
+The output columns:
+
+* 1: date
+* 2: time
+* 3: location
+* 4: http status code
+* 5: download id, - when not specified
+* 6: user id, first 8 characters, - when not specified
+* 7: unique request id
+* 8: x-edge-detailed-result-type
+* 9: time-taken
+* 10: url
 
 # View Download
 
 The view-download script shows you all the requests for a download. It
-shows important information from both the Cloudfront and the lambda
+shows important information from both the Cloudfront and the Lambda
 logs. You specify the day and download id of the download. You get
 this from the view-requests output above. You run it like this:
 
@@ -184,30 +201,7 @@ Partial Output:
 
 ~~~
 ...
-2025-02-13 04:28:22 SEA900-P1 200 id=xrgpgk5H 0.180 Hit /images/c1-7-p.jpg
-2025-02-13 04:28:22 SEA900-P1 200 id=xrgpgk5H 0.183 Hit /images/c1-3-t.jpg
-2025-02-13 04:28:22 SEA900-P1 200 id=xrgpgk5H 0.188 Hit /images/c1-5-t.jpg
-2025-02-13 04:28:22 SEA900-P1 200 id=xrgpgk5H 0.191 Hit /images/c1-6-t.jpg
-2025-02-13 04:28:23 SEA900-P1 200 id=xrgpgk5H 0.425 Hit /images/c1-1-p.jpg
-2025-02-13 04:28:23 SEA900-P1 200 id=xrgpgk5H 0.493 Hit /images/c1-3-p.jpg
-2025-02-13 04:28:23 SEA900-P1 200 id=xrgpgk5H 0.545 Hit /images/c1-5-p.jpg
-2025-02-13 04:28:23 SEA900-P1 200 id=xrgpgk5H 0.551 Hit /images/c1-4-p.jpg
-2025-02-13 04:28:22.655 6cf7012d
-2025-02-13 04:28:22.655 6cf7012d Version: 29
-2025-02-13 04:28:22.814 6cf7012d id: xrgpgk5H
-2025-02-13 04:28:22.814 6cf7012d url: /images/c1-5-p.jpg
-2025-02-13 04:28:22.815 6cf7012d jwks: Warm start.
-2025-02-13 04:28:22.815 6cf7012d warning: Ignoring token expiration for testing.
-2025-02-13 04:28:22.835 6cf7012d auth: Passed
-2025-02-13 04:28:22.955 6cf7012d 299.67 ms
-2025-02-13 04:28:22.654 5897c34b
-2025-02-13 04:28:22.654 5897c34b Version: 29
-2025-02-13 04:28:22.757 5897c34b id: xrgpgk5H
-2025-02-13 04:28:22.757 5897c34b url: /images/c1-5-t.jpg
-2025-02-13 04:28:22.777 5897c34b jwks: Warm start.
-2025-02-13 04:28:22.778 5897c34b warning: Ignoring token expiration for testing.
-2025-02-13 04:28:22.798 5897c34b auth: Passed
-2025-02-13 04:28:22.818 5897c34b 163.94 ms
+todo
 ...
 ~~~
 
@@ -215,13 +209,13 @@ Partial Output:
 
 # Lambda Logs
 
-The lambda function runs for each http request.  The Lambda function's
+The Lambda function runs for each http request.  The Lambda function's
 console.log messages appear in the log along with some system
 messages. Each request is assigned a unique id by AWS that groups the
 request’s log lines together. The time the request started determines
-its order in the output and each request group of lines is shown
-together. The requests run in parallel so the times are not
-sequential between groups.
+its order in the output and each request's group of lines is shown
+together. The requests run in parallel so the times are not sequential
+between groups.
 
 Example lines with headers:
 
@@ -235,7 +229,7 @@ date       time         unique id   message
 
 [⬇](#Contents)
 
-# Analysis Tasks
+# Analyze Logs
 
 You can analyze the logs to determine that the website is operating
 error free, to determine how fast it is and to determine usage
@@ -243,26 +237,36 @@ patterns.
 
 **Status Codes**
 
-You can look for 200 and 304 status codes.  The 200 requests
-successfully returned an uncached file. The 304 were successfully
-returned from the cache. The other status codes are error conditions.
-
-The following command will count each status code.  There were 507 status 200:
+You can look at the status codes starting from a particular date with
+the following command. It counts each different code:
 
 ~~~
 find logs/cloudfront -type f \
   | xargs zcat -f \
-  | awk '{ print $11 }' \
+  | grep -v '#Fields:\|#Version: 1.0' \
+  | awk '/2025\-02\-14/ {f=1; next} \
+  f {print $11}' \
   | sort | uniq -c | sort -n
 
-     11 301
-     81 403
-     93 304
-     96
-     96 cs-uri-stem
-    322 401
-    507 200
+      4 304
+     21 401
+    189 200
 ~~~
+
+To look a one of the 401 error requests you find a request id then you look at its log details:
+
+~~~
+scripts/view-requests | less
+
+2025-02-15 01:33:19 SEA900-P1 401 A9DxzhqT 0801f3d0 b3E8FoYg LambdaGene 0.028 /images/c2-15-p.jpg
+2025-02-15 01:33:19 SEA900-P1 401 A9DxzhqT 0801f3d0 eBd01sbt LambdaGene 0.060 /images/c2-1-p.jpg
+2025-02-15 01:33:19 SEA900-P1 401 A9DxzhqT 0801f3d0 g4VALzA0 LambdaGene 0.025 /images/c2-13-p.jpg
+
+scripts/view-download 2025-02-15 A9DxzhqT | less
+
+scripts/show-fields b3E8FoYg
+~~~
+
 
 # Contents
 
@@ -272,4 +276,4 @@ find logs/cloudfront -type f \
 * [View Requests](#view-requests) -- how to view all the Cloudfront requests.
 * [View Download](#view-download) -- how to view a download's Cloudfront and Lambda logs.
 * [Lambda Logs](#lambda-logs) -- information about the log lines and how they are grouped.
-* [Analysis Tasks](#analysis-tasks) -- how to use the logs to analyze the website traffic.
+* [Analyze Logs](#analyze-logs) -- how to use the logs to analyze the website traffic.

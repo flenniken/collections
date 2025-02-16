@@ -28,28 +28,18 @@ if [ "$downloadId" == "" ] || [ "${#downloadId}" != "8" ] ; then
   exit
 fi
 
-# echo "day: ${day}"
-# echo "download id: ${downloadId}"
-
-# Example lambda logs:
-#
-# 2025-02-07T01:44:09.064Z START RequestId: 57f7dfb5-e844-469d-b615-b5b8202efbc4 Version: 28
-#
-# 2025-02-07T01:44:09.178Z 2025-02-07T01:44:09.178Z	57f7dfb5-e844-469d-b615-b5b8202efbc4	INFO	Trying: 100 / undefined
-#
-# 2025-02-07T01:44:09.198Z REPORT RequestId: 57f7dfb5-e844-469d-b615-b5b8202efbc4	Duration: 134.17 ms	Billed Duration: 135 ms	Memory Size: 128 MB	Max Memory Used: 80 MB
-#
-# 2025-02-07T01:42:25.138Z END RequestId: 21cebdaa-57e1-4f31-844f-013f7b8ffe96
-
+# Find all the download requests in the cloudfront logs.
 find logs/cloudfront -type f \
   | xargs zcat \
   | grep $downloadId \
-  | awk 'BEGIN {n = split("3 4 5 11 14 21 31 10", \
-    list, " ") } \
-    /^[0-9]/ {for(i=1; i<=n; i++) \
-    {$14=substr($14,0,11); printf "%s ", $list[i]}; print ""}' \
+  | awk '/^[0-9]/ {id=substr($14,4,8); if (id == "") id="-"; \
+     user=substr($14,18,8); if (user == "") user="-";\
+     printf "%s %s %9s %s %8s %8s %10s %s %s\n", $3, $4, $5, $11, \
+     id, user, $31, $21, $10}' \
   | sort
 
+# Find all the lambda log files for the given day and write the
+# filenames to a file.
 find logs/lambda -type f \
   | grep "$day" \
   > lambda-files.txt
