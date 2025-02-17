@@ -237,13 +237,7 @@ date       time         unique id   message
 
 [⬇](#Contents)
 
-# Analyze Logs
-
-You can analyze the logs to determine that the website is operating
-error free, to determine how fast it is and to determine usage
-patterns.
-
-**Status Codes**
+# Status Codes
 
 You can look at the status codes starting from a particular date with
 the following command. It counts each different code:
@@ -275,6 +269,30 @@ scripts/view-download 2025-02-15 A9DxzhqT | less
 scripts/show-fields b3E8FoYg
 ~~~
 
+[⬇](#Contents)
+
+# Test Cache
+
+You want the cache to be used for speed.
+
+Test the scenario where the second user to download a collection uses the cache.
+
+* Use the cloudfront console to remove cached images for testing with the invalidate UI.  To remove collection one's images use "/images/c1-*" at:
+
+~~~
+ "CloudFront > Distributions > EHLMG1T8SOX48 > Create invalidation"
+~~~
+
+* login as user 1
+* delete collection 1
+* download collection 1
+* record the download id
+* repeat for user 2
+* wait 5 minutes
+* manually copy the lambda logs to S3
+* download the logs locally with: "scripts/sync"
+* view the cloudfront logs for user 1 misses and user 2 hits: "scripts/view-requests"
+* view the lambda logs for the both users:  "scripts/view-download ...".  The second user should by mostly "warm start".
 
 # Contents
 
@@ -284,4 +302,5 @@ scripts/show-fields b3E8FoYg
 * [View Requests](#view-requests) -- how to view all the Cloudfront requests.
 * [View Download](#view-download) -- how to view a download's Cloudfront and Lambda logs.
 * [Lambda Logs](#lambda-logs) -- information about the log lines and how they are grouped.
-* [Analyze Logs](#analyze-logs) -- how to use the logs to analyze the website traffic.
+* [Test Cache](#test-cache) -- test that users hit the cache.
+* [Status Codes](#status-codes) -- how to count the status code types and investigate them.

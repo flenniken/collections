@@ -168,7 +168,8 @@ When you log out, the login local data is deleted and you are logged
 out of cognito.
 
 You can login when developing on localhost:8000.  There are redirect
-urls for this.
+urls for this. Note that downloading from localhost downloads from the
+local images folder and does not go to cloudfront.
 
 Admin users see the debugging refresh and airplane icons at the bottom
 of the index page and the airplane on the image page.

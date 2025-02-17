@@ -301,8 +301,11 @@ wait for it to deploy.  It will take a few minutes.
 
 Under the Behaviors tab check the collections line and push the Edit
 button.  For the "Viewer protocol policy" select "Redirect HTTP to
-HTTPS" then save.
-
+HTTPS" then save. For the "Cache key and origin requests" create a
+"Cache policy" called Plain that caches files for a month without
+regard to headers, cookies or query parameters. Create a "Origin
+request policy - optional" that specifies the "auth" header.  This
+tells cloudfront to pass the auth header to the lambda function.
 
 [⬇](#Contents)
 
