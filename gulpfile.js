@@ -63,7 +63,7 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
   if (tsOptions === null) {
     tsOptions = {
       "noImplicitAny": true,
-      "lib": ["es7", "dom"],
+      "lib": ["ES2017", "dom"],
       "target": target,
       "strict": true,
       "outFile": `${destFile}`
@@ -135,7 +135,7 @@ gulp.task('sw', function () {
   options = {
     "noImplicitAny": true,
     "target": target,
-    "lib": ["es7", "webworker"],
+    "lib": ["ES2017", "webworker"],
     "strict": true,
     "outFile": "sw.js"
   }

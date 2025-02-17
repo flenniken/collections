@@ -112,6 +112,7 @@ def waitForDeployed(cloudfrontClient, distribution_id):
   while (1):
     response = cloudfrontClient.get_distribution(Id=distribution_id)
     distribution_status = response['Distribution']['Status']
+    # print(f"distribution_status: {distribution_status}")
     if distribution_status == "Deployed":
       if not showDeploying:
         print("")
@@ -124,8 +125,8 @@ def waitForDeployed(cloudfrontClient, distribution_id):
       print("deploying", end="")
       showDeploying = False
     else:
-     print(".", end="")
-     count += 1
+      print(".", end="")
+    count += 1
     sys.stdout.flush()
     time.sleep(waitSeconds)
 

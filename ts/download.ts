@@ -135,6 +135,12 @@ function getRandom8(): string {
   return result;
 }
 
+function getUTCDateTime() {
+  const now = new Date()
+  const dateString = now.toISOString()
+  return dateString.replace(/[TZ]/g, ' ');
+}
+
 async function downloadUrls(urls: string[]) {
   // Download the given urls in parallel.
 
@@ -149,7 +155,9 @@ async function downloadUrls(urls: string[]) {
   headers.set("auth", userInfo.access_token);
 
   // Generate an 8 character random number to identify this download.
+  const today = getUTCDateTime()
   const downloadId = getRandom8()
+  log("download",`Download UTC and id: ${today} ${downloadId}`)
 
   // Start fetching all images at once.
   let promises: Promise<Response>[] = []

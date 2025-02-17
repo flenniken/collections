@@ -111,11 +111,6 @@ async function verifyJwt(token, ignoreExpiration) {
   const formattedString = dateString.replace(/[TZ]/g, ' ');
   console.log(`expires: ${formattedString}`);
 
-  // Log the stream name to identify the AWS Lambda machine running
-  // the request.
-  const logStreamName = process.env.AWS_LAMBDA_LOG_STREAM_NAME
-  console.log(`stream name: ${logStreamName}`)
-
   return payload;
 }
 

@@ -34,7 +34,7 @@ if [ "$rid" == "" ]; then
 else
   find logs/cloudfront -type f \
     | xargs zgrep "$rid\|#Fields:" \
-    | awk '/hiw2IDCt/ {for(i=1; i<=NF; i++) \
+    | awk -vrid=$rid '$0 ~ rid {for(i=1; i<=NF; i++) \
        {printf "%-4s %20s  %s\n", i, f[i], $i}}; \
      /#Fields:/ {for(i=1; i<=NF; i++) {f[i] = $(i+1)}}'
 fi
