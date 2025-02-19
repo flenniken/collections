@@ -271,13 +271,23 @@ scripts/show-fields b3E8FoYg
 
 [⬇](#Contents)
 
-# Test Cache
+# Test Cloudfront Cache
 
-You want the cache to be used for speed.
+AWS Cloudfront caches files at the edge for fast responses.  Verify
+that the cache is hit using the Cloudfront logs.
 
-Test the scenario where the second user to download a collection uses the cache.
+The files in the cache last for a month or until the cache fills
+up. Each request contains unique information, download id, user id,
+token that should be verified that it does not affect the cache (or
+fragment it).  If a request doesn't provide a token, an error response
+is generated and this should not affect subsequent valid requests.
 
-* Use the cloudfront console to remove cached images for testing with the invalidate UI.  To remove collection one's images use "/images/c1-*" at:
+Test the scenario where the second user to download a collection uses
+the cache.
+
+You use the cloudfront console to remove cached images for testing
+with its invalidate UI.  To remove the first collection’s images use
+"/images/c1-*" at:
 
 ~~~
  "CloudFront > Distributions > EHLMG1T8SOX48 > Create invalidation"
@@ -294,6 +304,22 @@ Test the scenario where the second user to download a collection uses the cache.
 * view the cloudfront logs for user 1 misses and user 2 hits: "scripts/view-requests"
 * view the lambda logs for the both users:  "scripts/view-download ...".  The second user should by mostly "warm start".
 
+[⬇](#Contents)
+
+# Test Lambda Cache
+
+You want the cache to be used for speed. Verity with the Lambda logs.
+
+Verify the code stays at the edge most of the time, i.e. doesn’t go to
+the Oregon region to get the keys every time.
+
+The log shows warm or cold and the key used.  The code ages out in 5 -
+15 minutes.  Multiple AWS machines might be handling the requests in
+parallel.
+
+The same machine should be cold the first time then warm until it ages
+out.
+
 # Contents
 
 * [Gather Logs](#gather-logs) -— how to find the logs and copy them locally.
@@ -302,5 +328,6 @@ Test the scenario where the second user to download a collection uses the cache.
 * [View Requests](#view-requests) -- how to view all the Cloudfront requests.
 * [View Download](#view-download) -- how to view a download's Cloudfront and Lambda logs.
 * [Lambda Logs](#lambda-logs) -- information about the log lines and how they are grouped.
-* [Test Cache](#test-cache) -- test that users hit the cache.
+* [Test Cloudfront Cache](#test-cloudfront-cache) -- test that the Cloudfront cache is hit.
+* [Test Lambda Cache](#test-lambda-cache) -- test that the Lambda key cache is hit.
 * [Status Codes](#status-codes) -- how to count the status code types and investigate them.
