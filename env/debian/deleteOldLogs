@@ -1,0 +1,4 @@
+
+# Delete log files every hour that are older than 30 days.
+0 * * * * root find /home/coder/collections/logs -type f -mtime +30 -delete
+

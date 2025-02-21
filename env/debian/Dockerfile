@@ -13,11 +13,12 @@ ENV coder_env=debian
 # Install the needed apps and libraries.
 RUN apt-get update && apt-get -qy install less man sudo tree curl \
   wget nano git jq libpcre3 libpcre3-dev rsync nginx \
-  python3-requests python3-jwt unzip python3-boto3 dnsutils
+  python3-requests python3-jwt unzip python3-boto3 \
+  dnsutils procps zip
 
-# Install python pip and zip for creating a lambda zip file for the
-# authentication code.
-RUN apt-get -qy install python3-pip zip
+# # Install python pip for creating a lambda zip file for the
+# # authentication code.
+# RUN apt-get -qy install python3-pip
 
 # Install glow for viewing markdown at the command line.
 # https://github.com/charmbracelet/glow
@@ -45,7 +46,7 @@ RUN chown coder:coder /home/coder
 # Install statictea.
 COPY statictea /usr/bin
 
-RUN apt-get install -qy nodejs npm
+RUN apt-get install -qy nodejs npm cron
 
 # Install nodejs.  See available versions with "apt-cache policy nodejs".
 # ENV NODE_MAJOR=21
@@ -65,6 +66,9 @@ RUN npm install --global typescript
 
 # Install bashrc for the prompt and some aliases.
 COPY --chown=coder:coder bashrc /home/coder/.bashrc
+
+# Install cron job to delete old log files every hour.
+COPY deleteOldLogs /etc/cron.d/deleteOldLogs
 
 # Switch to coder user for following commands.
 USER coder
@@ -104,5 +108,5 @@ COPY --chown=coder:coder glow.yml /home/coder/.config/glow/glow.yml
 # Start in the collections directory.
 WORKDIR /home/coder/collections
 
-# Start nginx and leave the container running in bash.
-CMD sudo nginx && /bin/bash
+# Start cron, nginx and leave the container running in bash.
+CMD sudo service cron start; sudo nginx && /bin/bash

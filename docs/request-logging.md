@@ -320,6 +320,16 @@ parallel.
 The same machine should be cold the first time then warm until it ages
 out.
 
+[⬇](#Contents)
+
+# Remove Old Logs
+
+The S3 bucket is configured to remove log files that are older than 30
+days.  You run the script config-log-rotate to set this up.
+
+The local docker machine is also configured to remove logs older than
+30 days. It runs the deleteOldLogs cron job every hour to delete.
+
 # Contents
 
 * [Gather Logs](#gather-logs) -— how to find the logs and copy them locally.
@@ -331,3 +341,4 @@ out.
 * [Test Cloudfront Cache](#test-cloudfront-cache) -- test that the Cloudfront cache is hit.
 * [Test Lambda Cache](#test-lambda-cache) -- test that the Lambda key cache is hit.
 * [Status Codes](#status-codes) -- how to count the status code types and investigate them.
+* [Remove Old Logs](#remove-old-logs) -- how old logs are deleted.
