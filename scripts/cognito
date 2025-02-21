@@ -138,7 +138,12 @@ def listUsers(poolName, cognitoClient=None):
     given_name = a.get('given_name', "unknown")
     family_name = a.get('family_name', "unknown")
     email = a.get('email')
-    print(f"{given_name} {family_name} <{email}>")
+    admin = a.get('custom:admin')
+    if admin == "true":
+      adminStr = "admin"
+    else:
+      adminStr = "user"
+    print(f"{adminStr:>5}: {given_name} {family_name} <{email}>")
 
 def promptForEmailConfiguration(sesv2Client=None, stsClient=None):
   """
@@ -467,7 +472,8 @@ Domain?: """)
     ReadAttributes=[
       "email",
       "family_name",
-      "given_name"
+      "given_name",
+      "custom:admin",
     ],
     WriteAttributes=[
       "email",
@@ -730,6 +736,7 @@ def getPoolSettings(poolName, cognitoClient=None):
     UserPoolId=userPoolId, ClientId=poolApps[appName])
   userPoolClient = response['UserPoolClient']
   assert userPoolClient['ClientName'] == appName
+  printDict("userPoolClient: ", userPoolClient)
 
   # Get the redirect urls.
   callbackURLs = userPoolClient['CallbackURLs']
