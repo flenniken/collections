@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Configure the S3 bucket log folder to delete log files over 30 days old.
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+bucket=$1
+
+if [ "$bucket" == "" ]; then
+  echo "Pass in the bucket name"
+  exit
+fi
+
+# Create the lifecycle.json file.
+cat > lifecycle.json  <<EOF
+{
+  "Rules": [
+    {
+      "ID": "DeleteAfter30Days",
+      "Status": "Enabled",
+      "Prefix": "/logs",
+      "Expiration": {
+        "Days": 30
+      }
+    }
+  ]
+}
+EOF
+
+# Configure the S3 bucket to delete old log files.
+aws s3api put-bucket-lifecycle-configuration --bucket $bucket \
+    --lifecycle-configuration file://lifecycle.json
+
+rm -f lifecycle.json

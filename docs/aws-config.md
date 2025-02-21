@@ -171,6 +171,13 @@ aws s3api get-bucket-location --bucket sflennikco # variable
 }
 ~~~
 
+Configure S3 so 30 day old log files get automatically deleted. Pass
+in the bucket name, for example sflennikco:
+
+~~~
+scripts/config-log-rotate sflennikco
+~~~
+
 [⬇](#Contents)
 
 # Copy Website
