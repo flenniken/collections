@@ -327,8 +327,42 @@ out.
 The S3 bucket is configured to remove log files that are older than 30
 days.  You run the script config-log-rotate to set this up.
 
+You can test by listing the oldest logs on S3 and comparing that with
+the current date:
+
+~~~
+# from container
+date -I
+2025-02-21
+
+bucket=sflennikco  # variable
+aws s3 ls --recursive s3://$bucket/logs/ \
+  | awk '{print $1}' \
+  | sort \
+  | head
+
+2025-01-11
+2025-01-18
+2025-01-18
+2025-01-18
+2025-01-18
+2025-01-18
+2025-01-18
+2025-01-18
+2025-01-18
+2025-01-18
+~~~
+
 The local docker machine is also configured to remove logs older than
 30 days. It runs the deleteOldLogs cron job every hour to delete.
+
+You can test by counting the number of logs older than 30 days:
+
+~~~
+# from container
+find logs -mtime +30 | wc -l
+0
+~~~
 
 # Contents
 
