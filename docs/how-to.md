@@ -75,11 +75,23 @@ Edit the user and set their name.
 * Click add another
 * in the Attribute Name editbox type their "family_name"
 * in the Value edit box type their name, e.g. "Flenniken"
+* optionally add custom:admin, true
 * push the Save button
 
 The user will receive an email telling them their email address and
 password.  The password will expire if not used in 7 days.  The first
 time they login, they set a permanent password.
+
+Reset a user's password:
+
+~~~
+aws cognito-idp admin-set-user-password \
+  --user-pool-id us-west-2_4czmlJC5x \
+  --username f86103f0-7021-705f-290b-aa443e8605c2 \
+  --password Temp1pass= --no-permanent
+~~~
+
+It takes a few minutes for the user to recieve their email.
 
 Note: You can use the plus sign in emails for testing so multiple
 unique email addresses go to the same place. For example:
@@ -108,7 +120,6 @@ token refresh and revocation.
 
 # Contents
 
-* [Create User](#create-user) -- how to create a new user using the AWS console.
 * [Deploy](#deploy) -- how to deploy and and invalidate files and how the cloudfront cache works.
+* [Create User](#create-user) -- how to create a new user using the AWS console.
 * [Login-flow Script](#login-flow-script) -- authentication testing tool.
-* [Http Logging](#http-logging) -- how to turn on http request logging.
