@@ -83,7 +83,8 @@ function handleDOMContentLoaded() {
 
   area = get("area")
 
-  imageIndex = getFirstImage()
+  // imageIndex = getFirstImage()
+  imageIndex = 0
   log("image", `First image: ${imageIndex + 1}`)
 
   startTimer.log("image", "setAvailableArea")

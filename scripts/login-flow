@@ -27,6 +27,9 @@ import traceback
 import sys
 import signal
 import unittest
+import random
+import string
+from datetime import datetime
 import urllib.parse
 from collections import namedtuple
 import json
@@ -257,6 +260,45 @@ def revokeTokens():
 Response text:""")
   runJqLess(response.text)
 
+def getDownloadId():
+  """
+  Generate an 8 digit random id from letters and digits.
+  """
+  characters = string.ascii_letters + string.digits
+  return ''.join(random.choices(characters, k=8))
+
+def fetchUrl(url, filename):
+  """
+  Fetch the given url using the saved access_token.
+  """
+  access_token = readJsonKey(tokenFilename, "access_token")
+  data = getDecodeToken(tokenFilename, "access_token")
+  headers = {"auth": f"{access_token}"}
+  userId = data['username']
+  downloadId = getDownloadId()
+  url =  f"{url}?id={downloadId}&user={userId}"
+  response = requests.get(url, headers=headers, stream=True)
+  if response.status_code != 200:
+    raise LoginFlowException(f"Error: {response.status_code}")
+
+  with open(filename, "wb") as file:
+    for chunk in response.iter_content(8192):
+      file.write(chunk)
+
+  day = getCurrentUtcDate()
+  print(f"""\
+
+Wrote file: {filename}
+
+   day     download id             user
+----------  --------  ------------------------------------
+{day}  {downloadId}  {userId}
+""")
+
+def getCurrentUtcDate():
+  """ Return the current UTC date in YYYY-MM-DD format. """
+  return datetime.utcnow().strftime('%Y-%m-%d')
+
 def showDecodedToken(tokenName):
   tokenNames = ['access_token', 'id_token', 'refresh_token']
   if tokenName not in tokenNames:
@@ -290,9 +332,9 @@ def getCognitoJwksUrls(userPoolId):
 
 def decodeAndValidate(token):
   """
-  Decode and validate the access token using the jwt
-  module. Return the decoded information in a dictionary. Raise an
-  exception when the token cannot be decoded.
+  Decode and validate the token using the jwt module. Return the
+  decoded information in a dictionary. Raise an exception when the
+  token cannot be decoded.
   """
   params = getAwsParameters()
   issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
@@ -300,8 +342,11 @@ def decodeAndValidate(token):
   signing_key = jwkClient.get_signing_key_from_jwt(token)
 
   # The access token does not have the aud claim. It seems you use the
-  # id token instead of the access token.
+  # id token instead of the access token?
   # jwt.exceptions.MissingRequiredClaimError: Token is missing the "aud" claim
+
+  # You can ignore the expire date:
+  # options={"verify_exp": False})
 
   try:
     decoded_token = jwt.decode(token, signing_key.key,
@@ -340,6 +385,9 @@ def process(args):
     getTokens(code=None, refresh=True)
   elif args.revokeTokens:
     revokeTokens()
+  elif args.fetchUrl:
+    url, filename = args.fetchUrl
+    fetchUrl(url, filename)
   else:
     showHelp()
 
@@ -386,6 +434,8 @@ def parseCommandLine():
     help=f"get a new access and id token but not a refresh token (oauth2/token endpoint). It uses the refresh token in {tokenFilename} and overwrites the file with the new tokens. Since the refresh token is not in the file, calling refresh again will fail.")
   parser.add_argument("-k", "--revokeTokens", action="store_true",
     help=f"revoke the refresh token (oauth2/revoke endpoint) in {tokenFilename} and its related tokens")
+  parser.add_argument("-f", "--fetchUrl", metavar=("url", "filename"), nargs=2, required=False,
+    help="Download the given URL using the saved token and save it to the specified filename.")
 
   args = parser.parse_args(sys.argv[1:])
   return args

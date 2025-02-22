@@ -253,12 +253,12 @@ Are you sure you want to delete this collection's images from the cache?`
 
 function viewThumbnails(cNum: number) {
   log("index", `view thumbnails for collection ${cNum}`)
-  window.location.assign(`pages/thumbnails-${cNum}.html`)
+  window.location.assign(`images/c${cNum}/thumbnails-${cNum}.html`)
 }
 
 function viewCollection(cNum: number) {
   log("index", `view collection ${cNum}`)
-  window.location.assign(`pages/image-${cNum}.html`)
+  window.location.assign(`images/c${cNum}/image-${cNum}.html`)
 }
 
 async function clearAppCache() {

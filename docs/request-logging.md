@@ -287,7 +287,7 @@ the cache.
 
 You use the cloudfront console to remove cached images for testing
 with its invalidate UI.  To remove the first collection’s images use
-"/images/c1-*" at:
+"/images/c1/c1-*" at:
 
 ~~~
  "CloudFront > Distributions > EHLMG1T8SOX48 > Create invalidation"

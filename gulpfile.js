@@ -155,7 +155,7 @@ function validateHtml(filename) {
   // You can use a file "--ignore-config=valid-ignore.txt".
   // You can also support multiple with | regex.
 
-  // html-validator '--ignore=/Consider/' dist/pages/thumbnails-1.html
+  // html-validator '--ignore=/Consider/' dist/images/c1/thumbnails-1.html
 
   const ignore = "Consider avoiding viewport values that prevent users from resizing documents."
   const parameters = [
@@ -182,25 +182,25 @@ gulp.task("vindex", function (cb) {
 
 gulp.task("vimage1", function (cb) {
   // Validate the image html file.
-  validateHtml("dist/pages/image-1.html")
+  validateHtml("dist/images/c1/image-1.html")
   cb()
 })
 
 gulp.task("vimage2", function (cb) {
   // Validate the image html file.
-  validateHtml("dist/pages/image-2.html")
+  validateHtml("dist/images/c2/image-2.html")
   cb()
 })
 
 gulp.task("vthumbnails1", function (cb) {
   // Validate the thumbnails html file.
-  validateHtml("dist/pages/thumbnails-1.html")
+  validateHtml("dist/images/c1/thumbnails-1.html")
   cb()
 })
 
 gulp.task("vthumbnails2", function (cb) {
   // Validate the thumbnails html file.
-  validateHtml("dist/pages/thumbnails-2.html")
+  validateHtml("dist/images/c2/thumbnails-2.html")
   cb()
 })
 
@@ -285,18 +285,18 @@ function thumbnailsPage(collectionNumber, cb) {
 /*
 statictea \
   -t pages/thumbnails-tmpl.html \
-  -s pages/collection-x.json \
+  -s dist/images/cx/cx.json \
   -o pages/header.tea \
-  -r dist/pages/thumbnails-x.html
+  -r dist/images/cx/thumbnails-x.html
 */
 
   const num = collectionNumber
   log(`Compiling the thumbnails template for collection ${num}.`)
   const tmpFilename = `tmp/thumbnails-${num}.html`
-  const distFilename = `dist/pages/thumbnails-${num}.html`
+  const distFilename = `dist/images/c${num}/thumbnails-${num}.html`
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
-    "-s", `pages/collection-${num}.json`,
+    "-s", `dist/images/c${num}/c${num}.json`,
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]
@@ -321,18 +321,18 @@ function imagePage(collectionNumber, cb) {
 /*
 statictea \
   -t pages/image-tmpl.html \
-  -s pages/collection-x.json \
+  -s dist/images/cx/cx.json \
   -o pages/header.tea \
-  -r dist/pages/image-x.html
+  -r dist/images/cx/image-x.html
 */
 
   const num = collectionNumber
   log(`Compiling image template for collection ${collectionNumber}.`)
   const tmpFilename = `tmp/image-${num}.html`
-  const distFilename = `dist/pages/image-${num}.html`
+  const distFilename = `dist/images/c${num}/image-${num}.html`
   const parameters = [
     "-t", "pages/image-tmpl.html",
-    "-s", `pages/collection-${num}.json`,
+    "-s", `dist/images/c${num}/c${num}.json`,
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]
@@ -389,8 +389,8 @@ gulp.task("watch", function(cb) {
   gulp.watch("pages/collections.css", gs(["css"]));
 
   const hr = "pages/header.tea"
-  const json1 = "pages/collection-1.json"
-  const json2 = "pages/collection-2.json"
+  const json1 = "images/c1/c1.json"
+  const json2 = "images/c2/c2.json"
 
   gulp.watch([hr], gs("syncronize"))
 
@@ -409,9 +409,8 @@ gulp.task("watch", function(cb) {
 });
 
 gulp.task("missing-folders", function (cb) {
-  // Create the pages and images folders, they are missing the first time you run
+  // Create the images folders, it is missing the first time you run
   // after making a new docker container.
-  gulp.src('*.*', {read: false}).pipe(gulp.dest('./dist/pages'))
   gulp.src('*.*', {read: false}).pipe(gulp.dest('./dist/images'))
   return cb()
 })

@@ -1,5 +1,5 @@
 <!--$ # You build the image.html page from this template and -->
-<!--$ # the collection-1.json file with the gulpfile image task. -->
+<!--$ # the collection's json file with the gulpfile image task. -->
 
 <!--$ replace t.content = o.header -->
 <!DOCTYPE html>
@@ -16,8 +16,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ nextline -->
 <!--$ : title = html(s.title, "body") -->
   <title>{title}</title>
-  <link rel="stylesheet" href="../collections.css">
-  <script src="../js/image.js"></script>
+  <link rel="stylesheet" href="/collections.css">
+  <script src="/js/image.js"></script>
   <style>
 body {
 //$ # The page is hidden until it finishes loading so it does not flash.
@@ -72,14 +72,14 @@ body {
 <!--$ endblock -->
   </div>
   <div class="bottom-menu">
-    <a href="../index.html">
-      <img class="icon" src="../icons/index.svg" alt="index">
+    <a href="/index.html">
+      <img class="icon" src="/icons/index.svg" alt="index">
     </a>
 <!--$ nextline -->
     <a href="thumbnails-{s.collection}.html">
-      <img class="icon" src="../icons/thumbnails.svg" alt="thumbnails">
+      <img class="icon" src="/icons/thumbnails.svg" alt="thumbnails">
     </a>
-    <img class="icon right admin" src="../icons/airplane.svg"
+    <img class="icon right admin" src="/icons/airplane.svg"
       onclick="logAppCache()" alt="log json">
   </div>
 </body>

@@ -111,7 +111,7 @@ You test the code by downloading with and without a valid token.
 * test with curl after deployed by downloading:
 
 ~~~
-https://collections.sflennik.com/images/c1-1-p.jpg
+https://collections.sflennik.com/images/c1/c1-1-p.jpg
 
 https://collections.sflennik.com/icons/camera.svg
 ~~~

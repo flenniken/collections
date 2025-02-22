@@ -1,5 +1,5 @@
 <!--$ # You build the thumbnails.html page from this template -->
-<!--$ # and the collection-1.json file with the gulpfile -->
+<!--$ # and the collection's json file using the gulpfile -->
 <!--$ # thumbnails task. -->
 
 <!--$ replace t.content = o.header -->
@@ -17,8 +17,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ nextline -->
 <!--$ : g.title = html(s.title, "body") -->
   <title>{g.title}</title>
-  <link rel="stylesheet" href="../collections.css">
-  <script src="../js/thumbnails.js"></script>
+  <link rel="stylesheet" href="/collections.css">
+  <script src="/js/thumbnails.js"></script>
 </head>
 <!--$ block c = len(s.images) -->
 <!--$ : if((c != 8 and c != 10 and c != 12 and c != 14 and c != 16), +-->
@@ -31,7 +31,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ nextline t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
-<!--$ : url = format("{s.imagePageUrl}?image={id}") -->
+<!--$ : url = s.imagePageUrl -->
     <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
   </div>
 <!--$ block -->
@@ -42,14 +42,14 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   </div>
 <!--$ endblock -->
   <div class="bottom-menu">
-    <a href="../index.html">
-      <img class="icon" src="../icons/index.svg" alt="index">
+    <a href="/index.html">
+      <img class="icon" src="/icons/index.svg" alt="index">
     </a>
 <!--$ nextline -->
     <a href="image-{s.collection}.html">
-      <img class="icon" src="../icons/camera.svg" alt="view collection">
+      <img class="icon" src="/icons/camera.svg" alt="view collection">
     </a>
-    <!-- <img class="icon-current" src="../icons/thumbnails.svg" alt="thumbnails"> -->
+    <!-- <img class="icon-current" src="/icons/thumbnails.svg" alt="thumbnails"> -->
   </div>
 </body>
 </html>

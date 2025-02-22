@@ -5,8 +5,8 @@ tmp/
 dist/js/
 dist/index.html
 dist/sw.js
-dist/pages/
-dist/images/
+dist/images/*/*.jpg
+dist/images/*/*.html
 dist/tin/
 dist/collections.css
 working-images/

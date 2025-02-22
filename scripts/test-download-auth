@@ -32,6 +32,6 @@ gotExpected $statusCode "200"
 # # Test that downloading an image without a token fails.
 printf "Download image without token: "
 statusCode=$(curl -s --write-out %{http_code} --output /dev/null \
-  https://collections.sflennik.com/images/c1-2-p.jpg)
+  https://collections.sflennik.com/images/c1/c1-2-p.jpg)
 gotExpected $statusCode "401"
 

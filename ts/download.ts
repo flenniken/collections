@@ -115,11 +115,11 @@ function getCollectionUrls(cNum: number): string[] {
   // urls.push("js/missing.js")
 
   for (let imageNum = 1; imageNum <= collection.iCount; imageNum++) {
-    urls.push(`images/c${cNum}-${imageNum}-p.jpg`)
-    urls.push(`images/c${cNum}-${imageNum}-t.jpg`)
+    urls.push(`images/c${cNum}/c${cNum}-${imageNum}-p.jpg`)
+    urls.push(`images/c${cNum}/c${cNum}-${imageNum}-t.jpg`)
   }
-  urls.push(`pages/image-${cNum}.html`)
-  urls.push(`pages/thumbnails-${cNum}.html`)
+  urls.push(`images/c${cNum}/image-${cNum}.html`)
+  urls.push(`images/c${cNum}/thumbnails-${cNum}.html`)
 
   return urls
 }
