@@ -13,19 +13,9 @@ The website from a file perspective.
 
 From a file perspective the website consists of an index page and a
 set of collection pages. A collection consists of a thumbnails page
-and an image page.
+an image page, a json file and images.
 
-Each image and thumbnails page is named with the collection’s number.
-Below we show the index file and the first two collections 1 and 2.
-
-~~~
-index.html
-pages
-    image-1.html
-    image-2.html
-    thumbnails-1.html
-    thumbnails-2.html
-~~~
+The collection files are named with the collection’s number.
 
 Each of the three type of pages has an associated js page and the all
 share the same css file and the same icons.
@@ -55,13 +45,13 @@ index.html is made from:
 thumbnails-1.html is made from:
 
 * thumbnails-tmpl.html
-* collection-1.json
+* c1.json
 * header.tea
 
 images-1.html is made from:
 
 * images-tmpl.html
-* collection-1.json
+* c1.json
 * header.tea
 
 The js files are created from a set of type script files.
@@ -96,9 +86,9 @@ internet. The png icons come from the same Ocean Side beach image at
 different resolutions.
 
 Each collection consists 8, 10, 12, 14, or 16 full resolution jpg
-files at their original aspect ratio. Each image has an associated
+images at their original aspect ratio. Each image has an associated
 square 480 x 480 pixel jpg thumbnail.  The collection images are stored
-in the image folder.
+in the image folder along with their json, and html pages.
 
 Shown below are the first collection's image files.  Each file is
 named after its collection "c1" in this case.  The full resolution
@@ -127,6 +117,9 @@ images
   c1-7-t.jpg
   c1-8-p.jpg
   c1-8-t.jpg
+  c1.json
+  image-1.html
+  thumbnails-1.html
 ~~~
 
 The thumbnails used by the index page are duplicated in the tin
