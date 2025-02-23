@@ -1,0 +1,386 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+
+"""
+This script makes a new collection.
+
+See collection-maker.md for a guide to making collections.
+
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+import sys
+import argparse
+import traceback
+import sys
+import signal
+import unittest
+import urllib.parse
+from collections import namedtuple
+import json
+import subprocess
+import sys
+import textwrap
+
+from PIL import Image
+
+class MakerException(Exception):
+  """ An exception we plan for. """
+  pass
+
+def makeCollectionJson(collectionNum):
+  jData = makeJson(collectionNum)
+  num = collectionNum
+  filename = f"dist/local/c{num}/c{num}.json"
+  with open(filename, "w") as fh:
+    fh.write(jData)
+  print(f"Wrote collection json file: {filename}")
+
+def makeJson(collectionNum):
+  """
+  Make a collection json file from a directory of images.
+  """
+  # Verify the collection folder exists.
+  folder = f"dist/local/c{collectionNum}"
+  if not os.path.exists(folder):
+    raise MakerException(f"Missing the collection folder: {folder}")
+
+  # Get the filenames in the folder.
+  filenames = os.listdir(folder)
+
+  paths = []
+  for filename in filenames:
+    paths.append(f"{folder}/{filename}")
+
+  previews, thumbnails, other = previewsAndThumbnails(paths)
+  verifyNames(collectionNum, previews, thumbnails, other)
+
+  images = getCollectionImages(collectionNum, previews, thumbnails)
+  num = collectionNum
+  collection = {
+    "title": "",
+    "description": "",
+    "collection": num,
+    "width": 480,
+    "height": 480,
+    "imagePageUrl": f"/images/c{num}/image-{num}.html",
+    "thumbnailsPageUrl": f"/images/c{num}/thumbnails-{num}.html",
+    "images": images
+  }
+
+  return json.dumps(collection, indent=2)
+
+def previewsAndThumbnails(filenames):
+  """
+  Return the list of previews, thumbnails and other files. Pass in
+  a list of filenames.
+  """
+
+  previews = []
+  thumbnails = []
+  other = []
+  for filename in filenames:
+    if filename.endswith("-p.jpg"):
+      previews.append(filename)
+    elif filename.endswith("-t.jpg"):
+      thumbnails.append(filename)
+    else:
+      other.append(filename)
+  return previews, thumbnails, other
+
+def verifyNames(collectionNum, previews, thumbnails, other):
+  """
+  Verify that the list of names works for a collection.
+  """
+
+  if len(previews) == 0:
+    raise MakerException(f"Error: no previews files that end in -p.jpg.")
+  if len(thumbnails) == 0:
+    raise MakerException(f"Error: no thumbnails files that end in -t.jpg.")
+
+  if len(previews) != len(thumbnails):
+    raise MakerException(f"Error: the number of thumbnails ({len(thumbnails)}) and previews ({len(previews)}) must match.")
+
+  if len(thumbnails) < 8:
+    raise MakerException(f"Error: not enough images, you need at least 8, found: {len(thumbnails)}.")
+
+  if len(thumbnails) > 20:
+    raise MakerException(f"Error: too many images, you are limited to 20, found: {len(thumbnails)}.")
+
+  if len(other):
+    num = collectionNum
+    raise MakerException(f"Error: there are {len(other)} extra files in the folder: \
+dist/local/c{num}/{other[0]}")
+
+
+def getImageInfo(filename):
+  """
+  Return the image information as an ImageInfo named tuple.
+  Attributes: width, height, kind (image format), fileSize
+  """
+  try:
+    fileSize = os.path.getsize(filename)
+  except FileNotFoundError:
+    raise MakerException(f"Error: the file doesn't exist: {os.getcwd()}/{filename}")
+
+  with Image.open(filename) as img:
+    width, height = img.size
+
+  ImageInfo = namedtuple('ImageInfo', ['width', 'height', 'kind', 'fileSize'])
+  return ImageInfo(width=width, height=height, kind=img.format, fileSize=fileSize)
+
+def getCollectionImages(collectionNum, previews, thumbnails):
+  """
+  Get the image information needed for the collection images json.
+  Return a list of dictionaries, where each dictionary contains
+  information for an image an its thumbnail.
+
+  Raise an exception when an image is does not fit the requirements.
+  """
+  assert len(previews) == len(thumbnails)
+
+  num = collectionNum
+  images = []
+
+  for ix, filename in enumerate(previews):
+    thumbnail = thumbnails[ix]
+    collectionImage = {}
+    collectionImage['title'] = ""
+    collectionImage['description'] = ""
+
+    ii = getImageInfo(filename)
+    if ii.width < 933 or ii.height < 933:
+      got = f"{filename}: ({ii.width} x {ii.height})"
+      raise MakerException(f"Error: preview must be greater than or equal to 933, found: {got}")
+    if ii.kind != "JPEG":
+      got = f"{filename}: {ii.kind}"
+      raise MakerException(f"Error: preview must be a jpg, found: {got}")
+
+    collectionImage['url'] = f"/images/c{num}/c{num}-{ix+1}-p.jpg"
+    collectionImage['width'] = ii.width
+    collectionImage['height'] = ii.height
+    collectionImage['size'] = ii.fileSize
+
+    ti = getImageInfo(thumbnail)
+    if ti.width != 480 or ti.height != 480:
+      got = f"{thumbnail}: ({ti.width} x {ti.height})"
+      raise MakerException(f"Error: thumbnail must by 480 by 480, found: {got}")
+    if ti.kind != "JPEG":
+      got = f"{thumbnail}: {ti.kind}"
+      raise MakerException(f"Error: thumbnail must be a jpg, found: {ti.kind}")
+
+    collectionImage['thumbnail'] = f"/images/c{num}/c{num}-{ix+1}-t.jpg"
+    collectionImage['sizet'] = ti.fileSize
+    images.append(collectionImage)
+  return images
+
+def process(args):
+  """
+  """
+  if args.makeJson:
+    makeCollectionJson(args.makeJson)
+  else:
+    showHelp()
+
+def parseCommandLine():
+  """
+  Parse the command line arguments.
+  """
+  if len(sys.argv) == 1:
+    # When there are no arguments provided, show the help information.
+    sys.argv.append("-h")
+  else:
+    # When -t is provided, change argv so unittest does not see it.
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ['-t', '--test']:
+        sys.argv.pop(ix+1)
+        args = argparse.Namespace(test = True)
+        return args
+
+  # Use this module's comment at the top of the file for the
+  # description.
+  parser = argparse.ArgumentParser(
+  prog='PROG', formatter_class=argparse.RawDescriptionHelpFormatter,
+  description=textwrap.dedent(__doc__))
+
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests. Use alone to run all tests.")
+  parser.add_argument("-m", "--makeJson", metavar="collectionNum",
+    help="make a collections json file from a directory of images")
+
+  args = parser.parse_args(sys.argv[1:])
+  return args
+
+def signalHandler(sig, frame):
+  """ Handle ctrl-C """
+  sys.exit(1)
+
+def main(args):
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    process(args)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except MakerException as ex:
+    print(str(ex))
+  except Exception as ex:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0 # success
+
+
+def testVerifyNamesError(filenames, eMessage):
+  """
+  Test verifyNames errors, pass in the expected error message.
+  """
+  previews, thumbnails, other = previewsAndThumbnails(filenames)
+
+  try:
+    verifyNames(34, previews, thumbnails, other)
+    assert False, "Unexpectedly passed"
+  except MakerException as ex:
+    gotExpected(str(ex), eMessage)
+    return # passed
+  assert False, "Got an unexpected exception."
+
+def testGetCollectionImagesError(previews, thumbnails, eMessage):
+  """
+  Test getCollectionImages errors, pass in the expected error message.
+  """
+  try:
+    getCollectionImages(1, previews, thumbnails)
+    assert False, "Unexpectedly passed"
+  except MakerException as ex:
+    gotExpected(str(ex), eMessage)
+    return # passed
+  assert False, "Got an unexpected exception."
+
+def gotExpected(got, expected):
+  if got != expected:
+    msg = f"""
+     got: {got}
+expected: {expected}
+"""
+    assert False, msg
+
+class TestMaker(unittest.TestCase):
+
+  def test_me(self):
+    self.assertEqual(True, bool(1))
+    self.assertEqual(False, bool(0))
+
+  def test_verifyNames_8(filenames):
+    filenames = []
+    for ix in range(8):
+      filenames.append(f"c{ix+1}-p.jpg")
+      filenames.append(f"c{ix+1}-t.jpg")
+    previews, thumbnails, other = previewsAndThumbnails(filenames)
+    verifyNames(45, previews, thumbnails, other)
+
+  def test_verifyNames_20(filenames):
+    filenames = []
+    for ix in range(20):
+      filenames.append(f"c{ix+1}-p.jpg")
+      filenames.append(f"c{ix+1}-t.jpg")
+    previews, thumbnails, other = previewsAndThumbnails(filenames)
+    verifyNames(56, previews, thumbnails, other)
+
+  def test_verifyNames_no_p(filenames):
+    filenames = []
+    testVerifyNamesError(filenames, "Error: no previews files that end in -p.jpg.")
+
+  def test_verifyNames_no_t(filenames):
+    filenames = ["c1-p.jpg"]
+    testVerifyNamesError(filenames, "Error: no thumbnails files that end in -t.jpg.")
+
+  def test_verifyNames_too_few(filenames):
+    filenames = []
+    for ix in range(7):
+      filenames.append(f"c{ix+1}-p.jpg")
+      filenames.append(f"c{ix+1}-t.jpg")
+    testVerifyNamesError(filenames, "Error: not enough images, you need at least 8, found: 7.")
+
+  def test_verifyNames_too_many(filenames):
+    filenames = []
+    for ix in range(21):
+      filenames.append(f"c{ix+1}-p.jpg")
+      filenames.append(f"c{ix+1}-t.jpg")
+    testVerifyNamesError(filenames, "Error: too many images, you are limited to 20, found: 21.")
+
+  def test_verifyNames_uneven(filenames):
+    filenames = []
+    for ix in range(9):
+      filenames.append(f"c{ix+1}-p.jpg")
+      filenames.append(f"c{ix+1}-t.jpg")
+    del(filenames[0])
+    testVerifyNamesError(filenames, "Error: the number of thumbnails (9) and previews (8) must match.")
+
+  def test_verifyNames_other(filenames):
+    filenames = []
+    for ix in range(8):
+      filenames.append(f"c{ix+1}-p.jpg")
+      filenames.append(f"c{ix+1}-t.jpg")
+    filenames.append("extrafile.jpg")
+    testVerifyNamesError(filenames, "Error: there are 1 extra files in the \
+folder: dist/local/c34/extrafile.jpg")
+
+  def test_getCollectionImages(self):
+    filename = "dist/images/c1/c1-1-p.jpg"
+    thumbnail = "dist/images/c1/c1-1-t.jpg"
+    collectionImages = getCollectionImages(23, [filename], [thumbnail])
+
+    expected = [
+      {
+        'title': '',
+        'description': '',
+        'url': '/images/c23/c23-1-p.jpg',
+        'width': 3024,
+        'height': 4032,
+        'size': 2797506,
+        'thumbnail': '/images/c23/c23-1-t.jpg',
+        'sizet': 71810
+      }
+    ]
+    gotExpected(collectionImages, expected)
+
+  def test_getCollectionImages_preview(self):
+    filename = "dist/icons/icon-32.png"
+    thumbnail = "dist/images/c1/c1-1-t.jpg"
+    eMsg = """Error: preview must be greater than or equal to 933, \
+found: dist/icons/icon-32.png: (32 x 32)"""
+    testGetCollectionImagesError([filename], [thumbnail], eMsg)
+
+  def test_getCollectionImages_thumbnail(self):
+    filename = "dist/images/c1/c1-1-p.jpg"
+    thumbnail = "dist/icons/icon-32.png"
+    eMsg = """Error: thumbnail must by 480 by 480, \
+found: dist/icons/icon-32.png: (32 x 32)"""
+    testGetCollectionImagesError([filename], [thumbnail], eMsg)
+
+  def test_makeJson(self):
+    # test the good case
+    return
+    jData = makeJson(3)
+    print(jData)
+
+  def test_makeJson_error(self):
+    try:
+      jData = makeJson(1)
+    except Exception as ex:
+      gotExpected(str(ex), "Missing the collection folder: dist/local/c1")
+      return
+    self.assertTrue(False, "Did not get the expected exception.")
+
+if __name__ == '__main__':
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)

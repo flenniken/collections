@@ -7,11 +7,22 @@ How to create a new collection.
 You used Adobe applications to find and edit images for a collection.
 
 * open Adobe Bridge
-* tag from 8 - 20 original images with the next collection number, e.g. c24
-* edit them if needed
-* create a temp folder named after the collection, e.g. dist/local/24
-* create full size jpgs of the originals in the local folder, leave the name the same except use the "-p.jpg" extension.
-* make square 480 x 480 jpg thumbnails and put them in the folder with the extension "-t.jpg".
+* rate 8 - 20 original images
+* edit them in camera raw
+* using the keyword panel, tag them with the collection, e.g. c3
+* create a folder in the dist/local folder named after the collection, e.g. dist/local/c3
+* in camera raw, save full size jpgs the collection folder add -p to the names, e.g. dist/local/c3/CF8A0420-p.jpg
+* make copies of the images and rename the copies to have -t.jpg names:
+
+~~~
+cd dist/local/c3
+for file in *-p.jpg; do
+  cp "$file" "${file/-p.jpg/-t.jpg}"
+done
+~~~
+
+* open the -t images in photoshop and make them into square 480 x 480 jpg thumbnails
+
 
 Hand edit the json file or do the steps in the sections that follow.
 
@@ -29,7 +40,7 @@ You create a new cjson file by running the script and specifying the
 collection number:
 
 ~~~
-scripts/maker -m 24
+scripts/maker -m 3
 ~~~
 
 It validate the files. If a problem is found, it stops so you

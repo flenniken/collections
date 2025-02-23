@@ -16,10 +16,6 @@ RUN apt-get update && apt-get -qy install less man sudo tree curl \
   python3-requests python3-jwt unzip python3-boto3 \
   dnsutils procps zip
 
-# # Install python pip for creating a lambda zip file for the
-# # authentication code.
-# RUN apt-get -qy install python3-pip
-
 # Install glow for viewing markdown at the command line.
 # https://github.com/charmbracelet/glow
 RUN apt-get -qy install gpg
@@ -69,6 +65,10 @@ COPY --chown=coder:coder bashrc /home/coder/.bashrc
 
 # Install cron job to delete old log files every hour.
 COPY deleteOldLogs /etc/cron.d/deleteOldLogs
+
+# Install the python pillow package for reading jpg files by the maker
+# command.
+RUN apt-get -qy install python3-pillow
 
 # Switch to coder user for following commands.
 USER coder
