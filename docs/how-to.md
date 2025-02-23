@@ -13,15 +13,16 @@ The deploy script updates the server with your changes.  It copies the
 changed files to S3 and invalidates them in the cloudfront cache.
 
 The CloudFront cache control setting determine how long the file is
-pulled from the cloudfront cache. The default is 24 hours. Once the
-time has expired, cloudfront looks in S3 for new content.
+pulled from the cloudfront cache. The default is 24 hours but it has
+been changed to one month. Once the time has expired, cloudfront looks
+in S3 for new content.
 
 You can issue CloudFront invalidation requests every time your site is
 updated so the new files are removed from the cache.  The deploy
 script does this.
 
 You run the deploy script from the collections folder. It shows the
-files it copies.
+files it copies. If nothing is shown, nothing was copied.
 
 ~~~
 # from docker container
@@ -30,7 +31,8 @@ scripts/deploy -s
 
 You can use the deploy script to list the modified files without
 copying them with the -m option. You can also list the collections s3
-bucket contents with the -l option.
+bucket contents with the -l option. You can download one file from
+cloudfront using login-flow.
 
 You can tell when your code is deployed by using the -w option. It
 polls the distribution status and tells you when the code has been
@@ -115,6 +117,55 @@ tokens, inspecting JWT tokens (access, ID, and refresh tokens), and
 retrieving user information from Cognito's endpoints. All tokens are
 persisted in a JSON file, allowing for subsequent operations like
 token refresh and revocation.
+
+~~~
+scripts/login-flow
+~~~
+
+When you run login-flow with out any options is shows the following help:
+
+~~~
+usage: PROG [-h] [-t] [-l] [-o] [-g code] [-s] [-d token] [-v token] [-u] [-r] [-k]
+            [-f url filename]
+
+This script is for testing the login flow that Collections uses.
+
+The basic flow:
+
+  * Use -l to get the login url.
+  * Paste the login url in your browser and login, you will be redirected.
+  * Copy the code in the url in your browser's address bar.
+  * Use -g option specifying the code. This creates the tokens.json file.
+  * Use -s to look at the tokens file.
+  * Use -d id_token, -d access_token, -d refresh_token, to peer into each token.
+
+options:
+  -h, --help            show this help message and exit
+  -t, --test            run internal unit tests. Use alone to run all tests.
+  -l, --showLoginUrl    show the login url (oauth2/authorize endpoint)
+  -o, --showLogoutUrl   show the logout url (logout endpoint)
+  -g code, --getTokens code
+                        get the cognito tokens (oauth2/token endpoint) and write them to
+                        tmp/tokens.json. Specify a login code.
+  -s, --showTokens      show the tmp/tokens.json file
+  -d token, --decodeToken token
+                        decode a token from the tmp/tokens.json file, specify id_token,
+                        access_token, or refresh_token
+  -v token, --decodeAndValidate token
+                        decode and validate a token from the tmp/tokens.json file, specify
+                        id_token, access_token, or refresh_token
+  -u, --getUserInfo     show the user information (oauth2/userInfo endpoint) given an access token
+                        in tmp/tokens.json.
+  -r, --refreshTokens   get a new access and id token but not a refresh token (oauth2/token
+                        endpoint). It uses the refresh token in tmp/tokens.json and overwrites the
+                        file with the new tokens. Since the refresh token is not in the file,
+                        calling refresh again will fail.
+  -k, --revokeTokens    revoke the refresh token (oauth2/revoke endpoint) in tmp/tokens.json and
+                        its related tokens
+  -f url filename, --fetchUrl url filename
+                        Download the given URL using the saved token and save it to the specified
+                        filename.
+~~~
 
 [⬇](#Contents)
 

@@ -104,27 +104,87 @@ need to specify the ones you use so they don't get scripted.
 
 # Test
 
-You test the code by downloading with and without a valid token.
-
-* todo: write test steps
-* automate the testing
-* test with curl after deployed by downloading:
+You can run the testValidateImageRequest script to test the
+validateImageRequest lambda function:
 
 ~~~
-https://collections.sflennik.com/images/c1/c1-1-p.jpg
-
-https://collections.sflennik.com/icons/camera.svg
+# from the container
+node scripts/testValidateImageRequest.js
 ~~~
 
-Tests:
+The output from the test is shown below. Each line that starts with *
+is a test. The lines between the * lines are the log lines. The logs
+lines appear in the lambda logs. The tests use the token file created
+by login-flow.
 
-* non-image download
-* image without token
-* image with expired token
-* image with valid token
-* image with wrong user
-* image with wrong distribution
-* warm and cold starts
+~~~
+* Test that the file globals match the aws-settings.json.
+* Test reading the access token.
+* Test getJwks.
+* Test parseQueryString
+* Test verifyJwt without a token.
+* Test verifyJwt with an expired access token.
+jwks: Cold start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+* Test verifyJwt with an access token.
+jwks: Warm start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+warning: Ignoring token expiration for testing.
+expires: 2025-02-19 06:40:17.000
+jwks: Warm start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+warning: Ignoring token expiration for testing.
+expires: 2025-02-19 06:40:17.000
+* Test validateRequest with non-image.
+* Test validateRequest with image but no query parameters.
+No query parameters.
+* Test validateRequest with image but no user query parameter.
+Missing user query parameter.
+* Test validateRequest with image but no id query parameter.
+The id query parameter is missing.
+* Test validateRequest with image but no token.
+No token in the auth header.
+* Test validateRequest with image and an invalid token.
+VerifyJwt: Cannot destructure property 'header' of 'jwt.decode(...)' as it is null.
+* Test validateRequest with image and a mismatched user.
+jwks: Warm start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+warning: Ignoring token expiration for testing.
+expires: 2025-02-19 06:40:17.000
+Users do not match.
+Url user: user
+Token user: f86103f0-7021-705f-290b-aa443e8605c2
+* Test validateRequest with image, good case.
+jwks: Warm start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+warning: Ignoring token expiration for testing.
+expires: 2025-02-19 06:40:17.000
+* Test validateRequest with image but expired token.
+jwks: Warm start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+VerifyJwt: jwt expired
+* Test handler without an images url.
+url: /test.html
+id: undefined
+user: undefined
+auth: Passed
+* Test handler with an images url but no token.
+url: /images/test.html
+id: asdf
+user: fasdf
+No token in the auth header.
+auth: Failed
+* Test good case.
+url: /images/test.html
+id: 12345678
+user: f86103f0-7021-705f-290b-aa443e8605c2
+jwks: Warm start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+warning: Ignoring token expiration for testing.
+expires: 2025-02-19 06:40:17.000
+auth: Passed
+Success
+~~~
 
 # Contents
 
