@@ -59,7 +59,7 @@ def makeJson(collectionNum):
     paths.append(f"{folder}/{filename}")
 
   previews, thumbnails, other = previewsAndThumbnails(paths)
-  verifyNames(collectionNum, previews, thumbnails, other)
+  verifyNames(previews, thumbnails, other)
 
   images = getCollectionImages(collectionNum, previews, thumbnails)
   num = collectionNum
@@ -94,7 +94,7 @@ def previewsAndThumbnails(filenames):
       other.append(filename)
   return previews, thumbnails, other
 
-def verifyNames(collectionNum, previews, thumbnails, other):
+def verifyNames(previews, thumbnails, other):
   """
   Verify that the list of names works for a collection.
   """
@@ -114,9 +114,7 @@ def verifyNames(collectionNum, previews, thumbnails, other):
     raise MakerException(f"Error: too many images, you are limited to 20, found: {len(thumbnails)}.")
 
   if len(other):
-    num = collectionNum
-    raise MakerException(f"Error: there are {len(other)} extra files in the folder: \
-dist/local/c{num}/{other[0]}")
+    raise MakerException(f"Error: there are {len(other)} extra files in the folder: {other[0]}")
 
 
 def getImageInfo(filename):
@@ -243,7 +241,7 @@ def testVerifyNamesError(filenames, eMessage):
   previews, thumbnails, other = previewsAndThumbnails(filenames)
 
   try:
-    verifyNames(34, previews, thumbnails, other)
+    verifyNames(previews, thumbnails, other)
     assert False, "Unexpectedly passed"
   except MakerException as ex:
     gotExpected(str(ex), eMessage)
@@ -282,7 +280,7 @@ class TestMaker(unittest.TestCase):
       filenames.append(f"c{ix+1}-p.jpg")
       filenames.append(f"c{ix+1}-t.jpg")
     previews, thumbnails, other = previewsAndThumbnails(filenames)
-    verifyNames(45, previews, thumbnails, other)
+    verifyNames(previews, thumbnails, other)
 
   def test_verifyNames_20(filenames):
     filenames = []
@@ -290,7 +288,7 @@ class TestMaker(unittest.TestCase):
       filenames.append(f"c{ix+1}-p.jpg")
       filenames.append(f"c{ix+1}-t.jpg")
     previews, thumbnails, other = previewsAndThumbnails(filenames)
-    verifyNames(56, previews, thumbnails, other)
+    verifyNames(previews, thumbnails, other)
 
   def test_verifyNames_no_p(filenames):
     filenames = []
@@ -328,8 +326,7 @@ class TestMaker(unittest.TestCase):
       filenames.append(f"c{ix+1}-p.jpg")
       filenames.append(f"c{ix+1}-t.jpg")
     filenames.append("extrafile.jpg")
-    testVerifyNamesError(filenames, "Error: there are 1 extra files in the \
-folder: dist/local/c34/extrafile.jpg")
+    testVerifyNamesError(filenames, "Error: there are 1 extra files in the folder: extrafile.jpg")
 
   def test_getCollectionImages(self):
     filename = "dist/images/c1/c1-1-p.jpg"

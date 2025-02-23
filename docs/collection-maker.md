@@ -32,31 +32,28 @@ Note: the following sections are plans for the future.
 
 # Maker Script
 
-You run the maker script to do two things, to create the starting
-collection json file (cjson) and to to deploy the images files to S3
-(not the html pages) after selecting the order and adding descriptons.
+You run the maker script to create the starting collection json file
+from the folder of images. The titles and descriptions are empty and
+the order of the images is arbitrary. You will fill in this
+information later.
 
 You create a new cjson file by running the script and specifying the
 collection number:
 
 ~~~
 scripts/maker -m 3
+
+Wrote collection json file: dist/local/c3/c3.json
 ~~~
 
 It validate the files. If a problem is found, it stops so you
 can correct it. It validates:
 
-* that p files are greater than or equal to 933 x 933 pixels
-* that the t files are 480 x 480 pixels
-* that the files come in pairs
-* the collection number by looking at S3. It needs to be next and not exist.  If the collection already exists, go back and increment the tag in Adobe Bridge and start over.
-
-Once the files pass validation, it does the following:
-
-* it creates the cjson file in the local folder
-* it creates a temp section in the cjson for the 20 images
-* it initially does not have any associated text and the order is arbitrary
-* it gets the image width, height, and byte size for the 20 images (40 when counting the thumbnails)
+* that the images are jpg files
+* that the preview files are greater than or equal to 933 x 933 pixels
+* that the thumbnail files are 480 x 480 pixels
+* that each image has a preview and thumbnail
+* that no extra files exist in the folder
 
 [⬇](#Contents)
 
