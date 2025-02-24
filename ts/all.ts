@@ -6,6 +6,10 @@
 // images.
 const appCacheName = "collections-v1"
 
+// todo: remove this capability, it's not used and it adds extra
+// complicity not needed. Log what's needed and remove logs that are
+// too noisy.
+
 // Each log message has a tag that categorizes it. Currently tags are
 // named after the file the where the log message is used. You can
 // enable or disable log messages by adding or removing the tag from
@@ -18,6 +22,7 @@ const showTags = {
   "sw": 0,
   "win": 0,
   "download": 0,
+  "maker": 0,
 }
 
 function log(tag: string, message: string) {

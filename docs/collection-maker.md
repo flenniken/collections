@@ -61,10 +61,10 @@ can correct it. It validates:
 
 You use the maker page to determine which images to included in the
 collection (from the initial 20), to determine their order, and to
-enter the descriptive text. Run it in your browser:
+enter the descriptive text. Run it in your browser on localhost:
 
 ~~~
-https://localhost:8000/maker.html
+https://localhost:8000/local/maker.html
 ~~~
 
 You open the new collection from a dropdown menu and you make your
@@ -78,13 +78,23 @@ automatically.
 The maker page ui:
 
 * on the left is a table of boxes, 2 columns by 8 rows.
-* on the right are the 20 thumbnail images
-* you click on an image to put it in the next available box.
+
+* on the right is a table containing the 20 thumbnail images
+
+* you click on an image on the right to put it in the next available
+  box.
+
 * you click on a box image to move it to back with the temp images
-* you need to untag the images you don’t use (the remaining temp images) in Adobe Bridge.
-* next to each box is an edit icon for editing the image title and description.
-* at the bottom is a button to enter the collections title and description for the thumbnails page
-* at the top is a button to enter the collections title, description and post date for the index page. post date, e. g. 2025-01-26 and Jan 26, 2025
+
+* next to each box is an edit icon for editing the image title and
+  description.
+
+* at the bottom is a button to enter the collections title and
+  description for the thumbnails page
+
+* at the top is a button to enter the collections title, description
+  and post date for the index page. post date, e. g. 2025-01-26 and
+  Jan 26, 2025
 
 * todo: add the index info to the collection json. the index page builder needs to be changed to make it from a set of collections.
 * todo: store the base name in the json data so you can match up with the original using the tag and the name. Use an unique id?

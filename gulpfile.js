@@ -25,18 +25,21 @@ Tasks:
     t -- Compile thumbnails.ts
     x -- Compile index.ts
     sw -- Compile sw.ts
+    cm -- Compile maker.ts
 * pages -- Create all the pages from templates.
     index -- Create the main index page.
     thumbnails1 -- Create the thumbnails page for collection 1.
     thumbnails2 -- Create the thumbnails page for collection 2.
     image1 -- Create the image page for collection 1.
     image2 -- Create the image page for collection 2.
+    maker -- Create the collection maker.
 * vpages -- Validate all the html files.
     vindex -- Validate index html
     vthumbnails1 -- Validate thumbnails html for collection 1.
     vthumbnails2 -- Validate thumbnails html for collection 2.
     vimage1 -- Validate image html for collection 1.
     vimage2 -- Validate image html for collection 2.
+    vmaker -- Validate maker html.
 * css -- Minimize the collection.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea content.
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
@@ -44,6 +47,8 @@ Tasks:
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
+
+// todo: update the target to es7?
 const target = "es6"
 
 gulp.task("default", function(cb){
@@ -70,6 +75,7 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
     }
   }
 
+  // todo: simplify and remove the removeLogging feature.
   // When specified remove the log functions.
   let pure_funcs = []
   if (removeLogging) {
@@ -115,6 +121,7 @@ const image_ts = ["ts/all.ts", "ts/win.ts", "ts/image.ts"]
 const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/thumbnails.ts"]
 const index_ts = ["ts/all.ts", "ts/win.ts", "ts/login.ts", "ts/download.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
+const maker_ts = ["ts/all.ts", "ts/win.ts", "ts/maker.ts"]
 
 // image page
 gulp.task('i', function () {
@@ -144,7 +151,12 @@ gulp.task('sw', function () {
   return ts2js(sw_ts, 'sw.js', "dist", options)
 });
 
-gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
+// Compile maker ts
+gulp.task('cm', function () {
+  return ts2js(maker_ts, 'maker.js', "dist/local", null)
+});
+
+gulp.task("ts", gulp.parallel(["i", "t", "x", "sw", "cm"]))
 
 function validateHtml(filename) {
   // Validate an html file.
@@ -204,8 +216,14 @@ gulp.task("vthumbnails2", function (cb) {
   cb()
 })
 
+gulp.task("vmaker", function (cb) {
+  // Validate the maker html file.
+  validateHtml("dist/local/maker.html")
+  cb()
+})
+
 gulp.task("vpages", gulp.parallel(
-  "vindex", "vthumbnails1", "vthumbnails2", "vimage1", "vimage2"));
+  "vindex", "vthumbnails1", "vthumbnails2", "vimage1", "vimage2", "vmaker"));
 
 function compareContents(sourceFilename, destFilename) {
   // Return true when two files contain the same bytes. The source
@@ -339,18 +357,46 @@ statictea \
   runStaticteaTask(parameters, tmpFilename, distFilename, cb)
 }
 
+gulp.task("maker", function (cb) {
+  // Create the maker page.
+
+/*
+statictea \
+  -t pages/maker-tmpl.html \
+  -s pages/maker.json \
+  -o pages/header.tea \
+  -r dist/local/maker.html
+*/
+
+  log('Compiling the maker template')
+  const tmpFilename = 'tmp/maker.html'
+  const distFilename = 'dist/local/maker.html'
+  const parameters = [
+    "-t", "pages/maker-tmpl.html",
+    "-s", `pages/maker.json`,
+    "-o", "pages/header.tea",
+    "-r", tmpFilename,
+  ]
+  // Compile maker-tmpl.html into the tmp dir then copy it to the dist
+  // dir.
+  runStaticteaTask(parameters, tmpFilename, distFilename, cb)
+
+})
+
 gulp.task("syncronize", function (cb) {
   // Syncronize index template's replace blocks with header.tea.
 /*
 statictea -u -o pages/header.tea -t pages/index-tmpl.html
 statictea -u -o pages/header.tea -t pages/image-tmpl.html
 statictea -u -o pages/header.tea -t pages/thumbnails-tmpl.html
+statictea -u -o pages/header.tea -t pages/maker-tmpl.html
 */
   log("Syncronize all templates with header.tea.")
   const commands = [
     ["-u", "-o", "pages/header.tea", "-t", "pages/index-tmpl.html"],
     ["-u", "-o", "pages/header.tea", "-t", "pages/image-tmpl.html"],
     ["-u", "-o", "pages/header.tea", "-t", "pages/thumbnails-tmpl.html"],
+    ["-u", "-o", "pages/header.tea", "-t", "pages/maker-tmpl.html"],
   ]
   commands.forEach((parameters, ix) => {
     child_process.spawn("statictea", parameters, {stdio: "inherit"});
@@ -358,6 +404,7 @@ statictea -u -o pages/header.tea -t pages/thumbnails-tmpl.html
   cb()
 })
 
+// todo: simplify, remove compiling css.
 gulp.task("css", function (cb) {
   return gulp.src(["pages/collections.css"])
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
@@ -366,7 +413,8 @@ gulp.task("css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
-gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2", "image1", "image2"));
+gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2",
+  "image1", "image2", "maker"));
 
 gulp.task('readme', function () {
   const parameters = [
@@ -376,6 +424,7 @@ gulp.task('readme', function () {
   return child_process.spawn("glow", parameters, {stdio: "inherit"});
 });
 
+// todo: simplify, remove watch.  Just build everything.
 gulp.task("watch", function(cb) {
   // When a source file changes, compile it into the dist folder.
 
