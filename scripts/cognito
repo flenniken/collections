@@ -100,7 +100,7 @@ def listUsers(poolName, cognitoClient=None):
   List all users in the given cognito user pool.
   """
   if cognitoClient is None:
-    cognitoClient = getBotoClient('cognito-idp')
+    cognitoClient = getBotoClient('cognito-idp', CognitoException)
   pools = poolNamesToIds(cognitoClient)
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")

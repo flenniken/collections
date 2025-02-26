@@ -562,28 +562,14 @@ The [aws-settings.json] file looks something like this:
 # Create First Users
 
 Create a normal user and an admin user using the cognito
-console.
-
-Note: You can use the plus sign in emails so you to have multiple
-unique email addresses that go to the same place.
-
-I used:
+console. I used:
 
 * steve.flenniken@gmail.com
 * steve.flenniken+admin@gmail.com
 
-todo add steps
+Follow the Create User procedure.
 
-Save the passwords for the two users in your password manager.
-
-Verify by listing the users in the pool:
-
-~~~
-scripts/cognito -l
-
-Steve Flenniken <steve.flenniken+admin@gmail.com>
-Steve Flenniken <steve.flenniken@gmail.com>
-~~~
+[⬇](#Contents)
 
 # Build and Deploy
 
@@ -595,6 +581,8 @@ cd ~/collections
 g all
 scripts/deploy -s
 ~~~
+
+[⬇](#Contents)
 
 # View a Collection
 
@@ -617,3 +605,5 @@ scripts/deploy -s
 * [Create User Pool](#create-user-pool)
 * [Create Config File](#create-config-file)
 * [Create First Users](#create-first-users)
+* [Build and Deploy](#build-and-deploy)
+* [View a Collection](#view-a-collection)

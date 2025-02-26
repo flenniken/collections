@@ -12,6 +12,6 @@ mouse: true
 pager: true
 
 # word-wrap at width
-width: 80
+width: 98
 
 

@@ -82,26 +82,6 @@ When making changes to the image page test them with these steps:
 
 [⬇](#Contents)
 
-## Login-flow Script
-
-You use login-flow script to manually step through the login process
-for debugging and testing.  You can view and decode tokens.
-
-~~~
-# docker container
-scripts/login-flow
-
-This script is for testing the login flow that Collections uses.
-
-The basic flow:
-
-  * Use -l to get the login url.
-  * Paste the login url in your browser and login, you will be redirected.
-  * Copy the code in the url in your browser's address bar.
-  * Use -g option specifying the code. This creates the tokens.json file.
-  * Use -s to look at the tokens file.
-  * Use -d id_token, -d access_token, -d refresh_token, to peer into each token.
-~~~
 
 # Contents
 

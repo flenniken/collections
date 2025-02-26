@@ -3,7 +3,8 @@ import boto3
 import json
 from collections import namedtuple
 
-def getBotoClient(serviceName):
+# todo, pass in the exception everywhere
+def getBotoClient(serviceName, exception=None):
   """
   Return the boto3 client for the given AWS service. Services names
   like 's3', 'cognito-idp', 'ses', 'sts', etc.
@@ -11,11 +12,13 @@ def getBotoClient(serviceName):
   configFilename = "/home/coder/.aws/config"
   credsFilename = "/home/coder/.aws/credentials"
   if not os.path.exists(configFilename) or not os.path.exists(credsFilename):
-     raise Exception("""\
+    if exception is None:
+      exception = Exception
+    raise exception("""\
 
 Before this script can access your aws services, you need an
 AWS account and an IAM user with with the correct permissions.
-See the docs for how to get setup.
+See the aws-config.md for how to get setup and run "aws configure".
 """)
   return boto3.client(serviceName)
 
