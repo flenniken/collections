@@ -253,6 +253,8 @@ scripts/view-download 2025-02-25 O4YGRbu1
 2025-02-25 05:09:29.670 b6ae6c2d 633.95 ms
 ~~~
 
+# Contents
+
 * [Run login-flow](#run-login-flow) -- how to run login-flow and see its options.
 * [Login Url (-l)](#login-url-l) -- how to login and get a code.
 * [Get User Tokens (-g)](#get-user-tokens-g) -- how to fetch the tokens with the code.
