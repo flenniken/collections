@@ -22,6 +22,7 @@ import sys
 import signal
 import unittest
 import urllib.parse
+from datetime import datetime
 from collections import namedtuple
 import json
 import subprocess
@@ -30,74 +31,106 @@ import textwrap
 
 from PIL import Image
 
+workingDir='/home/coder/collections'
+
+# Location where the new list of image files exists.
+tmpFolder=f'{workingDir}/tmp/working'
+
 class MakerException(Exception):
   """ An exception we plan for. """
   pass
 
-def makeCollectionJson(collectionNum):
-  jData = makeJson(collectionNum)
-  num = collectionNum
-  filename = f"dist/local/c{num}/c{num}.json"
-  with open(filename, "w") as fh:
-    fh.write(jData)
-  print(f"Wrote collection json file: {filename}")
-
-def makeJson(collectionNum):
+def createNew(num):
   """
-  Make a collection json file from a directory of images.
+  Create a new local collection folder from a folder of images.
   """
-  # Verify the collection folder exists.
-  folder = f"dist/local/c{collectionNum}"
-  if not os.path.exists(folder):
-    raise MakerException(f"Missing the collection folder: {folder}")
+  sourceFolder = f"{tmpFolder}/c{num}"
+  if not os.path.exists(sourceFolder):
+    raise MakerException(f"Missing the collection folder: {sourceFolder}")
 
-  # Get the filenames in the folder.
-  filenames = os.listdir(folder)
+  localDestFolder = f"images/c{num}"
+  if not os.path.exists(localDestFolder):
+    raise MakerException(f"The local collection folder already exists: {localDestFolder}")
 
-  paths = []
-  for filename in filenames:
-    paths.append(f"{folder}/{filename}")
+  # Get names and info of all the files in the sourceFolder.
+  # Validate the files work in a collection.
+  fileInfoList = getFileInfoList(sourceFolder)
+  validateFolder(num, fileInfoList)
 
-  previews, thumbnails, other = previewsAndThumbnails(paths)
-  verifyNames(previews, thumbnails, other)
+  # todo: verify that the collection is the next available collection. It checks the
+  #  /db prefix files.
+  # reserve the num by writing the db prefix
 
-  images = getCollectionImages(collectionNum, previews, thumbnails)
-  num = collectionNum
-  collection = {
-    "title": "",
-    "description": "",
-    "collection": num,
-    "width": 480,
-    "height": 480,
-    "imagePageUrl": f"/images/c{num}/image-{num}.html",
-    "thumbnailsPageUrl": f"/images/c{num}/thumbnails-{num}.html",
-    "images": images
-  }
 
-  return json.dumps(collection, indent=2)
+  # Rename the images files to their standard name.
+  fileInfoList = getFileInfoList(sourceFolder)
+  renameFiles(fileInfoList)
+  cjson = validateFolder(num, fileInfoList)
 
-def previewsAndThumbnails(filenames):
+  # Write the cjson file if it doesn't already exist.
+  cjsonFilename = os.path.join(sourceFolder, f"c{num}.json")
+  if not os.path.exists(asdf):
+    with open(cjsonFilename, "w") as fh:
+      fh.write(cjson)
+
+  # Move the folder to the local images folder.
+  os.rename(sourceFolder, localDestFolder)
+
+  print(f"Created a new local collection: {localDestFolder}")
+
+class FileInfo(object):
+  def __init__(self, fullPath, isFile, size, modDate):
+    self.fullPath = fullPath
+    self.isFile = isFile
+    self.size = size
+    self.modDate = modDate
+  def __str__(self):
+    isFileStr = "file" if self.isFile else "-"
+    modified_time = datetime.utcfromtimestamp(self.modDate).strftime('%Y-%m-%d %H:%M:%S')
+    return f"{isFileStr:4} {self.size:8} {modified_time:19} {self.fullPath}"
+
+def getFileInfoList(folder):
   """
-  Return the list of previews, thumbnails and other files. Pass in
-  a list of filenames.
+  Return information about each file in a folder.
+  """
+  fileInfoList = []
+  fullPath = os.path.abspath(folder)
+  for entry in os.scandir(fullPath):
+    stats = entry.stat()
+    fileInfo = FileInfo(
+      f"{fullPath}/{entry.name}",
+      entry.is_file(),
+      stats.st_size,
+      stats.st_mtime
+    )
+    fileInfoList.append(fileInfo)
+  return fileInfoList
+
+def validateFolder(num, fileInfoList):
+  """
+  Validate that the given files works as a collection and return
+  the cjson. num is the collection number
   """
 
   previews = []
   thumbnails = []
+  jsonFiles = []
+  htmlFiles = []
   other = []
-  for filename in filenames:
+  for fileInfo in fileInfoList:
+    filename = fileInfo.fullPath
+    # pv("filename", filename)
+
     if filename.endswith("-p.jpg"):
       previews.append(filename)
     elif filename.endswith("-t.jpg"):
       thumbnails.append(filename)
+    elif filename.endswith(".json"):
+      jsonFiles.append(filename)
+    elif filename.endswith(".html"):
+      htmlFiles.append(filename)
     else:
       other.append(filename)
-  return previews, thumbnails, other
-
-def verifyNames(previews, thumbnails, other):
-  """
-  Verify that the list of names works for a collection.
-  """
 
   if len(previews) == 0:
     raise MakerException(f"Error: no previews files that end in -p.jpg.")
@@ -109,45 +142,35 @@ def verifyNames(previews, thumbnails, other):
 
   if len(thumbnails) < 8:
     raise MakerException(f"Error: not enough images, you need at least 8, found: {len(thumbnails)}.")
-
   if len(thumbnails) > 20:
     raise MakerException(f"Error: too many images, you are limited to 20, found: {len(thumbnails)}.")
+  if len(jsonFiles) == 1:
+    basename = os.path.basename(jsonFiles[0])
+    if basename != f"c{num}.json":
+      raise MakerException(f"Error: invalid cjson name for this collection: {basename}")
+
+  if len(htmlFiles) > 0:
+    for filename in htmlFiles:
+      basename = os.path.basename(filename)
+      e_images_page = f"image-{num}.html"
+      e_thumbnails_page = f"thumbnails-{num}.html"
+      if basename not in [e_images_page, e_thumbnails_page]:
+        raise MakerException(f"Error: invalid html name for this collection: {basename}")
+
+  if len(jsonFiles) > 1:
+    raise MakerException("Error: more than one cjson file")
+
+  if len(htmlFiles) > 2:
+    raise MakerException("Error: more than two html files")
 
   if len(other):
     raise MakerException(f"Error: there are {len(other)} extra files in the folder: {other[0]}")
 
-
-def getImageInfo(filename):
-  """
-  Return the image information as an ImageInfo named tuple.
-  Attributes: width, height, kind (image format), fileSize
-  """
-  try:
-    fileSize = os.path.getsize(filename)
-  except FileNotFoundError:
-    raise MakerException(f"Error: the file doesn't exist: {os.getcwd()}/{filename}")
-
-  with Image.open(filename) as img:
-    width, height = img.size
-
-  ImageInfo = namedtuple('ImageInfo', ['width', 'height', 'kind', 'fileSize'])
-  return ImageInfo(width=width, height=height, kind=img.format, fileSize=fileSize)
-
-def getCollectionImages(collectionNum, previews, thumbnails):
-  """
-  Get the image information needed for the collection images json.
-  Return a list of dictionaries, where each dictionary contains
-  information for an image an its thumbnail.
-
-  Raise an exception when an image is does not fit the requirements.
-  """
-  assert len(previews) == len(thumbnails)
-
-  num = collectionNum
   images = []
 
   for ix, filename in enumerate(previews):
     thumbnail = thumbnails[ix]
+
     collectionImage = {}
     collectionImage['title'] = ""
     collectionImage['description'] = ""
@@ -176,13 +199,55 @@ def getCollectionImages(collectionNum, previews, thumbnails):
     collectionImage['thumbnail'] = f"/images/c{num}/c{num}-{ix+1}-t.jpg"
     collectionImage['sizet'] = ti.fileSize
     images.append(collectionImage)
-  return images
+
+  # Create the cjson.
+  collection = {
+    "title": "",
+    "description": "",
+    "collection": num,
+    "width": 480,
+    "height": 480,
+    "imagePageUrl": f"/images/c{num}/image-{num}.html",
+    "thumbnailsPageUrl": f"/images/c{num}/thumbnails-{num}.html",
+    "images": images,
+    "usedImages": [],
+  }
+  return json.dumps(collection, indent=2)
+
+class ImageInfo(object):
+  def __init__(self, width, height, kind, fileSize):
+    self.width = width
+    self.height = height
+    self.kind = kind
+    self.fileSize = fileSize
+  def __str__(self):
+    return f"{self.kind} ({self.width} x {self.height}) {self.fileSize}"
+
+def getImageInfo(filename, fileSize=None):
+  """
+  Return the image information of a file.
+  """
+  if fileSize is None:
+    try:
+      fileSize = os.path.getsize(filename)
+    except FileNotFoundError:
+      raise MakerException(f"Error: the file doesn't exist: {filename}")
+  else:
+    fileSize = fileSize
+
+  try:
+    with Image.open(filename) as img:
+      width, height = img.size
+  except Exception as ex:
+    raise MakerException(f"Error: unable to open the image file: {str(ex)}")
+
+  return ImageInfo(width=width, height=height, kind=img.format, fileSize=fileSize)
 
 def process(args):
   """
   """
-  if args.makeJson:
-    makeCollectionJson(args.makeJson)
+  if args.createNew:
+    createNew(args.createNew)
   else:
     showHelp()
 
@@ -209,8 +274,8 @@ def parseCommandLine():
 
   parser.add_argument("-t", "--test", action="store_true",
     help="run internal unit tests. Use alone to run all tests.")
-  parser.add_argument("-m", "--makeJson", metavar="collectionNum",
-    help="make a collections json file from a directory of images")
+  parser.add_argument("-c", "--createNew", type=int, metavar="collectionNum",
+    help="create a new local collection folder from a directory of images")
 
   args = parser.parse_args(sys.argv[1:])
   return args
@@ -238,7 +303,7 @@ def testVerifyNamesError(filenames, eMessage):
   """
   Test verifyNames errors, pass in the expected error message.
   """
-  previews, thumbnails, other = previewsAndThumbnails(filenames)
+  previews, thumbnails, other, jsonFiles, htmlFiles = previewsAndThumbnails(filenames)
 
   try:
     verifyNames(previews, thumbnails, other)
@@ -268,112 +333,90 @@ expected: {expected}
 """
     assert False, msg
 
+def pv(name, value):
+  print(f"{name}: {value}")
+
+def fail(msg):
+  assert 0 == 1, message
+
+def testGetImageInfoError(filename, eMsg):
+  """
+  Test getImageInfo errors, pass in the expected error message.
+  """
+  try:
+    getImageInfo(filename)
+    fail("Unexpectedly passed")
+  except MakerException as ex:
+    gotExpected(str(ex), eMsg)
+    return # passed
+  fail("Got an unexpected exception.")
+
+
+
 class TestMaker(unittest.TestCase):
 
-  def test_me(self):
-    self.assertEqual(True, bool(1))
-    self.assertEqual(False, bool(0))
+  def test_getFileInfoList(self):
+    fileInfoList = getFileInfoList("dist")
+    self.assertTrue(len(fileInfoList) > 0)
+    for fileInfo in fileInfoList:
+      # pv('fileInfo', fileInfo)
+      self.assertTrue(fileInfo.fullPath.startswith("/home/coder/collections/dist/"))
 
-  def test_verifyNames_8(filenames):
-    filenames = []
-    for ix in range(8):
-      filenames.append(f"c{ix+1}-p.jpg")
-      filenames.append(f"c{ix+1}-t.jpg")
-    previews, thumbnails, other = previewsAndThumbnails(filenames)
-    verifyNames(previews, thumbnails, other)
+  def test_getImageInfo(self):
+    fileInfoList = getFileInfoList("dist/images/c1")
+    # for fileInfo in fileInfoList:
+    #   pv('fileInfo', fileInfo)
+    previewFile = "/home/coder/collections/dist/images/c1/c1-1-p.jpg"
+    imageInfo = getImageInfo(previewFile)
+    gotExpected(imageInfo.kind, "JPEG")
+    gotExpected(imageInfo.width, 3024)
+    gotExpected(imageInfo.height, 4032)
+    gotExpected(imageInfo.fileSize, 2797506)
 
-  def test_verifyNames_20(filenames):
-    filenames = []
-    for ix in range(20):
-      filenames.append(f"c{ix+1}-p.jpg")
-      filenames.append(f"c{ix+1}-t.jpg")
-    previews, thumbnails, other = previewsAndThumbnails(filenames)
-    verifyNames(previews, thumbnails, other)
+    thumbnailFile = "/home/coder/collections/dist/images/c1/c1-1-t.jpg"
+    info = getImageInfo(thumbnailFile)
+    # pv('thumbnailImageInfo', thumbnailImageInfo)
+    gotExpected(info.kind, "JPEG")
+    gotExpected(info.width, 480)
+    gotExpected(info.height, 480)
+    gotExpected(info.fileSize, 71810)
 
-  def test_verifyNames_no_p(filenames):
-    filenames = []
-    testVerifyNamesError(filenames, "Error: no previews files that end in -p.jpg.")
+  def test_getImageInfoSize(self):
+    # Test when you pass in a file size.
+    previewFile = "/home/coder/collections/dist/images/c1/c1-1-p.jpg"
+    imageInfo = getImageInfo(previewFile, 1234567)
+    gotExpected(imageInfo.fileSize, 1234567)
 
-  def test_verifyNames_no_t(filenames):
-    filenames = ["c1-p.jpg"]
-    testVerifyNamesError(filenames, "Error: no thumbnails files that end in -t.jpg.")
+  def test_getImageInfoNoFile(self):
+    # Test with missing file.
+    testGetImageInfoError("missing", "Error: the file doesn't exist: missing")
 
-  def test_verifyNames_too_few(filenames):
-    filenames = []
-    for ix in range(7):
-      filenames.append(f"c{ix+1}-p.jpg")
-      filenames.append(f"c{ix+1}-t.jpg")
-    testVerifyNamesError(filenames, "Error: not enough images, you need at least 8, found: 7.")
+  def test_getImageInfoNotImage(self):
+    # Test with non-image file
+    htmlFile = "/home/coder/collections/dist/index.html"
+    eMsg = "Error: unable to open the image file: cannot identify image file '/home/coder/collections/dist/index.html'"
+    testGetImageInfoError(htmlFile, eMsg)
 
-  def test_verifyNames_too_many(filenames):
-    filenames = []
-    for ix in range(21):
-      filenames.append(f"c{ix+1}-p.jpg")
-      filenames.append(f"c{ix+1}-t.jpg")
-    testVerifyNamesError(filenames, "Error: too many images, you are limited to 20, found: 21.")
+  def test_validateFolder(self):
+    c1 = "/home/coder/collections/dist/images/c1"
+    fileInfoList = getFileInfoList(c1)
+    validateFolder(1, fileInfoList)
 
-  def test_verifyNames_uneven(filenames):
-    filenames = []
-    for ix in range(9):
-      filenames.append(f"c{ix+1}-p.jpg")
-      filenames.append(f"c{ix+1}-t.jpg")
-    del(filenames[0])
-    testVerifyNamesError(filenames, "Error: the number of thumbnails (9) and previews (8) must match.")
+  def test_validateFolderTmp(self):
+    c3 = "/home/coder/collections/tmp/c3"
+    fileInfoList = getFileInfoList(c3)
+    cjson = validateFolder(3, fileInfoList)
+    # print(cjson)
+    # todo: check cjson
 
-  def test_verifyNames_other(filenames):
-    filenames = []
-    for ix in range(8):
-      filenames.append(f"c{ix+1}-p.jpg")
-      filenames.append(f"c{ix+1}-t.jpg")
-    filenames.append("extrafile.jpg")
-    testVerifyNamesError(filenames, "Error: there are 1 extra files in the folder: extrafile.jpg")
+  # test at least 8 images
+  # test at most 20 images
+  # verify the same number of previews and thumbnails
+  # verify the number of images is even
+  # test no extra files in the folder
+  # test previews width and height are greater than 933
+  # test that thumbnails are 480 by 480
 
-  def test_getCollectionImages(self):
-    filename = "dist/images/c1/c1-1-p.jpg"
-    thumbnail = "dist/images/c1/c1-1-t.jpg"
-    collectionImages = getCollectionImages(23, [filename], [thumbnail])
-
-    expected = [
-      {
-        'title': '',
-        'description': '',
-        'url': '/images/c23/c23-1-p.jpg',
-        'width': 3024,
-        'height': 4032,
-        'size': 2797506,
-        'thumbnail': '/images/c23/c23-1-t.jpg',
-        'sizet': 71810
-      }
-    ]
-    gotExpected(collectionImages, expected)
-
-  def test_getCollectionImages_preview(self):
-    filename = "dist/icons/icon-32.png"
-    thumbnail = "dist/images/c1/c1-1-t.jpg"
-    eMsg = """Error: preview must be greater than or equal to 933, \
-found: dist/icons/icon-32.png: (32 x 32)"""
-    testGetCollectionImagesError([filename], [thumbnail], eMsg)
-
-  def test_getCollectionImages_thumbnail(self):
-    filename = "dist/images/c1/c1-1-p.jpg"
-    thumbnail = "dist/icons/icon-32.png"
-    eMsg = """Error: thumbnail must by 480 by 480, \
-found: dist/icons/icon-32.png: (32 x 32)"""
-    testGetCollectionImagesError([filename], [thumbnail], eMsg)
-
-  def test_makeJson(self):
-    # test the good case
-    return
-    jData = makeJson(3)
-    print(jData)
-
-  def test_makeJson_error(self):
-    try:
-      jData = makeJson(1)
-    except Exception as ex:
-      gotExpected(str(ex), "Missing the collection folder: dist/local/c1")
-      return
-    self.assertTrue(False, "Did not get the expected exception.")
 
 if __name__ == '__main__':
   args = parseCommandLine()

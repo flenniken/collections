@@ -15,7 +15,7 @@ You use Adobe applications to find and edit images for a collection.
 * edit them in camera raw
 
 * create a folder in the tmp/working for the collection. Name the
-  folder cx where x is the next collection number.
+  folder cx where x is the next collection number, e.g. c3.
 
 * in camera raw, save full size jpgs to the folder and add -p to the
   names, e.g. tmp/c3/CF8A0420-p.jpg
@@ -37,20 +37,21 @@ done
 
 # Maker Command
 
-You run the maker command to create the collection's json file from
-the folder of images. It fills in the image width, height, size and
-other information.  It creates empty titles and descriptions and order
-of the images is arbitrary. You will fill in this information later.
+You run the maker command to create the collection's local image
+folder from the folder of images. It creates a cjson file with the
+images width, height, size and other information.  It creates empty
+titles and descriptions and order of the images is arbitrary. You will
+fill in this information later.
 
 Run the command and specify the folder:
 
 ~~~
-scripts/maker -m c3
+scripts/maker -c 3
 
-Wrote new collection folder images/c3.
+Created a new local collection: images/c3
 ~~~
 
-It validate the files and if a problem is found, it stops so you
+It validates the files and if a problem is found, it stops so you
 can correct it. It validates:
 
 * that the collection is the next available collection. It checks the
@@ -65,7 +66,7 @@ After validation it:
 
 * reserves the collection name (c3) by adding the db/c3 prefix file to S3.
 
-* it moves the c3 folder, containgin up to 20 images to the images
+* it moves the c3 folder, containing up to 20 images to the images
   directory.  The sync command will copy the files to S3 and the
   extras images will be deleted later.
 
@@ -75,37 +76,25 @@ After validation it:
 * for each image the image info is added to the json file
 
 * for each image the unique image id from the image metadata is added
-  to the cjson
+  to the cjson, if it exists
 
 * the cjson usedImages list is set to an empty list
 
 [⬇](#Contents)
 
-# Cjson Changes
-
-Add two new entries to the cjson:
-
-* usedImages -- a list that tells which images in the image list are
-  part of the collection:
-
-~~~
-usedImages = [0, 1, 2, 3, 4, 5, 6, 7]
-~~~
-
-* uniqueId -- the image's unique id metadata.  You use this to find
-  the image in Adobe Bridge when you want to find the original.
-
-todo: Determine what code is affected by this change and update it.
-
-[⬇](#Contents)
-
 # Collections Under Development
 
-We keep track of the collections under development with the /db prefix in S3. There is a prefix for each collection being developed. Prefixes don’t have contention problems like one file would.  There are no /db cx prefixes when there are no collections in development.
+We keep track of the collections under development with the /db prefix
+in S3. There is a prefix for each collection being developed. Prefixes
+don’t have contention problems like one file would.  There are no /db
+cx prefixes when there are no collections in development.
 
-Collections are in numeric order.  We keep track of the number of collections with the /published-x key.  The x is a variable that tell how many published collections there are.
+Collections are in numeric order.  We keep track of the number of
+collections with the /published-x key where x is a variable that tells
+how many published collections there are.
 
-One list of db prefixes tells you the both the collections under development and the number published.
+One list of S3 db prefixes tells you the both the collections under
+development and the number published.
 
 ~~~
 /db/c3 -- collection 3 is under development
