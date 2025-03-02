@@ -12,6 +12,7 @@ namespace CJson {
     height: number;
     size: number;
     sizet: number;
+    uniqueId: string;
   }
 
   export interface ZoomPoint {
@@ -32,6 +33,7 @@ namespace CJson {
     collection: number;
     imagePageUrl: string;
     thumbnailsPageUrl: string;
+    usedImages: number[];
     // The image array contains a element for each image in the collection.
     images: Image[];
     zoomPoints: ZoomPoints;

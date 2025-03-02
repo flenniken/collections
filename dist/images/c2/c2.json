@@ -4,8 +4,9 @@
   "collection": 2,
   "width": 480,
   "height": 480,
-  "imagePageUrl": "/images/c2/c2/image-2.html",
-  "thumbnailsPageUrl": "/images/c2/c2/thumbnails-2.html",
+  "imagePageUrl": "/images/c2/image-2.html",
+  "thumbnailsPageUrl": "/images/c2/thumbnails-2.html",
+  "usedImages" : [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
   "images": [
     {
       "url": "/images/c2/c2-1-p.jpg",

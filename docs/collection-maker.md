@@ -2,58 +2,116 @@
 
 How to create a new collection.
 
+[⬇](#Contents) (table of contents at the bottom)
+
 # Manual Steps
 
-You used Adobe applications to find and edit images for a collection.
+You use Adobe applications to find and edit images for a collection.
 
 * open Adobe Bridge
-* rate 8 - 20 original images
+
+* rate 8 - 20 original images so the best appear together
+
 * edit them in camera raw
-* using the keyword panel, tag them with the collection, e.g. c3
-* create a folder in the dist/local folder named after the collection, e.g. dist/local/c3
-* in camera raw, save full size jpgs the collection folder add -p to the names, e.g. dist/local/c3/CF8A0420-p.jpg
-* make copies of the images and rename the copies to have -t.jpg names:
+
+* create a folder in the tmp/working for the collection. Name the
+  folder cx where x is the next collection number.
+
+* in camera raw, save full size jpgs to the folder and add -p to the
+  names, e.g. tmp/c3/CF8A0420-p.jpg
+
+* make copies of the images and rename the copies to have -t.jpg
+  names:
 
 ~~~
-cd dist/local/c3
+cd tmp/working/c3
 for file in *-p.jpg; do
   cp "$file" "${file/-p.jpg/-t.jpg}"
 done
 ~~~
 
-* open the -t images in photoshop and make them into square 480 x 480 jpg thumbnails
+* open the -t images in photoshop and make them into square 480 x 480
+  jpg thumbnails
 
+[⬇](#Contents)
 
-Hand edit the json file or do the steps in the sections that follow.
+# Maker Command
 
-Note: the following sections are plans for the future.
+You run the maker command to create the collection's json file from
+the folder of images. It fills in the image width, height, size and
+other information.  It creates empty titles and descriptions and order
+of the images is arbitrary. You will fill in this information later.
 
-[⬇](#Contents) (table of contents at the bottom)
-
-# Maker Script
-
-You run the maker script to create the starting collection json file
-from the folder of images. The titles and descriptions are empty and
-the order of the images is arbitrary. You will fill in this
-information later.
-
-You create a new cjson file by running the script and specifying the
-collection number:
+Run the command and specify the folder:
 
 ~~~
-scripts/maker -m 3
+scripts/maker -m c3
 
-Wrote collection json file: dist/local/c3/c3.json
+Wrote new collection folder images/c3.
 ~~~
 
-It validate the files. If a problem is found, it stops so you
+It validate the files and if a problem is found, it stops so you
 can correct it. It validates:
 
+* that the collection is the next available collection. It checks the
+  /db prefix files.
 * that the images are jpg files
 * that the preview files are greater than or equal to 933 x 933 pixels
 * that the thumbnail files are 480 x 480 pixels
 * that each image has a preview and thumbnail
 * that no extra files exist in the folder
+
+After validation it:
+
+* reserves the collection name (c3) by adding the db/c3 prefix file to S3.
+
+* it moves the c3 folder, containgin up to 20 images to the images
+  directory.  The sync command will copy the files to S3 and the
+  extras images will be deleted later.
+
+* The images folder contains both the working and published
+  collections.
+
+* for each image the image info is added to the json file
+
+* for each image the unique image id from the image metadata is added
+  to the cjson
+
+* the cjson usedImages list is set to an empty list
+
+[⬇](#Contents)
+
+# Cjson Changes
+
+Add two new entries to the cjson:
+
+* usedImages -- a list that tells which images in the image list are
+  part of the collection:
+
+~~~
+usedImages = [0, 1, 2, 3, 4, 5, 6, 7]
+~~~
+
+* uniqueId -- the image's unique id metadata.  You use this to find
+  the image in Adobe Bridge when you want to find the original.
+
+todo: Determine what code is affected by this change and update it.
+
+[⬇](#Contents)
+
+# Collections Under Development
+
+We keep track of the collections under development with the /db prefix in S3. There is a prefix for each collection being developed. Prefixes don’t have contention problems like one file would.  There are no /db cx prefixes when there are no collections in development.
+
+Collections are in numeric order.  We keep track of the number of collections with the /published-x key.  The x is a variable that tell how many published collections there are.
+
+One list of db prefixes tells you the both the collections under development and the number published.
+
+~~~
+/db/c3 -- collection 3 is under development
+/db/c4 -- collection 4 is under development
+/db/published-2 -- there are 2 published collections
+~~~
 
 [⬇](#Contents)
 
