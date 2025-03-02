@@ -28,6 +28,7 @@ import json
 import subprocess
 import sys
 import textwrap
+from boto_client import getBotoClient, getAwsSettings
 
 from PIL import Image
 
@@ -40,13 +41,15 @@ class MakerException(Exception):
   """ An exception we plan for. """
   pass
 
-def createNew(num):
+def createNew(sourceFolder):
   """
   Create a new local collection folder from a folder of images.
   """
-  sourceFolder = f"{tmpFolder}/c{num}"
   if not os.path.exists(sourceFolder):
     raise MakerException(f"Missing the collection folder: {sourceFolder}")
+
+  # Reserve the next available collection number.
+  num = reserveNextNum()
 
   localDestFolder = f"images/c{num}"
   if not os.path.exists(localDestFolder):
@@ -61,6 +64,7 @@ def createNew(num):
   #  /db prefix files.
   # reserve the num by writing the db prefix
 
+  
 
   # Rename the images files to their standard name.
   fileInfoList = getFileInfoList(sourceFolder)
@@ -76,7 +80,86 @@ def createNew(num):
   # Move the folder to the local images folder.
   os.rename(sourceFolder, localDestFolder)
 
-  print(f"Created a new local collection: {localDestFolder}")
+  print(f"Reserved collection {num}.")
+  print(f"Renamed files and moved the tmp folder to: {localDestFolder}")
+
+def nextDbNum(prefixes):
+  """
+  Return the next collection number given a list of db prefixes.
+  """
+  num = 0
+  for prefix in prefixes:
+    if prefix.startswith('c'):
+      pnum = int(prefix[1:])
+    elif prefix.startswith('published-'):
+      pnum = int(prefix[10:])
+    else:
+      continue
+    if pnum > num:
+      num = pnum
+  nextNum = num + 1
+  return nextNum
+
+def reserveNextNum():
+  """
+  Reserve the next available collection number and return it.
+  """
+  # Determine the next from the current list the db prefix items.
+
+  awsSettings = getAwsSettings()
+  settings = awsSettings['settings']
+  bucket_name = settings['bucket_name']
+  s3Client = getBotoClient('s3')
+
+  prefixes = readDbPrefixes(s3Client, bucket_name)
+
+  num = nextDbNum(prefixes)
+
+  writeDbPrefix(s3client, bucket_name, "c", nextNum)
+  return nextNum
+
+def readDbPrefixes(s3Client, bucket_name):
+  """
+  Read the prefixes that start with db/.
+  """
+  bucket_name = 'sflennikco'
+  prefix = "db/"
+  response = s3Client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+  prefixes = []
+  if 'Contents' in response:
+    for obj in response['Contents']:
+      prefixes.append(obj['Key'])
+  return prefixes
+
+def makeDbPrefix(kind, num):
+  assert int(num) > 0
+  if kind == "c":
+    prefix = f"db/c{num}"
+    content = 'collection under development'
+  elif kind == "published":
+    prefix = f"db/published-{num}"
+    content = 'published collection'
+  else:
+    raise MakerException(f"Error: invalid prefix kind.")
+  return prefix, content
+
+def writeDbPrefix(s3Client, bucket_name, kind, num):
+  """
+  Write the db prefix. kind is "c" or "published" and num is the
+  collection number.
+  """
+  prefix, content = makeDbPrefix(kind, num)
+  s3Client.put_object(Bucket=bucket_name, Key=prefix, Body=content)
+
+def deleteDbPrefix(s3Client, bucket_name, kind, num):
+  """
+  Remove a db prefix.  kind is "c" or "published" and num is the
+  collection number.
+  """
+  prefix, content = makeDbPrefix(kind, num)
+
+  s3Client.delete_object(Bucket=bucket_name, Key=prefix)
+  
 
 class FileInfo(object):
   def __init__(self, fullPath, isFile, size, modDate):
@@ -352,6 +435,21 @@ def testGetImageInfoError(filename, eMsg):
   fail("Got an unexpected exception.")
 
 
+class TestClients:
+  def __init__(self):
+    self.s3Client = getBotoClient('s3')
+
+tc = None
+
+def setUpModule():
+  # Get the boto clients we test. This method is called once by the
+  # test suite. The code is here to avoid a runtime error in the
+  # shutdown phase.
+  global tc
+  tc = TestClients()
+
+def tearDownModule():
+  pass
 
 class TestMaker(unittest.TestCase):
 
@@ -417,7 +515,43 @@ class TestMaker(unittest.TestCase):
   # test previews width and height are greater than 933
   # test that thumbnails are 480 by 480
 
+  def test_readDbPrefixes(self):
+    awsSettings = getAwsSettings()
+    settings = awsSettings['settings']
+    bucket_name = settings['bucket_name']
+    prefixes = readDbPrefixes(tc.s3Client, bucket_name)
+    assert len(prefixes) > 0
+    # for prefix in prefixes:
+    #   pv("prefix", prefix)
 
+  def test_nextDbNum(prefixes):
+    gotExpected(nextDbNum(["published-2"]), 3)
+    gotExpected(nextDbNum(["published-2", "c3"]), 4)
+    gotExpected(nextDbNum(["published-2", "c3", "c4"]), 5)
+
+  def test_makeDbPrefixC(self):
+    prefix, content = makeDbPrefix('c', 4)
+    gotExpected(prefix, "db/c4")
+    gotExpected(content, "collection under development")
+
+  def test_makeDbPrefixPublished(self):
+    prefix, content = makeDbPrefix('published', 4)
+    gotExpected(prefix, "db/published-4")
+    gotExpected(content, "published collection")
+
+  # def test_roundTrip(self):
+  #   awsSettings = getAwsSettings()
+  #   settings = awsSettings['settings']
+  #   bucket_name = settings['bucket_name']
+  #   deleteDbPrefix(tc.s3Client, bucket_name, "c", 3)
+  #   prefixes = readDbPrefixes(tc.s3Client, bucket_name)
+  #   for prefix in prefixes:
+  #     pv("prefix", prefix)
+  #   writeDbPrefix(tc.s3Client, bucket_name, "c", 3)
+  #   prefixes = readDbPrefixes(tc.s3Client, bucket_name)
+  #   for prefix in prefixes:
+  #     pv("prefix", prefix)
+    
 if __name__ == '__main__':
   args = parseCommandLine()
   if args.test:
