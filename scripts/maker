@@ -50,7 +50,7 @@ previewMinDim = 933
 
 workingDir='/home/coder/collections'
 
-# Location where the new list of image files exists.
+# Folder where the new collection folder exists.
 tmpFolder=f'{workingDir}/tmp/working'
 
 class MakerException(Exception):
@@ -103,71 +103,32 @@ def createNew(num):
   print(f"Reserved collection {num}.")
   print(f"Created a collection folder and moved it to: {localDestFolder}")
 
-def getPreviewSizes(ftg):
+def getNextCollectionNum():
   """
-  Return the preview image information as a list of ImageInfo objects.
-  If the image is the wrong size or not a jpg, raise an exception.
+  Return the next available collection number.
   """
+  awsSettings = getAwsSettings()
+  settings = awsSettings['settings']
+  bucket_name = settings['bucket_name']
+  s3Client = getBotoClient('s3')
 
-  previewImageInfoList = []
-  for ix, previewFileInfo in enumerate(ftg.previews):
-    tii = getImageInfo(ftg.thumbnails[ix].fullPath)
-    if tii.width != thumbnailDim or tii.height != thumbnailDim:
-      raise MakerException(
-        f"""\
-Error: thumbnail must be square ({thumbnailDim} x {thumbnailDim}).
-file: ({tii.width} x {tii.height}) {tii.fullPath}
-"""
-      )
-    if tii.kind != "JPEG":
-      got = f"{thumbnailFileInfo}: {tii.kind}"
-      raise MakerException(f"""\
-Error: thumbnail must be a jpg.
-file: {tii.fullPath}
-""")
+  prefixes = readDbPrefixes(s3Client, bucket_name)
 
-    previewFile = previewFileInfo.fullPath
-    pii = getImageInfo(previewFile)
+  num = nextDbNum(prefixes)
+  return num
 
-    if pii.width < previewMinDim or pii.height < previewMinDim:
-      raise MakerException(
-        f"""\
-Error: preview width and hight must greater than or equal to {previewMinDim}.
-file: ({tii.width} x {tii.height}) {tii.fullPath}
-"""
-      )
-      got = f"{previewFile}: ({pii.width} x {pii.height})"
-      raise MakerException(f"Error: preview must be greater than or equal to {pMinWidth}, found: {got}")
-    if pii.kind != "JPEG":
-      raise MakerException(f"""\
-Error: preview must be a jpg.
-file: {pii.fullPath}
-""")
-
-    previewImageInfoList.append(pii)
-
-
-
-def renameFiles(folder, cinfo, ftg):
+def readDbPrefixes(s3Client, bucket_name):
   """
-  Rename the image files in the given folder to use the standard
-  collection number naming.
+  Read the prefixes that start with db/.
   """
-  parentFolder = os.path.dirname(folder)
-  assert parentFolder == tmpFolder
-  assert len(ftg.previews) == len(cinfo['images'])
-  assert len(ftg.thumbnails) == len(cinfo['images'])
-
-  for ix, image in enumerate(cinfo['images']):
-    previewName = ftg.previews[ix].fullPath
-    thumbnailName = ftg.thumbnails[ix].fullPath
-
-    stdPreviewName = os.path.join(folder, f"c{num}-{ix+1}-p.jpg")
-    stdThumbnailName = os.path.join(folder, f"c{num}-{ix+1}-t.jpg")
-
-    os.rename(previewName, stdPreviewName)
-    os.rename(thumbnailName, stdThumbnailName)
-
+  bucket_name = 'sflennikco'
+  prefix = "db/"
+  response = s3Client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
+  prefixes = []
+  if 'Contents' in response:
+    for obj in response['Contents']:
+      prefixes.append(obj['Key'])
+  return prefixes
 
 def nextDbNum(prefixes):
   """
@@ -185,20 +146,6 @@ def nextDbNum(prefixes):
       num = pnum
   nextNum = num + 1
   return nextNum
-
-def getNextCollectionNum():
-  """
-  Return the next available collection number.
-  """
-  awsSettings = getAwsSettings()
-  settings = awsSettings['settings']
-  bucket_name = settings['bucket_name']
-  s3Client = getBotoClient('s3')
-
-  prefixes = readDbPrefixes(s3Client, bucket_name)
-
-  num = nextDbNum(prefixes)
-  return num
 
 def reserveCollectionNum(num):
   """
@@ -219,19 +166,6 @@ def reserveCollectionNum(num):
 
   writeDbPrefix(s3client, bucket_name, "c", nextNum)
   return nextNum
-
-def readDbPrefixes(s3Client, bucket_name):
-  """
-  Read the prefixes that start with db/.
-  """
-  bucket_name = 'sflennikco'
-  prefix = "db/"
-  response = s3Client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-  prefixes = []
-  if 'Contents' in response:
-    for obj in response['Contents']:
-      prefixes.append(obj['Key'])
-  return prefixes
 
 def makeDbPrefix(kind, num):
   assert int(num) > 0
@@ -262,29 +196,91 @@ def deleteDbPrefix(s3Client, bucket_name, kind, num):
 
   s3Client.delete_object(Bucket=bucket_name, Key=prefix)
 
+def getPreviewSizes(ftg):
+  """
+  Return the preview image information as a list of ImageInfo objects.
+  If the image is the wrong size or not a jpg, raise an exception.
+  """
 
-# todo: store base name not full path.
+  previewImageInfoList = []
+  for ix, previewFileInfo in enumerate(ftg.previews):
+    thumbnailFileInfo = ftg.thumbnails[ix]
+    tii = ImageInfo(thumbnailFileInfo.basename, thumbnailFileInfo.size)
+    if tii.width != thumbnailDim or tii.height != thumbnailDim:
+      raise MakerException(
+        f"""\
+Error: thumbnail must be square ({thumbnailDim} x {thumbnailDim}).
+file: ({tii.width} x {tii.height}) {tii.fullPath}
+"""
+      )
+    if tii.kind != "JPEG":
+      got = f"{thumbnailFileInfo}: {tii.kind}"
+      raise MakerException(f"""\
+Error: thumbnail must be a jpg.
+file: {tii.fullPath}
+""")
+
+    previewFile = previewFileInfo.fullPath
+    pii = ImageInfo(previewFile, previewFileInfo.size)
+
+    if pii.width < previewMinDim or pii.height < previewMinDim:
+      raise MakerException(
+        f"""\
+Error: preview width and hight must greater than or equal to {previewMinDim}.
+file: ({tii.width} x {tii.height}) {tii.fullPath}
+"""
+      )
+      got = f"{previewFile}: ({pii.width} x {pii.height})"
+      raise MakerException(f"Error: preview must be greater than or equal to {pMinWidth}, found: {got}")
+    if pii.kind != "JPEG":
+      raise MakerException(f"""\
+Error: preview must be a jpg.
+file: {pii.fullPath}
+""")
+
+    previewImageInfoList.append(pii)
+
+def renameFiles(folder, cinfo, ftg):
+  """
+  Rename the image files in the given folder to use the standard
+  collection number naming.
+  """
+  parentFolder = os.path.dirname(folder)
+  assert parentFolder == tmpFolder
+  assert len(ftg.previews) == len(cinfo['images'])
+  assert len(ftg.thumbnails) == len(cinfo['images'])
+
+  for ix, image in enumerate(cinfo['images']):
+    previewName = ftg.previews[ix].fullPath
+    thumbnailName = ftg.thumbnails[ix].fullPath
+
+    stdPreviewName = os.path.join(folder, f"c{num}-{ix+1}-p.jpg")
+    stdThumbnailName = os.path.join(folder, f"c{num}-{ix+1}-t.jpg")
+
+    os.rename(previewName, stdPreviewName)
+    os.rename(thumbnailName, stdThumbnailName)
+
 class FileInfo(object):
-  def __init__(self, fullPath, isFile, size, modDate):
-    self.fullPath = fullPath
+  def __init__(self, basename, isFile, size, modDate):
+    self.basename = basename
     self.isFile = isFile
     self.size = size
     self.modDate = modDate
   def __str__(self):
     isFileStr = "file" if self.isFile else "-"
-    modified_time = datetime.utcfromtimestamp(self.modDate).strftime('%Y-%m-%d %H:%M:%S')
-    return f"{isFileStr:4} {self.size:8} {modified_time:19} {self.fullPath}"
+    dt = datetime.fromtimestamp(self.modDate)
+    dateTimeStr = dt.strftime('%Y-%m-%d %H:%M:%S')
+    return f"{isFileStr:4} {self.size:8} {dateTimeStr:19} {self.fullPath}"
 
 def getFileInfoList(folder):
   """
   Return information about each file in a folder.
   """
   fileInfoList = []
-  fullPath = os.path.abspath(folder)
-  for entry in os.scandir(fullPath):
+  for entry in os.scandir(folder):
     stats = entry.stat()
     fileInfo = FileInfo(
-      f"{fullPath}/{entry.name}",
+      entry.name,
       entry.is_file(),
       stats.st_size,
       stats.st_mtime
@@ -292,28 +288,10 @@ def getFileInfoList(folder):
     fileInfoList.append(fileInfo)
   return fileInfoList
 
-# def validateImageSizes(cinfo, pMinWidth=933, pThumbnailWidth=480):
-
-#   ii = getImageInfo(filename)
-#   if ii.width < pMinWidth or ii.height < pMinWidth:
-#     got = f"{filename}: ({ii.width} x {ii.height})"
-#     raise MakerException(f"Error: preview must be greater than or equal to 933, found: {got}")
-#   if ii.kind != "JPEG":
-#     got = f"{filename}: {ii.kind}"
-#     raise MakerException(f"Error: preview must be a jpg, found: {got}")
-
-#     if readImage:
-#       ti = getImageInfo(thumbnail)
-#       if ti.width != pThumbnailWidth or ti.height != pThumbnailWidth:
-#         got = f"{thumbnail}: ({ti.width} x {ti.height})"
-#         raise MakerException(f"Error: thumbnail must by {pThumbnailWidth} by {pThumbnailWidth}, found: {got}")
-#       if ti.kind != "JPEG":
-#         got = f"{thumbnail}: {ti.kind}"
-#         raise MakerException(f"Error: thumbnail must be a jpg, found: {ti.kind}")
-#     else:
-#       ii = ImageInfo(width=480, height=480, kind="JPEG", size=65432)
-
 class FileTypeGroups(object):
+  """
+  Holds the file information for a collection folder.
+  """
   def __init__(self, fileInfoList):
     self.previews = []
     self.thumbnails = []
@@ -333,12 +311,10 @@ class FileTypeGroups(object):
       else:
         self.other.append(fileInfo)
 
-def validateCollectionFolder(num, fileInfoList):
+def validateCollectionFolder(num, ftg):
   """
-  Validate that the given files works as a collection and return
-  the collection info (cinfo) if valid. num is the collection
-  number. The preview images width and height are set to 0. No files
-  are read.
+  Validate that the given files work as a collection. Num is the
+  collection number. No files are read.
   """
 
   if len(ftg.previews) == 0:
@@ -413,43 +389,31 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
   }
   return cinfo
 
-# return json.dumps(collection, indent=2)
-
 class ImageInfo(object):
-  def __init__(self, width, height, kind, fileSize):
+  """
+  Holds the information for an image file.
+  """
+  def __init__(filename, fileSize):
+    assert int(fileSize) > 0
+
+    try:
+      with Image.open(filename) as img:
+        width, height = img.size
+    except Exception as ex:
+      raise MakerException(f"Error: unable to open the image file: {str(ex)}")
     self.width = width
     self.height = height
-    self.kind = kind
+    self.kind = img.format
     self.fileSize = fileSize
+
   def __str__(self):
     return f"{self.kind} ({self.width} x {self.height}) {self.fileSize}"
-
-def getImageInfo(filename, fileSize=None):
-  """
-  Return the image information of a file.
-  """
-  if fileSize is None:
-    try:
-      fileSize = os.path.getsize(filename)
-    except FileNotFoundError:
-      raise MakerException(f"Error: the file doesn't exist: {filename}")
-  else:
-    fileSize = fileSize
-
-  try:
-    with Image.open(filename) as img:
-      width, height = img.size
-  except Exception as ex:
-    raise MakerException(f"Error: unable to open the image file: {str(ex)}")
-
-  return ImageInfo(width=width, height=height, kind=img.format, fileSize=fileSize)
 
 def process(args):
   """
   """
   if args.createNew:
     createNew(num)
-
 
 def parseCommandLine():
   """
@@ -463,7 +427,7 @@ def parseCommandLine():
     for ix, arg in enumerate(sys.argv[1:]):
       if arg in ['-t', '--test']:
         sys.argv.pop(ix+1)
-        args = argparse.Namespace(test = True)
+        args = argparse.Namespace(test=True)
         return args
 
   # Use this module's comment at the top of the file for the
@@ -502,6 +466,7 @@ def main(args):
     return 1
   return 0 # success
 
+# Test code:
 
 def testVerifyNamesError(filenames, eMessage):
   """
@@ -571,7 +536,6 @@ def testValidateFolderError(num, previews=8, thumbnails=8, cjson=0,
     gotExpected(str(ex), eMsg)
     return # passed
   fail("Got an unexpected exception.")
-
 
 def randomName(folder, k=6, prefix="", postfix=""):
   """
@@ -643,6 +607,69 @@ def tearDownModule():
   pass
 
 class TestMaker(unittest.TestCase):
+  def test_readDbPrefixes(self):
+    awsSettings = getAwsSettings()
+    settings = awsSettings['settings']
+    bucket_name = settings['bucket_name']
+    prefixes = readDbPrefixes(tc.s3Client, bucket_name)
+    assert len(prefixes) > 0
+    # for prefix in prefixes:
+    #   pv("prefix", prefix)
+    # prefix: db/c3
+    # prefix: db/published-2
+    working = 0
+    published = 0
+    for prefix in prefixes:
+      if prefix.startswith("db/c"):
+        working += 1
+      elif prefix.startswith("db/published-"):
+        published += 1
+    gotExpected(published, 1)
+
+  def test_nextDbNum(prefixes):
+    gotExpected(nextDbNum(["published-2"]), 3)
+    gotExpected(nextDbNum(["published-2", "c3"]), 4)
+    gotExpected(nextDbNum(["published-2", "c3", "c4"]), 5)
+
+  def test_makeDbPrefixC(self):
+    prefix, content = makeDbPrefix('c', 4)
+    gotExpected(prefix, "db/c4")
+    gotExpected(content, "collection under development")
+
+  def test_makeDbPrefixPublished(self):
+    prefix, content = makeDbPrefix('published', 4)
+    gotExpected(prefix, "db/published-4")
+    gotExpected(content, "published collection")
+
+  # def test_roundTrip(self):
+  #   awsSettings = getAwsSettings()
+  #   settings = awsSettings['settings']
+  #   bucket_name = settings['bucket_name']
+  #   deleteDbPrefix(tc.s3Client, bucket_name, "c", 3)
+  #   prefixes = readDbPrefixes(tc.s3Client, bucket_name)
+  #   for prefix in prefixes:
+  #     pv("prefix", prefix)
+  #   writeDbPrefix(tc.s3Client, bucket_name, "c", 3)
+  #   prefixes = readDbPrefixes(tc.s3Client, bucket_name)
+  #   for prefix in prefixes:
+  #     pv("prefix", prefix)
+
+  def test_dbPrefixes(self):
+    # Test getting and setting the db prefixes.
+    num = getNextCollectionNum()
+    gotExpected(num, 3)
+
+    writeDbPrefix(tc.s3Client, "sflennikco", "c", 3)
+    num = getNextCollectionNum()
+    gotExpected(num, 4)
+
+    writeDbPrefix(tc.s3Client, "sflennikco", "c", 4)
+    num = getNextCollectionNum()
+    gotExpected(num, 5)
+
+    deleteDbPrefix(tc.s3Client, "sflennikco", "c", 3)
+    deleteDbPrefix(tc.s3Client, "sflennikco", "c", 4)
+    deleteDbPrefix(tc.s3Client, "sflennikco", "c", 5)
 
   def test_getFileInfoList(self):
     fileInfoList = getFileInfoList("dist")
@@ -726,42 +753,6 @@ class TestMaker(unittest.TestCase):
   # test previews width and height are greater than 933
   # test that thumbnails are 480 by 480
 
-  def test_readDbPrefixes(self):
-    awsSettings = getAwsSettings()
-    settings = awsSettings['settings']
-    bucket_name = settings['bucket_name']
-    prefixes = readDbPrefixes(tc.s3Client, bucket_name)
-    assert len(prefixes) > 0
-    # for prefix in prefixes:
-    #   pv("prefix", prefix)
-
-  def test_nextDbNum(prefixes):
-    gotExpected(nextDbNum(["published-2"]), 3)
-    gotExpected(nextDbNum(["published-2", "c3"]), 4)
-    gotExpected(nextDbNum(["published-2", "c3", "c4"]), 5)
-
-  def test_makeDbPrefixC(self):
-    prefix, content = makeDbPrefix('c', 4)
-    gotExpected(prefix, "db/c4")
-    gotExpected(content, "collection under development")
-
-  def test_makeDbPrefixPublished(self):
-    prefix, content = makeDbPrefix('published', 4)
-    gotExpected(prefix, "db/published-4")
-    gotExpected(content, "published collection")
-
-  # def test_roundTrip(self):
-  #   awsSettings = getAwsSettings()
-  #   settings = awsSettings['settings']
-  #   bucket_name = settings['bucket_name']
-  #   deleteDbPrefix(tc.s3Client, bucket_name, "c", 3)
-  #   prefixes = readDbPrefixes(tc.s3Client, bucket_name)
-  #   for prefix in prefixes:
-  #     pv("prefix", prefix)
-  #   writeDbPrefix(tc.s3Client, bucket_name, "c", 3)
-  #   prefixes = readDbPrefixes(tc.s3Client, bucket_name)
-  #   for prefix in prefixes:
-  #     pv("prefix", prefix)
 
   # def test_renameFiles(self):
   #   c3 = "/home/coder/collections/tmp/c3"
