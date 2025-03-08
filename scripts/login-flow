@@ -381,6 +381,7 @@ def process(args):
     fetchUrl(url, filename)
   else:
     showHelp()
+# todo: no showHelp
 
 def parseCommandLine():
   """

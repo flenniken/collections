@@ -15,6 +15,16 @@ if not os.environ.get("coder_env"):
   print("Run from the Collection's docker environment.")
   exit(1)
 
+# Check that this script is run from the collections folder
+cwd = os.getcwd()
+if not cwd.endswith("collections"):
+  print(f"""\
+Run from the collections folder:
+cd ~/collections
+scripts/maker
+""")
+  exit(1)
+
 import sys
 import argparse
 import traceback
@@ -22,6 +32,7 @@ import sys
 import signal
 import unittest
 import urllib.parse
+import tempfile
 from datetime import datetime
 from collections import namedtuple
 import json
@@ -29,8 +40,13 @@ import subprocess
 import sys
 import textwrap
 from boto_client import getBotoClient, getAwsSettings
-
+import random
+import string
+import shutil
 from PIL import Image
+
+thumbnailDim = 480
+previewMinDim = 933
 
 workingDir='/home/coder/collections'
 
@@ -41,47 +57,117 @@ class MakerException(Exception):
   """ An exception we plan for. """
   pass
 
-def createNew(sourceFolder):
+def createNew(num):
   """
   Create a new local collection folder from a folder of images.
   """
+  assert int(num) > 0
+
+  sourceFolder = os.path.join(workingDir, num)
   if not os.path.exists(sourceFolder):
     raise MakerException(f"Missing the collection folder: {sourceFolder}")
 
-  # Reserve the next available collection number.
-  num = reserveNextNum()
+  nextNum = getNextCollectionNum()
+  if num != nextNum:
+    raise MakerException(f"Error: the collection number is not available, use: {nextNum}.")
 
   localDestFolder = f"images/c{num}"
   if not os.path.exists(localDestFolder):
     raise MakerException(f"The local collection folder already exists: {localDestFolder}")
 
-  # Get names and info of all the files in the sourceFolder.
-  # Validate the files work in a collection.
+  # Get names and info of all the files in the sourceFolder and
+  # validate that they work in a collection.
   fileInfoList = getFileInfoList(sourceFolder)
-  validateFolder(num, fileInfoList)
+  ftg = FileTypeGroups(fileInfoList)
+  validateCollectionFolder(num, ftg)
 
-  # todo: verify that the collection is the next available collection. It checks the
-  #  /db prefix files.
-  # reserve the num by writing the db prefix
+  # Validate the image dimensions and return the preview image information.
+  previewImageInfoList = getPreviewSizes(ftg)
 
-  
+  # Reserve the collection number for this collection.
+  reserveCollectionNum(num)
 
-  # Rename the images files to their standard name.
-  fileInfoList = getFileInfoList(sourceFolder)
-  renameFiles(fileInfoList)
-  cjson = validateFolder(num, fileInfoList)
+  cinfo = createCollectionCinfo(num, ftg, previewImageInfoList)
 
-  # Write the cjson file if it doesn't already exist.
+  # Rename the images in the tmp folder to their standard names.
+  renameFiles(sourceFolder, cinfo, ftg)
+
+  # Write the cjson file in the tmp folder.
   cjsonFilename = os.path.join(sourceFolder, f"c{num}.json")
-  if not os.path.exists(asdf):
-    with open(cjsonFilename, "w") as fh:
-      fh.write(cjson)
+  with open(cjsonFilename, "w") as fh:
+    fh.write(json.dumps(cinfo, indent=2))
 
-  # Move the folder to the local images folder.
+  # Move the tmp folder to the local images folder.
   os.rename(sourceFolder, localDestFolder)
 
   print(f"Reserved collection {num}.")
-  print(f"Renamed files and moved the tmp folder to: {localDestFolder}")
+  print(f"Created a collection folder and moved it to: {localDestFolder}")
+
+def getPreviewSizes(ftg):
+  """
+  Return the preview image information as a list of ImageInfo objects.
+  If the image is the wrong size or not a jpg, raise an exception.
+  """
+
+  previewImageInfoList = []
+  for ix, previewFileInfo in enumerate(ftg.previews):
+    tii = getImageInfo(ftg.thumbnails[ix].fullPath)
+    if tii.width != thumbnailDim or tii.height != thumbnailDim:
+      raise MakerException(
+        f"""\
+Error: thumbnail must be square ({thumbnailDim} x {thumbnailDim}).
+file: ({tii.width} x {tii.height}) {tii.fullPath}
+"""
+      )
+    if tii.kind != "JPEG":
+      got = f"{thumbnailFileInfo}: {tii.kind}"
+      raise MakerException(f"""\
+Error: thumbnail must be a jpg.
+file: {tii.fullPath}
+""")
+
+    previewFile = previewFileInfo.fullPath
+    pii = getImageInfo(previewFile)
+
+    if pii.width < previewMinDim or pii.height < previewMinDim:
+      raise MakerException(
+        f"""\
+Error: preview width and hight must greater than or equal to {previewMinDim}.
+file: ({tii.width} x {tii.height}) {tii.fullPath}
+"""
+      )
+      got = f"{previewFile}: ({pii.width} x {pii.height})"
+      raise MakerException(f"Error: preview must be greater than or equal to {pMinWidth}, found: {got}")
+    if pii.kind != "JPEG":
+      raise MakerException(f"""\
+Error: preview must be a jpg.
+file: {pii.fullPath}
+""")
+
+    previewImageInfoList.append(pii)
+
+
+
+def renameFiles(folder, cinfo, ftg):
+  """
+  Rename the image files in the given folder to use the standard
+  collection number naming.
+  """
+  parentFolder = os.path.dirname(folder)
+  assert parentFolder == tmpFolder
+  assert len(ftg.previews) == len(cinfo['images'])
+  assert len(ftg.thumbnails) == len(cinfo['images'])
+
+  for ix, image in enumerate(cinfo['images']):
+    previewName = ftg.previews[ix].fullPath
+    thumbnailName = ftg.thumbnails[ix].fullPath
+
+    stdPreviewName = os.path.join(folder, f"c{num}-{ix+1}-p.jpg")
+    stdThumbnailName = os.path.join(folder, f"c{num}-{ix+1}-t.jpg")
+
+    os.rename(previewName, stdPreviewName)
+    os.rename(thumbnailName, stdThumbnailName)
+
 
 def nextDbNum(prefixes):
   """
@@ -100,9 +186,23 @@ def nextDbNum(prefixes):
   nextNum = num + 1
   return nextNum
 
-def reserveNextNum():
+def getNextCollectionNum():
   """
-  Reserve the next available collection number and return it.
+  Return the next available collection number.
+  """
+  awsSettings = getAwsSettings()
+  settings = awsSettings['settings']
+  bucket_name = settings['bucket_name']
+  s3Client = getBotoClient('s3')
+
+  prefixes = readDbPrefixes(s3Client, bucket_name)
+
+  num = nextDbNum(prefixes)
+  return num
+
+def reserveCollectionNum(num):
+  """
+  Reserve the collection number.
   """
   # Determine the next from the current list the db prefix items.
 
@@ -113,7 +213,9 @@ def reserveNextNum():
 
   prefixes = readDbPrefixes(s3Client, bucket_name)
 
-  num = nextDbNum(prefixes)
+  nextNum = nextDbNum(prefixes)
+  if nextNum != num:
+    raise MakerException(f"Error: the collection number is not available, use: {nextNum}.")
 
   writeDbPrefix(s3client, bucket_name, "c", nextNum)
   return nextNum
@@ -159,8 +261,9 @@ def deleteDbPrefix(s3Client, bucket_name, kind, num):
   prefix, content = makeDbPrefix(kind, num)
 
   s3Client.delete_object(Bucket=bucket_name, Key=prefix)
-  
 
+
+# todo: store base name not full path.
 class FileInfo(object):
   def __init__(self, fullPath, isFile, size, modDate):
     self.fullPath = fullPath
@@ -189,113 +292,128 @@ def getFileInfoList(folder):
     fileInfoList.append(fileInfo)
   return fileInfoList
 
-def validateFolder(num, fileInfoList):
+# def validateImageSizes(cinfo, pMinWidth=933, pThumbnailWidth=480):
+
+#   ii = getImageInfo(filename)
+#   if ii.width < pMinWidth or ii.height < pMinWidth:
+#     got = f"{filename}: ({ii.width} x {ii.height})"
+#     raise MakerException(f"Error: preview must be greater than or equal to 933, found: {got}")
+#   if ii.kind != "JPEG":
+#     got = f"{filename}: {ii.kind}"
+#     raise MakerException(f"Error: preview must be a jpg, found: {got}")
+
+#     if readImage:
+#       ti = getImageInfo(thumbnail)
+#       if ti.width != pThumbnailWidth or ti.height != pThumbnailWidth:
+#         got = f"{thumbnail}: ({ti.width} x {ti.height})"
+#         raise MakerException(f"Error: thumbnail must by {pThumbnailWidth} by {pThumbnailWidth}, found: {got}")
+#       if ti.kind != "JPEG":
+#         got = f"{thumbnail}: {ti.kind}"
+#         raise MakerException(f"Error: thumbnail must be a jpg, found: {ti.kind}")
+#     else:
+#       ii = ImageInfo(width=480, height=480, kind="JPEG", size=65432)
+
+class FileTypeGroups(object):
+  def __init__(self, fileInfoList):
+    self.previews = []
+    self.thumbnails = []
+    self.jsonFiles = []
+    self.htmlFiles = []
+    self.other = []
+    for fileInfo in fileInfoList:
+      filename = os.path.basename(fileInfo.fullPath)
+      if filename.endswith("-p.jpg"):
+        self.previews.append(fileInfo)
+      elif filename.endswith("-t.jpg"):
+        self.thumbnails.append(fileInfo)
+      elif filename.endswith(".json"):
+        self.jsonFiles.append(fileInfo)
+      elif filename.endswith(".html"):
+        self.htmlFiles.append(fileInfo)
+      else:
+        self.other.append(fileInfo)
+
+def validateCollectionFolder(num, fileInfoList):
   """
   Validate that the given files works as a collection and return
-  the cjson. num is the collection number
+  the collection info (cinfo) if valid. num is the collection
+  number. The preview images width and height are set to 0. No files
+  are read.
   """
 
-  previews = []
-  thumbnails = []
-  jsonFiles = []
-  htmlFiles = []
-  other = []
-  for fileInfo in fileInfoList:
-    filename = fileInfo.fullPath
-    # pv("filename", filename)
-
-    if filename.endswith("-p.jpg"):
-      previews.append(filename)
-    elif filename.endswith("-t.jpg"):
-      thumbnails.append(filename)
-    elif filename.endswith(".json"):
-      jsonFiles.append(filename)
-    elif filename.endswith(".html"):
-      htmlFiles.append(filename)
-    else:
-      other.append(filename)
-
-  if len(previews) == 0:
+  if len(ftg.previews) == 0:
     raise MakerException(f"Error: no previews files that end in -p.jpg.")
-  if len(thumbnails) == 0:
+  if len(ftg.thumbnails) == 0:
     raise MakerException(f"Error: no thumbnails files that end in -t.jpg.")
 
-  if len(previews) != len(thumbnails):
+  if len(ftg.previews) != len(ftg.thumbnails):
     raise MakerException(f"Error: the number of thumbnails ({len(thumbnails)}) and previews ({len(previews)}) must match.")
 
-  if len(thumbnails) < 8:
+  if len(ftg.thumbnails) < 8:
     raise MakerException(f"Error: not enough images, you need at least 8, found: {len(thumbnails)}.")
-  if len(thumbnails) > 20:
+  if len(ftg.thumbnails) > 20:
     raise MakerException(f"Error: too many images, you are limited to 20, found: {len(thumbnails)}.")
-  if len(jsonFiles) == 1:
-    basename = os.path.basename(jsonFiles[0])
+  if len(ftg.jsonFiles) == 1:
+    basename = os.path.basename(ftg.jsonFiles[0])
     if basename != f"c{num}.json":
       raise MakerException(f"Error: invalid cjson name for this collection: {basename}")
 
-  if len(htmlFiles) > 0:
-    for filename in htmlFiles:
+  if len(ftg.htmlFiles) > 0:
+    for filename in ftg.htmlFiles:
       basename = os.path.basename(filename)
       e_images_page = f"image-{num}.html"
       e_thumbnails_page = f"thumbnails-{num}.html"
       if basename not in [e_images_page, e_thumbnails_page]:
         raise MakerException(f"Error: invalid html name for this collection: {basename}")
 
-  if len(jsonFiles) > 1:
+  if len(ftg.jsonFiles) > 1:
     raise MakerException("Error: more than one cjson file")
 
-  if len(htmlFiles) > 2:
+  if len(ftg.htmlFiles) > 2:
     raise MakerException("Error: more than two html files")
 
-  if len(other):
+  if len(ftg.other):
     raise MakerException(f"Error: there are {len(other)} extra files in the folder: {other[0]}")
 
+def createCollectionCinfo(num, ftg, previewImageInfoList):
+  """
+  Create the collection info (cinfo) for the given collection number
+  """
+  assert len(ftg.previews) == len(ftg.thumbnails)
   images = []
 
-  for ix, filename in enumerate(previews):
-    thumbnail = thumbnails[ix]
+  for ix, fileInfo in enumerate(ftg.previews):
+    thumbnailFileInfo = ftg.thumbnails[ix]
+    previewImageInfo = previewImageInfoList[ix]
 
     collectionImage = {}
     collectionImage['title'] = ""
     collectionImage['description'] = ""
 
-    ii = getImageInfo(filename)
-    if ii.width < 933 or ii.height < 933:
-      got = f"{filename}: ({ii.width} x {ii.height})"
-      raise MakerException(f"Error: preview must be greater than or equal to 933, found: {got}")
-    if ii.kind != "JPEG":
-      got = f"{filename}: {ii.kind}"
-      raise MakerException(f"Error: preview must be a jpg, found: {got}")
-
     collectionImage['url'] = f"/images/c{num}/c{num}-{ix+1}-p.jpg"
-    collectionImage['width'] = ii.width
-    collectionImage['height'] = ii.height
-    collectionImage['size'] = ii.fileSize
-
-    ti = getImageInfo(thumbnail)
-    if ti.width != 480 or ti.height != 480:
-      got = f"{thumbnail}: ({ti.width} x {ti.height})"
-      raise MakerException(f"Error: thumbnail must by 480 by 480, found: {got}")
-    if ti.kind != "JPEG":
-      got = f"{thumbnail}: {ti.kind}"
-      raise MakerException(f"Error: thumbnail must be a jpg, found: {ti.kind}")
+    collectionImage['width'] = previewImageInfo.width
+    collectionImage['height'] = previewImageInfo.height
+    collectionImage['size'] = fileInfo.size
 
     collectionImage['thumbnail'] = f"/images/c{num}/c{num}-{ix+1}-t.jpg"
-    collectionImage['sizet'] = ti.fileSize
+    collectionImage['sizet'] = thumbnailFileInfo.fileSize
     images.append(collectionImage)
 
-  # Create the cjson.
-  collection = {
+  # Create the collection info (cinfo).
+  cinfo = {
     "title": "",
     "description": "",
     "collection": num,
-    "width": 480,
-    "height": 480,
+    "width": thumbnailDim,
+    "height": thumbnailDim,
     "imagePageUrl": f"/images/c{num}/image-{num}.html",
     "thumbnailsPageUrl": f"/images/c{num}/thumbnails-{num}.html",
     "images": images,
     "usedImages": [],
   }
-  return json.dumps(collection, indent=2)
+  return cinfo
+
+# return json.dumps(collection, indent=2)
 
 class ImageInfo(object):
   def __init__(self, width, height, kind, fileSize):
@@ -330,9 +448,8 @@ def process(args):
   """
   """
   if args.createNew:
-    createNew(args.createNew)
-  else:
-    showHelp()
+    createNew(num)
+
 
 def parseCommandLine():
   """
@@ -361,6 +478,10 @@ def parseCommandLine():
     help="create a new local collection folder from a directory of images")
 
   args = parser.parse_args(sys.argv[1:])
+  if not args.createNew and not args.test:
+    # When there are no arguments provided, show the help information.
+    parser.print_help()
+    sys.exit(1)
   return args
 
 def signalHandler(sig, frame):
@@ -386,6 +507,7 @@ def testVerifyNamesError(filenames, eMessage):
   """
   Test verifyNames errors, pass in the expected error message.
   """
+
   previews, thumbnails, other, jsonFiles, htmlFiles = previewsAndThumbnails(filenames)
 
   try:
@@ -434,6 +556,75 @@ def testGetImageInfoError(filename, eMsg):
     return # passed
   fail("Got an unexpected exception.")
 
+def testValidateFolderError(num, previews=8, thumbnails=8, cjson=0,
+      imageHtml=0, thumbnailHtml=0, eMsg=""):
+  try:
+    folder = makeTestFolder(num, previews=previews, thumbnails=thumbnails,
+      cjson=cjson, imageHtml=imageHtml, thumbnailHtml=thumbnailHtml)
+    fileInfoList = getFileInfoList(folder)
+  finally:
+    shutil.rmtree(folder)
+
+  try:
+    validateFolder(num, fileInfoList, pMinWidth=100, pThumbnailWidth=50, readImage=False)
+  except MakerException as ex:
+    gotExpected(str(ex), eMsg)
+    return # passed
+  fail("Got an unexpected exception.")
+
+
+def randomName(folder, k=6, prefix="", postfix=""):
+  """
+  Return a random name in the given folder with the
+  given prefix and postfix.
+  """
+  randomPart = random62(k)
+  return os.path.join(folder, f"{prefix}{randomPart}{postfix}")
+
+def random62(k):
+  """
+  Return a random base 62 number of the given length.
+  """
+  characters = string.ascii_letters + string.digits
+  return ''.join(random.choices(characters, k=k))
+
+def createFile(filename, contents):
+  """ Create a new file with the given contents. """
+  with open(filename, 'w+', encoding='utf-8') as fh:
+    fh.write(contents)
+
+def makeTestFolder(num, previews=8, thumbnails=8, cjson=1,
+  imageHtml=1, thumbnailHtml=1):
+  """
+  Make a collection folder in the temp dir for testing. Return the
+  folder name.  When done with the folder delete it with:
+  shutil.rmtree(folder)
+  """
+
+  # Create a temp folder and fill it with the specified number of fake
+  # small files.
+  folder = tempfile.mkdtemp(prefix="maker-")
+  for ix in range(previews):
+    filename = randomName(folder, 6, "pre-", "-p.jpg")
+    createFile(filename, "fake preview file")
+
+  for ix in range(thumbnails):
+    filename = randomName(folder, 6, "thumb-", "-t.jpg")
+    createFile(filename, "fake thumbnail file")
+
+  if cjson:
+    filename = os.path.join(folder, f"c{num}.json")
+    createFile(filename, "fake cjson file")
+
+  if imageHtml:
+    filename = os.path.join(folder, f"image-{num}.html")
+    createFile(filename, "fake image html file")
+
+  if thumbnailHtml:
+    filename = os.path.join(folder, f"thumbnails-{num}.html")
+    createFile(filename, "fake thumbnail html file")
+
+  return folder
 
 class TestClients:
   def __init__(self):
@@ -507,7 +698,27 @@ class TestMaker(unittest.TestCase):
     # print(cjson)
     # todo: check cjson
 
-  # test at least 8 images
+  def test_makeTestFolder(self):
+    folder = makeTestFolder(4)
+    assert os.path.exists(folder)
+    # pv("folder", folder)
+    fileInfoList = getFileInfoList(folder)
+    filenames = []
+    for fileInfo in fileInfoList:
+      # pv("fileInfo", fileInfo)
+      filenames.append(fileInfo.fullPath)
+    filenames.sort()
+    # for filename in filenames:
+    #   pv("filename", filename)
+    shutil.rmtree(folder)
+
+  def test_validateFolderUnmatched(self):
+    # number of previews doesn't match the number of thumbnails
+    testValidateFolderError(4, previews=8, thumbnails=8, cjson=None,
+      imageHtml=None, thumbnailHtml=None, eMsg="")
+
+
+  # test with 7 images
   # test at most 20 images
   # verify the same number of previews and thumbnails
   # verify the number of images is even
@@ -551,7 +762,20 @@ class TestMaker(unittest.TestCase):
   #   prefixes = readDbPrefixes(tc.s3Client, bucket_name)
   #   for prefix in prefixes:
   #     pv("prefix", prefix)
-    
+
+  # def test_renameFiles(self):
+  #   c3 = "/home/coder/collections/tmp/c3"
+  #   fileInfoList = getFileInfoList(c3)
+  #   renameFiles(fileInfoList, 3)
+
+  def test_randomName(self):
+    name = randomName("folder", 6, "prefix-", "-p.jpg")
+    pv("name", name)
+    # folder/prefix-T223LT-p.jpg
+    assert name.startswith("folder/prefix-")
+    assert name.endswith("-p.jpg")
+    gotExpected(len(name), 26)
+
 if __name__ == '__main__':
   args = parseCommandLine()
   if args.test:
