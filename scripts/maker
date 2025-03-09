@@ -100,7 +100,8 @@ class FileTypeGroups(object):
     self.previews = []
     self.thumbnails = []
     self.jsonFiles = []
-    self.htmlFiles = []
+    self.htmlFilesI = []
+    self.htmlFilesT = []
     self.other = []
     for fileInfo in fileInfoList:
       filename = os.path.basename(fileInfo.basename)
@@ -110,8 +111,10 @@ class FileTypeGroups(object):
         self.thumbnails.append(fileInfo)
       elif filename.endswith(".json"):
         self.jsonFiles.append(fileInfo)
-      elif filename.endswith(".html"):
-        self.htmlFiles.append(fileInfo)
+      elif filename.startswith("image-") and filename.endswith(".html"):
+        self.htmlFilesI.append(fileInfo)
+      elif filename.startswith("thumbnails-") and filename.endswith(".html"):
+        self.htmlFilesT.append(fileInfo)
       else:
         self.other.append(fileInfo)
 
@@ -179,7 +182,8 @@ def validateCollectionFolder(num, ftg):
   numPreviews = len(ftg.previews)
   numThumbnails = len(ftg.thumbnails)
   numJson = len(ftg.jsonFiles)
-  numHtml = len(ftg.htmlFiles)
+  numHtmlI = len(ftg.htmlFilesI)
+  numHtmlT = len(ftg.htmlFilesT)
   numOther = len(ftg.other)
 
   if numPreviews == 0:
@@ -194,27 +198,33 @@ def validateCollectionFolder(num, ftg):
     raise MakerException(f"Error: {numThumbnails} images, you need at least 8.")
   if numThumbnails > 20:
     raise MakerException(f"Error: {numThumbnails} images, you are limited to 20.")
+  if numJson > 1:
+    raise MakerException(f"Error: {numJson} json files, expected 1.")
   if numJson == 1:
     fileInfo = ftg.jsonFiles[0]
     if fileInfo.basename != f"c{num}.json":
       raise MakerException(f"Error: invalid cjson name for this collection: {fileInfo.basename}")
 
-  if numJson > 1:
-    raise MakerException("Error: more than one cjson file")
+  if numHtmlI > 1:
+    raise MakerException(f"Error: {numHtmlI} image html files, expected 1.")
+  if numHtmlI == 1:
+    fileInfo = ftg.htmlFilesI[0]
+    if fileInfo.basename != f"image-{num}.html" :
+        raise MakerException(
+          f"Error: invalid image html name for this collection: {fileInfo.basename}")
 
-  if numHtml > 0:
-    for fileInfo in ftg.htmlFiles:
-      e_images_page = f"image-{num}.html"
-      e_thumbnails_page = f"thumbnails-{num}.html"
-      if fileInfo.basename not in [e_images_page, e_thumbnails_page]:
-        raise MakerException(f"Error: invalid html name for this collection: {fileInfo.basename}")
-
-  if numHtml > 2:
-    raise MakerException("Error: more than two html files")
+  if numHtmlT > 1:
+    raise MakerException(f"Error: {numHtmlT} thumbnails html files, expected 1.")
+  if numHtmlT == 1:
+    fileInfo = ftg.htmlFilesT[0]
+    if fileInfo.basename != f"thumbnails-{num}.html":
+        raise MakerException(
+          f"Error: invalid thumbnails html name for this collection: {fileInfo.basename}")
 
   if numOther:
+    first = ftg.other[0].basename
     raise MakerException(
-      f"Error: there are {numOther} extra files in the folder: {ftg.other[0]}")
+      f"Error: there are {numOther} extra files in the folder, first: {first}")
 
 def createCollectionCinfo(num, ftg, previewImageInfoList):
   """
@@ -478,21 +488,6 @@ def main(args):
 
 # Test code:
 
-def testVerifyNamesError(filenames, eMessage):
-  """
-  Test verifyNames errors, pass in the expected error message.
-  """
-
-  previews, thumbnails, other, jsonFiles, htmlFiles = previewsAndThumbnails(filenames)
-
-  try:
-    verifyNames(previews, thumbnails, other)
-    assert False, "Unexpectedly passed"
-  except MakerException as ex:
-    gotExpected(str(ex), eMessage)
-    return # passed
-  assert False, "Got an unexpected exception."
-
 def testGetCollectionImagesError(previews, thumbnails, eMessage):
   """
   Test getCollectionImages errors, pass in the expected error message.
@@ -593,19 +588,19 @@ def makeTestFolder(num, previews=8, thumbnails=8, cjson=1,
     createFile(filename, "fake thumbnail file")
 
   for ix in range(cjson):
-    filename = randomName(folder, 6, "c-", ".json")
+    filename = os.path.join(folder, f"c{num+ix}.json")
     createFile(filename, "fake cjson file")
 
   for ix in range(imageHtml):
-    filename = randomName(folder, 6, "image-", ".html")
+    filename = os.path.join(folder, f"image-{num+ix}.html")
     createFile(filename, "fake image html file")
 
   for ix in range(thumbnailHtml):
-    filename = randomName(folder, 6, "thumbnails-", ".html")
+    filename = os.path.join(folder, f"thumbnails-{num+ix}.html")
     createFile(filename, "fake thumbnail html file")
 
   for ix in range(others):
-    filename = randomName(folder, 6, "other-", ".txt")
+    filename = os.path.join(folder, f"other-{ix}.txt")
     createFile(filename, "fake other file")
 
   return folder
@@ -672,7 +667,8 @@ class TestMaker(unittest.TestCase):
     gotExpected(len(ftg.previews), 8)
     gotExpected(len(ftg.thumbnails), 8)
     gotExpected(len(ftg.jsonFiles), 1)
-    gotExpected(len(ftg.htmlFiles), 2)
+    gotExpected(len(ftg.htmlFilesI), 1)
+    gotExpected(len(ftg.htmlFilesT), 1)
 
   def test_makeTestFolderAll(self):
     folder = makeTestFolder(4, previews=1, thumbnails=2, cjson=3,
@@ -685,7 +681,8 @@ class TestMaker(unittest.TestCase):
     gotExpected(len(ftg.previews), 1)
     gotExpected(len(ftg.thumbnails), 2)
     gotExpected(len(ftg.jsonFiles), 3)
-    gotExpected(len(ftg.htmlFiles), 9)
+    gotExpected(len(ftg.htmlFilesI), 4)
+    gotExpected(len(ftg.htmlFilesT), 5)
     gotExpected(len(ftg.other), 6)
 
   def test_dim(self):
@@ -870,15 +867,40 @@ class TestMaker(unittest.TestCase):
     testValidateFolderError(4, previews=21, thumbnails=21, cjson=0,
       imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
 
-  def test_validateFolder21(self):
-    eMsg = "Error: 21 images, you are limited to 20."
-    testValidateFolderError(4, previews=21, thumbnails=21, cjson=0,
+  def test_validateFolderExtra(self):
+    eMsg = "Error: there are 2 extra files in the folder, first: other-0.txt"
+    testValidateFolderError(4, previews=8, thumbnails=8, cjson=0,
+      imageHtml=0, thumbnailHtml=0, eMsg=eMsg, others=2)
+
+  def test_validateFolderNoPreviews(self):
+    eMsg = "Error: no previews files that end in -p.jpg."
+    testValidateFolderError(4, previews=0, thumbnails=8, cjson=0,
       imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
 
-  # test no extra files in the folder
-  # test previews width and height are greater than 933
-  # test that thumbnails are 480 by 480
+  def test_validateFolderNoThumbs(self):
+    eMsg = "Error: no thumbnails files that end in -t.jpg."
+    testValidateFolderError(4, previews=8, thumbnails=0, cjson=0,
+      imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
 
+  def test_validateFolderCjson(self):
+    eMsg = "Error: 2 json files, expected 1."
+    testValidateFolderError(4, previews=8, thumbnails=8, cjson=2,
+      imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
+
+  def test_validateFolderCjson1(self):
+    eMsg = "Error: 2 json files, expected 1."
+    testValidateFolderError(4, previews=8, thumbnails=8, cjson=2,
+      imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
+
+  def test_validateFolderPreHtml(self):
+    eMsg = "Error: 3 image html files, expected 1."
+    testValidateFolderError(4, previews=8, thumbnails=8, cjson=1,
+      imageHtml=3, thumbnailHtml=0, eMsg=eMsg)
+
+  def test_validateFolderThumbHtml(self):
+    eMsg = "Error: 2 thumbnails html files, expected 1."
+    testValidateFolderError(4, previews=8, thumbnails=8, cjson=1,
+      imageHtml=1, thumbnailHtml=2, eMsg=eMsg)
 
   # def test_renameFiles(self):
   #   c3 = "/home/coder/collections/tmp/c3"
