@@ -31,12 +31,8 @@ import traceback
 import sys
 import signal
 import unittest
-import urllib.parse
 import tempfile
-from datetime import datetime
-from collections import namedtuple
 import json
-import subprocess
 import sys
 import textwrap
 from boto_client import getBotoClient, getAwsSettings
@@ -64,16 +60,13 @@ class FileInfo(object):
   """
   File information important for a Collection.
   """
-  def __init__(self, basename, isFile, size, modDate):
+  def __init__(self, basename, isFile, size):
     self.basename = basename
     self.isFile = isFile
     self.size = size
-    self.modDate = modDate
   def __str__(self):
     isFileStr = "file" if self.isFile else "-"
-    dt = datetime.fromtimestamp(self.modDate)
-    dateTimeStr = dt.strftime('%Y-%m-%d %H:%M:%S')
-    return f"{isFileStr:4} {self.size:8} {dateTimeStr:19} {self.basename}"
+    return f"{isFileStr:4} {self.size:8} {self.basename}"
 
 def getFileInfoList(folder):
   """
@@ -86,7 +79,6 @@ def getFileInfoList(folder):
       entry.name,
       entry.is_file(),
       stats.st_size,
-      stats.st_mtime
     )
     fileInfoList.append(fileInfo)
   return fileInfoList
@@ -640,14 +632,12 @@ class TestMaker(unittest.TestCase):
     self.assertTrue(True)
 
   def test_FileInfo(self):
-    fi = FileInfo("basename", isFile=True, size=0, modDate=0)
-    eStr = "file        0 1970-01-01 00:00:00 basename"
+    fi = FileInfo("basename", isFile=True, size=0)
+    eStr = "file        0 basename"
     gotExpected(str(fi), eStr)
 
-    dt = datetime(2025, 3, 8, 9, 15, 30)
-    modDate = dt.timestamp()
-    fi2 = FileInfo("name", isFile=False, size=1000, modDate=modDate)
-    eStr2 = "-        1000 2025-03-08 09:15:30 name"
+    fi2 = FileInfo("name", isFile=False, size=1000)
+    eStr2 = "-        1000 name"
     gotExpected(str(fi2), eStr2)
 
   def test_random62(self):
