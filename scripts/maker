@@ -123,26 +123,25 @@ class ImageInfo(object):
   Holds the information about an image file that is important for
   a collection.
   """
-  def __init__(self, width, height, kind, fileSize):
+  def __init__(self, width, height, kind):
     self.width = width
     self.height = height
     self.kind = kind
-    self.fileSize = fileSize
 
   @classmethod
-  def fromFile(cls, filename, fileSize):
+  def fromFile(cls, filename):
     """
     Create an ImageInfo object from a file.
     """
     try:
       with Image.open(filename) as img:
         width, height = img.size
-        return cls(width, height, img.format, fileSize)
+        return cls(width, height, img.format)
     except Exception as ex:
       raise MakerException(f"Error: unable to open the image file: {filename}")
 
   def __str__(self):
-    return f"{self.kind} ({self.width} x {self.height}) {self.fileSize}"
+    return f"{self.kind} ({self.width} x {self.height})"
 
 def getImageInfoList(folder, fileInfoList, previews=True):
   """
@@ -155,7 +154,7 @@ def getImageInfoList(folder, fileInfoList, previews=True):
 
   for ix, fileInfo in enumerate(fileInfoList):
     fullPath = os.path.join(folder, fileInfo.basename)
-    ii = ImageInfo.fromFile(fullPath, fileInfo.size)
+    ii = ImageInfo.fromFile(fullPath)
     if ii.kind != "JPEG":
       raise MakerException(f"""\
 Error: image must be a jpg.
@@ -527,7 +526,7 @@ def testGetImageInfoError(filename, eMsg):
   Test getImageInfo errors, pass in the expected error message.
   """
   try:
-    ImageInfo.fromFile(filename, 1)
+    ImageInfo.fromFile(filename)
     fail("Unexpectedly passed")
   except MakerException as ex:
     gotExpected(str(ex), eMsg)
@@ -617,7 +616,7 @@ def getTestImageInfoList(previews):
   """
   imageInfoList = []
   for ix, fileInfo in enumerate(previews):
-    imageInfoList.append(ImageInfo(previewMinDim+ix, previewMinDim+ix, "JPEG", 100+ix))
+    imageInfoList.append(ImageInfo(previewMinDim+ix, previewMinDim+ix, "JPEG"))
   return imageInfoList
 
 class TestClients:
@@ -706,24 +705,22 @@ class TestMaker(unittest.TestCase):
 
   def test_ImageFile(self):
     previewName = "dist/images/c1/c1-1-p.jpg"
-    pii = ImageInfo.fromFile(previewName, 1000)
+    pii = ImageInfo.fromFile(previewName)
     gotExpected(pii.kind, "JPEG")
     gotExpected(pii.width, 3024)
     gotExpected(pii.height, 4032)
-    gotExpected(pii.fileSize, 1000)
-    gotExpected(str(pii), "JPEG (3024 x 4032) 1000")
+    gotExpected(str(pii), "JPEG (3024 x 4032)")
 
     thumbnailName = "dist/images/c1/c1-1-t.jpg"
-    tii = ImageInfo.fromFile(thumbnailName, 999)
+    tii = ImageInfo.fromFile(thumbnailName)
     gotExpected(tii.kind, "JPEG")
     gotExpected(tii.width, 480)
     gotExpected(tii.height, 480)
-    gotExpected(tii.fileSize, 999)
-    gotExpected(str(tii), "JPEG (480 x 480) 999")
+    gotExpected(str(tii), "JPEG (480 x 480)")
 
   def test_ImageFileMissing(self):
     try:
-      ImageInfo.fromFile("missing", 1000)
+      ImageInfo.fromFile("missing")
       assert False, "Unexpectedly passed"
     except MakerException as ex:
       gotExpected(str(ex), "Error: unable to open the image file: missing")
@@ -829,19 +826,17 @@ class TestMaker(unittest.TestCase):
 
   def test_getImageInfo(self):
     previewFile = "/home/coder/collections/dist/images/c1/c1-1-p.jpg"
-    imageInfo = ImageInfo.fromFile(previewFile, 123)
+    imageInfo = ImageInfo.fromFile(previewFile)
     gotExpected(imageInfo.kind, "JPEG")
     gotExpected(imageInfo.width, 3024)
     gotExpected(imageInfo.height, 4032)
-    gotExpected(imageInfo.fileSize, 123)
 
     thumbnailFile = "/home/coder/collections/dist/images/c1/c1-1-t.jpg"
-    info = ImageInfo.fromFile(thumbnailFile, 234)
+    info = ImageInfo.fromFile(thumbnailFile)
     # pv('thumbnailImageInfo', thumbnailImageInfo)
     gotExpected(info.kind, "JPEG")
     gotExpected(info.width, 480)
     gotExpected(info.height, 480)
-    gotExpected(info.fileSize, 234)
 
   def test_getImageInfoNoFile(self):
     # Test with missing file.
