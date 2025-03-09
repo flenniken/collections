@@ -123,17 +123,23 @@ class ImageInfo(object):
   Holds the information about an image file that is important for
   a collection.
   """
-  def __init__(self, filename, fileSize):
-    assert int(fileSize) > 0
+  def __init__(self, width, height, kind, fileSize):
+    self.width = width
+    self.height = height
+    self.kind = kind
+    self.fileSize = fileSize
+
+  @classmethod
+  def fromFile(cls, filename, fileSize):
+    """
+    Create an ImageInfo object from a file.
+    """
     try:
       with Image.open(filename) as img:
         width, height = img.size
+        return cls(width, height, img.format, fileSize)
     except Exception as ex:
-      raise MakerException(f"Error: unable to open the image file: {str(filename)}")
-    self.width = width
-    self.height = height
-    self.kind = img.format
-    self.fileSize = fileSize
+      raise MakerException(f"Error: unable to open the image file: {filename}")
 
   def __str__(self):
     return f"{self.kind} ({self.width} x {self.height}) {self.fileSize}"
@@ -149,7 +155,7 @@ def getImageInfoList(folder, fileInfoList, previews=True):
 
   for ix, fileInfo in enumerate(fileInfoList):
     fullPath = os.path.join(folder, fileInfo.basename)
-    ii = ImageInfo(fullPath, fileInfo.size)
+    ii = ImageInfo.fromFile(fullPath, fileInfo.size)
     if ii.kind != "JPEG":
       raise MakerException(f"""\
 Error: image must be a jpg.
@@ -247,7 +253,7 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     collectionImage['size'] = fileInfo.size
 
     collectionImage['thumbnail'] = f"/images/c{num}/c{num}-{ix+1}-t.jpg"
-    collectionImage['sizet'] = thumbnailFileInfo.fileSize
+    collectionImage['sizet'] = thumbnailFileInfo.size
     images.append(collectionImage)
 
   # Create the collection info (cinfo).
@@ -259,8 +265,8 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     "height": thumbnailDim,
     "imagePageUrl": f"/images/c{num}/image-{num}.html",
     "thumbnailsPageUrl": f"/images/c{num}/thumbnails-{num}.html",
-    "images": images,
     "usedImages": [],
+    "images": images,
   }
   return cinfo
 
@@ -521,7 +527,7 @@ def testGetImageInfoError(filename, eMsg):
   Test getImageInfo errors, pass in the expected error message.
   """
   try:
-    ImageInfo(filename, 1)
+    ImageInfo.fromFile(filename, 1)
     fail("Unexpectedly passed")
   except MakerException as ex:
     gotExpected(str(ex), eMsg)
@@ -604,6 +610,15 @@ def makeTestFolder(num, previews=8, thumbnails=8, cjson=1,
     createFile(filename, "fake other file")
 
   return folder
+
+def getTestImageInfoList(previews):
+  """
+  Return a list of preview image information for testing. The information is made up.
+  """
+  imageInfoList = []
+  for ix, fileInfo in enumerate(previews):
+    imageInfoList.append(ImageInfo(previewMinDim+ix, previewMinDim+ix, "JPEG", 100+ix))
+  return imageInfoList
 
 class TestClients:
   def __init__(self):
@@ -691,7 +706,7 @@ class TestMaker(unittest.TestCase):
 
   def test_ImageFile(self):
     previewName = "dist/images/c1/c1-1-p.jpg"
-    pii = ImageInfo(previewName, 1000)
+    pii = ImageInfo.fromFile(previewName, 1000)
     gotExpected(pii.kind, "JPEG")
     gotExpected(pii.width, 3024)
     gotExpected(pii.height, 4032)
@@ -699,7 +714,7 @@ class TestMaker(unittest.TestCase):
     gotExpected(str(pii), "JPEG (3024 x 4032) 1000")
 
     thumbnailName = "dist/images/c1/c1-1-t.jpg"
-    tii = ImageInfo(thumbnailName, 999)
+    tii = ImageInfo.fromFile(thumbnailName, 999)
     gotExpected(tii.kind, "JPEG")
     gotExpected(tii.width, 480)
     gotExpected(tii.height, 480)
@@ -708,7 +723,7 @@ class TestMaker(unittest.TestCase):
 
   def test_ImageFileMissing(self):
     try:
-      ImageInfo("missing", 1000)
+      ImageInfo.fromFile("missing", 1000)
       assert False, "Unexpectedly passed"
     except MakerException as ex:
       gotExpected(str(ex), "Error: unable to open the image file: missing")
@@ -814,14 +829,14 @@ class TestMaker(unittest.TestCase):
 
   def test_getImageInfo(self):
     previewFile = "/home/coder/collections/dist/images/c1/c1-1-p.jpg"
-    imageInfo = ImageInfo(previewFile, 123)
+    imageInfo = ImageInfo.fromFile(previewFile, 123)
     gotExpected(imageInfo.kind, "JPEG")
     gotExpected(imageInfo.width, 3024)
     gotExpected(imageInfo.height, 4032)
     gotExpected(imageInfo.fileSize, 123)
 
     thumbnailFile = "/home/coder/collections/dist/images/c1/c1-1-t.jpg"
-    info = ImageInfo(thumbnailFile, 234)
+    info = ImageInfo.fromFile(thumbnailFile, 234)
     # pv('thumbnailImageInfo', thumbnailImageInfo)
     gotExpected(info.kind, "JPEG")
     gotExpected(info.width, 480)
@@ -845,12 +860,18 @@ class TestMaker(unittest.TestCase):
     validateCollectionFolder(1, ftg)
 
   def test_validateFolderTmp(self):
-    c3 = "tmp/c3"
-    fileInfoList = getFileInfoList(c3)
+    num = 3
+    folder = f"tmp/c{num}"
+    fileInfoList = getFileInfoList(folder)
     ftg = FileTypeGroups(fileInfoList)
-    cjson = validateCollectionFolder(3, ftg)
+    validateCollectionFolder(num, ftg)
+
+    previewImageInfoList = getImageInfoList(folder, ftg.previews, previews=True)
+    getImageInfoList(folder, ftg.thumbnails, previews=False)
+
+    cinfo = createCollectionCinfo(num, ftg, previewImageInfoList)
+    cjson = json.dumps(cinfo, indent=2)
     # print(cjson)
-    # todo: check cjson
 
   def test_validateFolderUnmatched(self):
     eMsg = "Error: mismatch: 8 previews != 9 thumbnails."
@@ -906,6 +927,49 @@ class TestMaker(unittest.TestCase):
   #   c3 = "/home/coder/collections/tmp/c3"
   #   fileInfoList = getFileInfoList(c3)
   #   renameFiles(fileInfoList, 3)
+
+  def test_createCollectionCinfo(self):
+
+    num = 3
+    try:
+      folder = makeTestFolder(num, previews=8, thumbnails=8,
+        cjson=0, imageHtml=0, thumbnailHtml=0, others=0)
+      fileInfoList = getFileInfoList(folder)
+    finally:
+      shutil.rmtree(folder)
+
+    ftg = FileTypeGroups(fileInfoList)
+    validateCollectionFolder(num, ftg)
+
+    previewImageInfoList = getTestImageInfoList(ftg.previews)
+
+    cinfo = createCollectionCinfo(num, ftg, previewImageInfoList)
+    # cjson = json.dumps(cinfo, indent=2)
+    # print(cjson)
+    gotExpected(cinfo['title'], "")
+    gotExpected(cinfo['description'], "")
+    gotExpected(cinfo['collection'], num)
+    gotExpected(cinfo['width'], thumbnailDim)
+    gotExpected(cinfo['height'], thumbnailDim)
+    gotExpected(cinfo['imagePageUrl'], f"/images/c{num}/image-{num}.html")
+    gotExpected(cinfo['thumbnailsPageUrl'], f"/images/c{num}/thumbnails-{num}.html")
+    gotExpected(len(cinfo['usedImages']), 0)
+    gotExpected(len(cinfo['images']), 8)
+    for ix, image in enumerate(cinfo['images']):
+      gotExpected(image['title'], "")
+      gotExpected(image['description'], "")
+      # "url": "/images/c3/c3-8-p.jpg",
+      gotExpected(image['url'], f"/images/c{num}/c{num}-{ix+1}-p.jpg")
+      gotExpected(image['width'], previewMinDim+ix)
+      gotExpected(image['height'], previewMinDim+ix)
+      #gotExpected(image['size'], f"{100+ix}")
+      gotExpected(image['thumbnail'], f"/images/c{num}/c{num}-{ix+1}-t.jpg")
+      #gotExpected(image['sizet'], f"{100+ix}")
+      # todo: check the image['size'] and image['sizet'] values.
+
+
+
+
 
 if __name__ == '__main__':
   args = parseCommandLine()
