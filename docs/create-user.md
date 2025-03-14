@@ -80,8 +80,8 @@ admin: Steve Flenniken <steve.flenniken+admin@gmail.com>
 
 # Contents
 
-* [Create New User](create-new-user) -- how to create a new website user.
-* [Set User Name](set-user-name) -- how to set the new user's name.
-* [Reset Password](reset-password) -- how to reset a user's password.
-* [Plus Sign Emails](plus-sign-emails) -- how to use the plus sign for multiple emails to the same location
-* [Verify User](verify-user) -- how to verify the new user got created correctly.
+* [Create New User](#create-new-user) -- how to create a new website user.
+* [Set User Name](#set-user-name) -- how to set the new user's name.
+* [Reset Password](#reset-password) -- how to reset a user's password.
+* [Plus Sign Emails](#plus-sign-emails) -- how to use the plus sign for multiple emails to the same location
+* [Verify User](#verify-user) -- how to verify the new user got created correctly.

@@ -14,8 +14,8 @@ You use Adobe applications to find and edit images for a collection.
 
 * edit them in camera raw
 
-* create a folder in the tmp/working for the collection. Name the
-  folder cx where x is the next collection number, e.g. c3.
+* create a folder in the tmp for the collection. Name the
+  folder x where x is the next collection number, e.g. tmp/4.
 
 * in camera raw, save full size jpgs to the folder and add -p to the
   names, e.g. tmp/c3/CF8A0420-p.jpg
@@ -30,8 +30,8 @@ for file in *-p.jpg; do
 done
 ~~~
 
-* open the -t images in photoshop and make them into square 480 x 480
-  jpg thumbnails
+* open the -t images in photoshop and crop them square 480 x 480
+  pixels jpgs
 
 [⬇](#Contents)
 
@@ -40,7 +40,7 @@ done
 You run the maker command to create the collection's local image
 folder from the folder of images. It creates a cjson file with the
 images width, height, size and other information.  It creates empty
-titles and descriptions and order of the images is arbitrary. You will
+titles and descriptions and sets an arbitrary images order.  You will
 fill in this information later.
 
 Run the command and specify the folder:
@@ -55,8 +55,9 @@ It validates the files and if a problem is found, it stops so you
 can correct it. It validates:
 
 * that the collection is the next available collection. It checks the
-  /db prefix files.
+  S3 /db prefix files.
 * that the images are jpg files
+* that there are at least 8 images and not more that 20
 * that the preview files are greater than or equal to 933 x 933 pixels
 * that the thumbnail files are 480 x 480 pixels
 * that each image has a preview and thumbnail
@@ -66,17 +67,10 @@ After validation it:
 
 * reserves the collection name (c3) by adding the db/c3 prefix file to S3.
 
-* it moves the c3 folder, containing up to 20 images to the images
-  directory.  The sync command will copy the files to S3 and the
-  extras images will be deleted later.
-
 * The images folder contains both the working and published
   collections.
 
 * for each image the image info is added to the json file
-
-* for each image the unique image id from the image metadata is added
-  to the cjson, if it exists
 
 * the cjson usedImages list is set to an empty list
 
@@ -108,11 +102,9 @@ development and the number published.
 
 You use the maker page to determine which images to included in the
 collection (from the initial 20), to determine their order, and to
-enter the descriptive text. Run it in your browser on localhost:
+enter the descriptive text.
 
-~~~
-https://localhost:8000/local/maker.html
-~~~
+Admin's will see an maker icon.
 
 You open the new collection from a dropdown menu and you make your
 changes.  The dropdown choices come from `get-new-collections` api

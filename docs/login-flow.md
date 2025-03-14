@@ -63,7 +63,7 @@ options:
 
 [⬇](#Contents)
 
-# Login Url (-l)
+# Login Url
 
 Get the login url with the -l option. You follow the instructions to
 login.
@@ -88,7 +88,7 @@ https://collections.sflennik.com/index.html?code=fba8fc61-3d64-44ba-95e9-7889243
 
 [⬇](#Contents)
 
-# Get User Tokens (-g)
+# Get User Tokens
 
 You use the -g option with the login code to fetch the user tokens.
 The tokens are written to the file tokens.json in the tmp folder.
@@ -101,7 +101,7 @@ Wrote the tokens to tmp/tokens.json.
 
 [⬇](#Contents)
 
-# View Token File (-s)
+# View Token File
 
 You use the -s option to look at the tokens file.  It is a json file
 with three kinds for tokens. Besides the tokens it contains the expire
@@ -119,7 +119,7 @@ time in seconds and the token type:
 
 [⬇](#Contents)
 
-# Decode Token (-d)
+# Decode Token
 
 You can decode each token with the -d option. The example command
 decodes the id_token:
@@ -147,20 +147,7 @@ scripts/login-flow -d id_token
 }
 ~~~
 
-# Validate Token (-v)
-
-You can validate each token with the -v option. In the example the
-id_token has expired:
-
-~~~
-scripts/login-flow -v id_token
-
-Signature has expired
-~~~
-
-[⬇](#Contents)
-
-# User Information (-u)
+# Validate Token
 
 This -u option calls the coginto oauth2/userInfo endpoint with the
 access_token to get the user attribute information.
@@ -180,19 +167,19 @@ scripts/login-flow -u
 
 [⬇](#Contents)
 
-# Refresh Tokens (-r)
+# Refresh Tokens
 
 todo: document Refresh Tokens
 
 [⬇](#Contents)
 
-# Revoke Tokens (-k)
+# Revoke Tokens
 
 todo: document Revoke Tokens
 
 [⬇](#Contents)
 
-# Download Image (-f)
+# Download Image
 
 You can download an image using the stored token for authentication.
 It downloads to the specified filename.  It tells you the time and
@@ -256,11 +243,11 @@ scripts/view-download 2025-02-25 O4YGRbu1
 # Contents
 
 * [Run login-flow](#run-login-flow) -- how to run login-flow and see its options.
-* [Login Url (-l)](#login-url-l) -- how to login and get a code.
-* [Get User Tokens (-g)](#get-user-tokens-g) -- how to fetch the tokens with the code.
-* [View Token File (-s)](#view-token-file-s) -- how to few the token file.
-* [Decode Token (-d)](#decode-token-d) -- how to decode the three tokens in the token file.
-* [Validate Token (-v)](#validate-token-v) -- how to decode and validate three tokens in the token file.
-* [User Information (-u)](#user-information-u) -- how to get the user information with the access_token.
-* [Download Image (-f)](#download-image-f) -- how to download an image using the access_token.
-* [View Logs](#view-logs-f) -- how to view the logs associated with the download.
+* [Login Url](#login-url) -- how to login and get a code.
+* [Get User Tokens](#get-user-tokens) -- how to fetch the tokens with the code.
+* [View Token File](#view-token-file) -- how to few the token file.
+* [Decode Token](#decode-token) -- how to decode the three tokens in the token file.
+* [Validate Token](#validate-token) -- how to decode and validate three tokens in the token file.
+* [User Information](#user-information) -- how to get the user information with the access_token.
+* [Download Image](#download-image) -- how to download an image using the access_token.
+* [View Logs](#view-logs) -- how to view the logs associated with the download.

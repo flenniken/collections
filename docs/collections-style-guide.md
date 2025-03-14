@@ -70,6 +70,8 @@ cd ~/collections
 aws s3 sync s3://sflennikco/logs/cloudfront logs/cloudfront
 ~~~
 
+[⬇](#Contents)
+
 # Links
 
 Use annotated links when linking. An annotated link is a bullet point
@@ -84,7 +86,13 @@ Example internal annotated link:
 You use internal links so you can quickly jump to sections in the
 document.  You jump to the table of contents then jump to any section.
 
-A link to the table of contents looks like this:
+The first link to the table of contents looks like this:
+
+~~~
+[⬇](#Contents) (table of contents at the bottom)
+~~~
+
+The rest of them look like:
 
 ~~~
 [⬇](#Contents)
@@ -108,7 +116,7 @@ Each document ends with a table of contents (TOC) section called
 
 # Contents
 
-* [Sections](#section) -- how to divide document into small sections.
+* [Sections](#sections) -- how to divide document into small sections.
 * [Bullet Points](#bullet-points) -- how to use bullet points.
 * [Code Blocks](#code-blocks) -- how to show example code.
 * [Links](#links) -- how to format internal and external hyper links.
