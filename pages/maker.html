@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Collection Maker</title>
+  <link rel="stylesheet" href="maker.css">
+</head>
+<body id="maker">
+  <div class="container">
+    <!-- Group 1: Dropdown and Save Button -->
+    <div class="group controls-group">
+      <div class="collection-selector">
+        <select id="collection-dropdown">
+          <option value="">Select a collection...</option>
+          <option value="collection1">Collection 1</option>
+          <option value="collection2">Collection 2</option>
+          <option value="collection3">Collection 3</option>
+        </select>
+      </div>
+
+      <div class="save-button">
+        <button id="save-button">Save Collection</button>
+      </div>
+    </div>
+
+    <!-- Group 2: Collection Title -->
+    <div class="group title-group">
+      <div class="collection-title">
+        <input type="text" id="collection-title" placeholder="Collection Title">
+      </div>
+    </div>
+
+    <!-- Flex Container for side-by-side layout -->
+    <div class="flex-container">
+      <!-- Group 3: Collection Images -->
+      <div class="group collection-group">
+        <h2>Collection Images</h2>
+        <div class="collection-grid">
+          <!-- 16 image boxes in 2 columns -->
+          <div class="image-box collection-box" data-position="1"></div>
+          <div class="image-box collection-box" data-position="2"></div>
+          <div class="image-box collection-box" data-position="3"></div>
+          <div class="image-box collection-box" data-position="4"></div>
+          <div class="image-box collection-box" data-position="5"></div>
+          <div class="image-box collection-box" data-position="6"></div>
+          <div class="image-box collection-box" data-position="7"></div>
+          <div class="image-box collection-box" data-position="8"></div>
+          <div class="image-box collection-box" data-position="9"></div>
+          <div class="image-box collection-box" data-position="10"></div>
+          <div class="image-box collection-box" data-position="11"></div>
+          <div class="image-box collection-box" data-position="12"></div>
+          <div class="image-box collection-box" data-position="13"></div>
+          <div class="image-box collection-box" data-position="14"></div>
+          <div class="image-box collection-box" data-position="15"></div>
+          <div class="image-box collection-box" data-position="16"></div>
+        </div>
+      </div>
+
+      <div class="right-side-container">
+        <input type="checkbox" id="toggle-checkbox" class="toggle-checkbox">
+
+        <div class="toggle-header">
+          <label for="toggle-checkbox" class="toggle-available">Toggle Images</label>
+        </div>
+
+        <!-- Group 4: Available Images with Toggle -->
+        <div class="group available-group">
+          <div class="available-header">
+            <h2>Available Images</h2>
+          </div>
+          <div class="available-grid" id="available-grid">
+            <!-- 20 image boxes for available images -->
+            <div class="image-box available-box" data-id="1">
+              <img src="placeholder.jpg" alt="Image 1">
+            </div>
+            <div class="image-box available-box" data-id="2">
+              <img src="placeholder.jpg" alt="Image 2">
+            </div>
+            <div class="image-box available-box" data-id="3">
+              <img src="placeholder.jpg" alt="Image 3">
+            </div>
+            <div class="image-box available-box" data-id="4">
+              <img src="placeholder.jpg" alt="Image 4">
+            </div>
+            <div class="image-box available-box" data-id="5">
+              <img src="placeholder.jpg" alt="Image 5">
+            </div>
+            <div class="image-box available-box" data-id="6">
+              <img src="placeholder.jpg" alt="Image 6">
+            </div>
+            <div class="image-box available-box" data-id="7">
+              <img src="placeholder.jpg" alt="Image 7">
+            </div>
+            <div class="image-box available-box" data-id="8">
+              <img src="placeholder.jpg" alt="Image 8">
+            </div>
+            <div class="image-box available-box" data-id="9">
+              <img src="placeholder.jpg" alt="Image 9">
+            </div>
+            <div class="image-box available-box" data-id="10">
+              <img src="placeholder.jpg" alt="Image 10">
+            </div>
+            <div class="image-box available-box" data-id="11">
+              <img src="placeholder.jpg" alt="Image 11">
+            </div>
+            <div class="image-box available-box" data-id="12">
+              <img src="placeholder.jpg" alt="Image 12">
+            </div>
+            <div class="image-box available-box" data-id="13">
+              <img src="placeholder.jpg" alt="Image 13">
+            </div>
+            <div class="image-box available-box" data-id="14">
+              <img src="placeholder.jpg" alt="Image 14">
+            </div>
+            <div class="image-box available-box" data-id="15">
+              <img src="placeholder.jpg" alt="Image 15">
+            </div>
+            <div class="image-box available-box" data-id="16">
+              <img src="placeholder.jpg" alt="Image 16">
+            </div>
+            <div class="image-box available-box" data-id="17">
+              <img src="placeholder.jpg" alt="Image 17">
+            </div>
+            <div class="image-box available-box" data-id="18">
+              <img src="placeholder.jpg" alt="Image 18">
+            </div>
+            <div class="image-box available-box" data-id="19">
+              <img src="placeholder.jpg" alt="Image 19">
+            </div>
+            <div class="image-box available-box" data-id="20">
+              <img src="placeholder.jpg" alt="Image 20">
+            </div>
+          </div>
+        </div>
+
+        <!-- Group 5: Image Details -->
+        <div class="group details-group">
+          <h2>Image Details</h2>
+          <div class="image-details">
+            <input type="text" id="image-title" placeholder="Image Title">
+            <textarea id="image-description" placeholder="Image Description"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Group 6: Post Date -->
+    <div class="group metadata-group post-date-group">
+      <div class="metadata-field">
+        <label for="post-date">Post Date:</label>
+        <input type="date" id="post-date">
+      </div>
+    </div>
+
+    <!-- Group 7: Index Description -->
+    <div class="group metadata-group index-desc-group">
+      <div class="metadata-field">
+        <label for="index-description">Index Page Description:</label>
+        <textarea id="index-description" rows="3"></textarea>
+      </div>
+    </div>
+
+    <!-- Group 8: Thumbnails Description -->
+    <div class="group metadata-group thumbnails-desc-group">
+      <div class="metadata-field">
+        <label for="thumbnails-description">Thumbnails Page Description:</label>
+        <textarea id="thumbnails-description" rows="3"></textarea>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,342 @@
+/* maker.css - Styles for the Collection Maker page */
+
+/* Reset and base styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  background-color: #f5f5f5;
+  padding: 20px;
+}
+
+h1, h2 {
+  margin-bottom: 15px;
+}
+
+/* Container layout */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 95vh;
+}
+
+/* Group styles */
+.group {
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #fafafa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+/* Group 1: Controls Group */
+.controls-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.collection-selector select {
+  padding: 8px 12px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  min-width: 200px;
+}
+
+.save-button button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.save-button button:hover {
+  background-color: #45a049;
+}
+
+/* Group 2: Title Group */
+.title-group {
+  text-align: center;
+}
+
+.collection-title input {
+  padding: 10px 15px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 20px;
+  width: 100%;
+  max-width: 600px;
+  text-align: center;
+  font-weight: bold;
+}
+
+/* Flex container for side-by-side layout */
+.flex-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Right side container */
+.right-side-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Toggle header */
+.toggle-header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+/* Group 3: Collection Images */
+.collection-group {
+  flex: 1;
+  min-width: 300px;
+}
+
+.collection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Group 4: Available Images */
+.available-group {
+  position: relative;
+  min-width: 500px;
+  overflow-x: auto;
+}
+
+.available-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.toggle-available {
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+  display: inline-block;
+  position: relative;
+  padding-right: 25px;
+}
+
+.toggle-available:hover {
+  background-color: #e0e0e0;
+}
+
+.toggle-available:after {
+  content: "▼";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+}
+
+.toggle-checkbox {
+  display: none;
+}
+
+.toggle-checkbox:checked ~ .available-group {
+  display: none;
+}
+
+.toggle-checkbox:checked ~ .details-group {
+  display: block;
+}
+
+.toggle-checkbox:checked ~ .available-group .toggle-available:after {
+  content: "▶";
+}
+
+.available-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-top: 10px;
+  min-width: 500px;
+}
+
+/* Group 5: Image Details */
+.details-group {
+  display: none;
+}
+
+.image-details {
+  width: 100%;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.image-details input,
+.image-details textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.image-details textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Group 6-8: Metadata Fields */
+.metadata-group {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.post-date-group {
+  order: 1;
+}
+
+.index-desc-group {
+  order: 2;
+}
+
+.thumbnails-desc-group {
+  order: 3;
+}
+
+.metadata-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.metadata-field label {
+  font-weight: bold;
+}
+
+.metadata-field input,
+.metadata-field textarea {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.metadata-field textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Image boxes */
+.image-box {
+  aspect-ratio: 1 / 1;
+  background-color: #f9f9f9;
+  border: 2px dashed #ccc;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.image-box:hover {
+  border-color: #999;
+  transform: scale(1.02);
+}
+
+.image-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
+
+.collection-box {
+  background-color: #e8f4fc;
+  border-color: #a8d1f0;
+}
+
+.available-box {
+  background-color: #f0f0f0;
+  border-color: #ccc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .controls-group {
+    flex-direction: column;
+    gap: 15px;
+    align-items: stretch;
+  }
+
+  .collection-selector select,
+  .save-button button {
+    width: 100%;
+  }
+}
+
+/* Side-by-side layout for wider screens */
+@media (min-width: 1024px) {
+  .flex-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .collection-group {
+    flex: 0 0 45%;
+    max-width: 45%;
+  }
+
+  .right-side-container {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+/* Ensure minimum width based on content */
+@media (min-width: 769px) {
+  .container {
+    min-width: min-content;
+  }
+
+  /* Maintain column counts even when there's more space */
+  .collection-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .available-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
