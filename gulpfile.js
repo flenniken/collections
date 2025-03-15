@@ -41,6 +41,7 @@ Tasks:
     vimage2 -- Validate image html for collection 2.
     vmaker -- Validate maker html.
 * css -- Minimize the collection.css file.
+* m-css -- Minimize the maker.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea content.
 * watch -- (alias gw) Watch file changes and call the appropriate task. You can
     run it in the background with alias gw.
@@ -413,6 +414,14 @@ gulp.task("css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
+gulp.task("m-css", function (cb) {
+  return gulp.src(["pages/maker.css"])
+    .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
+    .pipe(cleanCSS({compatibility: "ie8"}))
+    .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
+    .pipe(gulp.dest("dist/"));
+})
+
 gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2",
   "image1", "image2", "maker"));
 
@@ -464,4 +473,5 @@ gulp.task("missing-folders", function (cb) {
   return cb()
 })
 
-gulp.task("all", gulp.series(["missing-folders", gulp.parallel(["ts", "pages", "css", "vpages"])]));
+gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
+  ["ts", "pages", "css", "m-css", "vpages"])]));

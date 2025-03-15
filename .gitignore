@@ -9,6 +9,7 @@ dist/images/*/*.jpg
 dist/images/*/*.html
 dist/tin/
 dist/collections.css
+dist/maker.css
 dist/local/
 working-images/
 tokens.json
