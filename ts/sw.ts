@@ -19,7 +19,7 @@ const cacheUrlPrefix = "/images/"
 
 function logsw(message: string) {
   // Log the service worker message to the console.
-  log("sw", "👷 " + message)
+  log("👷 " + message)
 }
 
 self.addEventListener("install", (event: Event) => {
@@ -94,7 +94,6 @@ async function fetchRemote(cache: Cache, request: Request,
   // If the url has query parameters, strip them off so we only have
   // one version of the file in the cache.
   let bareUrl = stripUrlParameters(request.url)
-  // log(`bare url: ${bareUrl}`)
   let bareRequest = new Request(bareUrl)
   await cache.put(bareRequest, response.clone());
 

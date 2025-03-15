@@ -67,8 +67,8 @@ async function enoughSpace(collection: IndexCollection) {
   // collection.
 
   const sizeString = humanFileSize(collection.totalSize)
-  log("download",`Collection ${collection.collection} size: ${sizeString}`)
-  log("download",await getUsageQuotaString())
+  log(`Collection ${collection.collection} size: ${sizeString}`)
+  log(await getUsageQuotaString())
 
   const estimate = await navigator.storage.estimate()
   if (!estimate.usage || !estimate.quota)
@@ -157,7 +157,7 @@ async function downloadUrls(urls: string[]) {
   // Generate an 8 character random number to identify this download.
   const today = getUTCDateTime()
   const downloadId = getRandom8()
-  log("download",`Download UTC and id: ${today} ${downloadId}`)
+  log(`Download UTC and id: ${today} ${downloadId}`)
 
   // Start fetching all images at once.
   let promises: Promise<Response>[] = []
@@ -183,7 +183,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const readyRequest = new Request(`c${cNum}-ready`)
   const readyResponse = await cache.match(readyRequest);
   if (readyResponse) {
-    log("download","The collection is completely cached.")
+    log("The collection is completely cached.")
     return
   }
 
@@ -191,13 +191,13 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   const downloadTimer = new Timer()
 
   const urls = getCollectionUrls(cNum)
-  downloadTimer.log("download",`Download collection ${cNum} which has ${urls.length} files.`)
+  downloadTimer.log(`Download collection ${cNum} which has ${urls.length} files.`)
 
   try {
     await downloadUrls(urls)
   } catch (error) {
-    downloadTimer.log("download",`error: ${error}`)
-    downloadTimer.log("download","Failed downloading all images.")
+    downloadTimer.log(`error: ${error}`)
+    downloadTimer.log("Failed downloading all images.")
 
     // It better to leave the spinning icon then quickly going back to
     // the no image state. We don't want them to click download over
@@ -207,7 +207,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   }
 
   // Successfully downloaded all the images.
-  downloadTimer.log("download","Images downloaded and cached.")
+  downloadTimer.log("Images downloaded and cached.")
 
   setCollectionState(cNum, "withImages")
 }

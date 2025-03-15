@@ -6,11 +6,11 @@ window.addEventListener("load", handleLoad)
 window.addEventListener("resize", handleResize)
 
 async function handleLoad() {
-  log("maker","Window load event")
+  log("Window load event")
 
 }
 
 function handleResize() {
-  log("maker", "resize event")
+  log("resize event")
 }
 

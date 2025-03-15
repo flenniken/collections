@@ -6,39 +6,8 @@
 // images.
 const appCacheName = "collections-v1"
 
-// todo: remove this capability, it's not used and it adds extra
-// complicity not needed. Log what's needed and remove logs that are
-// too noisy.
-
-// Each log message has a tag that categorizes it. Currently tags are
-// named after the file the where the log message is used. You can
-// enable or disable log messages by adding or removing the tag from
-// the showTags object.
-const showTags = {
-  "login": 0,
-  "index": 0,
-  "thumbnails": 0,
-  "image": 0,
-  "sw": 0,
-  "win": 0,
-  "download": 0,
-  "maker": 0,
-}
-
-function log(tag: string, message: string) {
-  // Log the message to the console if the tag is enabled.
-  // Tag is the file of the caller.
-
-  if (showTags.hasOwnProperty(tag)) {
-    const msg = `${tag}: ${message}`
-    console.log(msg)
-  }
-}
-
-function logError(message: string) {
-  // Log an error message to the console.
-  console.error(message)
-}
+const log = console.log
+const logError = console.error
 
 function two(num: number) {
   // Return the number rounded to two decimal places.
@@ -61,7 +30,7 @@ class Timer {
   seconds() {
     return (performance.now() - this.start) / 1000.0
   }
-  log(tags: string, message: string) {
-    log(tags, `${three(this.seconds())}s ----- ${message}`)
+  log(message: string) {
+    log(`${three(this.seconds())}s ----- ${message}`)
   }
 }

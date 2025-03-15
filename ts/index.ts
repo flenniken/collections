@@ -21,15 +21,15 @@ function registerServerWorker() {
 
   // Listen for messages sent from the worker and log them.
   navigator.serviceWorker.addEventListener("message", (event) => {
-    log("index",`Worker msg received: ${event.data}`)
+    log(`Worker msg received: ${event.data}`)
   })
 
-  log("index","Register the service worker javascript file sw.js.");
+  log("Register the service worker javascript file sw.js.");
   navigator.serviceWorker.register("sw.js");
 
   // Log when the service worker is ready.
   navigator.serviceWorker.ready.then((registration) => {
-    log("index", "Service worker ready.");
+    log("Service worker ready.");
     // Test send a message to the service worker. The worker should
     // send the message back for logging.
     registration.active?.postMessage(
@@ -103,7 +103,7 @@ async function setCollectionState(cNum: number, collectionState: string) {
     await cache.put(c2ReadyRequest, c2ReadyResponse)
 
     // const text = await readyResponse.text()
-    log("index",`Collection ${cNum} is ready: ${text}`);
+    log(`Collection ${cNum} is ready: ${text}`);
   } else if (collectionState == "withoutImages") {
     await cache.delete(c2ReadyRequest)
   }
@@ -119,21 +119,21 @@ function showHideAdminUI(pageId: string) {
 }
 
 async function handleLoad() {
-  log("index","Window load event")
+  log("Window load event")
 
-  log("index",`window.location.search: "${window.location.search}"`)
+  log(`window.location.search: "${window.location.search}"`)
   const state = getSearchParam("state")
-  log("index", `state: "${state}"`)
+  log(`state: "${state}"`)
 
   const [availW, availH] = getAvailableWidthHeight()
-  log("index",`Available width and height: (${availW}, ${availH})`)
+  log(`Available width and height: (${availW}, ${availH})`)
 
   installBanner()
 
   // Show the admin icons when an admin is logged in.
   showHideAdminUI("index")
 
-  log("index","Download shared collection files.")
+  log("Download shared collection files.")
   const sharedCollectionUrls = [
     "js/image.js",
     "js/thumbnails.js",
@@ -154,7 +154,7 @@ async function handleLoad() {
       setCollectionState(cNum, "withImages")
 
     } else {
-      log("index",`Collection ${cNum} is not cached yet.`);
+      log(`Collection ${cNum} is not cached yet.`);
       setCollectionState(cNum, "withoutImages")
     }
   })
@@ -172,30 +172,30 @@ function installBanner() {
 
   if (window.matchMedia("(display-mode: standalone)").matches) {
     runningFromIcon = true
-    log("index", "Running from the desktop icon.")
+    log("Running from the desktop icon.")
     return
   }
 
   // On an iPhone, when installing is allowed, we want to show a banner when the
   // user has not installed it yet.
 
-  log("index",`navigator.platform: ${navigator.platform}`)
+  log(`navigator.platform: ${navigator.platform}`)
   if (navigator.platform != "iPhone") {
     return
   }
 
   if (!("GestureEvent" in window)) {
-    log("index", "not running safari")
+    log("not running safari")
     return
   }
 
-  log("index", "show install banner")
+  log("show install banner")
   get("install-banner").style.display = "block"
 }
 
 addEventListener("message", (event) => {
   // Listen for messages sent from the client and echo them here.
-  log("index", `Message received: ${event.data}`)
+  log(`Message received: ${event.data}`)
 })
 
 // onmessage = (e) => {
@@ -206,22 +206,22 @@ addEventListener("message", (event) => {
 // }
 
 function handleResize() {
-  log("index", "resize event")
+  log("resize event")
 }
 
 function refreshPage() {
-  log("index", "refresh")
+  log("refresh")
   location.reload()
 }
 
 function about() {
-  log("index", "about")
+  log("about")
   get("about-box").style.display = 'block'
 }
 
 function hideAboutBox(element: Element) {
   // Hide the about box from the page.
-  log("index", "hide about box")
+  log("hide about box")
 
   // Get the number of collections.
 
@@ -234,7 +234,7 @@ async function removeCollection(cNum: number) {
 
 Are you sure you want to delete this collection's images from the cache?`
   if (confirm(message) == true) {
-    log("index", `remove collection ${cNum} from the app cache`)
+    log(`remove collection ${cNum} from the app cache`)
     const urls = getCollectionUrls(cNum)
     const cache = await openCreateCache()
 
@@ -242,27 +242,27 @@ Are you sure you want to delete this collection's images from the cache?`
 
     urls.forEach( (url) => {
       cache.delete(url).then((response) => {
-        log("index", `removed ${url}`)
+        log(`removed ${url}`)
       });
     })
 
   } else {
-    log("index", "Nothing removed")
+    log("Nothing removed")
   }
 }
 
 function viewThumbnails(cNum: number) {
-  log("index", `view thumbnails for collection ${cNum}`)
+  log(`view thumbnails for collection ${cNum}`)
   window.location.assign(`images/c${cNum}/thumbnails-${cNum}.html`)
 }
 
 function viewCollection(cNum: number) {
-  log("index", `view collection ${cNum}`)
+  log(`view collection ${cNum}`)
   window.location.assign(`images/c${cNum}/image-${cNum}.html`)
 }
 
 async function clearAppCache() {
-  log("index", "clearAppCache")
+  log("clearAppCache")
   const quota = await getUsageQuotaString()
   const message = `${quota}
 
@@ -274,7 +274,7 @@ Are you sure you want to delete all the photos and files from the cache?`
 
 async function deleteCache() {
   // Delete the application cache.
-  log("index", "deleted")
+  log("deleted")
   await caches.delete(appCacheName)
   refreshPage()
 }
@@ -295,7 +295,7 @@ async function getUsageQuotaString() {
 
 async function logAppCache() {
   // Log the contents of the application cache.
-  log("index", "Application Cache")
+  log("Application Cache")
 
   const cache = await openCreateCache()
 
@@ -310,12 +310,12 @@ async function logAppCache() {
     urls.sort()
 
     urls.forEach((url) => {
-      log("index", `key: ${url}`)
+      log(`key: ${url}`)
     })
-    log("index", `The cache contains ${urls.length} items.`)
+    log(`The cache contains ${urls.length} items.`)
 
     getUsageQuotaString().then((message) => {
-      log("index", message)
+      log(message)
     })
   })
 }
