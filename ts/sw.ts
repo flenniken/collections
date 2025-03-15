@@ -113,6 +113,14 @@ async function cacheMatch(cache: Cache, request: Request) {
   return await cache.match(request, {ignoreSearch: true})
 }
 
+function isImageFileType(url: string) {
+  // Return true when the file is in the images folder and its not an
+  // html file. We cache images different than html files.
+  if (url.includes(cacheUrlPrefix) && !url.endsWith(".html"))
+    return true
+  return false
+}
+
 self.addEventListener("fetch", (event: Event) => {
   // Fetch a file and return a Promise that resolves to a Response.
 
@@ -142,7 +150,7 @@ self.addEventListener("fetch", (event: Event) => {
   fetchEvent.respondWith((async () => {
 
     // Identify image files.
-    const isImageFile = url.includes(cacheUrlPrefix);
+    const isImageFile = isImageFileType(url)
 
     const cache = await openCreateCache()
     let statusStr  = "unknown"
@@ -153,7 +161,7 @@ self.addEventListener("fetch", (event: Event) => {
       // Look for the file in the cache.
       const cacheReponse = await cacheMatch(cache, fetchEvent.request);
       if (cacheReponse) {
-        logsw(`Special file found in cache: ${sUrl(url)}`);
+        logsw(`Image file found in cache: ${sUrl(url)}`);
         return cacheReponse;
       }
 
@@ -161,21 +169,20 @@ self.addEventListener("fetch", (event: Event) => {
       // application cache when found.
       try {
         const result = await fetchRemote(cache, fetchEvent.request, false)
-        logsw(`Special file found on net: ${sUrl(url)}`);
+        logsw(`Image file found on net: ${sUrl(url)}`);
         return result
       }
       catch (error) {
         if (error instanceof Error) {
           statusStr = `${error.message}`
         }
-        logsw(`Special file not found: ${statusStr}.`)
+        logsw(`Image file not found: ${statusStr}.`)
       }
     }
     else {
-      // The file is not in the images folder (except the index page
-      // thumbnails).  Look for it in the internet first so we always
-      // get the newest when connected, then look in the cache so we
-      // work when offline.
+      // The file is not an image in the images folder. Look for it in
+      // the internet first so we always get the newest when
+      // connected, then look in the cache so we work when offline.
 
       // Look for the file on the net. When found store it in the
       // browser cache and the application cache.
