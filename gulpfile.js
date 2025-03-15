@@ -12,15 +12,11 @@ const fs = require("fs");
 const path = require("path");
 
 // Minimize the javascript.
-const minimize = false
-
-// Remove the logging functions. Minimize must be on too since uglify
-// removes the functions.
-const removeLogging = false
+const minimize = true
 
 let help = `
 Tasks:
-* ts -- Compile and minimize ts files to dist/js.
+* ts -- Compile and optionally minimize ts files to dist/js.
     i -- Compile image.ts
     t -- Compile thumbnails.ts
     x -- Compile index.ts
@@ -43,14 +39,11 @@ Tasks:
 * css -- Minimize the collection.css file.
 * m-css -- Minimize the maker.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea content.
-* watch -- (alias gw) Watch file changes and call the appropriate task. You can
-    run it in the background with alias gw.
 * readme -- Show the readme file with glow.
 * all -- Compile everything in parallel, tasks ts, pages and css.
 `
 
-// todo: update the target to es7?
-const target = "es6"
+const target = "es2017"
 
 gulp.task("default", function(cb){
   console.log(help)
@@ -76,21 +69,6 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
     }
   }
 
-  // todo: simplify and remove the removeLogging feature.
-  // When specified remove the log functions.
-  let pure_funcs = []
-  if (removeLogging) {
-    log("Remove log functions")
-    pure_funcs = ["log", "startTimer.log", "logError"]
-  }
-
-  const ugOptions = {
-    warnings: true,
-    compress:{
-      pure_funcs: pure_funcs
-    }
-  }
-
   const tmpPath = `tmp/${destFile}`
   const destPath = `${destDir}/${destFile}`
 
@@ -98,10 +76,11 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
     .pipe(using({prefix:'File size:', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
     .pipe(using({prefix:'Compiled', filesize:true, color: "blue"}))
-    .pipe(gulp.dest("tmp"))
     .pipe(gulpif(minimize, uglify()))
+    .pipe(gulpif(minimize, using({prefix:'Minimized', filesize:true, color: "blue"})))
+    .pipe(gulp.dest("tmp"))
     .pipe(gulpif(
-      // Only pipe to dest if files are different
+      // Only copy to dest if files are different
       file => {
         const unchanged = compareContents(tmpPath, destPath);
         if (unchanged) {
@@ -405,7 +384,6 @@ statictea -u -o pages/header.tea -t pages/maker-tmpl.html
   cb()
 })
 
-// todo: simplify, remove compiling css.
 gulp.task("css", function (cb) {
   return gulp.src(["pages/collections.css"])
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
@@ -431,39 +409,6 @@ gulp.task('readme', function () {
     "readme.md",
   ]
   return child_process.spawn("glow", parameters, {stdio: "inherit"});
-});
-
-// todo: simplify, remove watch.  Just build everything.
-gulp.task("watch", function(cb) {
-  // When a source file changes, compile it into the dist folder.
-
-  const gs = gulp.series
-
-  gulp.watch(image_ts, gs(["i"]));
-  gulp.watch(thumbnails_ts, gs(["t"]));
-  gulp.watch(index_ts, gs(["x"]));
-  gulp.watch(sw_ts, gs(["sw"]));
-
-  gulp.watch("pages/collections.css", gs(["css"]));
-
-  const hr = "pages/header.tea"
-  const json1 = "images/c1/c1.json"
-  const json2 = "images/c2/c2.json"
-
-  gulp.watch([hr], gs("syncronize"))
-
-  gulp.watch(["pages/index-tmpl.html", "pages/index.json", hr], gs(["index", "vindex"]))
-  gulp.watch(["pages/thumbnails-tmpl.html", json1, json2, hr], gs([
-    "thumbnails1", "thumbnails2", "vthumbnails1", "vthumbnails2"]))
-  gulp.watch(["pages/image-tmpl.html", json1, json2, hr], gs([
-    "image1", "image2", "vimage1", "vimage2"]))
-
-  // todo: it is hard to tell whether the watch ran or not because the
-  // time is in utc and it is not clear what the current time is.
-  // Show the current time when the watch process finishes using
-  // log(`${Date()}`)?
-
-  cb();
 });
 
 gulp.task("missing-folders", function (cb) {
