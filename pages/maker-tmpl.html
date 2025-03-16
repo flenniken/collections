@@ -1,3 +1,5 @@
+<!--$ # You build the maker.html page from this template and -->
+<!--$ # the make.json file with the gulpfile maker task. -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,9 +15,10 @@
       <div class="collection-selector">
         <select id="collection-dropdown">
           <option value="">Select a collection...</option>
-          <option value="collection1">Collection 1</option>
-          <option value="collection2">Collection 2</option>
-          <option value="collection3">Collection 3</option>
+<!--$ nextline -->
+<!--$ : t.repeat = len(s.collections) -->
+<!--$ : num = s.collections[t.row] -->
+          <option value="collection{num}">Collection {num}</option>
         </select>
       </div>
 

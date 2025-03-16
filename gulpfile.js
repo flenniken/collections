@@ -133,7 +133,7 @@ gulp.task('sw', function () {
 
 // Compile maker ts
 gulp.task('cm', function () {
-  return ts2js(maker_ts, 'maker.js', "dist/local", null)
+  return ts2js(maker_ts, 'maker.js', "dist", null)
 });
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw", "cm"]))
@@ -198,7 +198,7 @@ gulp.task("vthumbnails2", function (cb) {
 
 gulp.task("vmaker", function (cb) {
   // Validate the maker html file.
-  validateHtml("dist/local/maker.html")
+  validateHtml("dist/maker.html")
   cb()
 })
 
@@ -345,12 +345,12 @@ statictea \
   -t pages/maker-tmpl.html \
   -s pages/maker.json \
   -o pages/header.tea \
-  -r dist/local/maker.html
+  -r dist/maker.html
 */
 
   log('Compiling the maker template')
   const tmpFilename = 'tmp/maker.html'
-  const distFilename = 'dist/local/maker.html'
+  const distFilename = 'dist/maker.html'
   const parameters = [
     "-t", "pages/maker-tmpl.html",
     "-s", `pages/maker.json`,

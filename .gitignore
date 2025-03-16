@@ -4,7 +4,9 @@ save/
 tmp/
 dist/js/
 dist/index.html
+dist/maker.html
 dist/sw.js
+dist/maker.js
 dist/images/*/*.jpg
 dist/images/*/*.html
 dist/tin/
