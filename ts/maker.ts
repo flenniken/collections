@@ -27,6 +27,7 @@ function getCollectionNumber(selected: string) {
     const num = parseInt(numberStr, 10)
     if (Number.isNaN(num))
       return null
+    return num
   }
   catch {
     return null
@@ -36,7 +37,7 @@ function getCollectionNumber(selected: string) {
 async function fetchCJson(num: number): Promise<CJson.Collection> {
   // Load the collection's cjson file.
 
-  const url = `/images/c${num}/cjson-${num}.json`
+  const url = `/images/c${num}/c${num}.json`
   const response = await fetch(url)
   if (!response.ok) {
     log(`Unable to fetch the url: ${url}`)
@@ -46,7 +47,7 @@ async function fetchCJson(num: number): Promise<CJson.Collection> {
 }
 
 async function selectCollection(event: Event) {
-  // Start editing the selected collection.
+  // Populate the page with the selected collection.
 
   // Parse the selection string to get the collection number.
   const target = event.target as HTMLSelectElement;
@@ -58,13 +59,47 @@ async function selectCollection(event: Event) {
     return
   }
 
-  let cJson: CJson.Collection
+  // Read the cjson file.
+  let cinfo: CJson.Collection
   try {
-    cJson = await fetchCJson(num)
+    cinfo = await fetchCJson(num)
+    log(cinfo)
   }
   catch {
-    log("fetch failed")
+    log("Fetch of cjson failed.")
     return
+  }
+
+  // Loop through the images and put them in the collection images on
+  // the left or in the available images on the right. Hide the
+  // available image boxes not used.
+  let cindex = 0
+  let ix
+  for (ix = 0; ix < cinfo.images.length; ix++) {
+
+    // Look for the index in the usedImages list.
+    used = isUsed(ix)
+
+    // <div id="c0" class="image-box collection-box">
+    //   <img id="ci0" src="icons/blank.svg" alt="Image 1">
+
+    const image = cinfo.images[ix]
+    const title = escape(image.title)
+    let imgElement
+    if (used) {
+      // The image goes in the collection.
+      imgElement = get(`ci${cindex}`)
+      cindex += 1
+
+      // Hide the available box.
+      get(`a${ix}`).display = "None"
+    }
+    else {
+      // The image goes in the available images section.
+      imgElement = get(`ai${ix}`)
+    }
+    imgElement.src = image.thumbnail
+    imgElement.alt = title
   }
 
   log("success")
@@ -73,4 +108,3 @@ async function selectCollection(event: Event) {
 function handleResize() {
   log("resize event")
 }
-
