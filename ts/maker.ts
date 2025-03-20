@@ -10,7 +10,6 @@ collectionDropdown.addEventListener("change", selectCollection)
 
 async function handleLoad() {
   log("Window load event")
-
 }
 
 function getCollectionNumber(selected: string) {
@@ -46,13 +45,19 @@ async function fetchCJson(num: number): Promise<CJson.Collection> {
   return await response.json()
 }
 
+function encodeHtml(text: string) {
+  // Return the given text where the html special characters are encoded
+  // with their equivalent safe entities, < to &lt; etc.
+  return document.createElement('div').textContent = text
+}
+
 async function selectCollection(event: Event) {
   // Populate the page with the selected collection.
 
   // Parse the selection string to get the collection number.
   const target = event.target as HTMLSelectElement;
   const selected = target.value
-  log("Selected value:", selected);
+  log("Populate the page. Selected value:", selected);
   const num = getCollectionNumber(selected)
   if (num == null) {
     log(`Invalid selection.`)
@@ -74,34 +79,37 @@ async function selectCollection(event: Event) {
   // the left or in the available images on the right. Hide the
   // available image boxes not used.
   let cindex = 0
-  let ix
-  for (ix = 0; ix < cinfo.images.length; ix++) {
+  for (let ix = 0; ix < cinfo.images.length; ix++) {
 
     // Look for the index in the usedImages list.
-    used = isUsed(ix)
+    const used = cinfo.usedImages.includes(ix)
 
     // <div id="c0" class="image-box collection-box">
     //   <img id="ci0" src="icons/blank.svg" alt="Image 1">
 
     const image = cinfo.images[ix]
-    const title = escape(image.title)
-    let imgElement
+
+    let imgElement: HTMLImageElement
     if (used) {
       // The image goes in the collection.
-      imgElement = get(`ci${cindex}`)
+      imgElement = get(`ci${cindex}`) as HTMLImageElement
       cindex += 1
 
       // Hide the available box.
-      get(`a${ix}`).display = "None"
+      get(`a${ix}`).style.display = "none"
     }
     else {
       // The image goes in the available images section.
-      imgElement = get(`ai${ix}`)
+      imgElement = get(`ai${ix}`) as HTMLImageElement
     }
     imgElement.src = image.thumbnail
-    imgElement.alt = title
+    imgElement.alt = encodeHtml(image.title)
   }
 
+  // Hide any remaining unused available image boxes.
+  for (let ix = cinfo.images.length; ix < 20; ix++) {
+    get(`a${ix}`).style.display = "none"
+  }
   log("success")
 }
 
