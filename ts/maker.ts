@@ -1,20 +1,32 @@
-// Main code file for the maker page. It is compile by the gulp file
+// Main code file for the maker page. It is compiled by the gulp file
 // maker task. Some other ts files are concatenated so functions
 // are available that way, for example the log function.
 
-window.addEventListener("load", handleLoad)
-window.addEventListener("resize", handleResize)
-
+// Add a event handler for the collection dropdown.
 const collectionDropdown = get("collection-dropdown") as HTMLSelectElement;
 collectionDropdown.addEventListener("change", selectCollection)
 
-async function handleLoad() {
-  log("Window load event")
+// Add click event handlers for the collection images.
+for (let ix = 0; ix < 16; ix++) {
+  const collectionImgElement = get(`ci${ix}`) as HTMLImageElement
+  collectionImgElement.addEventListener('click', () =>
+    handleCollectionImageClick(ix))
 }
+// Add click event handlers for the available images.
+for (let ix = 0; ix < 20; ix++) {
+  const availableElement = get(`ai${ix}`) as HTMLImageElement
+  availableElement.addEventListener('click', () =>
+    handleAvailableImageClick(ix))
+}
+
+// This variable is the current collection information.
+// It is set when you select a collection.
+let cinfo: CJson.Collection | null = null;
 
 function getCollectionNumber(selected: string) {
   // Parse the collection number from the selected string and return
-  // the number. Return null on error.
+  // the number. Return null on error.  For the string
+  // collection34, 34 is returned.
 
   const prefix = "collection"
   if (!selected.startsWith(prefix)) {
@@ -34,7 +46,7 @@ function getCollectionNumber(selected: string) {
 }
 
 async function fetchCJson(num: number): Promise<CJson.Collection> {
-  // Load the collection's cjson file.
+  // Load the collection's cjson file given the collection number.
 
   const url = `/images/c${num}/c${num}.json`
   const response = await fetch(url)
@@ -58,6 +70,7 @@ async function selectCollection(event: Event) {
   const target = event.target as HTMLSelectElement;
   const selected = target.value
   log("Populate the page. Selected value:", selected);
+
   const num = getCollectionNumber(selected)
   if (num == null) {
     log(`Invalid selection.`)
@@ -65,7 +78,6 @@ async function selectCollection(event: Event) {
   }
 
   // Read the cjson file.
-  let cinfo: CJson.Collection
   try {
     cinfo = await fetchCJson(num)
     log(cinfo)
@@ -75,44 +87,118 @@ async function selectCollection(event: Event) {
     return
   }
 
+  // When the order variable is missing make one using the images
+  // natural order.
+  if (!("order" in cinfo)) {
+    cinfo.order = []
+    for (let ix = 0; ix < cinfo.images.length; ix++) {
+      if (ix < 16)
+        cinfo.order.push(ix)
+      else
+        cinfo.order.push(-1)
+    }
+  }
+  log(`cinfo.order: ${cinfo.order}`)
+
   // Loop through the images and put them in the collection images on
   // the left or in the available images on the right. Hide the
   // available image boxes not used.
-  let cindex = 0
+
   for (let ix = 0; ix < cinfo.images.length; ix++) {
 
-    // Look for the index in the usedImages list.
-    const used = cinfo.usedImages.includes(ix)
-
-    // <div id="c0" class="image-box collection-box">
-    //   <img id="ci0" src="icons/blank.svg" alt="Image 1">
+    // c0 is the element id for box 0 and ci0 is the element
+    // index of its image.
 
     const image = cinfo.images[ix]
+    const imageIx = cinfo.order![ix]
 
     let imgElement: HTMLImageElement
-    if (used) {
+
+    // All images go in the available section. We hide and show them.
+    const aImgElement = get(`ai${ix}`) as HTMLImageElement
+    aImgElement.src = image.thumbnail
+    aImgElement.alt = encodeHtml(image.title)
+
+    if (imageIx != -1) {
       // The image goes in the collection.
-      imgElement = get(`ci${cindex}`) as HTMLImageElement
-      cindex += 1
+      imgElement = get(`ci${imageIx}`) as HTMLImageElement
 
       // Hide the available box.
       get(`a${ix}`).style.display = "none"
+
+      imgElement.src = image.thumbnail
+      imgElement.alt = encodeHtml(image.title)
     }
-    else {
-      // The image goes in the available images section.
-      imgElement = get(`ai${ix}`) as HTMLImageElement
-    }
-    imgElement.src = image.thumbnail
-    imgElement.alt = encodeHtml(image.title)
   }
 
-  // Hide any remaining unused available image boxes.
+  // Hide the extra avaiable image at the end.
   for (let ix = cinfo.images.length; ix < 20; ix++) {
-    get(`a${ix}`).style.display = "none"
+      get(`a${ix}`).style.display = "none"
   }
+
   log("success")
 }
 
-function handleResize() {
-  log("resize event")
+async function handleCollectionImageClick(collectionIndex: number) {
+  // Move the collection image to the available images section.
+
+  log(`Collection image ${collectionIndex} clicked.`)
+
+  if (cinfo == null || !cinfo.order) {
+    log("No cinfo or no order array.")
+    return
+  }
+  if (cinfo.order[collectionIndex] == -1) {
+    log("No image here.")
+    return
+  }
+
+  // Put the blank image back.
+  const collectionImg = get(`ci${collectionIndex}`) as HTMLImageElement
+  collectionImg.src = "icons/blank.svg"
+  collectionImg.alt = `Image ${collectionIndex+1}`
+
+  // Display the available image.
+  const availableIx = cinfo.order[collectionIndex]
+  const availableBox = get(`a${availableIx}`) as HTMLElement
+  availableBox.style.display = "block"
+  log(`availableIx: ${availableIx}`)
+
+  // Set the order value to -1.
+  cinfo.order[collectionIndex] = -1
+  log(`Remove from the image order list. order: ${cinfo.order}`)
+}
+
+async function handleAvailableImageClick(availIndex: number) {
+  // Move the available image to the collection's next free spot.
+  log(`Available image ${availIndex} clicked.`)
+
+  if (cinfo == null || !cinfo.order) {
+    log("No cinfo or no order list.")
+    return
+  }
+
+  // Find the first collection image that's blank, first -1 in the
+  // order list.
+  const firstBlankIx = cinfo.order?.indexOf(-1)
+  if (firstBlankIx == -1 || firstBlankIx >= 16) {
+    log("The collection is full.")
+    return
+  }
+  log(`The first available collection index: ${firstBlankIx}`)
+
+  // Hide the available box.
+  const availableBox = get(`a${availIndex}`) as HTMLElement
+  availableBox.style.display = "none"
+
+  // Copy the source and alt text from the available image.
+  const collectionImg = get(`ci${firstBlankIx}`) as HTMLImageElement
+  const availableImg = get(`ai${availIndex}`) as HTMLImageElement
+
+  collectionImg.src = availableImg.src
+  collectionImg.alt = availableImg.alt
+
+  // Add to used images list in the collection info
+  cinfo.order[firstBlankIx] = availIndex
+  log(`Added to the image order list. order: ${cinfo.order}`)
 }

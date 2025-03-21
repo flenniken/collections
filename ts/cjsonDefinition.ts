@@ -1,4 +1,3 @@
-
 namespace CJson {
   // The collection json's typescript definition.
 
@@ -32,8 +31,16 @@ namespace CJson {
     collection: number;
     imagePageUrl: string;
     thumbnailsPageUrl: string;
-    usedImages: number[];
-    // The image array contains a element for each image in the collection.
+
+    // The optional order variable is a list of image indexes, matching the size
+    // of the image list, that defines the display order of the collection
+    // images. If the order variable is not specified, images are shown in their
+    // original order from the image list. Additionally, the order variable
+    // determines which images to display -- an index of -1 indicates that the
+    // image should be hidden.
+    order?: number[];
+
+    // The image array contains an element for each image in the collection.
     images: Image[];
     zoomPoints: ZoomPoints;
   }
