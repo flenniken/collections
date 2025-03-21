@@ -32,7 +32,6 @@ import sys
 import textwrap
 import boto3
 from boto_client import getBotoClient, getAwsParameters, readJsonFile
-from capture import capture
 
 # The token file created by the -g option. Used by some of the other options.
 tokenFilename = "tmp/tokens.json"
