@@ -6,6 +6,9 @@
 const collectionDropdown = get("collection-dropdown") as HTMLSelectElement;
 collectionDropdown.addEventListener("change", selectCollection)
 
+const saveButton = get("save-button") as HTMLElement;
+saveButton.addEventListener("click", saveCollection)
+
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`ci${ix}`) as HTMLImageElement
@@ -201,4 +204,31 @@ async function handleAvailableImageClick(availIndex: number) {
   // Add to used images list in the collection info
   cinfo.order[firstBlankIx] = availIndex
   log(`Added to the image order list. order: ${cinfo.order}`)
+}
+
+async function saveCollection(event: Event) {
+  // Download the cjson file.
+  log("The save-button was clicked.")
+
+  if (!cinfo) {
+    log("No collection info to save.")
+    return
+  }
+
+  // Convert collection info to a json string.
+  const cjson = JSON.stringify(cinfo, null, 2)
+
+  // Create a download link.
+  const blob = new Blob([cjson], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `c${cinfo.collection}.cjson`
+
+  // Trigger download.
+  document.body.appendChild(a)
+  a.click()
+
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
