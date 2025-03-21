@@ -233,6 +233,7 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
   """
   assert len(ftg.previews) == len(ftg.thumbnails)
   images = []
+  order = []
 
   for ix, fileInfo in enumerate(ftg.previews):
     thumbnailFileInfo = ftg.thumbnails[ix]
@@ -250,6 +251,7 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     collectionImage['thumbnail'] = getStdImageName(num, ix, "thumbnail", "path")
     collectionImage['sizet'] = thumbnailFileInfo.size
     images.append(collectionImage)
+    order.append(-1)
 
   # Create the collection info (cinfo).
   cinfo = {
@@ -260,7 +262,7 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     "height": thumbnailDim,
     "imagePageUrl": f"/images/c{num}/image-{num}.html",
     "thumbnailsPageUrl": f"/images/c{num}/thumbnails-{num}.html",
-    "usedImages": [],
+    "order": order,
     "images": images,
   }
   return cinfo
@@ -984,7 +986,7 @@ class TestMaker(unittest.TestCase):
       gotExpected(cinfo['height'], thumbnailDim)
       gotExpected(cinfo['imagePageUrl'], f"/images/c{num}/image-{num}.html")
       gotExpected(cinfo['thumbnailsPageUrl'], f"/images/c{num}/thumbnails-{num}.html")
-      gotExpected(len(cinfo['usedImages']), 0)
+      gotExpected(len(cinfo['order']), 0)
       gotExpected(len(cinfo['images']), 8)
       for ix, image in enumerate(cinfo['images']):
         #print(json.dumps(image, indent=2))
