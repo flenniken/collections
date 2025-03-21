@@ -223,7 +223,7 @@ async function saveCollection(event: Event) {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `c${cinfo.collection}.cjson`
+  a.download = `c${cinfo.collection}.json`
 
   // Trigger download.
   document.body.appendChild(a)
