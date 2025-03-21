@@ -167,18 +167,6 @@ scripts/login-flow -u
 
 [⬇](#Contents)
 
-# Refresh Tokens
-
-todo: document Refresh Tokens
-
-[⬇](#Contents)
-
-# Revoke Tokens
-
-todo: document Revoke Tokens
-
-[⬇](#Contents)
-
 # Download Image
 
 You can download an image using the stored token for authentication.
