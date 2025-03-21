@@ -9,7 +9,7 @@ Collections. It has all the programs installed needed to build the
 app.
 
 The code folder is shared with docker and your local environment so
-you can edit files locally with you favorite editor and build them in
+you can edit files locally with your favorite editor and build them in
 the container.
 
 [⬇](#Contents) (table of contents at the bottom)
@@ -57,7 +57,6 @@ The environment has a few aliases defined for common commands:
 (debian)~/collections $ alias
 
 alias g='gulp'
-alias gw='g watch &'
 alias jqless='jq -C | less -RF'
 alias ll='ls -l'
 alias ls='ls --color=auto'
@@ -149,6 +148,9 @@ The dist folder contains the distribution files that get deployed and
 nothing else.  The static resources are checked in to this folder. The
 compiled resources are put here.
 
+The collection image files are not checked in. They are managed
+outside this project. The collection cjson files are checked in.
+
 ~~~
 (debian)~/collections $ tree dist
 
@@ -159,16 +161,11 @@ dist
 |-- icons
 |   |-- 6-dots-rotate.svg
 |   |-- airplane.svg
+|   |-- blank.svg
 |   |-- camera.svg
 |   |-- download.svg
 |   |-- icon-128.png
-|   |-- icon-168.png
-|   |-- icon-192.png
-|   |-- icon-256.png
-|   |-- icon-32.png
-|   |-- icon-512.png
-|   |-- icon-64.png
-|   |-- icon-96.png
+...
 |   |-- index.svg
 |   |-- refresh.svg
 |   |-- thumbnails.svg
@@ -176,28 +173,45 @@ dist
 |   |-- user.svg
 |   `-- xclose.svg
 |-- images
-|   |-- c1-1-p.jpg
-|   |-- c1-1-t.jpg
-|   |-- c1-2-p.jpg
-|   |-- c1-2-t.jpg
-|   |-- c1-3-p.jpg
+|   |-- c1
+|   |   |-- c1-1-p.jpg
+|   |   |-- c1-1-t.jpg
+|   |   |-- c1-2-p.jpg
+|   |   |-- c1-2-t.jpg
+|   |   |-- c1-3-p.jpg
+|   |   |-- c1-3-t.jpg
 ...
-|   |-- c1-8-p.jpg
-|   |-- c1-8-t.jpg
-|   |-- c2-1-p.jpg
+|   |   |-- c1.json
+|   |   |-- image-1.html
+|   |   `-- thumbnails-1.html
+|   |-- c2
+|   |   |-- c2-1-p.jpg
+|   |   |-- c2-1-t.jpg
+|   |   |-- c2-2-p.jpg
+|   |   |-- c2-2-t.jpg
+|   |   |-- c2-3-p.jpg
+|   |   |-- c2-3-t.jpg
 ...
-|   |-- c2-16-p.jpg
-|   `-- c2-16-t.jpg
+|   |   |-- c2.json
+|   |   |-- image-2.html
+|   |   `-- thumbnails-2.html
+|   `-- c3
+|       |-- c3-1-p.jpg
+|       |-- c3-1-t.jpg
+|       |-- c3-2-p.jpg
+|       |-- c3-2-t.jpg
+|       |-- c3-3-p.jpg
+|       |-- c3-3-t.jpg
+...
+|       `-- c3.json
 |-- index.html
 |-- js
 |   |-- image.js
 |   |-- index.js
 |   `-- thumbnails.js
-|-- pages
-|   |-- image-1.html
-|   |-- image-2.html
-|   |-- thumbnails-1.html
-|   `-- thumbnails-2.html
+|-- maker.css
+|-- maker.html
+|-- maker.js
 |-- sw.js
 `-- tin
     |-- c1-3-t.jpg

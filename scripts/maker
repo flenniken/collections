@@ -3,10 +3,9 @@
 # This is the help text shown with -h:
 
 """
-This script makes a new collection.
+This script makes a new collection from a folder of images.
 
 See collection-maker.md for a guide to making collections.
-
 """
 
 import os

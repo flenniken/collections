@@ -104,7 +104,7 @@ Wrote the tokens to tmp/tokens.json.
 # View Token File
 
 You use the -s option to look at the tokens file.  It is a json file
-with three kinds for tokens. Besides the tokens it contains the expire
+with three kinds of tokens. Besides the tokens it contains the expire
 time in seconds and the token type:
 
 ~~~
@@ -147,7 +147,7 @@ scripts/login-flow -d id_token
 }
 ~~~
 
-# Validate Token
+# User
 
 This -u option calls the coginto oauth2/userInfo endpoint with the
 access_token to get the user attribute information.
@@ -247,7 +247,7 @@ scripts/view-download 2025-02-25 O4YGRbu1
 * [Get User Tokens](#get-user-tokens) -- how to fetch the tokens with the code.
 * [View Token File](#view-token-file) -- how to few the token file.
 * [Decode Token](#decode-token) -- how to decode the three tokens in the token file.
-* [Validate Token](#validate-token) -- how to decode and validate three tokens in the token file.
+* [User](#validate-token) -- how to decode and validate three tokens in the token file.
 * [User Information](#user-information) -- how to get the user information with the access_token.
 * [Download Image](#download-image) -- how to download an image using the access_token.
 * [View Logs](#view-logs) -- how to view the logs associated with the download.

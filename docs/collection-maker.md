@@ -41,7 +41,7 @@ You run the maker command to create the collection's local image
 folder from the folder of images. It creates a cjson file with the
 images width, height, size and other information.  It creates empty
 titles and descriptions and sets an arbitrary images order.  You will
-fill in this information later.
+fill in this information later with the maker page.
 
 Run the command and specify the folder:
 
@@ -63,16 +63,17 @@ can correct it. It validates:
 * that each image has a preview and thumbnail
 * that no extra files exist in the folder
 
-After validation it:
+After after successful validation it:
 
-* reserves the collection name (c3) by adding the db/c3 prefix file to S3.
+* reserves the collection name, for example c3, by adding the db/c3
+  prefix file to S3
 
-* The images folder contains both the working and published
-  collections.
+* the new folder is moved to the images folder
 
-* for each image the image info is added to the json file
+* the cjson file is created and written to the folder
 
-* the cjson usedImages list is set to an empty list
+* the cjson order list is set to a list of -1 meaning that nothing is
+  in the collection yet.
 
 [⬇](#Contents)
 
@@ -81,7 +82,7 @@ After validation it:
 We keep track of the collections under development with the /db prefix
 in S3. There is a prefix for each collection being developed. Prefixes
 don’t have contention problems like one file would.  There are no /db
-cx prefixes when there are no collections in development.
+prefixes prefixes when there are no collections in development.
 
 Collections are in numeric order.  We keep track of the number of
 collections with the /published-x key where x is a variable that tells
