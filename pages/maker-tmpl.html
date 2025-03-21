@@ -47,20 +47,22 @@
         </div>
       </div>
 <!--$ # Group 4: Available Images with Toggle -->
-      <div id="available-image-group" class="group available-group">
+      <div class="group available-group">
         <div class="available-header">
           <h2>Available Images</h2>
           <label for="toggle-checkbox" class="toggle-available">Toggle Images</label>
           <input type="checkbox" id="toggle-checkbox" class="toggle-checkbox">
         </div>
-        <div id="available-images" class="available-images-container">
+        <div id="available-image-group" class="available-images-section">
+          <div id="available-images" class="available-images-container">
 <!--$ # 20 image boxes for available images -->
 <!--$ block t.repeat = 20-->
 <!--$ : inum = add(t.row, 1)  -->
-          <div id="a{t.row}" class="image-box available-box">
-            <img id="ai{t.row}" src="icons/blank.svg" alt="Image {inum}">
-          </div>
+            <div id="a{t.row}" class="image-box available-box">
+              <img id="ai{t.row}" src="icons/blank.svg" alt="Image {inum}">
+            </div>
 <!--$ endblock -->
+          </div>
         </div>
       </div>
 <!--$ # Group 5: Image Details -->
