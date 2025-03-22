@@ -9,6 +9,32 @@ collectionDropdown.addEventListener("change", populateCollection)
 const saveButton = get("save-button") as HTMLElement;
 saveButton.addEventListener("click", saveCollection)
 
+// Store the title in the cjson when the user enters a title.
+const titleInput = get("collection-title") as HTMLInputElement;
+titleInput.addEventListener('blur', () => {
+  if (cinfo) {
+    cinfo.title = titleInput.value;
+    log(`Save collection title: ${cinfo.title}`)
+  }
+});
+// Store the index description in the cjson when the user enters a description.
+const thumbnailsDescInput = get("thumbnails-description") as HTMLTextAreaElement;
+thumbnailsDescInput.addEventListener('blur', () => {
+  if (cinfo) {
+    cinfo.description = thumbnailsDescInput.value;
+    log(`Save collection index description: ${cinfo.description}`)
+  }
+});
+
+// Store the post date in the cjson when the user selects a date.
+const postDateInput = get("post-date") as HTMLInputElement;
+postDateInput.addEventListener('blur', () => {
+  if (cinfo) {
+    cinfo.posted = postDateInput.value;
+    log(`Save collection post date: ${cinfo.posted}`)
+  }
+});
+
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`ci${ix}`) as HTMLImageElement
@@ -149,6 +175,16 @@ async function populateCollection(event: Event) {
       nextCix++
     }
   }
+  // Set the post date, thumbnails description and collection title from cinfo
+
+  const postDateInput = get("post-date") as HTMLInputElement
+  postDateInput.value = cinfo.posted
+
+  const thumbnailsDesc = get("thumbnails-description") as HTMLTextAreaElement
+  thumbnailsDesc.value = cinfo.description
+
+  const titleInput = get("collection-title") as HTMLInputElement
+  titleInput.value = cinfo.title
 
   log("success")
 }
