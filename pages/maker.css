@@ -176,9 +176,6 @@ h1, h2 {
 }
 
 /* Group 5: Image Details */
-.details-group {
-  flex: 1 1 300px;
-}
 
 .image-details {
   width: 40em;
