@@ -10,7 +10,7 @@
 </head>
 <body id="maker">
   <div class="container">
-<!--$ # Group 1: Dropdown and Save Button -->
+<!--$ # Dropdown and Save Button group -->
     <div class="group controls-group">
       <div class="collection-selector">
         <select id="collection-dropdown">
@@ -25,15 +25,14 @@
         <button id="save-button">Save Collection</button>
       </div>
     </div>
-<!--$ # Group 2: Collection Title -->
+<!--$ # Collection title group -->
     <div class="group title-group">
       <div class="collection-title">
         <input type="text" id="collection-title" placeholder="Collection Title">
       </div>
     </div>
-<!--$ # Main content area with natural flow -->
     <div class="main-content">
-      <!-- Group 3: Collection Images -->
+      <!-- Collection images group -->
       <div class="group collection-group">
         <h2>Collection Images</h2>
         <div id="collection-images" class="collection-grid">
@@ -46,12 +45,10 @@
 <!--$ endblock -->
         </div>
       </div>
-<!--$ # Group 4: Available Images with Toggle -->
+<!--$ # Available images group -->
       <div class="group available-group">
         <div class="available-header">
           <h2>Available Images</h2>
-          <label for="toggle-checkbox" class="toggle-available">Toggle Images</label>
-          <input type="checkbox" id="toggle-checkbox" class="toggle-checkbox">
         </div>
         <div id="available-image-group" class="available-images-section">
           <div id="available-images" class="available-images-container">
@@ -66,22 +63,14 @@
         </div>
       </div>
     </div>
-<!--$ # Group 5: Image Details -->
-    <div class="group metadata-group">
-      <h2>Image Details</h2>
-      <div class="metadata-field">
-        <input type="text" id="image-title" placeholder="Image Title">
-        <textarea id="image-description" placeholder="Image Description"></textarea>
-      </div>
-    </div>
-<!--$ # Group 6: Post Date -->
+<!--$ # Post date group -->
     <div class="group metadata-group">
       <div class="metadata-field">
         <label for="post-date">Post Date:</label>
         <input type="date" id="post-date">
       </div>
     </div>
-<!--$ # Group 7: Index Description -->
+<!--$ # Index description group -->
     <div class="group metadata-group index-desc-group">
       <div class="metadata-field">
         <label for="index-description">Index Page Description:</label>
@@ -89,12 +78,20 @@
         placeholder="Short Description for the Index"></textarea>
       </div>
     </div>
-<!--$ # Group 8: Thumbnails Description -->
+<!--$ # Thumbnails description group -->
     <div class="group metadata-group thumbnails-desc-group">
       <div class="metadata-field">
         <label for="thumbnails-description">Thumbnails Page Description:</label>
         <textarea id="thumbnails-description" rows="5"
         placeholder="Detailed Description of the Collection"></textarea>
+      </div>
+    </div>
+<!--$ # Image details group -->
+    <div class="group metadata-group">
+      <h2>Image Details</h2>
+      <div class="metadata-field">
+        <input type="text" id="image-title" placeholder="Image Title">
+        <textarea id="image-description" placeholder="Image Description"></textarea>
       </div>
     </div>
   </div>

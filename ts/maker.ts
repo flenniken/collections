@@ -9,17 +9,6 @@ collectionDropdown.addEventListener("change", populateCollection)
 const saveButton = get("save-button") as HTMLElement;
 saveButton.addEventListener("click", saveCollection)
 
-// Add event handler for the toggle images button
-const toggleButton = get("toggle-checkbox") as HTMLElement;
-toggleButton.addEventListener("click", () => {
-  const availableImages = get("available-image-group") as HTMLElement;
-  if (availableImages.style.display === "none") {
-    availableImages.style.display = "block";
-  } else {
-    availableImages.style.display = "none";
-  }
-});
-
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`ci${ix}`) as HTMLImageElement

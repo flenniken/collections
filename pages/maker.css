@@ -1,14 +1,12 @@
 /* maker.css - Styles for the Collection Maker page */
 
-/* CSS Variables for easy size adjustments */
 :root {
-  --image-box-size: 120px;
+  --image-box-size: 200px;
   --gap-size: 10px;
   --border-radius: 8px;
   --box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-/* Reset and base styles */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -80,11 +78,6 @@ h1, h2 {
   background-color: #45a049;
 }
 
-/* Group 2: Title Group */
-.title-group {
-  text-align: center;
-}
-
 .collection-title input {
   padding: 10px 15px;
   border-radius: 4px;
@@ -96,14 +89,12 @@ h1, h2 {
   font-weight: bold;
 }
 
-/* Main content area with natural flow */
 .main-content {
   display: flex;
   flex-wrap: wrap;
   gap: var(--gap-size);
 }
 
-/* Group 3: Collection Images */
 .collection-group {
   flex: 0 0 auto;
 }
@@ -116,56 +107,10 @@ h1, h2 {
   justify-content: start;
 }
 
-/* Group 4: Available Images */
 .available-group {
   flex: 1 1 auto;
   min-width: 300px;
   width: 50%;
-}
-
-.available-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.toggle-available {
-  padding: 5px 10px;
-  background-color: #f0f0f0;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s;
-  display: inline-block;
-  position: relative;
-  padding-right: 25px;
-}
-
-.toggle-available:hover {
-  background-color: #e0e0e0;
-}
-
-.toggle-available:after {
-  content: "▼";
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 12px;
-}
-
-.toggle-checkbox {
-  display: none;
-}
-
-.toggle-checkbox:checked ~ .available-images-container {
-  display: none;
-}
-
-.toggle-checkbox:checked + .toggle-available:after {
-  content: "▶";
 }
 
 .available-images-container {
@@ -174,8 +119,6 @@ h1, h2 {
   gap: var(--gap-size);
   margin-top: 10px;
 }
-
-/* Group 5: Image Details */
 
 .image-details {
   width: 40em;
@@ -201,7 +144,6 @@ h1, h2 {
   resize: vertical;
 }
 
-/* Group 6-8: Metadata Fields */
 .metadata-group {
   display: flex;
   flex-direction: column;
@@ -232,7 +174,6 @@ h1, h2 {
   resize: vertical;
 }
 
-/* Image boxes */
 .image-box {
   width: var(--image-box-size);
   height: var(--image-box-size);
