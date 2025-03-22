@@ -271,33 +271,3 @@ h1, h2 {
   background-color: #f0f0f0;
   border-color: #ccc;
 }
-
-/* /\* Responsive adjustments *\/ */
-/* @media (max-width: 768px) { */
-/*   .controls-group { */
-/*     flex-direction: column; */
-/*     gap: 15px; */
-/*     align-items: stretch; */
-/*   } */
-
-/*   .collection-selector select, */
-/*   .save-button button { */
-/*     width: 100%; */
-/*   } */
-
-/*   /\* Adjust collection grid for smaller screens *\/ */
-/*   .collection-grid { */
-/*     grid-template-columns: repeat(2, var(--image-box-size)); */
-/*   } */
-/* } */
-
-/* For very small screens */
-/* @media (max-width: 480px) { */
-/*   :root { */
-/*     --image-box-size: 100px; */
-/*   } */
-
-/*   .collection-grid { */
-/*     grid-template-columns: repeat(2, var(--image-box-size)); */
-/*   } */
-/* } */
