@@ -4,7 +4,7 @@
 
 // Add a event handler for the collection dropdown.
 const collectionDropdown = get("collection-dropdown") as HTMLSelectElement;
-collectionDropdown.addEventListener("change", selectCollection)
+collectionDropdown.addEventListener("change", populateCollection)
 
 const saveButton = get("save-button") as HTMLElement;
 saveButton.addEventListener("click", saveCollection)
@@ -77,7 +77,7 @@ function encodeHtml(text: string) {
   return document.createElement('div').textContent = text
 }
 
-async function selectCollection(event: Event) {
+async function populateCollection(event: Event) {
   // Populate the page with the selected collection.
 
   // Parse the selection string to get the collection number.
@@ -118,36 +118,47 @@ async function selectCollection(event: Event) {
   // the left or in the available images on the right. Hide the
   // available image boxes not used.
 
-  for (let ix = 0; ix < cinfo.images.length; ix++) {
+  // c0 is the element id for box 0 and ci0 is the element index of
+  // its collection image and the same goes for available images, a0
+  // and ai0.
 
-    // c0 is the element id for box 0 and ci0 is the element
-    // index of its image.
-
-    const image = cinfo.images[ix]
-    const imageIx = cinfo.order![ix]
-
-    let imgElement: HTMLImageElement
-
-    // All images go in the available section. We hide and show them.
-    const aImgElement = get(`ai${ix}`) as HTMLImageElement
-    aImgElement.src = image.thumbnail
-    aImgElement.alt = encodeHtml(image.title)
-
-    if (imageIx != -1) {
-      // The image goes in the collection.
-      imgElement = get(`ci${imageIx}`) as HTMLImageElement
-
-      // Hide the available box.
+  // All images go in the available section. We hide and show them
+  // when clicked.
+  for (let ix = 0; ix < 20; ix++) {
+    if (ix < cinfo.images.length) {
+      const aImgElement = get(`ai${ix}`) as HTMLImageElement
+      const image = cinfo.images[ix]
+      aImgElement.src = image.thumbnail
+      aImgElement.alt = encodeHtml(image.title)
+    }
+    else {
+      // Hide the blank available boxes.
       get(`a${ix}`).style.display = "none"
-
-      imgElement.src = image.thumbnail
-      imgElement.alt = encodeHtml(image.title)
     }
   }
 
-  // Hide the extra avaiable image at the end.
-  for (let ix = cinfo.images.length; ix < 20; ix++) {
-      get(`a${ix}`).style.display = "none"
+  // Fill in the collection images and hide them in the available
+  // images section.
+  let nextCix = 0
+  for (let ix = 0; ix < cinfo.images.length; ix++) {
+
+    const orderIx = cinfo.order![ix]
+
+    // Put the non -1 images in the collection and hide its associated
+    // available image.
+    if (orderIx != -1) {
+      const image = cinfo.images[orderIx]
+
+      // Put the image in the collection.
+      const imgElement = get(`ci${nextCix}`) as HTMLImageElement
+      imgElement.src = image.thumbnail
+      imgElement.alt = encodeHtml(image.title)
+
+      // Hide the associated available box.
+      get(`a${orderIx}`).style.display = "none"
+
+      nextCix++
+    }
   }
 
   log("success")
