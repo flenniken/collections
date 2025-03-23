@@ -114,9 +114,9 @@ async function cacheMatch(cache: Cache, request: Request) {
 }
 
 function isImageFileType(url: string) {
-  // Return true when the file is in the images folder and its not an
-  // html file. We cache images different than html files.
-  if (url.includes(cacheUrlPrefix) && !url.endsWith(".html"))
+  // Return true when the file is in the images folder and its a jpg
+  // file. We cache images different than html and json files.
+  if (url.includes(cacheUrlPrefix) && url.includes(".jpg"))
     return true
   return false
 }

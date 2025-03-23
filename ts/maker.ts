@@ -77,7 +77,10 @@ function getCollectionNumber(selected: string) {
 async function fetchCJson(num: number): Promise<CJson.Collection> {
   // Load the collection's cjson file given the collection number.
 
-  const url = `/images/c${num}/c${num}.json`
+  // Add the time to the url so it is not found in the cache.
+  const timestamp = new Date().getTime()
+  const url = `/images/c${num}/c${num}.json?t=${timestamp}`
+
   const response = await fetch(url)
   if (!response.ok) {
     log(`Unable to fetch the url: ${url}`)
@@ -107,6 +110,7 @@ async function populateCollection(event: Event) {
   }
 
   // Read the cjson file.
+
   try {
     cinfo = await fetchCJson(num)
     log(cinfo)
@@ -115,6 +119,7 @@ async function populateCollection(event: Event) {
     log("Fetch of cjson failed.")
     return
   }
+  log(cinfo)
 
   // When the order variable is missing make one using the images
   // natural order.

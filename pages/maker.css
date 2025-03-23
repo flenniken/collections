@@ -84,7 +84,6 @@ h1, h2 {
   border: 1px solid #ccc;
   font-size: 20px;
   width: 100%;
-  max-width: 600px;
   text-align: center;
   font-weight: bold;
 }
@@ -144,17 +143,11 @@ h1, h2 {
   resize: vertical;
 }
 
-.metadata-group {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  width: 40em;
-}
-
 .metadata-field {
   display: flex;
   flex-direction: column;
   gap: 5px;
+  max-width: 40em;
 }
 
 .metadata-field label {
