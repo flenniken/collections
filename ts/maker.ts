@@ -194,6 +194,17 @@ async function populateCollection(event: Event) {
   const titleInput = get("collection-title") as HTMLInputElement
   titleInput.value = cinfo.title
 
+  // Set the image details image to the first one in the collection.
+
+  const firstOrderIx = cinfo.order![0]
+  if (firstOrderIx != -1) {
+    const firstImage = cinfo.images[firstOrderIx]
+    const detailsElement = get("image-details") as HTMLImageElement
+    detailsElement.src = firstImage.thumbnail
+    detailsElement.alt = encodeHtml(firstImage.title)
+    log(`Added the first image to image details.`)
+  }
+
   log("success")
 }
 

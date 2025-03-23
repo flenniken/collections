@@ -143,6 +143,14 @@ h1, h2 {
   resize: vertical;
 }
 
+#index-thumbnail {
+  width: 430px;
+  height: 430px;
+}
+
+#image-details {
+  margin-bottom: 15px;
+}
 .metadata-field {
   display: flex;
   flex-direction: column;
