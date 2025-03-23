@@ -63,7 +63,7 @@ h1, h2 {
   min-width: 200px;
 }
 
-.save-button button {
+.html-button button {
   padding: 8px 16px;
   background-color: #4CAF50;
   color: white;
@@ -74,7 +74,7 @@ h1, h2 {
   transition: background-color 0.3s;
 }
 
-.save-button button:hover {
+.html-button button:hover {
   background-color: #45a049;
 }
 
@@ -143,14 +143,15 @@ h1, h2 {
   resize: vertical;
 }
 
+.image-details-buttons {
+  max-width: 40em;
+}
+
 #index-thumbnail {
   width: 430px;
   height: 430px;
 }
 
-#image-details {
-  margin-bottom: 15px;
-}
 .metadata-field {
   display: flex;
   flex-direction: column;

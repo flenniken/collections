@@ -52,6 +52,13 @@ for (let ix = 0; ix < 20; ix++) {
 // It is set when you select a collection.
 let cinfo: CJson.Collection | null = null;
 
+// The current index thumbnail index or -1 when not one yet.
+let currentIndexThumbnail: number;
+
+// The current image detail thumbnail index or -1.
+let currentImageThumbnail: number;
+
+
 function getCollectionNumber(selected: string) {
   // Parse the collection number from the selected string and return
   // the number. Return null on error.  For the string
@@ -195,17 +202,29 @@ async function populateCollection(event: Event) {
   titleInput.value = cinfo.title
 
   // Set the image details image to the first one in the collection.
-
-  const firstOrderIx = cinfo.order![0]
-  if (firstOrderIx != -1) {
-    const firstImage = cinfo.images[firstOrderIx]
-    const detailsElement = get("image-details") as HTMLImageElement
-    detailsElement.src = firstImage.thumbnail
-    detailsElement.alt = encodeHtml(firstImage.title)
-    log(`Added the first image to image details.`)
-  }
+  currentImageThumbnail = cinfo.order![0]
+  setImageDetailsThumbnail(currentImageThumbnail)
 
   log("success")
+}
+
+function setImageDetailsThumbnail(index: number) {
+  if (!cinfo) {
+    log("No cinfo.")
+    return
+  }
+  const detailsElement = get("image-details") as HTMLImageElement
+  if (index == -1) {
+    detailsElement.src = "icons/blank.svg"
+    detailsElement.alt = ""
+    log("Added blank image to image details.")
+  }
+  else {
+    const image = cinfo.images[index]
+    detailsElement.src = image.thumbnail
+    detailsElement.alt = encodeHtml(image.title)
+    log(`Added image index ${index} to image details.`)
+  }
 }
 
 async function handleCollectionImageClick(collectionIndex: number) {

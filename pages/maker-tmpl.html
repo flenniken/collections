@@ -21,7 +21,7 @@
           <option value="collection{num}">Collection {num}</option>
         </select>
       </div>
-      <div class="save-button">
+      <div class="html-button">
         <button id="save-button">Save Collection</button>
       </div>
     </div>
@@ -97,9 +97,18 @@
       <h2>Image Details</h2>
       <div class="metadata-field">
         <img id="image-details" src="icons/blank.svg" alt="Image {inum}">
+        <div class="controls-group image-details-buttons">
+          <div class="html-button">
+            <button id="prev-button">Previous</button>
+          </div>
+          <div class="html-button">
+            <button id="next-button">Next</button>
+          </div>
+        </div>
         <input type="text" id="image-title" placeholder="Image Title">
         <textarea id="image-description" placeholder="Image Description"></textarea>
       </div>
+
     </div>
   </div>
 </body>
