@@ -218,56 +218,21 @@ async function handleCollectionImageClick(collectionIndex: number) {
 
   const availableIx = cinfo.order[collectionIndex]
   const availableBox = get(`a${availableIx}`) as HTMLElement
+  const availableImg = get(`ai${availableIx}`) as HTMLImageElement
 
-  // Display the available image.
+  // Set initial state for animation
+  availableImg.style.transition = 'opacity 0.5s ease-in-out'
   availableBox.style.display = "block"
-  log(`availableIx: ${availableIx}`)
+  availableImg.style.opacity = '0'
 
-  // Animate moving the image so you can see where it went.
+  // Use requestAnimationFrame to ensure the initial state is rendered
+  requestAnimationFrame(() => {
+    availableImg.style.opacity = '1'
+  })
+
   // Set the order value to -1.
   cinfo.order[collectionIndex] = -1
   log(`Remove from the image order list. order: ${cinfo.order}`)
-
-  animateMove(collectionIndex, availableIx)
-}
-
-function animateMove(collectionIndex: number, availableIx: number) {
-  const collectionBox = get(`ci${collectionIndex}`).getBoundingClientRect();
-  const availableBoxRect = get(`ai${availableIx}`).getBoundingClientRect();
-
-  // Create a temporary div for animation
-  const animatedDiv = document.createElement('div');
-  animatedDiv.style.position = 'fixed';
-  animatedDiv.style.width = `${collectionBox.width}px`;
-  animatedDiv.style.height = `${collectionBox.height}px`;
-  animatedDiv.style.left = `${collectionBox.left}px`;
-  animatedDiv.style.top = `${collectionBox.top}px`;
-  animatedDiv.style.zIndex = '1000';
-  animatedDiv.style.transition = 'all 0.5s ease-in-out';
-
-  // Copy the image into the animated div
-  const collectionImg = get(`ci${collectionIndex}`) as HTMLImageElement
-  const img = document.createElement('img');
-  img.src = collectionImg.src;
-  img.style.width = '100%';
-  img.style.height = '100%';
-  animatedDiv.appendChild(img);
-
-  // Add to DOM and trigger animation
-  document.body.appendChild(animatedDiv);
-
-  // Force a reflow to ensure the initial position is rendered
-  animatedDiv.offsetHeight;
-
-  // Animate to destination
-  animatedDiv.style.left = `${availableBoxRect.left}px`;
-  animatedDiv.style.top = `${availableBoxRect.top}px`;
-
-  // Remove the animated element after animation
-  setTimeout(() => {
-    document.body.removeChild(animatedDiv);
-  }, 500);
-
 }
 
 async function handleAvailableImageClick(availIndex: number) {
