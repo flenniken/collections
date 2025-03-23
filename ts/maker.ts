@@ -98,6 +98,9 @@ function encodeHtml(text: string) {
 async function populateCollection(event: Event) {
   // Populate the page with the selected collection.
 
+  if (cinfo != null) {
+    log("cinfo already populated.")
+  }
   // Parse the selection string to get the collection number.
   const target = event.target as HTMLSelectElement;
   const selected = target.value
@@ -113,7 +116,6 @@ async function populateCollection(event: Event) {
 
   try {
     cinfo = await fetchCJson(num)
-    log(cinfo)
   }
   catch {
     log("Fetch of cjson failed.")
@@ -183,7 +185,8 @@ async function populateCollection(event: Event) {
   // Set the post date, thumbnails description and collection title from cinfo
 
   const postDateInput = get("post-date") as HTMLInputElement
-  postDateInput.value = cinfo.posted
+  if (cinfo.posted)
+    postDateInput.value = cinfo.posted
 
   const thumbnailsDesc = get("thumbnails-description") as HTMLTextAreaElement
   thumbnailsDesc.value = cinfo.description
@@ -213,15 +216,58 @@ async function handleCollectionImageClick(collectionIndex: number) {
   collectionImg.src = "icons/blank.svg"
   collectionImg.alt = `Image ${collectionIndex+1}`
 
-  // Display the available image.
   const availableIx = cinfo.order[collectionIndex]
   const availableBox = get(`a${availableIx}`) as HTMLElement
+
+  // Display the available image.
   availableBox.style.display = "block"
   log(`availableIx: ${availableIx}`)
 
+  // Animate moving the image so you can see where it went.
   // Set the order value to -1.
   cinfo.order[collectionIndex] = -1
   log(`Remove from the image order list. order: ${cinfo.order}`)
+
+  animateMove(collectionIndex, availableIx)
+}
+
+function animateMove(collectionIndex: number, availableIx: number) {
+  const collectionBox = get(`ci${collectionIndex}`).getBoundingClientRect();
+  const availableBoxRect = get(`ai${availableIx}`).getBoundingClientRect();
+
+  // Create a temporary div for animation
+  const animatedDiv = document.createElement('div');
+  animatedDiv.style.position = 'fixed';
+  animatedDiv.style.width = `${collectionBox.width}px`;
+  animatedDiv.style.height = `${collectionBox.height}px`;
+  animatedDiv.style.left = `${collectionBox.left}px`;
+  animatedDiv.style.top = `${collectionBox.top}px`;
+  animatedDiv.style.zIndex = '1000';
+  animatedDiv.style.transition = 'all 0.5s ease-in-out';
+
+  // Copy the image into the animated div
+  const collectionImg = get(`ci${collectionIndex}`) as HTMLImageElement
+  const img = document.createElement('img');
+  img.src = collectionImg.src;
+  img.style.width = '100%';
+  img.style.height = '100%';
+  animatedDiv.appendChild(img);
+
+  // Add to DOM and trigger animation
+  document.body.appendChild(animatedDiv);
+
+  // Force a reflow to ensure the initial position is rendered
+  animatedDiv.offsetHeight;
+
+  // Animate to destination
+  animatedDiv.style.left = `${availableBoxRect.left}px`;
+  animatedDiv.style.top = `${availableBoxRect.top}px`;
+
+  // Remove the animated element after animation
+  setTimeout(() => {
+    document.body.removeChild(animatedDiv);
+  }, 500);
+
 }
 
 async function handleAvailableImageClick(availIndex: number) {
