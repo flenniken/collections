@@ -2,36 +2,60 @@
 // maker task. Some other ts files are concatenated so functions
 // are available that way, for example the log function.
 
-// Add a event handler for the collection dropdown.
-const collectionDropdown = get("collection-dropdown") as HTMLSelectElement;
-collectionDropdown.addEventListener("change", populateCollection)
+// Current collection information.  It is set when you select a
+// collection.
+let cinfo: CJson.Collection | null = null;
 
-const saveButton = get("save-button") as HTMLElement;
-saveButton.addEventListener("click", saveCollection)
+// The current index thumbnail. It is an index into the order list.
+let currentIndexThumbnail: number = 0;
 
-// Store the title in the cjson when the user enters a title.
-const titleInput = get("collection-title") as HTMLInputElement;
-titleInput.addEventListener('blur', () => {
+// The current image thumbnail. It is an index into the order list.
+let currentImageThumbnail: number = 0;
+
+
+getElement<HTMLSelectElement>("collection-dropdown")
+  .addEventListener("change", populateCollection)
+
+getElement<HTMLElement>("save-button")
+  .addEventListener("click", saveCollection)
+
+const tie = get("collection-title") as HTMLInputElement
+tie.addEventListener('blur', () => {
   if (cinfo) {
-    cinfo.title = titleInput.value;
-    log(`Save collection title: ${cinfo.title}`)
+    cinfo.title = tie.value;
+    log(`Store title: ${cinfo.title}`)
+  }
+})
+
+const dse = get("description") as HTMLTextAreaElement
+dse.addEventListener('blur', () => {
+  if (cinfo) {
+    cinfo.description = dse.value;
+    log(`Store description: ${cinfo.description}`)
+  }
+})
+
+const ide = get("index-description") as HTMLTextAreaElement;
+ide.addEventListener('blur', () => {
+  if (cinfo) {
+    cinfo.indexDescription = ide.value;
+    log(`Store index description: ${cinfo.indexDescription}`)
   }
 });
-// Store the index description in the cjson when the user enters a description.
-const thumbnailsDescInput = get("thumbnails-description") as HTMLTextAreaElement;
-thumbnailsDescInput.addEventListener('blur', () => {
+
+const ite = get("index-thumbnail") as HTMLTextAreaElement;
+ite.addEventListener('blur', () => {
   if (cinfo) {
-    cinfo.description = thumbnailsDescInput.value;
-    log(`Save collection index description: ${cinfo.description}`)
+    cinfo.indexThumbnail = ite.value;
+    log(`Store the index thumbnail: ${cinfo.indexThumbnail}`)
   }
 });
 
-// Store the post date in the cjson when the user selects a date.
-const postDateInput = get("post-date") as HTMLInputElement;
-postDateInput.addEventListener('blur', () => {
+const pde = get("post-date") as HTMLInputElement;
+pde.addEventListener('blur', () => {
   if (cinfo) {
-    cinfo.posted = postDateInput.value;
-    log(`Save collection post date: ${cinfo.posted}`)
+    cinfo.posted = pde.value;
+    log(`Store post date: ${cinfo.posted}`)
   }
 });
 
@@ -43,20 +67,18 @@ for (let ix = 0; ix < 16; ix++) {
 }
 // Add click event handlers for the available images.
 for (let ix = 0; ix < 20; ix++) {
-  const availableElement = get(`ai${ix}`) as HTMLImageElement
-  availableElement.addEventListener('click', () =>
-    handleAvailableImageClick(ix))
+  getElement<HTMLImageElement>(`ai${ix}`)
+    .addEventListener('click', () => handleAvailableImageClick(ix))
 }
 
-// This variable is the current collection information.
-// It is set when you select a collection.
-let cinfo: CJson.Collection | null = null;
-
-// The current index thumbnail index or -1 when not one yet.
-let currentIndexThumbnail: number;
-
-// The current image detail thumbnail index or -1.
-let currentImageThumbnail: number;
+getElement<HTMLElement>("previous-image")
+  .addEventListener('click', () => previousImage())
+getElement<HTMLElement>("next-image")
+  .addEventListener('click', () => nextImage())
+getElement<HTMLElement>("index-previous-image")
+  .addEventListener('click', () => indexPreviousImage())
+getElement<HTMLElement>("index-next-image")
+  .addEventListener('click', () => indexNextImage())
 
 
 function getCollectionNumber(selected: string) {
@@ -100,6 +122,11 @@ function encodeHtml(text: string) {
   // Return the given text where the html special characters are encoded
   // with their equivalent safe entities, < to &lt; etc.
   return document.createElement('div').textContent = text
+}
+
+function getElement<T extends HTMLElement>(id: string): T {
+  const element = get(id)
+  return element as T;
 }
 
 async function populateCollection(event: Event) {
@@ -189,23 +216,19 @@ async function populateCollection(event: Event) {
       nextCix++
     }
   }
-  // Set the post date, thumbnails description and collection title from cinfo
 
-  const postDateInput = get("post-date") as HTMLInputElement
-  if (cinfo.posted)
-    postDateInput.value = cinfo.posted
+  getElement<HTMLInputElement>("post-date").value = cinfo.posted
+  getElement<HTMLTextAreaElement>("description").value = cinfo.description
+  getElement<HTMLTextAreaElement>("index-description").value = cinfo.indexDescription
+  getElement<HTMLInputElement>("collection-title").value = cinfo.title
 
-  const thumbnailsDesc = get("thumbnails-description") as HTMLTextAreaElement
-  thumbnailsDesc.value = cinfo.description
-
-  const titleInput = get("collection-title") as HTMLInputElement
-  titleInput.value = cinfo.title
+  if (cinfo.indexThumbnail != "")
+    getElement<HTMLInputElement>("index-thumbnail").value = cinfo.indexThumbnail
+  else
+    getElement<HTMLInputElement>("index-thumbnail").value = "icons/blank.svg"
 
   // Set the image details image to the first one in the collection.
-  currentImageThumbnail = cinfo.order![0]
-  setImageDetailsThumbnail(currentImageThumbnail)
-
-  log("success")
+  setImageDetailsThumbnail(cinfo.order![0])
 }
 
 function setImageDetailsThumbnail(index: number) {
@@ -284,13 +307,11 @@ async function handleAvailableImageClick(availIndex: number) {
   log(`The first available collection index: ${firstBlankIx}`)
 
   // Hide the available box.
-  const availableBox = get(`a${availIndex}`) as HTMLElement
-  availableBox.style.display = "none"
+  getElement<HTMLElement>(`a${availIndex}`).style.display = "none"
 
   // Copy the source and alt text from the available image.
   const collectionImg = get(`ci${firstBlankIx}`) as HTMLImageElement
   const availableImg = get(`ai${availIndex}`) as HTMLImageElement
-
   collectionImg.src = availableImg.src
   collectionImg.alt = availableImg.alt
 
@@ -324,4 +345,62 @@ async function saveCollection(event: Event) {
 
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+function nextImage() {
+  log('nextImage')
+  if (cinfo == null || !cinfo.order) {
+    log("No cinfo or no order array.")
+    return
+  }
+
+  // Loop through the order array until you find the next non-negative
+  // value. Then show this image. Wrap around when you get to the
+  // end. Stop if you get back to where you started.
+
+  let orderIndex = currentImageThumbnail
+  for (let ix = 0; ix < cinfo.order.length; ix++) {
+    orderIndex += 1
+    if (orderIndex >= cinfo.order.length) {
+      orderIndex = 0
+    }
+    if (cinfo.order[orderIndex] != -1) {
+      // Found the next image.
+      currentImageThumbnail = orderIndex
+      setImageDetailsThumbnail(cinfo.order[orderIndex])
+      break
+    }
+  }
+}
+
+function previousImage() {
+  log('previousImage')
+  if (cinfo == null || !cinfo.order) {
+    log("No cinfo or no order array.")
+    return
+  }
+  let orderIndex = currentImageThumbnail
+  for (let ix = 0; ix < cinfo.order.length; ix++) {
+    orderIndex -= 1
+    if (orderIndex < 0) {
+      orderIndex = cinfo.order.length - 1
+    }
+    if (cinfo.order[orderIndex] != -1) {
+      // Found the next image.
+      currentImageThumbnail = orderIndex
+      setImageDetailsThumbnail(cinfo.order[orderIndex])
+      break
+    }
+  }
+}
+
+
+function indexPreviousImage() {
+  log('indexPreviousImage')
+  // currentIndexThumbnail
+}
+
+function indexNextImage() {
+  log('indexNextImage')
+  // currentIndexThumbnail
 }

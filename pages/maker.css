@@ -147,6 +147,10 @@ h1, h2 {
   max-width: 40em;
 }
 
+.index-button-bar {
+  max-width: 433px;
+}
+
 #index-thumbnail {
   width: 430px;
   height: 430px;

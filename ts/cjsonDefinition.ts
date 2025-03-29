@@ -26,8 +26,23 @@ namespace CJson {
 
   export interface Collection {
     title: string;
+
+    // Index description is a short summary of the description for the
+    // index page.
+    indexDescription: string;
+
+    // Full desciption of the collection for the thumbnails page.
     description: string;
+
+    // Thumbnail url for the index page. The index thumbnails are
+    // copied to the tin folder so the are publicly visible. While
+    // developing the collection the maker page will set it empty or
+    // set it to an image in the image folder.
+    indexThumbnail: string;
+
+    // The date the collection was posted on the internet.
     posted: string;
+
     collection: number;
     imagePageUrl: string;
     thumbnailsPageUrl: string;
