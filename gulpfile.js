@@ -12,35 +12,38 @@ const fs = require("fs");
 const path = require("path");
 
 // Minimize the javascript.
-const minimize = true
+const minimize = false
 
 let help = `
 Tasks:
 * ts -- Compile and optionally minimize ts files to dist/js.
-    i -- Compile image.ts
-    t -- Compile thumbnails.ts
-    x -- Compile index.ts
-    sw -- Compile sw.ts
-    cm -- Compile maker.ts
+          i -- Compile image.ts
+          t -- Compile thumbnails.ts
+          x -- Compile index.ts
+         sw -- Compile sw.ts
+         cm -- Compile maker.ts
+
 * pages -- Create all the pages from templates.
-    index -- Create the main index page.
-    thumbnails1 -- Create the thumbnails page for collection 1.
-    thumbnails2 -- Create the thumbnails page for collection 2.
-    image1 -- Create the image page for collection 1.
-    image2 -- Create the image page for collection 2.
-    maker -- Create the collection maker.
+      index -- Create the main index page.
+thumbnails1 -- Create the thumbnails page for collection 1.
+thumbnails2 -- Create the thumbnails page for collection 2.
+     image1 -- Create the image page for collection 1.
+     image2 -- Create the image page for collection 2.
+      maker -- Create the collection maker.
+
 * vpages -- Validate all the html files.
-    vindex -- Validate index html
-    vthumbnails1 -- Validate thumbnails html for collection 1.
-    vthumbnails2 -- Validate thumbnails html for collection 2.
-    vimage1 -- Validate image html for collection 1.
-    vimage2 -- Validate image html for collection 2.
-    vmaker -- Validate maker html.
-* css -- Minimize the collection.css file.
-* m-css -- Minimize the maker.css file.
+      vindex -- Validate index html
+vthumbnails1 -- Validate thumbnails html for collection 1.
+vthumbnails2 -- Validate thumbnails html for collection 2.
+     vimage1 -- Validate image html for collection 1.
+     vimage2 -- Validate image html for collection 2.
+      vmaker -- Validate maker html.
+
+*        css -- Minimize the collection.css file.
+*      m-css -- Minimize the maker.css file.
 * syncronize -- Syncronize the template's replace blocks with header.tea content.
-* readme -- Show the readme file with glow.
-* all -- Compile everything in parallel, tasks ts, pages and css.
+*     readme -- Show the readme file with glow.
+*        all -- Compile everything in parallel, tasks ts, pages, vpages and css.
 `
 
 const target = "es2017"
@@ -53,11 +56,6 @@ gulp.task("default", function(cb){
 function ts2js(srcList, destFile, destDir, tsOptions=null) {
   // Compile a list of typescript files to one javascript file and
   // optionally minimize it.
-
-  if (minimize)
-    log(`Compile and minimize: ${srcList}`)
-  else
-    log(`Compile (un-minimized): ${srcList}`)
 
   if (tsOptions === null) {
     tsOptions = {

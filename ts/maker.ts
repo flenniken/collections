@@ -6,11 +6,11 @@
 // collection.
 let cinfo: CJson.Collection | null = null;
 
-// The current index thumbnail. It is an index into the order list.
-let currentIndexThumbnail: number = 0;
+// The current index thumbnail. It is an index into the image list.
+let currentThumbnail: number = 0;
 
-// The current image thumbnail. It is an index into the order list.
-let currentImageThumbnail: number = 0;
+// The current image thumbnail. It is an index into the image list.
+let currentImage: number = 0;
 
 
 getElement<HTMLSelectElement>("collection-dropdown")
@@ -222,31 +222,42 @@ async function populateCollection(event: Event) {
   getElement<HTMLTextAreaElement>("index-description").value = cinfo.indexDescription
   getElement<HTMLInputElement>("collection-title").value = cinfo.title
 
-  if (cinfo.indexThumbnail != "")
-    getElement<HTMLInputElement>("index-thumbnail").value = cinfo.indexThumbnail
-  else
-    getElement<HTMLInputElement>("index-thumbnail").value = "icons/blank.svg"
+  // Set the index thumbnail image to the one specified in the
+  // collection or when not specified the first one.
+  currentThumbnail = 0
+  for (let ix = 0; ix < cinfo.order!.length; ix++) {
+    const imageIx = cinfo.order![ix]
+    if (imageIx == -1)
+      continue
+    const image = cinfo.images[imageIx]
+    if (image.thumbnail == cinfo.indexThumbnail) {
+      currentThumbnail = imageIx
+      break
+    }
+  }
+  log(`currentThumbnail: ${currentThumbnail}`)
+  setImgElement("index-thumbnail", currentThumbnail)
 
   // Set the image details image to the first one in the collection.
-  setImageDetailsThumbnail(cinfo.order![0])
+  setImgElement("image-details", cinfo.order![0])
 }
 
-function setImageDetailsThumbnail(index: number) {
+function setImgElement(id: string, imageIndex: number) {
   if (!cinfo) {
     log("No cinfo.")
     return
   }
-  const detailsElement = get("image-details") as HTMLImageElement
-  if (index == -1) {
-    detailsElement.src = "icons/blank.svg"
-    detailsElement.alt = ""
-    log("Added blank image to image details.")
+  const imgElement = get(id) as HTMLImageElement
+  if (imageIndex == -1) {
+    imgElement.src = "icons/blank.svg"
+    imgElement.alt = ""
+    log(`Set ${id}'s image to the blank image.`)
   }
   else {
-    const image = cinfo.images[index]
-    detailsElement.src = image.thumbnail
-    detailsElement.alt = encodeHtml(image.title)
-    log(`Added image index ${index} to image details.`)
+    const image = cinfo.images[imageIndex]
+    imgElement.src = image.thumbnail
+    imgElement.alt = encodeHtml(image.title)
+    log(`Set ${id}'s image to image index ${imageIndex}`)
   }
 }
 
@@ -347,60 +358,128 @@ async function saveCollection(event: Event) {
   URL.revokeObjectURL(url)
 }
 
-function nextImage() {
-  log('nextImage')
-  if (cinfo == null || !cinfo.order) {
-    log("No cinfo or no order array.")
-    return
+function getPreviousNext(orderList: number[], imageIndex: number) {
+  // Return the previous and next index for the given image index
+  // wrapping around if necessary, [ix-1, ix+1]. If the image doesn't
+  // exist return, [-1, -1]. Return the image index when one image
+  // exists, [ix, ix].
+
+  // Make a list of the non-negative image indexes from the order
+  // list.
+  let imageIndexes = []
+  for (let ix = 0; ix < orderList.length; ix++) {
+    const imageIx = orderList[ix]
+    if (imageIx != -1) {
+      imageIndexes.push(imageIx)
+    }
   }
 
-  // Loop through the order array until you find the next non-negative
-  // value. Then show this image. Wrap around when you get to the
-  // end. Stop if you get back to where you started.
-
-  let orderIndex = currentImageThumbnail
-  for (let ix = 0; ix < cinfo.order.length; ix++) {
-    orderIndex += 1
-    if (orderIndex >= cinfo.order.length) {
-      orderIndex = 0
-    }
-    if (cinfo.order[orderIndex] != -1) {
-      // Found the next image.
-      currentImageThumbnail = orderIndex
-      setImageDetailsThumbnail(cinfo.order[orderIndex])
+  // Find the image index.
+  let iix = -1
+  for (let ix = 0; ix < imageIndexes.length; ix++) {
+    if (imageIndexes[ix] == imageIndex) {
+      iix = ix
       break
     }
   }
+  if (iix == -1)
+    return [-1, -1]
+
+  let previousOrderIx = iix-1
+  if (previousOrderIx < 0)
+    previousOrderIx = imageIndexes.length - 1
+  const previous = imageIndexes[previousOrderIx]
+
+  let nextOrderIx = iix+1
+  if (nextOrderIx >= imageIndexes.length)
+    nextOrderIx = 0
+  const next = imageIndexes[nextOrderIx]
+
+  return [previous, next]
+}
+
+function noCinfo(): boolean {
+  if (cinfo == null || !cinfo.order) {
+    log("No cinfo or no order array.")
+    return true
+  }
+  return false
+}
+
+function goPreviousNext(id: string, imageIndex: number, goNext: boolean) {
+  if (noCinfo())
+    return 0
+
+  const [previous, next] = getPreviousNext(cinfo!.order!, imageIndex)
+  if (next == -1)
+    return 0
+
+  const index = goNext ? next : previous
+  setImgElement(id, index)
+  return index
 }
 
 function previousImage() {
-  log('previousImage')
-  if (cinfo == null || !cinfo.order) {
-    log("No cinfo or no order array.")
-    return
-  }
-  let orderIndex = currentImageThumbnail
-  for (let ix = 0; ix < cinfo.order.length; ix++) {
-    orderIndex -= 1
-    if (orderIndex < 0) {
-      orderIndex = cinfo.order.length - 1
-    }
-    if (cinfo.order[orderIndex] != -1) {
-      // Found the next image.
-      currentImageThumbnail = orderIndex
-      setImageDetailsThumbnail(cinfo.order[orderIndex])
-      break
-    }
-  }
+  currentImage = goPreviousNext("image-details", currentImage, false)
 }
 
+function nextImage() {
+  currentImage = goPreviousNext("image-details", currentImage, true)
+}
 
 function indexPreviousImage() {
-  log('indexPreviousImage')
-  // currentIndexThumbnail
+  currentThumbnail = goPreviousNext("index-thumbnail", currentThumbnail, false)
 }
 
 function indexNextImage() {
-  log('indexNextImage')
-  // currentIndexThumbnail
+  currentThumbnail = goPreviousNext("index-thumbnail", currentThumbnail, true)
+}
+
+function gotExpected(got: any, expected: any) {
+  if (got !== expected) {
+    const message = `
+Error:
+     got: ${got}
+expected: ${expected}
+`
+    throw new Error(message)
+  }
+  return 0
+}
+
+function testGetPreviousNext(orderList: number[], imageIndex: number,
+    ePrevious: number, eNext: number) {
+  const [previous, next] = getPreviousNext(orderList, imageIndex)
+  gotExpected(previous, ePrevious)
+  gotExpected(next, eNext)
+  return 0
+}
+
+let testNumber = 1
+function test(rc: number): void {
+  log(`${testNumber}: ✅ pass`)
+  testNumber += 1
+}
+
+function testMaker() {
+  const [previous, next] = getPreviousNext([], 0)
+  test(gotExpected(previous, -1))
+  test(gotExpected(next, -1))
+
+  const fn = testGetPreviousNext
+  test(fn([], 0, -1, -1))
+  test(fn([-1], 0, -1, -1))
+  test(fn([-1,-1], 0, -1, -1))
+  test(fn([1], 6, -1, -1))
+  test(fn([1,-1], 6, -1, -1))
+  test(fn([1], 1, 1, 1))
+  test(fn([8,7], 7, 8, 8))
+  test(fn([8,7], 8, 7, 7))
+  test(fn([1,3,2], 1, 2, 3))
+  test(fn([1,3,2], 2, 3, 1))
+  test(fn([1,3,2], 3, 1, 2))
+  test(fn([-1,5,-1,-1,8,-1,3,-1], 8, 5, 3))
+
+  log("success")
+  return 0
 }
