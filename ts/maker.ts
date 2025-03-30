@@ -59,6 +59,25 @@ pde.addEventListener('blur', () => {
   }
 });
 
+const imageTitle = get("image-title") as HTMLInputElement
+imageTitle.addEventListener('blur', () => {
+  if (cinfo) {
+    const image = cinfo.images[currentImage]
+    image.title = imageTitle.value;
+    log(`Store image title: ${image.title}`)
+  }
+})
+
+const imageDesc = get("image-description") as HTMLTextAreaElement
+imageDesc.addEventListener('blur', () => {
+  if (cinfo) {
+    const image = cinfo.images[currentImage]
+    image.description = imageDesc.value;
+    log(`Store image description: ${image.description}`)
+  }
+})
+
+
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`ci${ix}`) as HTMLImageElement
@@ -238,8 +257,16 @@ async function populateCollection(event: Event) {
   log(`currentThumbnail: ${currentThumbnail}`)
   setImgElement("index-thumbnail", currentThumbnail)
 
-  // Set the image details image to the first one in the collection.
-  setImgElement("image-details", cinfo.order![0])
+  setImgElement("image-details", currentImage)
+  setImageTitleDesc(currentImage)
+}
+
+function setImageTitleDesc(imageIndex: number) {
+  console.assert(cinfo != null)
+  console.assert(imageIndex != -1)
+  const image = cinfo!.images[imageIndex]
+  getElement<HTMLInputElement>("image-title").value = image.title
+  getElement<HTMLTextAreaElement>("image-description").value = image.description
 }
 
 function setImgElement(id: string, imageIndex: number) {
@@ -416,6 +443,10 @@ function goPreviousNext(id: string, imageIndex: number, goNext: boolean) {
 
   const index = goNext ? next : previous
   setImgElement(id, index)
+
+  if (id == "image-details")
+    setImageTitleDesc(index)
+
   return index
 }
 
@@ -434,6 +465,8 @@ function indexPreviousImage() {
 function indexNextImage() {
   currentThumbnail = goPreviousNext("index-thumbnail", currentThumbnail, true)
 }
+
+// Test code:
 
 function gotExpected(got: any, expected: any) {
   if (got !== expected) {
