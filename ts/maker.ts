@@ -81,13 +81,20 @@ imageDesc.addEventListener('blur', () => {
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`ci${ix}`) as HTMLImageElement
-  collectionImgElement.addEventListener('click', () =>
-    handleCollectionImageClick(ix))
+  collectionImgElement.addEventListener('click', (event) => {
+    // The cmd/alt key is handled by handleCmdAltClick.
+    if (event.metaKey || event.altKey) {
+      return
+    }
+    handleCollectionImageClick(ix)
+  })
 }
 // Add click event handlers for the available images.
 for (let ix = 0; ix < 20; ix++) {
   getElement<HTMLImageElement>(`ai${ix}`)
-    .addEventListener('click', () => handleAvailableImageClick(ix))
+    .addEventListener('click', (event) => {
+    handleAvailableImageClick(ix)
+  })
 }
 
 getElement<HTMLElement>("previous-image")
@@ -99,6 +106,57 @@ getElement<HTMLElement>("index-previous-image")
 getElement<HTMLElement>("index-next-image")
   .addEventListener('click', () => indexNextImage())
 
+// Add cmd/alt click event handlers for the collection boxes.
+for (let ix = 0; ix < 16; ix++) {
+  const collectionImgElement = get(`cb${ix}`) as HTMLImageElement;
+  collectionImgElement.addEventListener('click', (event) => {
+    if (event.metaKey || event.altKey) {
+      handleCmdAltClick(ix);
+    }
+  });
+}
+
+function handleCmdAltClick(collectionIndex: number) {
+  log(`Cmd/Alt clicked on collection box ${collectionIndex}.`);
+
+  if (noCinfo())
+    return
+
+  shiftImages(cinfo!.order!, collectionIndex)
+  log(`Shifted the images. order: ${cinfo!.order}`)
+}
+
+function shiftImages(orderList: number[], collectionIndex: number) {
+  // Shift the entries in the given order list.  If the clicked box
+  // is blank (-1), shift the images below up one space. If the box
+  // contains an image (not -1), shift the images below up one space.
+
+  const orderIx = orderList[collectionIndex]
+  if (orderIx == -1) {
+    // Shift the images below up one space.
+
+    // Remove the item clicked on and add a -1 to the end of the list.
+    orderList.splice(collectionIndex, 1);
+    orderList.push(-1);
+  }
+  else {
+    // Shift the images below down one space. They move down to the first
+    // blank image box.
+
+    // If there are no blank image boxes below, you cannot shift them.
+    const nextBlankIx = orderList.indexOf(-1, collectionIndex + 1);
+    if (nextBlankIx == -1) {
+      //log("Cannot shift the images. No blank image boxes below.")
+      return
+    }
+    // Remove the blank image below from the list.
+    orderList.splice(nextBlankIx, 1);
+
+    // Insert a blank image in the list where the clicked image was
+    // without removing the element.
+    orderList.splice(collectionIndex, 0, -1);
+  }
+}
 
 function getCollectionNumber(selected: string) {
   // Parse the collection number from the selected string and return
@@ -290,7 +348,6 @@ function setImgElement(id: string, imageIndex: number) {
 
 async function handleCollectionImageClick(collectionIndex: number) {
   // Move the collection image to the available images section.
-
   log(`Collection image ${collectionIndex} clicked.`)
 
   if (cinfo == null || !cinfo.order) {
@@ -468,16 +525,24 @@ function indexNextImage() {
 
 // Test code:
 
-function gotExpected(got: any, expected: any) {
-  if (got !== expected) {
-    const message = `
+function gotExpected(got: any, expected: any, message?: string) {
+  // Check if the got value is the same as the expected value.
+  // Convert the values to JSON then compare them.
+  const gotJson = JSON.stringify(got);
+  const expectedJson = JSON.stringify(expected);
+
+  // Use a default message if none is provided.
+  const errorMessage = message || "";
+
+  if (gotJson !== expectedJson) {
+    const fullMessage = `
+${errorMessage}
 Error:
-     got: ${got}
-expected: ${expected}
-`
-    throw new Error(message)
+     got: ${gotJson}
+expected: ${expectedJson}
+`;
+    throw new Error(fullMessage);
   }
-  return 0
 }
 
 function testGetPreviousNext(orderList: number[], imageIndex: number,
@@ -485,34 +550,108 @@ function testGetPreviousNext(orderList: number[], imageIndex: number,
   const [previous, next] = getPreviousNext(orderList, imageIndex)
   gotExpected(previous, ePrevious)
   gotExpected(next, eNext)
-  return 0
 }
 
 let testNumber = 1
-function test(rc: number): void {
-  log(`${testNumber}: ✅ pass`)
-  testNumber += 1
+let errorCount = 0
+function test(fn: (...args: any[]) => void, ...args: any[]): void {
+  // Run the test function with the provided arguments and log the result.
+  try {
+    fn(...args);
+    log(`${testNumber}: ✅ pass`);
+  }
+  catch (error) {
+    log(`${testNumber}: ❌ fail`);
+    log(error instanceof Error ? error.message : error);
+    errorCount += 1;
+  }
+  testNumber += 1;
+}
+
+function testExpectedError() {
+  // This function is used to test the gotExpected function
+  // when the arguments do not match.
+
+  try {
+    gotExpected([1], [2], "comparing arrays")
+    throw Error("array compare did not throw")
+  }
+  catch (error) {
+    if (!(error instanceof Error))
+      throw Error("the error type is not an instance of Error")
+
+    const eMsg = `
+comparing arrays
+Error:
+     got: [1]
+expected: [2]
+`
+    if (error.message != eMsg) {
+      log("expected error message, got:")
+      log(error.message)
+      log("expected:")
+      log(eMsg)
+      throw Error("error message not as expected")
+    }
+  }
+
+  // success
+}
+
+function gotExpectedSuite() {
+  test(gotExpected, [1], [1])
+  test(testExpectedError, [1], [2], "comparing arrays")
+}
+
+function testShiftImages(orderList: number[], collectionIndex: number,
+    eOrder: number[]) {
+  const input = `orderList: ${orderList}, collectionIndex: ${collectionIndex}`
+  shiftImages(orderList, collectionIndex)
+  gotExpected(orderList, eOrder, input)
+}
+
+function shiftImagesSuite() {
+  const fn = testShiftImages
+  test(fn, [0, 1, 2], 0, [0, 1, 2])
+  test(fn, [0, 1, 2], 1, [0, 1, 2])
+  test(fn, [0, 1, 2], 2, [0, 1, 2])
+  test(fn, [-1, 1, 2], 0, [1, 2, -1])
+  test(fn, [3, -1, 2], 0, [-1, 3, 2])
+  test(fn, [3, 1, -1], 0, [-1, 3, 1])
+  test(fn, [3, 1, -1], 1, [3, -1, 1])
+  test(fn, [3, 1, -1], 2, [3, 1, -1])
+  test(fn, [5, 6, -1, 7, -1, 8], 0, [-1, 5, 6, 7, -1, 8])
+  test(fn, [5, 6, -1, 7, -1, 8], 2, [5, 6, 7, -1, 8, -1])
+}
+
+function getPreviousNextSuite() {
+  const [previous, next] = getPreviousNext([], 0)
+  test(gotExpected, previous, -1)
+  test(gotExpected, next, -1)
+
+  const fn = testGetPreviousNext
+  test(fn, [], 0, -1, -1)
+  test(fn, [-1], 0, -1, -1)
+  test(fn, [-1,-1], 0, -1, -1)
+  test(fn, [1], 6, -1, -1)
+  test(fn, [1,-1], 6, -1, -1)
+  test(fn, [1], 1, 1, 1)
+  test(fn, [8,7], 7, 8, 8)
+  test(fn, [8,7], 8, 7, 7)
+  test(fn, [1,3,2], 1, 2, 3)
+  test(fn, [1,3,2], 2, 3, 1)
+  test(fn, [1,3,2], 3, 1, 2)
+  test(fn, [-1,5,-1,-1,8,-1,3,-1], 8, 5, 3)
 }
 
 function testMaker() {
-  const [previous, next] = getPreviousNext([], 0)
-  test(gotExpected(previous, -1))
-  test(gotExpected(next, -1))
+  gotExpectedSuite()
+  getPreviousNextSuite()
+  shiftImagesSuite()
+  if (errorCount == 0)
+    log("All tests passed.")
+  else
+    log(`❌ ${errorCount} tests failed.`)
 
-  const fn = testGetPreviousNext
-  test(fn([], 0, -1, -1))
-  test(fn([-1], 0, -1, -1))
-  test(fn([-1,-1], 0, -1, -1))
-  test(fn([1], 6, -1, -1))
-  test(fn([1,-1], 6, -1, -1))
-  test(fn([1], 1, 1, 1))
-  test(fn([8,7], 7, 8, 8))
-  test(fn([8,7], 8, 7, 7))
-  test(fn([1,3,2], 1, 2, 3))
-  test(fn([1,3,2], 2, 3, 1))
-  test(fn([1,3,2], 3, 1, 2))
-  test(fn([-1,5,-1,-1,8,-1,3,-1], 8, 5, 3))
-
-  log("success")
   return 0
 }
