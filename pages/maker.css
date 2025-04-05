@@ -215,3 +215,9 @@ h1, h2 {
   background-color: #f0f0f0;
   border-color: #ccc;
 }
+
+.required {
+  color: red;
+  border-color: red;
+  font-weight: bold;
+}

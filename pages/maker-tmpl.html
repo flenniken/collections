@@ -28,13 +28,15 @@
 <!--$ # Collection title group -->
     <div class="group title-group">
       <div class="collection-title">
+        <span id="collection-title-required" class="required">*</span>
         <input type="text" id="collection-title" placeholder="Collection Title">
       </div>
     </div>
 <!--$ # Post date group -->
     <div class="group controls-group">
       <div class="metadata-field">
-        <label for="post-date">Post Date:</label>
+        <label for="post-date"><span id="post-date-required" class="required">*</span> Post Date:</label>
+
         <input type="date" id="post-date">
       </div>
     </div>
@@ -44,9 +46,15 @@
         <h2>Collection Images</h2>
         <div id="collection-images" class="collection-grid">
 <!--$ # 16 image boxes in 2 columns -->
-<!--$ block t.repeat = 16 -->
-          <div id="cb{t.row}" class="image-box collection-box">
+<!--$ block t.repeat = 8 -->
+          <div id="cb{t.row}" class="image-box collection-box required">
             <img id="ci{t.row}" src="icons/blank.svg" alt="">
+          </div>
+<!--$ endblock -->
+<!--$ block t.repeat = 8 -->
+<!--$ : num = add(t.row, 8) -->
+          <div id="cb{num}" class="image-box collection-box">
+            <img id="ci{num}" src="icons/blank.svg" alt="">
           </div>
 <!--$ endblock -->
         </div>
@@ -60,7 +68,7 @@
           <div id="available-images" class="available-images-container">
 <!--$ # 20 image boxes for available images -->
 <!--$ block t.repeat = 20-->
-            <div id="a{t.row}" class="image-box available-box">
+            <div id="ab{t.row}" class="image-box available-box">
               <img id="ai{t.row}" src="icons/blank.svg" alt="">
             </div>
 <!--$ endblock -->
@@ -71,14 +79,14 @@
 <!--$ # Description group -->
     <div class="group control-group thumbnails-desc-group">
       <div class="metadata-field">
-        <label for="description">Description:</label>
+        <label for="description"><span id="description-required" class="required">*</span> Description:</label>
         <textarea id="description" rows="5"
         placeholder="description of the collection"></textarea>
       </div>
     </div>
     <div class="group control-group">
       <div class="metadata-field">
-        <h3>Index Thumbnail:</h3>
+        <h3><span id="index-thumbnail-required" class="required">*</span> Index Thumbnail:</h3>
         <img id="index-thumbnail" src="icons/blank.svg"
              alt="index thumbnail">
         <div class="controls-group index-button-bar">
@@ -94,7 +102,7 @@
 <!--$ # Index description group -->
     <div class="group control-group index-desc-group">
       <div class="metadata-field">
-        <label for="index-description">Index Description:</label>
+        <label for="index-description"><span id="index-description-required" class="required">*</span> Index Description:</label>
         <textarea id="index-description" rows="5"
         placeholder="short description for the index"></textarea>
       </div>
@@ -103,6 +111,7 @@
     <div class="group control-group">
       <h2>Image Details</h2>
       <div class="metadata-field">
+        <span id="image-details-required" class="required">*</span>
         <img id="image-details" src="icons/blank.svg" alt="">
         <div class="controls-group image-details-buttons">
           <div class="html-button">
@@ -112,10 +121,10 @@
             <button id="next-image">Next</button>
           </div>
         </div>
-        <input type="text" id="image-title" placeholder="image title">
-        <textarea id="image-description" placeholder="image description"></textarea>
+        <input type="text" id="image-title" placeholder="image title (required)">
+        <span id="image-description-required" class="required">*</span>
+        <textarea id="image-description" placeholder="image description (required)"></textarea>
       </div>
-
     </div>
   </div>
 </body>
