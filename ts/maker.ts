@@ -43,26 +43,32 @@ let collectionImages: number[]
 getElement<HTMLSelectElement>("collection-dropdown")
   .addEventListener("change", populateCollection)
 
+
 addClickListener("save-button", saveCollection)
 
-const tie = get("collection-title") as HTMLInputElement
-tie.addEventListener('blur', () => {
-  storeText(cinfo, "title", "collection-title-required", tie.value)
-})
-
-function storeText(cinfo: CJson.Collection | null,
-    field: keyof CJson.Collection,
-    requiredId: string, text: string): void {
+function storeText(field: TextType, requiredId: RequiredIdType, text: string): void {
   // Store the text in the cinfo field and update the required status
   // of the associated page element.
-  if (cinfo) {
-    (cinfo[field] as unknown as string) = text;
-    setRequired(requiredId, text ? false : true)
-    log(`Stored text in field "cinfo.${field}": ${text}`);
-  }
-  else {
-    setRequired(requiredId, false)
-  }
+  if (cinfo == null)
+    return
+  cinfo[field] = text;
+  setRequired(requiredId, text ? false : true)
+  log(`Stored text in field "cinfo.${field}": ${text}`)
+}
+
+type ImageTextType = "title" | "description";
+function storeImageText(field: ImageTextType, requiredId: RequiredIdType,
+    imageIndex: number, text: string): void {
+  // Store the text in the cinfo field of the given image and update
+  // the required status of the associated page element.
+  if (cinfo == null)
+    return
+
+  const image = cinfo.images[imageIndex];
+  image[field] = text;
+
+  setRequired(requiredId, text ? false : true);
+  log(`Stored text in field "image.${field}": ${text}`);
 }
 
 function storeIndexThumbnail(cinfo: CJson.Collection | null,
@@ -79,33 +85,30 @@ function storeIndexThumbnail(cinfo: CJson.Collection | null,
     setRequired("index-thumbnail-required", true)
   }
 }
+type TextType = "title" | "description" | "indexDescription" | "posted";
+function addBlurListener(id: string, field: TextType,
+    requiredId: RequiredIdType) {
+  const element = get(id) as HTMLTextAreaElement;
+  element.addEventListener('blur', () => {
+    storeText(field, requiredId, element.value)
+  });
+}
 
-const dse = get("description") as HTMLTextAreaElement
-dse.addEventListener('blur', () => {
-  storeText(cinfo, "description", "description-required",
-    dse.value)
-})
+addBlurListener("collection-title", "title", "collection-title-required")
+addBlurListener("description", "description", "description-required")
+addBlurListener("index-description", "indexDescription", "index-description-required")
+addBlurListener("post-date", "posted", "post-date-required")
 
-const ide = get("index-description") as HTMLTextAreaElement;
-ide.addEventListener('blur', () => {
-  storeText(cinfo, "indexDescription",
-    "index-description-required", ide.value)
-});
+function addBlurImageTextListener(id: string, field: ImageTextType, requiredId: RequiredIdType) {
+  const element = get(id) as HTMLTextAreaElement;
+  element.addEventListener('blur', () => {
+    storeImageText(field, requiredId, currentImageIx, element.value)
+  });
+}
 
-const pde = get("post-date") as HTMLInputElement;
-pde.addEventListener('blur', () => {
-  storeText(cinfo, "posted", "post-date-required", pde.value)
-});
-
-const imageTitle = get("image-title") as HTMLInputElement
-imageTitle.addEventListener('blur', () => {
-  storeText(cinfo, "title", "", imageTitle.value)
-})
-
-const imageDesc = get("image-description") as HTMLTextAreaElement
-imageDesc.addEventListener('blur', () => {
-  storeText(cinfo, "description", "image-description-required", imageDesc.value)
-})
+addBlurImageTextListener("image-title", "title", "")
+addBlurImageTextListener("image-description", "description",
+  "image-description-required")
 
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
@@ -115,14 +118,14 @@ for (let ix = 0; ix < 16; ix++) {
     if (event.metaKey || event.altKey) {
       return
     }
-    handleCollectionImageClick(ix)
+    collectionImageClick(ix)
   })
 }
 // Add click event handlers for the available images.
 for (let ix = 0; ix < 20; ix++) {
   const img = get(`ai${ix}`) as HTMLImageElement;
   img.addEventListener('click', (event) => {
-    handleAvailableImageClick(ix)
+    availableImageClick(ix)
   })
 }
 
@@ -149,8 +152,7 @@ function addClickListener(id: string, listener: (this: HTMLElement, ev: MouseEve
 function handleCmdAltClick(collectionIndex: number) {
   // Shift the collection images up or down.
   log(`Cmd/Alt clicked on collection box ${collectionIndex}.`);
-
-  if (noCinfo())
+  if (cinfo == null)
     return
 
   shiftImages(collectionImages, collectionIndex)
@@ -161,7 +163,7 @@ function handleCmdAltClick(collectionIndex: number) {
     setImage(`ci${ix}`, `cb${ix}`, collectionImages[ix])
   }
   for (let ix = 8; ix < 16; ix++) {
-    setImage(`ci${ix}`, "", collectionImages[ix])
+    setImage(`ci${ix}`, null, collectionImages[ix])
   }
 }
 
@@ -198,7 +200,7 @@ function shiftImages(orderList: number[], collectionIndex: number) {
   }
 }
 
-function getCollectionNumber(selected: string) {
+function parseSelection(selected: string) {
   // Parse the collection number from the selected string and return
   // the number. Return null on error.  For the string
   // "collection34", 34 is returned.
@@ -249,11 +251,11 @@ function getElement<T extends HTMLElement>(id: string): T {
   return element as T;
 }
 
-function setText(element_id: string, required_id: string, text: string) {
+function setText(element_id: string, requiredId: RequiredIdType, text: string) {
   // Set the text of the page element and update its required status.
   const element = get(element_id) as HTMLElement
   element.textContent = text
-  setRequired(required_id, text ? false : true)
+  setRequired(requiredId, text ? false : true)
 }
 
 async function populateCollection(event: Event) {
@@ -268,7 +270,7 @@ async function populateCollection(event: Event) {
   const target = event.target as HTMLSelectElement;
   const selected = target.value
   log("Populate the page. Selected value:", selected);
-  const num = getCollectionNumber(selected)
+  const num = parseSelection(selected)
   if (num == null) {
     log(`Invalid selection.`)
     return
@@ -314,7 +316,7 @@ async function populateCollection(event: Event) {
   // when clicked.
   for (let ix = 0; ix < 20; ix++) {
     if (ix < cinfo.images.length) {
-      setImage(`ai${ix}`, "", ix)
+      setImage(`ai${ix}`, null, ix)
     }
     else {
       // Hide the blank available boxes.
@@ -326,7 +328,7 @@ async function populateCollection(event: Event) {
   // images section.
   for (let ix = 0; ix < 16; ix++) {
     const imageIx = collectionImages[ix]
-    setImage(`ci${ix}`, "", imageIx)
+    setImage(`ci${ix}`, null, imageIx)
 
     let required: boolean
     if (imageIx == -1 && ix < 8)
@@ -372,8 +374,8 @@ async function populateCollection(event: Event) {
 function setImageDetails(currentImageIx: number) {
   // Set the image details section with the image, image title and
   // image description.
-  if (noCinfo())
-    return 0
+  if (cinfo == null)
+    return
 
   const imageIx = collectionImages[currentImageIx]
   let imageTitle: string
@@ -388,11 +390,11 @@ function setImageDetails(currentImageIx: number) {
     imageDescription = ""
   }
   setImage("image-details", "image-details-required", currentImageIx)
-  setText("image-title", "", imageTitle)
+  setText("image-title", null, imageTitle)
   setText("image-description", "image-description-required", imageDescription)
 }
 
-function setImage(id: string, requiredId: string,
+function setImage(id: string, requiredId: RequiredIdType,
     imageIndex: number) {
   // Set the image page element to the collection image with the given
   // imageIndex. If the imageIndex is -1, set blank. Set the required
@@ -413,14 +415,12 @@ function setImage(id: string, requiredId: string,
   setRequired(requiredId, required)
 }
 
-async function handleCollectionImageClick(collectionIndex: number) {
+async function collectionImageClick(collectionIndex: number) {
   // Move the collection image to the available images section.
   log(`Collection image ${collectionIndex} clicked.`)
 
-  if (cinfo == null) {
-    log("No cinfo")
+  if (cinfo == null)
     return
-  }
   if (collectionImages[collectionIndex] == -1) {
     log("No image here.")
     return
@@ -448,15 +448,13 @@ async function handleCollectionImageClick(collectionIndex: number) {
   log(`Remove from the image order list. order: ${collectionImages}`)
 }
 
-async function handleAvailableImageClick(availIndex: number) {
+async function availableImageClick(availIndex: number) {
   // Set the next free spot with the clicked available image then hide
   // the available image.
   log(`Available image ${availIndex} clicked.`)
 
-  if (cinfo == null) {
-    log("No cinfo")
+  if (cinfo == null)
     return
-  }
 
   // Find the first collection image that's blank, first -1 in the
   // order list.
@@ -548,17 +546,9 @@ function getPreviousNext(orderList: number[], imageIndex: number) {
   return [previous, next]
 }
 
-function noCinfo(): boolean {
-  if (cinfo == null) {
-    log("No cinfo or no order array.")
-    return true
-  }
-  return false
-}
-
-function goPreviousNext(id: string, requiredId: string,
+function goPreviousNext(id: string, requiredId: RequiredIdType,
     imageIndex: number, goNext: boolean) {
-  if (noCinfo())
+  if (cinfo == null)
     return 0
 
   const [previous, next] = getPreviousNext(collectionImages, imageIndex)
@@ -593,10 +583,11 @@ function indexNextImage() {
     currentThumbnailIx, true)
 }
 
-function setRequired(requiredId: string, status: boolean) {
+type RequiredIdType = string | null;
+function setRequired(requiredId: RequiredIdType, status: boolean) {
   // Set the page element required or not. A status true means it is
   // missing and will be marked as required.
-  if (requiredId == "")
+  if (requiredId == null)
     return
   const element = get(requiredId) as HTMLElement;
   if (status) {
@@ -612,135 +603,3 @@ function setRequired(requiredId: string, status: boolean) {
   log(`status: ${status}, classList: ${element.classList}`)
 }
 
-// Test code:
-
-function gotExpected(got: any, expected: any, message?: string) {
-  // Check if the got value is the same as the expected value.
-  // Convert the values to JSON then compare them.
-  const gotJson = JSON.stringify(got);
-  const expectedJson = JSON.stringify(expected);
-
-  // Use a default message if none is provided.
-  const errorMessage = message || "";
-
-  if (gotJson !== expectedJson) {
-    const fullMessage = `
-${errorMessage}
-Error:
-     got: ${gotJson}
-expected: ${expectedJson}
-`;
-    throw new Error(fullMessage);
-  }
-}
-
-function testGetPreviousNext(collectionImages: number[], imageIndex: number,
-    ePrevious: number, eNext: number) {
-  const [previous, next] = getPreviousNext(collectionImages, imageIndex)
-  gotExpected(previous, ePrevious)
-  gotExpected(next, eNext)
-}
-
-let testNumber = 1
-let errorCount = 0
-function test(fn: (...args: any[]) => void, ...args: any[]): void {
-  // Run the test function with the provided arguments and log the result.
-  try {
-    fn(...args);
-    log(`${testNumber}: ✅ pass`);
-  }
-  catch (error) {
-    log(`${testNumber}: ❌ fail`);
-    log(error instanceof Error ? error.message : error);
-    errorCount += 1;
-  }
-  testNumber += 1;
-}
-
-function testExpectedError() {
-  // This function is used to test the gotExpected function
-  // when the arguments do not match.
-
-  try {
-    gotExpected([1], [2], "comparing arrays")
-    throw Error("array compare did not throw")
-  }
-  catch (error) {
-    if (!(error instanceof Error))
-      throw Error("the error type is not an instance of Error")
-
-    const eMsg = `
-comparing arrays
-Error:
-     got: [1]
-expected: [2]
-`
-    if (error.message != eMsg) {
-      log("expected error message, got:")
-      log(error.message)
-      log("expected:")
-      log(eMsg)
-      throw Error("error message not as expected")
-    }
-  }
-
-  // success
-}
-
-function gotExpectedSuite() {
-  test(gotExpected, [1], [1])
-  test(testExpectedError, [1], [2], "comparing arrays")
-}
-
-function testShiftImages(orderList: number[], collectionIndex: number,
-    eOrder: number[]) {
-  const input = `orderList: ${orderList}, collectionIndex: ${collectionIndex}`
-  shiftImages(orderList, collectionIndex)
-  gotExpected(orderList, eOrder, input)
-}
-
-function shiftImagesSuite() {
-  const fn = testShiftImages
-  test(fn, [0, 1, 2], 0, [0, 1, 2])
-  test(fn, [0, 1, 2], 1, [0, 1, 2])
-  test(fn, [0, 1, 2], 2, [0, 1, 2])
-  test(fn, [-1, 1, 2], 0, [1, 2, -1])
-  test(fn, [3, -1, 2], 0, [-1, 3, 2])
-  test(fn, [3, 1, -1], 0, [-1, 3, 1])
-  test(fn, [3, 1, -1], 1, [3, -1, 1])
-  test(fn, [3, 1, -1], 2, [3, 1, -1])
-  test(fn, [5, 6, -1, 7, -1, 8], 0, [-1, 5, 6, 7, -1, 8])
-  test(fn, [5, 6, -1, 7, -1, 8], 2, [5, 6, 7, -1, 8, -1])
-}
-
-function getPreviousNextSuite() {
-  const [previous, next] = getPreviousNext([], 0)
-  test(gotExpected, previous, -1)
-  test(gotExpected, next, -1)
-
-  const fn = testGetPreviousNext
-  test(fn, [], 0, -1, -1)
-  test(fn, [-1], 0, -1, -1)
-  test(fn, [-1,-1], 0, -1, -1)
-  test(fn, [1], 6, -1, -1)
-  test(fn, [1,-1], 6, -1, -1)
-  test(fn, [1], 1, 1, 1)
-  test(fn, [8,7], 7, 8, 8)
-  test(fn, [8,7], 8, 7, 7)
-  test(fn, [1,3,2], 1, 2, 3)
-  test(fn, [1,3,2], 2, 3, 1)
-  test(fn, [1,3,2], 3, 1, 2)
-  test(fn, [-1,5,-1,-1,8,-1,3,-1], 8, 5, 3)
-}
-
-function testMaker() {
-  gotExpectedSuite()
-  getPreviousNextSuite()
-  shiftImagesSuite()
-  if (errorCount == 0)
-    log("All tests passed.")
-  else
-    log(`❌ ${errorCount} tests failed.`)
-
-  return 0
-}
