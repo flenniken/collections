@@ -4,7 +4,8 @@
 
 // Current collection information.  It is set when you select a
 // collection.
-let cinfo: CJson.Collection | null = null;
+type OptionalCinfo = CJson.Collection | null
+let cinfo: OptionalCinfo = null;
 
 // The current index thumbnail. It is an index into the image list.
 let currentThumbnailIx: number = 0;
@@ -12,6 +13,7 @@ let currentThumbnailIx: number = 0;
 // The current image thumbnail. It is an index into the image list.
 let currentImageIx: number = 0;
 
+// todo: switch back to the cinfo.order list.
 // These are boxes for images in the collection. Each number refers
 // to an image object index. Empty ones are -1. It has 16 entries.
 let collectionImages: number[]
@@ -41,7 +43,7 @@ let collectionImages: number[]
 
 
 getElement<HTMLSelectElement>("collection-dropdown")
-  .addEventListener("change", populateCollection)
+  .addEventListener("change", selectCollection)
 
 
 addClickListener("save-button", saveCollection)
@@ -71,8 +73,7 @@ function storeImageText(field: ImageTextType, requiredId: RequiredIdType,
   log(`Stored text in field "image.${field}": ${text}`);
 }
 
-function storeIndexThumbnail(cinfo: CJson.Collection | null,
-    url: string): void {
+function storeIndexThumbnail(cinfo: OptionalCinfo, url: string): void {
   // Store the image url in the cinfo index thumbnail field and update
   // the required status of the associated page element.  The
   // collection title is used as the alt text.
@@ -258,8 +259,9 @@ function setText(element_id: string, requiredId: RequiredIdType, text: string) {
   setRequired(requiredId, text ? false : true)
 }
 
-async function populateCollection(event: Event) {
-  // Populate the page with the selected collection.
+async function selectCollection(event: Event) {
+  // Handle collection select event.  Populate the page with the
+  // selected collection.
 
   if (cinfo != null) {
     log("cinfo already populated.")
@@ -286,6 +288,61 @@ async function populateCollection(event: Event) {
   }
   log(cinfo)
 
+  populateCollection(cinfo)
+}
+
+function isRequired(collectionImages: number[], boxIx: number) {
+  // Return whether the collection image box (ix) is required or
+  // not.
+
+  const boxEmpty = (collectionImages[boxIx] == -1) ? true : false
+
+  // A full box is not required.
+  if (!boxEmpty)
+    return false
+
+  // The first 8 boxes are required.
+  if (boxIx < 8)
+    return true
+
+  // Find the last box with an image.
+  let lastBoxIx = -1
+  for (let ix = 8; ix < 16; ix++) {
+    if (collectionImages[ix] != -1) {
+      lastBoxIx = ix
+    }
+  }
+
+  // If there are no boxes filled in after the first 8,
+  // then the empty box is not required.
+  if (lastBoxIx == -1)
+    return false
+
+  // If the empty box has a full box after it, the empty one is
+  // required.
+  if (boxIx < lastBoxIx)
+    return true
+
+  // The collection count must be 8, 10, 12, 14, or 16.
+  // log(`boxIx: ${boxIx}, lastBoxIx: ${lastBoxIx}. even: ${lastBoxIx % 2}`)
+  if (boxIx == lastBoxIx + 1 && lastBoxIx % 2 === 0) {
+    return true
+  }
+  return false
+}
+
+// todo; cinfo is global. pass it around instead?
+
+async function populateCollection(cinfo: OptionalCinfo) {
+  // Populate the page with the given collection info.
+  if (cinfo == null)
+    return
+
+  setText("post-date", "post-date-required", cinfo.posted)
+  setText("description", "description-required", cinfo.description)
+  setText("index-description", "index-description-required", cinfo.indexDescription)
+  setText("collection-title", "collection-title-required", cinfo.title)
+
   // When the order variable is missing make one using the images
   // natural order.
 
@@ -293,6 +350,7 @@ async function populateCollection(event: Event) {
   for (let ix = 0; ix < 16; ix++) {
     collectionImages.push(-1)
   }
+
   // Make the collectionImages list from the order list.
   if ("order" in cinfo) {
     log(`cinfo.order: ${cinfo.order!}`)
@@ -308,12 +366,12 @@ async function populateCollection(event: Event) {
   // the left or in the available images on the right. Hide the
   // available image boxes not used.
 
-  // c0 is the element id for box 0 and ci0 is the element index of
-  // its collection image and the same goes for available images, a0
+  // cb0 is the element id for box 0 and ci0 is the element index of
+  // its collection image and the same goes for available images, ab0
   // and ai0.
 
-  // All images go in the available section. We hide and show them
-  // when clicked.
+  // All images go in and remain in the available section. We hide and
+  // show them when clicked.
   for (let ix = 0; ix < 20; ix++) {
     if (ix < cinfo.images.length) {
       setImage(`ai${ix}`, null, ix)
@@ -324,18 +382,15 @@ async function populateCollection(event: Event) {
     }
   }
 
-  // Fill in the collection images and hide them in the available
-  // images section.
+  // Fill in the collection images on the left and hide them in the
+  // available images section.
   for (let ix = 0; ix < 16; ix++) {
     const imageIx = collectionImages[ix]
-    setImage(`ci${ix}`, null, imageIx)
 
-    let required: boolean
-    if (imageIx == -1 && ix < 8)
-      required = true
-    else
-      required = false
+    const required = isRequired(collectionImages, ix)
     setRequired(`cb${ix}`, required)
+
+    setImage(`ci${ix}`, null, imageIx)
 
     // Hide the available image if we put a real image in the
     // collection (not -1).
@@ -345,49 +400,57 @@ async function populateCollection(event: Event) {
     }
   }
 
-  setText("post-date", "post-date-required", cinfo.posted)
-  setText("description", "description-required", cinfo.description)
-  setText("index-description", "index-description-required", cinfo.indexDescription)
-  setText("collection-title", "collection-title-required", cinfo.title)
-
   // Set the index thumbnail image to the one specified in the cinfo
-  // if it is part of the collection, else 0.
-  currentThumbnailIx = 0
+  // if it is part of the collection, else set it to the first image.
+  const thumbnailIndex = findThumbnailIx(cinfo.images,
+    collectionImages, cinfo.indexThumbnail)
+  currentThumbnailIx = (thumbnailIndex != -1) ? thumbnailIndex : 0
+  setImage("index-thumbnail", "index-thumbnail-required", currentThumbnailIx)
+  log(`currentThumbnail: ${currentThumbnailIx}`)
+
+  // Set the image details section with the first image in the
+  // collection.
+  setImgDetails(currentImageIx)
+}
+
+function findThumbnailIx(images: CJson.Image[], collectionImages: number[],
+    url: string) {
+  // Return the image index of the thumbnail image if if it is part of
+  // the collection, else -1.
+  if (cinfo == null)
+    return -1
+
+  let thumbnailIx = -1
   for (let ix = 0; ix < 16; ix++) {
     const imageIx = collectionImages[ix]
     if (imageIx == -1)
       continue
     const image = cinfo.images[imageIx]
     if (image.thumbnail == cinfo.indexThumbnail) {
-      currentThumbnailIx = imageIx
+      thumbnailIx = imageIx
       break
     }
   }
-  log(`currentThumbnail: ${currentThumbnailIx}`)
-  setImage("index-thumbnail", "index-thumbnail-required", currentThumbnailIx)
-
-  // Set the image details section with the first image in the
-  // collection.
-  setImageDetails(currentImageIx)
+  return thumbnailIx
 }
 
-function setImageDetails(currentImageIx: number) {
+function setImgDetails(currentImageIx: number) {
   // Set the image details section with the image, image title and
-  // image description.
+  // image description for the given image index along with their
+  // required state.
   if (cinfo == null)
     return
 
-  const imageIx = collectionImages[currentImageIx]
   let imageTitle: string
   let imageDescription: string
-  if (currentImageIx != -1) {
-    const image = cinfo!.images[imageIx]
-    imageTitle = image.title
-    imageDescription = image.description
-  }
-  else {
+  if (currentImageIx == -1) {
     imageTitle = ""
     imageDescription = ""
+  }
+  else {
+    const image = cinfo!.images[currentImageIx]
+    imageTitle = image.title
+    imageDescription = image.description
   }
   setImage("image-details", "image-details-required", currentImageIx)
   setText("image-title", null, imageTitle)
@@ -416,7 +479,8 @@ function setImage(id: string, requiredId: RequiredIdType,
 }
 
 async function collectionImageClick(collectionIndex: number) {
-  // Move the collection image to the available images section.
+  // Handler for a click on a collection image.  "Move" the image to the
+  // available images section.
   log(`Collection image ${collectionIndex} clicked.`)
 
   if (cinfo == null)
@@ -426,31 +490,32 @@ async function collectionImageClick(collectionIndex: number) {
     return
   }
 
-  // Put the blank image back.
-  setImage(`ci${collectionIndex}`, `cb${collectionIndex}`, collectionIndex)
+  // Blank out the collection box.
+  setImage(`ci${collectionIndex}`, `cb${collectionIndex}`, -1)
+  collectionImages[collectionIndex] = -1
+
+  // Make the available image fade in with an opacity animation.
 
   const availableIx = collectionImages[collectionIndex]
   const availableBox = get(`ab${availableIx}`) as HTMLElement
   const availableImg = get(`ai${availableIx}`) as HTMLImageElement
 
   // Set initial state for animation
-  availableImg.style.transition = 'opacity 0.5s ease-in-out'
+  availableImg.style.transition = 'opacity  0.5s ease-in-out'
   availableBox.style.display = "block"
   availableImg.style.opacity = '0'
 
-  // Use requestAnimationFrame to ensure the initial state is rendered
+  // Ensure the initial state is rendered.
   requestAnimationFrame(() => {
     availableImg.style.opacity = '1'
   })
 
-  // Set the order value to -1.
-  collectionImages[collectionIndex] = -1
-  log(`Remove from the image order list. order: ${collectionImages}`)
+  log(`Removed ${collectionIndex} from the image order list: ${collectionImages}`)
 }
 
 async function availableImageClick(availIndex: number) {
-  // Set the next free spot with the clicked available image then hide
-  // the available image.
+  // Handler for available image clicks.  Fill in the next free spot
+  // with the clicked image then hide the available image.
   log(`Available image ${availIndex} clicked.`)
 
   if (cinfo == null)
@@ -471,7 +536,7 @@ async function availableImageClick(availIndex: number) {
   // Set the collection box with the available image.
   setImage(`ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
 
-  // Add to used images list in the collection info
+  // Add the image to the order list.
   collectionImages[firstBlankIx] = availIndex
   log(`Added to the image order list. order: ${collectionImages}`)
 
@@ -508,9 +573,9 @@ async function saveCollection(event: Event) {
 
 function getPreviousNext(orderList: number[], imageIndex: number) {
   // Return the previous and next index for the given image index
-  // wrapping around if necessary, [ix-1, ix+1]. If the image doesn't
-  // exist return, [-1, -1]. Return the image index when one image
-  // exists, [ix, ix].
+  // wrapping around if necessary, i.e: [ix-1, ix+1]. If the image
+  // doesn't exist return [-1, -1]. Return the image index when one
+  // image exists: [ix, ix].
 
   // Make a list of the non-negative image indexes from the order
   // list.
@@ -548,6 +613,8 @@ function getPreviousNext(orderList: number[], imageIndex: number) {
 
 function goPreviousNext(id: string, requiredId: RequiredIdType,
     imageIndex: number, goNext: boolean) {
+  // Set the page element image to the previous or next image in the
+  // collection and set its required state. Return the new image index.
   if (cinfo == null)
     return 0
 
@@ -562,31 +629,36 @@ function goPreviousNext(id: string, requiredId: RequiredIdType,
 }
 
 function previousImage() {
+  // Set the image details image to the previous collection image.
   currentImageIx = goPreviousNext("image-details", "image-details-required",
     currentImageIx, false)
-  setImageDetails(currentImageIx)
+  setImgDetails(currentImageIx)
 }
 
 function nextImage() {
+  // Set the image details image to the next collection image.
   currentImageIx = goPreviousNext("image-details", "image-details-required",
     currentImageIx, true)
-  setImageDetails(currentImageIx)
+  setImgDetails(currentImageIx)
 }
 
 function indexPreviousImage() {
+  // Set the index thumbnail to the previous collection image.
   currentThumbnailIx = goPreviousNext("index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, false)
 }
 
 function indexNextImage() {
+  // Set the index thumbnail to the next collection image.
   currentThumbnailIx = goPreviousNext("index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, true)
 }
 
 type RequiredIdType = string | null;
 function setRequired(requiredId: RequiredIdType, status: boolean) {
-  // Set the page element required or not. A status true means it is
-  // missing and will be marked as required.
+  // Set the page element (requiredId) with the "required" class or
+  // not. A true status means the element is empty and will be marked
+  // as required. A null requiredId is skipped.
   if (requiredId == null)
     return
   const element = get(requiredId) as HTMLElement;
@@ -596,10 +668,9 @@ function setRequired(requiredId: RequiredIdType, status: boolean) {
     log(`Mark ${requiredId} required.`)
   }
   else {
-    // We have it, mark it not required.
+    // We have it, remove the required class.
     element.classList.remove('required')
     log(`Mark ${requiredId} is good.`)
   }
   log(`status: ${status}, classList: ${element.classList}`)
 }
-

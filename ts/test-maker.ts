@@ -20,6 +20,10 @@ expected: ${expectedJson}
   }
 }
 
+function fail(message: string) {
+  throw Error(message)
+}
+
 function testGetPreviousNext(collectionImages: number[], imageIndex: number,
     ePrevious: number, eNext: number) {
   const [previous, next] = getPreviousNext(collectionImages, imageIndex)
@@ -119,10 +123,130 @@ function getPreviousNextSuite() {
   test(fn, [-1,5,-1,-1,8,-1,3,-1], 8, 5, 3)
 }
 
+function fillBoxes(filledBoxes: number[]) {
+  // Return a list of collection boxes filled in with the given list
+  // of image indexes. The rest of the boxes are empty (-1).
+
+  if (filledBoxes.length >= 16)
+    fail("too many filled boxes")
+
+  // Create an array of 16 numbers all -1.
+  let collectionImages: number[]  = []
+  for (let ix = 0; ix < 16; ix++) {
+    collectionImages.push(-1)
+  }
+
+  // Set the boxes that are filled in.
+  for (let ix = 0; ix < filledBoxes.length; ix++) {
+    const filledIx = filledBoxes[ix]
+    if (filledIx < 0 || filledIx >= 16) {
+      fail("filled box index is out of range")
+    }
+    collectionImages[filledIx] = 99
+  }
+  return collectionImages
+}
+
+function testIsRequired(filledBoxes: number[], eRequiredTrue: number[]) {
+
+  const eRequired = fillBoxes(eRequiredTrue)
+
+  const collectionImages = fillBoxes(filledBoxes)
+  let answers: number[] = []
+  for (let ix = 0; ix < 16; ix++) {
+    const required = isRequired(collectionImages, ix)
+    if (required == true)
+      answers.push(99)
+    else
+      answers.push(-1)
+  }
+  const msg = `isRequired:
+   input: ${JSON.stringify(collectionImages)}`
+  gotExpected(answers, eRequired, msg)
+}
+
+function isRequireSuite() {
+  const fn = testIsRequired
+
+  // Full box is not required.
+  // The first 8 boxes are required.
+  // Tests cases where there is an empty box before.
+  // The collection count must be 8, 10, 12, 14, or 16.
+
+  test(fn, [0], [1,2,3,4,5,6,7])
+  test(fn, [0,1], [2,3,4,5,6,7])
+  test(fn, [8, 15], [0,1,2,3,4,5,6,7,9,10,11,12,13,14])
+  test(fn, [12, 15], [ 0,1,2,3,4,5,6,7,8,9,10,11,13,14])
+  test(fn, [8, 9], [0,1,2,3,4,5,6,7])
+  test(fn, [9], [0,1,2,3,4,5,6,7,8])
+  test(fn, [8], [0,1,2,3,4,5,6,7,9])
+}
+
+/// <reference path="./cjsonDefinition.ts" />
+function createTestImage(thumbnail: string): CJson.Image {
+  let image: CJson.Image = {
+    url: "image url",
+    thumbnail: thumbnail,
+    title: "title",
+    description: "description",
+    width: 2040,
+    height: 1024,
+    size: 12345,
+    sizet: 9876,
+    uniqueId: ""
+  }
+  return image
+}
+
+function createTestImages(imageThumbnails: string[]): CJson.Image[] {
+
+  let images: CJson.Image[] = []
+  for (let ix = 0; ix < imageThumbnails.length; ix++) {
+    const thumbnail = imageThumbnails[ix]
+    const image = createTestImage(thumbnail)
+    images.push(image)
+  }
+  return images
+}
+
+function testFindThumbnailIx(imageThumbnails: string[],
+    filledBoxes: number[], url: string, eIndex: number) {
+  const images = createTestImages(imageThumbnails)
+  const collectionImages = fillBoxes(filledBoxes)
+  const index = findThumbnailIx(images, collectionImages, url)
+  gotExpected(index, eIndex)
+}
+
+function findThumbnailInfoSuite() {
+  const fn = testFindThumbnailIx
+
+  test(fn, [], [], "url", -1)
+
+  test(fn, ["url"], [], "url", -1)
+  test(fn, ["url"], [0], "url", 0)
+
+  test(fn, ["url", "abc"], [0], "url", 0)
+  test(fn, ["abc", "url"], [0], "url", -1)
+  test(fn, ["url", "abc"], [0,1], "url", 0)
+  test(fn, ["abc", "url"], [0,1], "url", 1)
+
+  test(fn, ["url", "abc", "xyz"], [0], "url", 0)
+
+  test(fn, ["abc", "url", "xyz"], [0], "url", -1)
+  test(fn, ["abc", "url", "xyz"], [0,1], "url", 1)
+  test(fn, ["abc", "url", "xyz"], [0,1,2], "url", 1)
+
+  test(fn, ["abc", "xyz", "url"], [0], "url", -1)
+  test(fn, ["abc", "xyz", "url"], [0,1], "url", -1)
+  test(fn, ["abc", "xyz", "url"], [0,1,2], "url", 2)
+}
+
 function testMaker() {
   gotExpectedSuite()
   getPreviousNextSuite()
   shiftImagesSuite()
+  isRequireSuite()
+
   if (errorCount == 0)
     log("All tests passed.")
   else
