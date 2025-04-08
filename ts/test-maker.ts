@@ -241,11 +241,34 @@ function findThumbnailInfoSuite() {
   test(fn, ["abc", "xyz", "url"], [0,1,2], "url", 2)
 }
 
+function testCreateCollectionOrder(order: number[], availableCount: number, eOrder: number[]) {
+  const gotOrder = createCollectionOrder(order, 3, availableCount)
+  const msg = `order: ${order}, availableCount: ${availableCount}`
+  gotExpected(gotOrder, eOrder, msg)
+}
+
+function createCollectionOrderSuite() {
+  const fn = testCreateCollectionOrder
+
+  test(fn, undefined, 1, [0, -1, -1])
+  test(fn, undefined, 2, [0, 1, -1])
+  test(fn, undefined, 3, [0, 1, 2])
+  test(fn, undefined, 4, [0, 1, 2])
+
+  test(fn, [0, 2, 1], 3, [0, 2, 1])
+  test(fn, [3, -1, 1], 4, [3, -1, 1])
+  test(fn, [3, -1, 4], 5, [3, -1, 4])
+
+  test(fn, [3, 2], 3, [-1, 2, -1])
+}
+
+
 function testMaker() {
   gotExpectedSuite()
   getPreviousNextSuite()
   shiftImagesSuite()
   isRequireSuite()
+  createCollectionOrderSuite()
 
   if (errorCount == 0)
     log("All tests passed.")

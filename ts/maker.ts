@@ -2,6 +2,11 @@
 // maker task. Some other ts files are concatenated so functions
 // are available that way, for example the log function.
 
+// Include the ts files that get concatenated with this file.
+/// <reference path="./cjsonDefinition.ts" />
+/// <reference path="./win.ts" />
+/// <reference path="./all.ts" />
+
 // Current collection information.  It is set when you select a
 // collection.
 type OptionalCinfo = CJson.Collection | null
@@ -13,38 +18,8 @@ let currentThumbnailIx: number = 0;
 // The current image thumbnail. It is an index into the image list.
 let currentImageIx: number = 0;
 
-// todo: switch back to the cinfo.order list.
-// These are boxes for images in the collection. Each number refers
-// to an image object index. Empty ones are -1. It has 16 entries.
-let collectionImages: number[]
-
-// You can build the cinfo.order list from the collectionImages.
-
-// let order: number[]
-// for (let ix = 0; ix < cinfo.images.length; ix++) {
-//   order.push(-1)
-// }
-// for (let ix = 0; ix < 16; ix++) {
-//   imageIndex = collectionImages[ix]
-//   if (imageIndex != -1)
-//     order[imageIndex] = ix
-// }
-
-
-// You can look up the image in a box:
-// imageIndex = collectionImages[ix]
-// if (imageIndex != -1)
-//   image = cinfo.images[imageIndex]
-//
-//     cinfo.images[]: 0 1 2 ... n  -- contains image objects where length is 8 - 20.
-//          available: 0 1 2 ... 19 -- page element ids, abx, aix
-//         collection: 0 1 2 ... 15 -- page element ids, cbx, cix
-// collectionImages[]: 0 1 2 ... 15  -- contains indexes to images or -1
-
-
 getElement<HTMLSelectElement>("collection-dropdown")
   .addEventListener("change", selectCollection)
-
 
 addClickListener("save-button", saveCollection)
 
@@ -115,18 +90,18 @@ addBlurImageTextListener("image-description", "description",
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`ci${ix}`) as HTMLImageElement
   collectionImgElement.addEventListener('click', (event) => {
-    // The cmd/alt key is handled by handleCmdAltClick.
+    // The cmd/alt key is handled by cmdAltClick.
     if (event.metaKey || event.altKey) {
       return
     }
-    collectionImageClick(ix)
+    collectionImageClick(cinfo?.order!, ix)
   })
 }
 // Add click event handlers for the available images.
 for (let ix = 0; ix < 20; ix++) {
   const img = get(`ai${ix}`) as HTMLImageElement;
   img.addEventListener('click', (event) => {
-    availableImageClick(ix)
+    availableImageClick(cinfo?.order!, ix)
   })
 }
 
@@ -139,8 +114,8 @@ addClickListener("index-next-image", indexNextImage)
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`cb${ix}`) as HTMLImageElement;
   collectionImgElement.addEventListener('click', (event) => {
-    if (event.metaKey || event.altKey) {
-      handleCmdAltClick(ix);
+    if (cinfo && (event.metaKey || event.altKey)) {
+      cmdAltClick(cinfo.order!, ix);
     }
   });
 }
@@ -150,21 +125,22 @@ function addClickListener(id: string, listener: (this: HTMLElement, ev: MouseEve
   element.addEventListener('click', listener)
 }
 
-function handleCmdAltClick(collectionIndex: number) {
-  // Shift the collection images up or down.
+function cmdAltClick(order: number[], collectionIndex: number) {
+  // Handle cmd-click on a collection box. Shift the collection images
+  // up or down.
   log(`Cmd/Alt clicked on collection box ${collectionIndex}.`);
-  if (cinfo == null)
+  if (!order)
     return
 
-  shiftImages(collectionImages, collectionIndex)
-  log(`Shifted the images. order: ${collectionImages}`)
+  shiftImages(order, collectionIndex)
+  log(`Shifted the images. order: ${order}`)
 
   // Update the collection images to match the new order.
   for (let ix = 0; ix < 8; ix++) {
-    setImage(`ci${ix}`, `cb${ix}`, collectionImages[ix])
+    setImage(`ci${ix}`, `cb${ix}`, order[ix])
   }
   for (let ix = 8; ix < 16; ix++) {
-    setImage(`ci${ix}`, null, collectionImages[ix])
+    setImage(`ci${ix}`, null, order[ix])
   }
 }
 
@@ -331,7 +307,33 @@ function isRequired(collectionImages: number[], boxIx: number) {
   return false
 }
 
-// todo; cinfo is global. pass it around instead?
+function createCollectionOrder(order: number[], max: number, availableCount: number) {
+  // Create the cinfo.order variable. max is the maximum number of
+  // images in a collection and availableCount is the number of available
+  // images.
+
+  let collectionImages = []
+  for (let ix = 0; ix < max; ix++) {
+    collectionImages.push(-1)
+  }
+  if (order) {
+    // Make the order from the existing order and correct invalid
+    // indexes.
+    for (let ix = 0; ix < availableCount; ix++) {
+      const imageIndex = order[ix]
+      if (ix < max && imageIndex < availableCount && imageIndex >= -1)
+        collectionImages[ix] = imageIndex
+    }
+  }
+  else {
+    // When the order variable is missing make one using the images
+    // natural order.
+    for (let ix = 0; ix < availableCount && ix < max; ix++) {
+      collectionImages[ix] = ix
+    }
+  }
+  return collectionImages
+}
 
 async function populateCollection(cinfo: OptionalCinfo) {
   // Populate the page with the given collection info.
@@ -343,24 +345,9 @@ async function populateCollection(cinfo: OptionalCinfo) {
   setText("index-description", "index-description-required", cinfo.indexDescription)
   setText("collection-title", "collection-title-required", cinfo.title)
 
-  // When the order variable is missing make one using the images
-  // natural order.
-
-  collectionImages = []
-  for (let ix = 0; ix < 16; ix++) {
-    collectionImages.push(-1)
-  }
-
-  // Make the collectionImages list from the order list.
-  if ("order" in cinfo) {
-    log(`cinfo.order: ${cinfo.order!}`)
-    for (let ix = 0; ix < cinfo.images.length; ix++) {
-      const order = cinfo.order![ix]
-      if (ix < 16)
-        collectionImages[ix] = order
-    }
-  }
-  log(`collectionImages: ${collectionImages}`)
+  // Create cinfo.order.
+  cinfo.order = createCollectionOrder(cinfo.order!, 16, cinfo.images.length)
+  log(`cinfo.order: ${cinfo.order}`)
 
   // Loop through the images and put them in the collection images on
   // the left or in the available images on the right. Hide the
@@ -385,9 +372,9 @@ async function populateCollection(cinfo: OptionalCinfo) {
   // Fill in the collection images on the left and hide them in the
   // available images section.
   for (let ix = 0; ix < 16; ix++) {
-    const imageIx = collectionImages[ix]
+    const imageIx = cinfo.order[ix]
 
-    const required = isRequired(collectionImages, ix)
+    const required = isRequired(cinfo.order, ix)
     setRequired(`cb${ix}`, required)
 
     setImage(`ci${ix}`, null, imageIx)
@@ -403,7 +390,7 @@ async function populateCollection(cinfo: OptionalCinfo) {
   // Set the index thumbnail image to the one specified in the cinfo
   // if it is part of the collection, else set it to the first image.
   const thumbnailIndex = findThumbnailIx(cinfo.images,
-    collectionImages, cinfo.indexThumbnail)
+    cinfo.order, cinfo.indexThumbnail)
   currentThumbnailIx = (thumbnailIndex != -1) ? thumbnailIndex : 0
   setImage("index-thumbnail", "index-thumbnail-required", currentThumbnailIx)
   log(`currentThumbnail: ${currentThumbnailIx}`)
@@ -478,25 +465,25 @@ function setImage(id: string, requiredId: RequiredIdType,
   setRequired(requiredId, required)
 }
 
-async function collectionImageClick(collectionIndex: number) {
-  // Handler for a click on a collection image.  "Move" the image to the
+async function collectionImageClick(order: number[], collectionIndex: number) {
+  // Handle click on a collection image.  "Move" the image to the
   // available images section.
   log(`Collection image ${collectionIndex} clicked.`)
 
-  if (cinfo == null)
+  if (order == null)
     return
-  if (collectionImages[collectionIndex] == -1) {
+  if (order[collectionIndex] == -1) {
     log("No image here.")
     return
   }
 
   // Blank out the collection box.
   setImage(`ci${collectionIndex}`, `cb${collectionIndex}`, -1)
-  collectionImages[collectionIndex] = -1
+  order[collectionIndex] = -1
 
   // Make the available image fade in with an opacity animation.
 
-  const availableIx = collectionImages[collectionIndex]
+  const availableIx = order[collectionIndex]
   const availableBox = get(`ab${availableIx}`) as HTMLElement
   const availableImg = get(`ai${availableIx}`) as HTMLImageElement
 
@@ -510,20 +497,20 @@ async function collectionImageClick(collectionIndex: number) {
     availableImg.style.opacity = '1'
   })
 
-  log(`Removed ${collectionIndex} from the image order list: ${collectionImages}`)
+  log(`Removed ${collectionIndex} from the image order list: ${order}`)
 }
 
-async function availableImageClick(availIndex: number) {
-  // Handler for available image clicks.  Fill in the next free spot
+async function availableImageClick(order: number[], availIndex: number) {
+  // Handle available image click.  Fill in the next free spot
   // with the clicked image then hide the available image.
   log(`Available image ${availIndex} clicked.`)
 
-  if (cinfo == null)
+  if (order == null)
     return
 
   // Find the first collection image that's blank, first -1 in the
   // order list.
-  const firstBlankIx = collectionImages.indexOf(-1)
+  const firstBlankIx = order.indexOf(-1)
   if (firstBlankIx == -1 || firstBlankIx >= 16) {
     log("The collection is full.")
     return
@@ -537,8 +524,8 @@ async function availableImageClick(availIndex: number) {
   setImage(`ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
 
   // Add the image to the order list.
-  collectionImages[firstBlankIx] = availIndex
-  log(`Added to the image order list. order: ${collectionImages}`)
+  order[firstBlankIx] = availIndex
+  log(`Added to the image order list. order: ${order}`)
 
   setRequired(`cb${firstBlankIx}`, false)
 }
@@ -611,14 +598,14 @@ function getPreviousNext(orderList: number[], imageIndex: number) {
   return [previous, next]
 }
 
-function goPreviousNext(id: string, requiredId: RequiredIdType,
+function goPreviousNext(order: number[], id: string, requiredId: RequiredIdType,
     imageIndex: number, goNext: boolean) {
   // Set the page element image to the previous or next image in the
   // collection and set its required state. Return the new image index.
-  if (cinfo == null)
+  if (order == null)
     return 0
 
-  const [previous, next] = getPreviousNext(collectionImages, imageIndex)
+  const [previous, next] = getPreviousNext(order, imageIndex)
   if (next == -1)
     return 0
 
@@ -630,27 +617,27 @@ function goPreviousNext(id: string, requiredId: RequiredIdType,
 
 function previousImage() {
   // Set the image details image to the previous collection image.
-  currentImageIx = goPreviousNext("image-details", "image-details-required",
+  currentImageIx = goPreviousNext(cinfo?.order!, "image-details", "image-details-required",
     currentImageIx, false)
   setImgDetails(currentImageIx)
 }
 
 function nextImage() {
   // Set the image details image to the next collection image.
-  currentImageIx = goPreviousNext("image-details", "image-details-required",
+  currentImageIx = goPreviousNext(cinfo?.order!, "image-details", "image-details-required",
     currentImageIx, true)
   setImgDetails(currentImageIx)
 }
 
 function indexPreviousImage() {
   // Set the index thumbnail to the previous collection image.
-  currentThumbnailIx = goPreviousNext("index-thumbnail", "index-thumbnail-required",
+  currentThumbnailIx = goPreviousNext(cinfo?.order!, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, false)
 }
 
 function indexNextImage() {
   // Set the index thumbnail to the next collection image.
-  currentThumbnailIx = goPreviousNext("index-thumbnail", "index-thumbnail-required",
+  currentThumbnailIx = goPreviousNext(cinfo?.order!, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, true)
 }
 

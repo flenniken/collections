@@ -47,12 +47,12 @@ namespace CJson {
     imagePageUrl: string;
     thumbnailsPageUrl: string;
 
-    // The optional order variable is a list of image indexes, matching the size
-    // of the image list, that defines the display order of the collection
-    // images. If the order variable is not specified, images are shown in their
-    // original order from the image list. Additionally, the order variable
-    // determines which images to display -- an index of -1 indicates that the
-    // image should be hidden.
+    // The optional order variable is a list of 16 image indexes.  It
+    // defines which images are in the collection and their order. An
+    // index of -1 indicates the collection box is empty. It’s used
+    // while building the collection. Once built, the image list is
+    // rewritten to match the order list and the order list is
+    // deleted.
     order?: number[];
 
     // The image array contains an element for each image in the collection.
