@@ -2,6 +2,13 @@
 
 How to create a new collection.
 
+* create a folder with images
+* run the maker command
+* determine the images in the collection and their order
+* enter the image descriptions
+* define the zoom points
+* publish
+
 [⬇](#Contents) (table of contents at the bottom)
 
 # Manual Steps
@@ -82,7 +89,7 @@ After after successful validation it:
 We keep track of the collections under development with the /db prefix
 in S3. There is a prefix for each collection being developed. Prefixes
 don’t have contention problems like one file would.  There are no /db
-prefixes prefixes when there are no collections in development.
+prefixes when there are no collections in development.
 
 Collections are in numeric order.  We keep track of the number of
 collections with the /published-x key where x is a variable that tells
@@ -105,12 +112,12 @@ You use the maker page to determine which images to included in the
 collection (from the initial 20), to determine their order, and to
 enter the descriptive text.
 
-Admin's will see an maker icon.
+Admin's will see a maker icon.
 
-You open the new collection from a dropdown menu and you make your
-changes.  The dropdown choices come from `get-new-collections` api
-which returns the local image folders that have cjson files.  The
-cjson list comes from the `get-collection api`.
+You edit the new collection by selecting it from the dropdown menu.
+The dropdown choices come from `get-new-collections` api which returns
+the local image folders that have cjson files.  The cjson list comes
+from the `get-collection api`.
 
 Your edits change the cjson file. Your changes are saved
 automatically.
@@ -124,17 +131,9 @@ The maker page ui:
 * you click on an image on the right to put it in the next available
   box.
 
-* you click on a box image to move it to back with the temp images
+* you click on a box image to move it to back with the available images
 
-* next to each box is an edit icon for editing the image title and
-  description.
-
-* at the bottom is a button to enter the collections title and
-  description for the thumbnails page
-
-* at the top is a button to enter the collections title, description
-  and post date for the index page. post date, e. g. 2025-01-26 and
-  Jan 26, 2025
+* at the top you enter the collection’s title and post date
 
 * todo: add the index info to the collection json. the index page builder needs to be changed to make it from a set of collections.
 * todo: store the base name in the json data so you can match up with the original using the tag and the name. Use an unique id?

@@ -26,7 +26,7 @@ addClickListener("save-button", saveCollection)
 function storeText(field: TextType, requiredId: RequiredIdType, text: string): void {
   // Store the text in the cinfo field and update the required status
   // of the associated page element.
-  if (cinfo == null)
+  if (!cinfo)
     return
   cinfo[field] = text;
   setRequired(requiredId, text ? false : true)
@@ -38,7 +38,7 @@ function storeImageText(field: ImageTextType, requiredId: RequiredIdType,
     imageIndex: number, text: string): void {
   // Store the text in the cinfo field of the given image and update
   // the required status of the associated page element.
-  if (cinfo == null)
+  if (!cinfo)
     return
 
   const image = cinfo.images[imageIndex];
@@ -249,7 +249,7 @@ async function selectCollection(event: Event) {
   const selected = target.value
   log("Populate the page. Selected value:", selected);
   const num = parseSelection(selected)
-  if (num == null) {
+  if (!num) {
     log(`Invalid selection.`)
     return
   }
@@ -337,7 +337,7 @@ function createCollectionOrder(order: number[], max: number, availableCount: num
 
 async function populateCollection(cinfo: OptionalCinfo) {
   // Populate the page with the given collection info.
-  if (cinfo == null)
+  if (!cinfo)
     return
 
   setText("post-date", "post-date-required", cinfo.posted)
@@ -404,7 +404,7 @@ function findThumbnailIx(images: CJson.Image[], collectionImages: number[],
     url: string) {
   // Return the image index of the thumbnail image if if it is part of
   // the collection, else -1.
-  if (cinfo == null)
+  if (!cinfo)
     return -1
 
   let thumbnailIx = -1
@@ -425,7 +425,7 @@ function setImgDetails(currentImageIx: number) {
   // Set the image details section with the image, image title and
   // image description for the given image index along with their
   // required state.
-  if (cinfo == null)
+  if (!cinfo)
     return
 
   let imageTitle: string
@@ -470,7 +470,7 @@ async function collectionImageClick(order: number[], collectionIndex: number) {
   // available images section.
   log(`Collection image ${collectionIndex} clicked.`)
 
-  if (order == null)
+  if (!order)
     return
   if (order[collectionIndex] == -1) {
     log("No image here.")
@@ -505,7 +505,7 @@ async function availableImageClick(order: number[], availIndex: number) {
   // with the clicked image then hide the available image.
   log(`Available image ${availIndex} clicked.`)
 
-  if (order == null)
+  if (!order)
     return
 
   // Find the first collection image that's blank, first -1 in the
@@ -602,7 +602,7 @@ function goPreviousNext(order: number[], id: string, requiredId: RequiredIdType,
     imageIndex: number, goNext: boolean) {
   // Set the page element image to the previous or next image in the
   // collection and set its required state. Return the new image index.
-  if (order == null)
+  if (!order)
     return 0
 
   const [previous, next] = getPreviousNext(order, imageIndex)
@@ -646,7 +646,7 @@ function setRequired(requiredId: RequiredIdType, status: boolean) {
   // Set the page element (requiredId) with the "required" class or
   // not. A true status means the element is empty and will be marked
   // as required. A null requiredId is skipped.
-  if (requiredId == null)
+  if (!requiredId)
     return
   const element = get(requiredId) as HTMLElement;
   if (status) {
