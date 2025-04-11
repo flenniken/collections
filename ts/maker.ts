@@ -7,9 +7,14 @@
 /// <reference path="./win.ts" />
 /// <reference path="./all.ts" />
 
-// Current collection information.  It is set when you select a
-// collection.
 type OptionalCinfo = CJson.Collection | null
+type RequiredIdType = string | null;
+type ImageTextType = "title" | "description";
+type TextType = "title" | "description" | "indexDescription" | "posted";
+type ListenerFunction = (this: HTMLElement, ev: MouseEvent) => void
+
+// Current collection information.  It is set when you select a
+// collection to edit.
 let cinfo: OptionalCinfo = null;
 
 // The current index thumbnail. It is an index into the image list.
@@ -18,73 +23,18 @@ let currentThumbnailIx: number = 0;
 // The current image thumbnail. It is an index into the image list.
 let currentImageIx: number = 0;
 
-getElement<HTMLSelectElement>("collection-dropdown")
-  .addEventListener("change", selectCollection)
-
+addChangeListener("collection-dropdown", selectCollection)
 addClickListener("save-button", saveCollection)
-
-function storeText(field: TextType, requiredId: RequiredIdType, text: string): void {
-  // Store the text in the cinfo field and update the required status
-  // of the associated page element.
-  if (!cinfo)
-    return
-  cinfo[field] = text;
-  setRequired(requiredId, text ? false : true)
-  log(`Stored text in field "cinfo.${field}": ${text}`)
-}
-
-type ImageTextType = "title" | "description";
-function storeImageText(field: ImageTextType, requiredId: RequiredIdType,
-    imageIndex: number, text: string): void {
-  // Store the text in the cinfo field of the given image and update
-  // the required status of the associated page element.
-  if (!cinfo)
-    return
-
-  const image = cinfo.images[imageIndex];
-  image[field] = text;
-
-  setRequired(requiredId, text ? false : true);
-  log(`Stored text in field "image.${field}": ${text}`);
-}
-
-function storeIndexThumbnail(cinfo: OptionalCinfo, url: string): void {
-  // Store the image url in the cinfo index thumbnail field and update
-  // the required status of the associated page element.  The
-  // collection title is used as the alt text.
-  if (cinfo) {
-    cinfo.indexThumbnail = url;
-    setRequired("index-thumbnail-required", true)
-    log(`Stored the index thumbnail url: ${url}`);
-  }
-  else {
-    setRequired("index-thumbnail-required", true)
-  }
-}
-type TextType = "title" | "description" | "indexDescription" | "posted";
-function addBlurListener(id: string, field: TextType,
-    requiredId: RequiredIdType) {
-  const element = get(id) as HTMLTextAreaElement;
-  element.addEventListener('blur', () => {
-    storeText(field, requiredId, element.value)
-  });
-}
-
 addBlurListener("collection-title", "title", "collection-title-required")
 addBlurListener("description", "description", "description-required")
 addBlurListener("index-description", "indexDescription", "index-description-required")
 addBlurListener("post-date", "posted", "post-date-required")
-
-function addBlurImageTextListener(id: string, field: ImageTextType, requiredId: RequiredIdType) {
-  const element = get(id) as HTMLTextAreaElement;
-  element.addEventListener('blur', () => {
-    storeImageText(field, requiredId, currentImageIx, element.value)
-  });
-}
-
 addBlurImageTextListener("image-title", "title", "")
-addBlurImageTextListener("image-description", "description",
-  "image-description-required")
+addBlurImageTextListener("image-description", "description", "image-description-required")
+addClickListener("previous-image", previousImage)
+addClickListener("next-image", nextImage)
+addClickListener("index-previous-image", indexPreviousImage)
+addClickListener("index-next-image", indexNextImage)
 
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
@@ -105,11 +55,6 @@ for (let ix = 0; ix < 20; ix++) {
   })
 }
 
-addClickListener("previous-image", previousImage)
-addClickListener("next-image", nextImage)
-addClickListener("index-previous-image", indexPreviousImage)
-addClickListener("index-next-image", indexNextImage)
-
 // Add cmd/alt click event handlers for the collection boxes.
 for (let ix = 0; ix < 16; ix++) {
   const collectionImgElement = get(`cb${ix}`) as HTMLImageElement;
@@ -120,9 +65,53 @@ for (let ix = 0; ix < 16; ix++) {
   });
 }
 
-function addClickListener(id: string, listener: (this: HTMLElement, ev: MouseEvent) => void) {
+function addChangeListener(id: string, listener: ListenerFunction) {
+  const selectElement = get("collection-dropdown") as HTMLSelectElement
+  selectElement.addEventListener("change", selectCollection)
+}
+
+function addClickListener(id: string, listener: ListenerFunction) {
   const element = get(id) as HTMLElement
   element.addEventListener('click', listener)
+}
+
+function addBlurImageTextListener(id: string, field: ImageTextType, requiredId: RequiredIdType) {
+  const element = get(id) as HTMLTextAreaElement;
+  element.addEventListener('blur', () => {
+    storeImageText(field, requiredId, currentImageIx, element.value)
+  });
+}
+
+function addBlurListener(id: string, field: TextType,
+    requiredId: RequiredIdType) {
+  const element = get(id) as HTMLTextAreaElement;
+  element.addEventListener('blur', () => {
+    storeText(field, requiredId, element.value)
+  });
+}
+
+function storeText(field: TextType, requiredId: RequiredIdType, text: string): void {
+  // Store the text in the cinfo field and update the required status
+  // of the associated page element.
+  if (!cinfo)
+    return
+  cinfo[field] = text;
+  setRequired(requiredId, text ? false : true)
+  log(`Stored text in field "cinfo.${field}": ${text}`)
+}
+
+function storeImageText(field: ImageTextType, requiredId: RequiredIdType,
+    imageIndex: number, text: string): void {
+  // Store the text in the cinfo image object field and update the
+  // required status of the associated page element.
+  if (!cinfo)
+    return
+
+  const image = cinfo.images[imageIndex];
+  image[field] = text;
+
+  setRequired(requiredId, text ? false : true);
+  log(`Stored text in field "image.${field}": ${text}`);
 }
 
 function cmdAltClick(order: number[], collectionIndex: number) {
@@ -214,18 +203,11 @@ async function fetchCJson(num: number): Promise<CJson.Collection> {
   return await response.json()
 }
 
-// todo: make sure text we put on the page is encoded. See all the set
-// methods.
-
+// todo: make sure the text we put on the page is encoded.
 function encodeHtml(text: string) {
   // Return the given text where the html special characters are encoded
   // with their equivalent safe entities, < to &lt; etc.
   return document.createElement('div').textContent = text
-}
-
-function getElement<T extends HTMLElement>(id: string): T {
-  const element = get(id)
-  return element as T;
 }
 
 function setText(element_id: string, requiredId: RequiredIdType, text: string) {
@@ -239,15 +221,16 @@ async function selectCollection(event: Event) {
   // Handle collection select event.  Populate the page with the
   // selected collection.
 
-  if (cinfo != null) {
+  if (cinfo) {
     log("cinfo already populated.")
     return
   }
 
-  // Parse the selection string to get the collection number.
   const target = event.target as HTMLSelectElement;
   const selected = target.value
   log("Populate the page. Selected value:", selected);
+
+  // Parse the selection string to get the collection number.
   const num = parseSelection(selected)
   if (!num) {
     log(`Invalid selection.`)
@@ -268,8 +251,7 @@ async function selectCollection(event: Event) {
 }
 
 function isRequired(collectionImages: number[], boxIx: number) {
-  // Return whether the collection image box (ix) is required or
-  // not.
+  // Return whether the collection image box index is required or not.
 
   const boxEmpty = (collectionImages[boxIx] == -1) ? true : false
 
@@ -308,9 +290,9 @@ function isRequired(collectionImages: number[], boxIx: number) {
 }
 
 function createCollectionOrder(order: number[], max: number, availableCount: number) {
-  // Create the cinfo.order variable. max is the maximum number of
-  // images in a collection and availableCount is the number of available
-  // images.
+  // Create and return the variable used for cinfo.order. Max is the
+  // maximum number of images in a collection and availableCount is
+  // the number of available images.
 
   let collectionImages = []
   for (let ix = 0; ix < max; ix++) {
@@ -402,7 +384,7 @@ async function populateCollection(cinfo: OptionalCinfo) {
 
 function findThumbnailIx(images: CJson.Image[], collectionImages: number[],
     url: string) {
-  // Return the image index of the thumbnail image if if it is part of
+  // Return the image index of the thumbnail image if it is part of
   // the collection, else -1.
   if (!cinfo)
     return -1
@@ -447,8 +429,8 @@ function setImgDetails(currentImageIx: number) {
 function setImage(id: string, requiredId: RequiredIdType,
     imageIndex: number) {
   // Set the image page element to the collection image with the given
-  // imageIndex. If the imageIndex is -1, set blank. Set the required
-  // status of the element.
+  // imageIndex. If the imageIndex is -1, set it blank. Set the
+  // required status of the element.
   let required: boolean
   const element = get(id) as HTMLImageElement
   if (!cinfo || imageIndex == -1) {
@@ -518,7 +500,8 @@ async function availableImageClick(order: number[], availIndex: number) {
   log(`The first available collection index: ${firstBlankIx}`)
 
   // Hide the available box.
-  getElement<HTMLElement>(`ab${availIndex}`).style.display = "none"
+  const abox = get(`ab${availIndex}`) as HTMLElement
+  abox.style.display = "none"
 
   // Set the collection box with the available image.
   setImage(`ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
@@ -526,13 +509,10 @@ async function availableImageClick(order: number[], availIndex: number) {
   // Add the image to the order list.
   order[firstBlankIx] = availIndex
   log(`Added to the image order list. order: ${order}`)
-
-  setRequired(`cb${firstBlankIx}`, false)
 }
 
 async function saveCollection(event: Event) {
   // Download the cjson file.
-
   log("The save-button was clicked.")
 
   if (!cinfo) {
@@ -582,8 +562,10 @@ function getPreviousNext(orderList: number[], imageIndex: number) {
       break
     }
   }
-  if (iix == -1)
+  if (iix == -1) {
+    // The image index is not in the collection.
     return [-1, -1]
+  }
 
   let previousOrderIx = iix-1
   if (previousOrderIx < 0)
@@ -641,7 +623,6 @@ function indexNextImage() {
     currentThumbnailIx, true)
 }
 
-type RequiredIdType = string | null;
 function setRequired(requiredId: RequiredIdType, status: boolean) {
   // Set the page element (requiredId) with the "required" class or
   // not. A true status means the element is empty and will be marked
