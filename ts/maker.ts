@@ -236,13 +236,14 @@ async function selectCollection(event: Event) {
     log(`Invalid selection.`)
     return
   }
+  log(`collection num: ${num}`)
 
   // Read the cjson file.
   try {
     cinfo = await fetchCJson(num)
   }
-  catch {
-    log("Fetch of cjson failed.")
+  catch (error) {
+    log(`Fetch of cjson failed: ${error}`);
     return
   }
   log(cinfo)
@@ -379,7 +380,7 @@ async function populateCollection(cinfo: OptionalCinfo) {
 
   // Set the image details section with the first image in the
   // collection.
-  setImgDetails(currentImageIx)
+  setImgDetails(cinfo.images, currentImageIx)
 }
 
 function findThumbnailIx(images: CJson.Image[], collectionImages: number[],
@@ -403,7 +404,7 @@ function findThumbnailIx(images: CJson.Image[], collectionImages: number[],
   return thumbnailIx
 }
 
-function setImgDetails(currentImageIx: number) {
+function setImgDetails(images: CJson.Image[], currentImageIx: number) {
   // Set the image details section with the image, image title and
   // image description for the given image index along with their
   // required state.
@@ -417,7 +418,7 @@ function setImgDetails(currentImageIx: number) {
     imageDescription = ""
   }
   else {
-    const image = cinfo!.images[currentImageIx]
+    const image = images[currentImageIx]
     imageTitle = image.title
     imageDescription = image.description
   }
@@ -599,27 +600,35 @@ function goPreviousNext(order: number[], id: string, requiredId: RequiredIdType,
 
 function previousImage() {
   // Set the image details image to the previous collection image.
-  currentImageIx = goPreviousNext(cinfo?.order!, "image-details", "image-details-required",
+  if (!cinfo || cinfo.order == null)
+    return
+  currentImageIx = goPreviousNext(cinfo?.order, "image-details", "image-details-required",
     currentImageIx, false)
-  setImgDetails(currentImageIx)
+  setImgDetails(cinfo.images, currentImageIx)
 }
 
 function nextImage() {
   // Set the image details image to the next collection image.
-  currentImageIx = goPreviousNext(cinfo?.order!, "image-details", "image-details-required",
+  if (!cinfo || cinfo.order == null)
+    return
+  currentImageIx = goPreviousNext(cinfo?.order, "image-details", "image-details-required",
     currentImageIx, true)
-  setImgDetails(currentImageIx)
+  setImgDetails(cinfo.images, currentImageIx)
 }
 
 function indexPreviousImage() {
   // Set the index thumbnail to the previous collection image.
-  currentThumbnailIx = goPreviousNext(cinfo?.order!, "index-thumbnail", "index-thumbnail-required",
+  if (!cinfo || cinfo.order == null)
+    return
+  currentThumbnailIx = goPreviousNext(cinfo.order, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, false)
 }
 
 function indexNextImage() {
   // Set the index thumbnail to the next collection image.
-  currentThumbnailIx = goPreviousNext(cinfo?.order!, "index-thumbnail", "index-thumbnail-required",
+  if (!cinfo || cinfo.order == null)
+    return
+  currentThumbnailIx = goPreviousNext(cinfo.order, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, true)
 }
 

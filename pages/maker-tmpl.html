@@ -17,8 +17,10 @@
           <option value="" disabled selected>Select a collection...</option>
 <!--$ nextline -->
 <!--$ : t.repeat = len(s.collections) -->
-<!--$ : num = s.collections[t.row] -->
-          <option value="collection{num}">Collection {num}</option>
+<!--$ : keys = keys(s.collections) -->
+<!--$ : num = keys[t.row] -->
+<!--$ : name = s.collections[num] -->
+          <option value="collection{num}">{name}</option>
         </select>
       </div>
       <div class="html-button">

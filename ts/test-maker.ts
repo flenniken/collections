@@ -78,6 +78,7 @@ expected: [2]
 }
 
 function gotExpectedSuite() {
+  log("gotExpectedSuite")
   test(gotExpected, [1], [1])
   test(testExpectedError, [1], [2], "comparing arrays")
 }
@@ -90,6 +91,7 @@ function testShiftImages(orderList: number[], collectionIndex: number,
 }
 
 function shiftImagesSuite() {
+  log("shiftImagesSuite")
   const fn = testShiftImages
   test(fn, [0, 1, 2], 0, [0, 1, 2])
   test(fn, [0, 1, 2], 1, [0, 1, 2])
@@ -104,6 +106,7 @@ function shiftImagesSuite() {
 }
 
 function getPreviousNextSuite() {
+  log("getPreviousNextSuite")
   const [previous, next] = getPreviousNext([], 0)
   test(gotExpected, previous, -1)
   test(gotExpected, next, -1)
@@ -166,6 +169,7 @@ function testIsRequired(filledBoxes: number[], eRequiredTrue: number[]) {
 }
 
 function isRequireSuite() {
+  log("isRequireSuite")
   const fn = testIsRequired
 
   // Full box is not required.
@@ -218,6 +222,7 @@ function testFindThumbnailIx(imageThumbnails: string[],
 }
 
 function findThumbnailInfoSuite() {
+  log("findThumbnailInfoSuite")
   const fn = testFindThumbnailIx
 
   test(fn, [], [], "url", -1)
@@ -248,6 +253,7 @@ function testCreateCollectionOrder(order: number[], availableCount: number, eOrd
 }
 
 function createCollectionOrderSuite() {
+  log("createCollectionOrderSuite")
   const fn = testCreateCollectionOrder
 
   test(fn, undefined, 1, [0, -1, -1])
@@ -262,13 +268,31 @@ function createCollectionOrderSuite() {
   test(fn, [3, 2], 3, [-1, 2, -1])
 }
 
+function testParseSelection(selection: string, num: number | null) {
+  const index = parseSelection(selection)
+  gotExpected(index, num, `selection: ${selection}`)
+}
+
+function parseSelectionSuite() {
+  log("parseSelectionSuite")
+  const fn = testParseSelection
+  test(fn, "collection3", 3)
+  test(fn, "collection24", 24)
+  test(fn, "collection", null)
+  test(fn, "collectionabc", null)
+  test(fn, "collabc", null)
+  test(fn, "", null)
+  test(fn, "asdf", null)
+}
 
 function testMaker() {
+  log("Running testMaker...")
   gotExpectedSuite()
   getPreviousNextSuite()
   shiftImagesSuite()
   isRequireSuite()
   createCollectionOrderSuite()
+  parseSelectionSuite()
 
   if (errorCount == 0)
     log("All tests passed.")
@@ -277,3 +301,7 @@ function testMaker() {
 
   return 0
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  testMaker();
+});
