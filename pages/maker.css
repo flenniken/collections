@@ -226,3 +226,7 @@ h1, h2 {
 span.required {
   color: red;
 }
+
+span.good {
+  display: none;
+}

@@ -20,7 +20,7 @@
 <!--$ : keys = keys(s.collections) -->
 <!--$ : num = keys[t.row] -->
 <!--$ : name = s.collections[num] -->
-          <option value="collection{num}">{name}</option>
+          <option value="{num}">{name}</option>
         </select>
       </div>
       <div class="html-button">
@@ -123,7 +123,7 @@
             <button id="next-image">Next</button>
           </div>
         </div>
-        <input type="text" id="image-title" placeholder="image title (required)">
+        <input type="text" id="image-title" placeholder="image title (optional)">
         <span id="image-description-required" class="required">*</span>
         <textarea id="image-description" placeholder="image description (required)"></textarea>
       </div>

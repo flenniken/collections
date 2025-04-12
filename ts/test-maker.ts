@@ -334,6 +334,52 @@ function parseNonNegativeIntSuite() {
   test(errorFn, ".1")
 }
 
+function isRequiredStatus(requiredId: RequiredIdType, eStatus: boolean) {
+  // Validate that the element's required status matches the expected
+  // status.
+  if (requiredId == null)
+    return
+  const classes = get(requiredId).classList
+  const required = classes.contains("required")
+  const good = classes.contains("good")
+  const msg = `${requiredId} classes: ${classes}`
+  if (required && good)
+    fail("both required and good classes are set")
+  if (eStatus)
+    gotExpected(required, true, msg)
+  else
+    gotExpected(good, true, msg)
+}
+
+function testSetRequired(requiredId: RequiredIdType, status: boolean) {
+  setRequired(requiredId, status)
+  isRequiredStatus(requiredId, status)
+}
+
+function setRequiredSuite() {
+  log("setRequiredSuite")
+  const requiredIds: RequiredIdType[] = [
+    "image-details-required",
+    "image-description-required",
+    "collection-title-required",
+    "post-date-required",
+    "description-required",
+    "index-thumbnail-required",
+    "index-description-required",
+    "image-details-required",
+    "image-description-required",
+  ]
+  for (const requiredId of requiredIds) {
+    isRequiredStatus(requiredId, true)
+  }
+  const requiredId = "collection-title-required"
+  const fn = testSetRequired
+  test(fn, requiredId, false)
+  test(fn, requiredId, false)
+  test(fn, requiredId, true)
+  test(fn, requiredId, true)
+}
+
 function testMaker() {
   log("Running testMaker...")
   gotExpectedSuite()
@@ -345,6 +391,7 @@ function testMaker() {
   findThumbnailIxSuite()
   createCollectionOrderSuite()
   parseNonNegativeIntSuite()
+  setRequiredSuite()
 
   if (errorCount == 0)
     log("All tests passed.")

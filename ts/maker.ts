@@ -167,9 +167,9 @@ function shiftImages(orderList: number[], collectionIndex: number) {
 }
 
 function parseNonNegativeInt(numberStr: string): number {
-  // Parse the given string as a non-negative integer.
-  // Return the integer when the string represents a
-  // valid non-negative integer else throw an error.
+  // Parse the given string as a non-negative integer.  Return the
+  // integer when the string represents a valid non-negative integer
+  // else throw an error.
   if (/^\d+$/.test(numberStr)) {
     const num = parseInt(numberStr, 10);
     if (num >= 0) {
@@ -196,8 +196,8 @@ async function fetchCJson(num: number): Promise<CJson.Collection> {
 
 // todo: make sure the text we put on the page is encoded.
 function encodeHtml(text: string) {
-  // Return the given text where the html special characters are encoded
-  // with their equivalent safe entities, < to &lt; etc.
+  // Return the given text where the html special characters are
+  // encoded with their equivalent safe entities, < to &lt; etc.
   return document.createElement('div').textContent = text
 }
 
@@ -616,21 +616,19 @@ function indexNextImage() {
 }
 
 function setRequired(requiredId: RequiredIdType, status: boolean) {
-  // Set the page element (requiredId) with the "required" class or
-  // not. A true status means the element is empty and will be marked
-  // as required. A null requiredId is skipped.
+  // Set the page element (requiredId) with the "required" class when
+  // required or good when not. A true status means the element is
+  // empty and will be marked as required. A null requiredId is
+  // skipped.
   if (!requiredId)
     return
   const element = get(requiredId) as HTMLElement;
   if (status) {
     // Mark it required.
-    element.classList.add('required');
-    log(`Mark ${requiredId} required.`)
+    element.classList.replace('good', 'required');
   }
   else {
     // We have it, remove the required class.
-    element.classList.remove('required')
-    log(`Mark ${requiredId} is good.`)
+    element.classList.replace('required', 'good')
   }
-  log(`status: ${status}, classList: ${element.classList}`)
 }
