@@ -299,21 +299,39 @@ function createCollectionOrderSuite() {
   test(fn, [3, 2], 3, [-1, 2, -1])
 }
 
-function testParseSelection(selection: string, num: number | null) {
-  const index = parseSelection(selection)
-  gotExpected(index, num, `selection: ${selection}`)
+function testParseNonNegativeInt(numberStr: string, eNumber: number) {
+  const num = parseNonNegativeInt(numberStr)
+  gotExpected(num, eNumber, `numberStr: ${numberStr}`)
 }
 
-function parseSelectionSuite() {
-  log("parseSelectionSuite")
-  const fn = testParseSelection
-  test(fn, "collection3", 3)
-  test(fn, "collection24", 24)
-  test(fn, "collection", null)
-  test(fn, "collectionabc", null)
-  test(fn, "collabc", null)
-  test(fn, "", null)
-  test(fn, "asdf", null)
+function testParseNonNegativeIntError(numberStr: string) {
+  try {
+    const num = parseNonNegativeInt(numberStr)
+    throw Error("parseNonNegativeInt did not generate an exception")
+  }
+  catch (error) {
+    if (!(error instanceof Error))
+      throw Error("invalid error type")
+    const eMsg = "not a valid non-negative integer"
+    gotExpected(error.message, eMsg, `numberStr: ${numberStr}`)
+  }
+}
+
+function parseNonNegativeIntSuite() {
+  log("parseNonNegativeIntSuite")
+  const fn = testParseNonNegativeInt
+  test(fn, "0", 0)
+  test(fn, "3", 3)
+  test(fn, "12", 12)
+  const errorFn = testParseNonNegativeIntError
+  test(errorFn, "")
+  test(errorFn, "abc")
+  test(errorFn, "3abc")
+  test(errorFn, "abc3")
+  test(errorFn, "3.14")
+  test(errorFn, "-1")
+  test(errorFn, "1-1")
+  test(errorFn, ".1")
 }
 
 function testMaker() {
@@ -326,7 +344,7 @@ function testMaker() {
   createTestImageSuite()
   findThumbnailIxSuite()
   createCollectionOrderSuite()
-  parseSelectionSuite()
+  parseNonNegativeIntSuite()
 
   if (errorCount == 0)
     log("All tests passed.")

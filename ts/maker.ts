@@ -166,26 +166,17 @@ function shiftImages(orderList: number[], collectionIndex: number) {
   }
 }
 
-function parseSelection(selected: string) {
-  // Parse the collection number from the selected string and return
-  // the number. Return null on error.  For the string
-  // "collection34", 34 is returned.
-
-  const prefix = "collection"
-  if (!selected.startsWith(prefix)) {
-    return null
+function parseNonNegativeInt(numberStr: string): number {
+  // Parse the given string as a non-negative integer.
+  // Return the integer when the string represents a
+  // valid non-negative integer else throw an error.
+  if (/^\d+$/.test(numberStr)) {
+    const num = parseInt(numberStr, 10);
+    if (num >= 0) {
+      return num;
+    }
   }
-
-  const numberStr = selected.slice(prefix.length)
-  try {
-    const num = parseInt(numberStr, 10)
-    if (Number.isNaN(num))
-      return null
-    return num
-  }
-  catch {
-    return null
-  }
+  throw new Error("not a valid non-negative integer");
 }
 
 async function fetchCJson(num: number): Promise<CJson.Collection> {
@@ -228,14 +219,9 @@ async function selectCollection(event: Event) {
 
   const target = event.target as HTMLSelectElement;
   const selected = target.value
-  log("Populate the page. Selected value:", selected);
+  log("Selected value:", selected);
 
-  // Parse the selection string to get the collection number.
-  const num = parseSelection(selected)
-  if (!num) {
-    log(`Invalid selection.`)
-    return
-  }
+  const num = parseNonNegativeInt(selected)
   log(`collection num: ${num}`)
 
   // Read the cjson file.
