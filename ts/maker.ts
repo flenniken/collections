@@ -372,8 +372,8 @@ async function populateCollection(cinfo: OptionalCinfo) {
 
   // Set the index thumbnail image to the one specified in the cinfo
   // if it is part of the collection, else set it to the first image.
-  const thumbnailIndex = findThumbnailIx(cinfo.images,
-    cinfo.order, cinfo.indexThumbnail)
+  const thumbnailIndex = findThumbnailIx(cinfo.order, cinfo.images,
+    cinfo.indexThumbnail)
   currentThumbnailIx = (thumbnailIndex != -1) ? thumbnailIndex : 0
   setImage("index-thumbnail", "index-thumbnail-required", currentThumbnailIx)
   log(`currentThumbnail: ${currentThumbnailIx}`)
@@ -383,20 +383,17 @@ async function populateCollection(cinfo: OptionalCinfo) {
   setImgDetails(cinfo.images, currentImageIx)
 }
 
-function findThumbnailIx(images: CJson.Image[], collectionImages: number[],
-    url: string) {
+function findThumbnailIx(order: number[], images: CJson.Image[],
+  indexThumbnail: string) {
   // Return the image index of the thumbnail image if it is part of
   // the collection, else -1.
-  if (!cinfo)
-    return -1
-
   let thumbnailIx = -1
-  for (let ix = 0; ix < 16; ix++) {
-    const imageIx = collectionImages[ix]
+  for (let ix = 0; ix < order.length; ix++) {
+    const imageIx = order[ix]
     if (imageIx == -1)
       continue
-    const image = cinfo.images[imageIx]
-    if (image.thumbnail == cinfo.indexThumbnail) {
+    const image = images[imageIx]
+    if (image.thumbnail == indexThumbnail) {
       thumbnailIx = imageIx
       break
     }

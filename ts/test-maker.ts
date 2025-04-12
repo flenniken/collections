@@ -1,5 +1,10 @@
 // Test code:
 
+/// <reference path="./win.ts" />
+/// <reference path="./all.ts" />
+/// <reference path="./cjsonDefinition.ts" />
+/// <reference path="./maker.ts" />
+
 function gotExpected(got: any, expected: any, message?: string) {
   // Check if the got value is the same as the expected value.
   // Convert the values to JSON then compare them.
@@ -126,9 +131,10 @@ function getPreviousNextSuite() {
   test(fn, [-1,5,-1,-1,8,-1,3,-1], 8, 5, 3)
 }
 
-function fillBoxes(filledBoxes: number[]) {
-  // Return a list of collection boxes filled in with the given list
-  // of image indexes. The rest of the boxes are empty (-1).
+function boxes99(filledBoxes: number[]) {
+  // Create a collection of 16 boxes.
+  // Each element of filledBoxes is the index to set to the value 99.
+  // The rest of the boxes are set empty (-1).
 
   if (filledBoxes.length >= 16)
     fail("too many filled boxes")
@@ -150,11 +156,29 @@ function fillBoxes(filledBoxes: number[]) {
   return collectionImages
 }
 
+function testBoxes99(filledBoxes: number[], eOrder: number[]) {
+  const collectionImages = boxes99(filledBoxes)
+  const msg = `boxes99:
+   input: ${JSON.stringify(filledBoxes)}`
+  gotExpected(collectionImages, eOrder, msg)
+}
+
+function testBoxes99Suite() {
+  log("testBoxes99Suite")
+  const fn = testBoxes99
+  test(fn, [], [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1])
+  test(fn, [0], [99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1])
+  test(fn, [1], [-1,99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1])
+  test(fn, [0, 1], [99, 99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1])
+  test(fn, [2, 3], [-1,-1,99,99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1])
+  test(fn, [15], [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,99])
+}
+
 function testIsRequired(filledBoxes: number[], eRequiredTrue: number[]) {
 
-  const eRequired = fillBoxes(eRequiredTrue)
+  const eRequired = boxes99(eRequiredTrue)
 
-  const collectionImages = fillBoxes(filledBoxes)
+  const collectionImages = boxes99(filledBoxes)
   let answers: number[] = []
   for (let ix = 0; ix < 16; ix++) {
     const required = isRequired(collectionImages, ix)
@@ -180,70 +204,77 @@ function isRequireSuite() {
   test(fn, [0], [1,2,3,4,5,6,7])
   test(fn, [0,1], [2,3,4,5,6,7])
   test(fn, [8, 15], [0,1,2,3,4,5,6,7,9,10,11,12,13,14])
-  test(fn, [12, 15], [ 0,1,2,3,4,5,6,7,8,9,10,11,13,14])
+  test(fn, [12, 15], [0,1,2,3,4,5,6,7,8,9,10,11,13,14])
   test(fn, [8, 9], [0,1,2,3,4,5,6,7])
   test(fn, [9], [0,1,2,3,4,5,6,7,8])
   test(fn, [8], [0,1,2,3,4,5,6,7,9])
 }
 
-/// <reference path="./cjsonDefinition.ts" />
-function createTestImage(thumbnail: string): CJson.Image {
+function createTestImage(unique: number): CJson.Image {
   let image: CJson.Image = {
-    url: "image url",
-    thumbnail: thumbnail,
-    title: "title",
-    description: "description",
-    width: 2040,
-    height: 1024,
-    size: 12345,
-    sizet: 9876,
-    uniqueId: ""
+    url: `image url ${unique}`,
+    thumbnail: `thumbnail ${unique}`,
+    title: `title ${unique}`,
+    description: `description ${unique}`,
+    width: 2040+unique,
+    height: 1024+unique,
+    size: 10000+unique,
+    sizet: 5000+unique,
+    uniqueId: `${unique}`,
   }
   return image
 }
 
-function createTestImages(imageThumbnails: string[]): CJson.Image[] {
+function testCreateTestImage(unique: number) {
+  const image = createTestImage(unique)
+  const msg = `image: ${JSON.stringify(image, null, 2)}`
+  gotExpected(image.thumbnail, `thumbnail ${unique}`, msg)
+  gotExpected(image.url, `image url ${unique}`, msg)
+  gotExpected(image.width, 2040 + unique, msg)
+  gotExpected(image.uniqueId, `${unique}`, msg)
+}
 
+function createTestImageSuite() {
+  log("createTestImageSuite")
+  test(testCreateTestImage, 0)
+  test(testCreateTestImage, 1)
+  test(testCreateTestImage, 2)
+  test(testCreateTestImage, 99)
+}
+
+function createTestImages(count: number): CJson.Image[] {
   let images: CJson.Image[] = []
-  for (let ix = 0; ix < imageThumbnails.length; ix++) {
-    const thumbnail = imageThumbnails[ix]
-    const image = createTestImage(thumbnail)
+  for (let ix = 0; ix < count; ix++) {
+    const image = createTestImage(ix)
     images.push(image)
   }
   return images
 }
 
-function testFindThumbnailIx(imageThumbnails: string[],
-    filledBoxes: number[], url: string, eIndex: number) {
-  const images = createTestImages(imageThumbnails)
-  const collectionImages = fillBoxes(filledBoxes)
-  const index = findThumbnailIx(images, collectionImages, url)
+function testFindThumbnailIx(order: number[], images: CJson.Image[],
+    url: string, eIndex: number) {
+  const index = findThumbnailIx(order, images, url)
   gotExpected(index, eIndex)
 }
 
-function findThumbnailInfoSuite() {
-  log("findThumbnailInfoSuite")
+function findThumbnailIxSuite() {
+  log("findThumbnailIxSuite")
   const fn = testFindThumbnailIx
+  let order = [0, 2]
+  const images = createTestImages(3)
+  test(fn, order, images, "thumbnail 0", 0)
+  test(fn, order, images, "thumbnail 1", -1)
+  test(fn, order, images, "thumbnail 2", 2)
 
-  test(fn, [], [], "url", -1)
+  order = [-1, 0]
+  test(fn, order, images, "thumbnail 0", 0)
+  test(fn, order, images, "thumbnail 1", -1)
+  test(fn, order, images, "thumbnail 2", -1)
 
-  test(fn, ["url"], [], "url", -1)
-  test(fn, ["url"], [0], "url", 0)
-
-  test(fn, ["url", "abc"], [0], "url", 0)
-  test(fn, ["abc", "url"], [0], "url", -1)
-  test(fn, ["url", "abc"], [0,1], "url", 0)
-  test(fn, ["abc", "url"], [0,1], "url", 1)
-
-  test(fn, ["url", "abc", "xyz"], [0], "url", 0)
-
-  test(fn, ["abc", "url", "xyz"], [0], "url", -1)
-  test(fn, ["abc", "url", "xyz"], [0,1], "url", 1)
-  test(fn, ["abc", "url", "xyz"], [0,1,2], "url", 1)
-
-  test(fn, ["abc", "xyz", "url"], [0], "url", -1)
-  test(fn, ["abc", "xyz", "url"], [0,1], "url", -1)
-  test(fn, ["abc", "xyz", "url"], [0,1,2], "url", 2)
+  order = [-1, -1]
+  test(fn, order, images, "thumbnail 0", -1)
+  test(fn, order, images, "thumbnail 1", -1)
+  test(fn, order, images, "thumbnail 2", -1)
 }
 
 function testCreateCollectionOrder(order: number[], availableCount: number, eOrder: number[]) {
@@ -290,7 +321,10 @@ function testMaker() {
   gotExpectedSuite()
   getPreviousNextSuite()
   shiftImagesSuite()
+  testBoxes99Suite()
   isRequireSuite()
+  createTestImageSuite()
+  findThumbnailIxSuite()
   createCollectionOrderSuite()
   parseSelectionSuite()
 
