@@ -2,10 +2,10 @@
 
 How to create a new collection.
 
-* create a folder with images
-* run the maker command
-* determine the images in the collection and their order
-* enter the image descriptions
+* create a folder with images following the manual steps
+* create the collection's cjson file by running the maker command
+* determine the images in the collection and their order with the maker page
+* enter the image descriptions with the maker page
 * define the zoom points
 * publish
 
@@ -45,10 +45,13 @@ done
 # Maker Command
 
 You run the maker command to create the collection's local image
-folder from the folder of images. It creates a cjson file with the
-images width, height, size and other information.  It creates empty
-titles and descriptions and sets an arbitrary images order.  You will
-fill in this information later with the maker page.
+folder from the folder of images you created. You do this on your
+desktop running the website with localhost.
+
+The command creates the collection's cjson file in the folder which
+describes collection. It contains empty titles and descriptions and an
+arbitrary image order.  You will fill in this information later with
+the maker page.
 
 Run the command and specify the folder:
 
@@ -58,8 +61,8 @@ scripts/maker -c 3
 Created a new local collection: images/c3
 ~~~
 
-It validates the files and if a problem is found, it stops so you
-can correct it. It validates:
+The command validates the files and if a problem is found, it stops so
+you can correct it. It validates:
 
 * that the collection is the next available collection. It checks the
   S3 /db prefix files.
@@ -84,194 +87,55 @@ After after successful validation it:
 
 [⬇](#Contents)
 
-# Collections Under Development
-
-We keep track of the collections under development with the /db prefix
-in S3. There is a prefix for each collection being developed. Prefixes
-don’t have contention problems like one file would.  There are no /db
-prefixes when there are no collections in development.
-
-Collections are in numeric order.  We keep track of the number of
-collections with the /published-x key where x is a variable that tells
-how many published collections there are.
-
-One list of S3 db prefixes tells you the both the collections under
-development and the number published.
-
-~~~
-/db/c3 -- collection 3 is under development
-/db/c4 -- collection 4 is under development
-/db/published-2 -- there are 2 published collections
-~~~
-
-[⬇](#Contents)
-
 # Maker Page
 
 You use the maker page to determine which images to included in the
 collection (from the initial 20), to determine their order, and to
-enter the descriptive text.
+enter descriptive text.
 
-Admin's will see a maker icon.
+As an admin you click the maker icon to load the maker page. You
+select the collection to edit from the dropdown menu. You do this
+while running from localhost on your desktop.
 
-You edit the new collection by selecting it from the dropdown menu.
-The dropdown choices come from `get-new-collections` api which returns
-the local image folders that have cjson files.  The cjson list comes
-from the `get-collection api`.
+***Saving***
 
-Your edits change the cjson file. Your changes are saved
-automatically.
+Your edits change the cjson file. You must be careful to save your
+changes with the Save button.
 
-The maker page ui:
+You will lose your changes if you refresh the page or select a
+different collection to edit!
 
-* on the left is a table of boxes, 2 columns by 8 rows.
+When you save the cjson file is downloaded to the download folder.
+You need to move it to the images folder. For example to move the c1
+json file:
 
-* on the right is a table containing the 20 thumbnail images
+~~~
+mv ~/Downloads/c1.json dist/images/c1/
+~~~
 
-* you click on an image on the right to put it in the next available
+Eventually saving will be done automatically on every change.
+
+***Maker Page UI***
+
+The maker page elements:
+
+* on the left is a table of boxes, 2 columns by 8 rows. This table
+  tells which images are in the colloection and their order.
+
+* on the right is a table containing the 20 available images
+
+* you click on an image on the right to put it in the next collection
   box.
 
 * you click on a box image to move it to back with the available images
 
-* at the top you enter the collection’s title and post date
+* you cmd-click a collection box to open up an empty box or to close one
 
-* todo: add the index info to the collection json. the index page builder needs to be changed to make it from a set of collections.
-* todo: store the base name in the json data so you can match up with the original using the tag and the name. Use an unique id?
-
-[⬇](#Contents)
-
-# Deploy New Folder
-
-You deploy the files to S3 with the maker script using the -d option.
-You do this after you finish editing the collection.
-
-~~~
-scripts/maker -d 24
-~~~
-
-The -d option does the following:
-
-* it renames the image files locally to use the standard naming
-* it updates the local json file in the json folder with the new names
-* it copies the local image folder to S3 in the production location
-* it makes a copy of the index thumbnail to the tin folder on s3
-* it deletes the local collection folder
-
-[⬇](#Contents)
-
-# Build Collection Pages
-
-After the cjson file and the image files have been deployed to S3
-(maker -d), you can run the gulp build command to create the
-collections thumbnails and image pages and to update the index page.
-
-* The pages are built based on the cjson files.
-* Users do not see the new collection until you deploy.
-* You test locally.
-
-[⬇](#Contents)
-
-# Set Zoom Points
-
-You set the zoom points as well as test on your local machine before
-you deploy it to the world.
-
-You run the collections web app on your local machine and log in as an
-admin so the needed icons appears.  You use the developer tools to set
-the width and height of the screen before setting the zoom points. For
-each full size image you zoom in and pan to set its zoom points in
-both orientations.
-
-You save your zoom point changes with the admin save icon. It saves the
-zoom points in the json file with the `post-collection` api.
-
-[⬇](#Contents)
-
-# Deploy
-
-After you finish setting the zoom points and testing, you deploy the
-new pages everyone can see the new collection.  Run the deploy script:
-
-~~~
-scripts/deploy -sw
-~~~
-
-# Implementation Details
-
-**Width & Height**
-
-You can determine the width and height of a JPEG image in Python using
-the Pillow library (PIL). Here’s how to do it:
-
-Code Example:
-
-~~~
-from PIL import Image
-
-# Open the image file
-image = Image.open("your_image.jpg")
-
-# Get width and height
-width, height = image.size
-
-print(f"Width: {width}, Height: {height}")
-~~~
-
-~~~
-pip install pillow
-~~~
-
-**Edit Pages**
-
-Eventually it would be nice to allow users to edit the descriptions on
-the public pages.
-
-You could open it up first for admins.
-
-**API**
-
-Create an api to fetch and save the collection json file while running
-locally.
-
-* **save-json** -- post request that saves cjson to disk. The collection number is in the cjson so you know where to store it.
-* **get-json** -- get request to fetch the cjson, you pass the collection number
-* **get-local-collections** -- get request that returns the collections. A list of numbers for the local collections and a number for the remote collections (1-number).
-
-**Local Folder**
-
-Make a local folder for the files that don’t get copied to s3 but need
-to be under the dist folder
-
-~~~
-dist/local
-dist/local/images
-dist/local/maker.html
-dist/local/get-json
-dist/local/post-json
-~~~
-
-* put the temp collection files there
-* put the server files there for get and post json
-* put the maker page there
-* write in typescript the maker js code
-* write the maker and server code in python
-
-**todo**
-
-* Store json in the collections folder. Check them in in the project dist folder.
-* store the html thumbnails and image pages there too.
-* we could version the js files if necessary. Then the html pages to not need to need rebuilt.
-* in the json file make a thumbnail and index section, for their information.
-* exclude the maker.html page from the deploy sync
-* exclude the images in the images folder too?
+* at the top you enter the collection’s title and post date and below
+  you enter the descriptive text for the collection and images
 
 # Contents
 
-* [Manual Steps](#manual-steps) -- the manual steps to create a folder of images for a new collection.
-* [Maker Script](#maker-script) -- how to create the starting cjson file and how to deploy to s3.
+* [Manual Steps](#manual-steps) -- the steps to create images for a new collection.
+* [Maker Command](#maker-command) -- how to create the starting cjson file.
 * [Maker Page](#maker-page) -- how to order and describe the new collection.
-* [Deploy New Folder](#deploy-new-folder) -- how to copy the new collection folder to s3.
-* [Build Collection Pages](#build-collection-pages) -- how to make the collection html pages.
-* [Set Zoom Points](#set-zoom-points) -- how to set the zoom points.
-* [Deploy](#deploy) -- how to deploy the finished collection.
-* [Implementation Details](#implementation-details) -- details about writing the code.
