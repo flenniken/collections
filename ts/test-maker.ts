@@ -456,6 +456,7 @@ function appendTestContent() {
   // that text is encoded correctly.
 
   const container = document.createElement("div");
+  container.id = "test-container";
   document.body.appendChild(container);
 
   // Create a test heading in the test container.

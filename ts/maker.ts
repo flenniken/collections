@@ -90,6 +90,9 @@ function addBlurListener(id: string, field: TextType,
   });
 }
 
+// Disable the inputs.
+disableInputs(true)
+
 function storeText(field: TextType, requiredId: RequiredIdType, text: string): void {
   // Store the text in the cinfo field and update the required status
   // of the associated page element.
@@ -119,8 +122,6 @@ function cmdAltClick(order: number[], collectionIndex: number) {
   // up or down.
   log(`Cmd/Alt clicked on collection box ${collectionIndex}.`);
   if (!cinfo)
-    return
-  if (!order)
     return
 
   shiftImages(order, collectionIndex)
@@ -364,14 +365,29 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
   // if it is part of the collection, else set it to the first image.
   let thumbnailIndex = findThumbnailIx(newCinfo.order, newCinfo.images,
     newCinfo.indexThumbnail)
-  thumbnailIndex = (thumbnailIndex != -1) ? thumbnailIndex : 0
+  if (thumbnailIndex == -1) {
+    thumbnailIndex = 0
+    newCinfo.indexThumbnail = newCinfo.images[thumbnailIndex].thumbnail
+  }
+  currentThumbnailIx = thumbnailIndex
   setImage(newCinfo.images, "index-thumbnail", "index-thumbnail-required", thumbnailIndex)
   log(`thumbnailIndex: ${thumbnailIndex}`)
+  const thumbnailImg = get("index-thumbnail") as HTMLImageElement
+  log(thumbnailImg)
 
   // Set the image details section with the first image in the
-  // collection.
-  const imageIndex = 0
+  // collection or if blank, set it to the first available image.
+  let imageIndex = newCinfo.order[0]
+  if (imageIndex == -1)
+    imageIndex = 0
   setImgDetails(newCinfo.images, imageIndex)
+
+  // Hide the test container.
+  const testContainer = get("test-container") as HTMLElement
+  testContainer.style.display = "none"
+
+  // Enable the inputs.
+  disableInputs(false)
 
   const populateResult = {
     cinfo: newCinfo,
@@ -443,24 +459,21 @@ function setImage(images: CJson.Collection["images"], id: string, requiredId: Re
 async function collectionImageClick(order: number[], collectionIndex: number) {
   // Handle click on a collection image.  "Move" the image to the
   // available images section.
-  log(`Collection image ${collectionIndex} clicked.`)
   if (!cinfo)
     return
-  if (!order)
-    return
+  log(`Collection image ${collectionIndex} clicked.`)
 
   // Blank out the collection box.
   setImage(cinfo.images, `ci${collectionIndex}`, `cb${collectionIndex}`, -1)
+  const availableIx = order[collectionIndex]
   order[collectionIndex] = -1
 
   // Make the available image fade in with an opacity animation.
-
-  const availableIx = order[collectionIndex]
   const availableBox = get(`ab${availableIx}`) as HTMLElement
   const availableImg = get(`ai${availableIx}`) as HTMLImageElement
 
   // Set initial state for animation
-  availableImg.style.transition = 'opacity  0.5s ease-in-out'
+  availableImg.style.transition = 'opacity  0.75s ease-in-out'
   availableBox.style.display = "block"
   availableImg.style.opacity = '0'
 
@@ -477,8 +490,6 @@ async function availableImageClick(order: number[], availIndex: number) {
   // with the clicked image then hide the available image.
   log(`Available image ${availIndex} clicked.`)
   if (!cinfo)
-    return
-  if (!order)
     return
 
   // Find the first collection image that's blank, first -1 in the
@@ -571,20 +582,14 @@ function getPreviousNext(orderList: number[], imageIndex: number) {
   return [previous, next]
 }
 
-function goPreviousNext(order: number[], id: string, requiredId: RequiredIdType,
-    imageIndex: number, goNext: boolean) {
+function goPreviousNext(order: number[], imageIndex: number, goNext: boolean) {
   // Set the page element image to the previous or next image in the
   // collection and set its required state. Return the new image index.
-  if (!cinfo)
-    return 0
-
   const [previous, next] = getPreviousNext(order, imageIndex)
   if (next == -1)
     return 0
 
   const index = goNext ? next : previous
-  setImage(cinfo.images, id, requiredId, index)
-
   return index
 }
 
@@ -592,8 +597,8 @@ function previousImage() {
   // Set the image details image to the previous collection image.
   if (!cinfo || !cinfo.order)
     return
-  currentImageIx = goPreviousNext(cinfo.order, "image-details", "image-details-required",
-    currentImageIx, false)
+  currentImageIx = goPreviousNext(cinfo.order, currentImageIx, false)
+  setImage(cinfo.images, "image-details", "image-details-required", currentImageIx)
   setImgDetails(cinfo.images, currentImageIx)
 }
 
@@ -601,25 +606,41 @@ function nextImage() {
   // Set the image details image to the next collection image.
   if (!cinfo || !cinfo.order)
     return
-  currentImageIx = goPreviousNext(cinfo.order, "image-details", "image-details-required",
-    currentImageIx, true)
+  currentImageIx = goPreviousNext(cinfo.order, currentImageIx, true)
+  setImage(cinfo.images, "image-details", "image-details-required",
+    currentImageIx)
   setImgDetails(cinfo.images, currentImageIx)
+}
+
+function storeThumbnailImage(thumbnailIndex: number) {
+  // Store the index thumbnail image in the collection info.
+  if (!cinfo)
+    return
+  cinfo.indexThumbnail = cinfo.images[thumbnailIndex].thumbnail
+  const thumbnailImg = get("index-thumbnail") as HTMLImageElement
+  log("Stored thumbnail image:")
+  log(thumbnailImg)
 }
 
 function indexPreviousImage() {
   // Set the index thumbnail to the previous collection image.
   if (!cinfo || !cinfo.order)
     return
-  currentThumbnailIx = goPreviousNext(cinfo.order, "index-thumbnail", "index-thumbnail-required",
-    currentThumbnailIx, false)
+  currentThumbnailIx = goPreviousNext(cinfo.order, currentThumbnailIx,
+    false)
+  setImage(cinfo.images, "index-thumbnail", "index-thumbnail-required",
+    currentThumbnailIx)
+  storeThumbnailImage(currentThumbnailIx)
 }
 
 function indexNextImage() {
   // Set the index thumbnail to the next collection image.
   if (!cinfo || !cinfo.order)
     return
-  currentThumbnailIx = goPreviousNext(cinfo.order, "index-thumbnail", "index-thumbnail-required",
-    currentThumbnailIx, true)
+  currentThumbnailIx = goPreviousNext(cinfo.order, currentThumbnailIx, true)
+  setImage(cinfo.images, "index-thumbnail", "index-thumbnail-required",
+    currentThumbnailIx)
+  storeThumbnailImage(currentThumbnailIx)
 }
 
 function setRequired(requiredId: RequiredIdType, status: boolean) {
@@ -638,4 +659,12 @@ function setRequired(requiredId: RequiredIdType, status: boolean) {
     // We have it, remove the required class.
     element.classList.replace('required', 'good')
   }
+}
+
+function disableInputs(disable: boolean) {
+  // Disable or enable the input and text area elements on the page.
+  const inputs = document.querySelectorAll('input, textarea')
+  inputs.forEach((input) => {
+    (input as HTMLInputElement).disabled = disable
+  })
 }

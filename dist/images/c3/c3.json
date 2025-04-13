@@ -2,7 +2,7 @@
   "title": "Brooklyn Bridge",
   "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
   "description": "We walked the Brooklyn Bridge Sep 13, 2019 when we visited Alex and Agatha in New York. I highly recommend it because of the great views of the city and the people watching.",
-  "indexThumbnail": "",
+  "indexThumbnail": "/images/c3/c3-1-t.jpg",
   "collection": 3,
   "width": 480,
   "height": 480,
@@ -11,7 +11,7 @@
   "images": [
     {
       "title": "Famous Picture Area",
-      "description": "After leaving the nearest subway stop you're here.  The Manhattan Bridge is visible.  The Brooklyn Bridge is to the right.\nThis location is famous for picture taking.  Once a learned that I see these all over the place.  Most recently I saw it in the Full Swing TV show.",
+      "description": "After leaving the nearest subway stop you're here.  The Manhattan Bridge is visible.  The Brooklyn Bridge is to the left.\nThis location is famous for picture taking.  Once a learned that I see photos all over the place.  Most recently I saw it in the Full Swing TV golf show.",
       "url": "/images/c3/c3-1-p.jpg",
       "width": 3648,
       "height": 5472,
@@ -101,7 +101,7 @@
     },
     {
       "title": "",
-      "description": "",
+      "description": "The Statue of Liberty.",
       "url": "/images/c3/c3-10-p.jpg",
       "width": 5414,
       "height": 3609,
@@ -131,7 +131,7 @@
     },
     {
       "title": "",
-      "description": "",
+      "description": "I really like the path.",
       "url": "/images/c3/c3-13-p.jpg",
       "width": 3648,
       "height": 5472,
@@ -141,7 +141,7 @@
     },
     {
       "title": "",
-      "description": "",
+      "description": "The Chrysler Building with one of the new pencil buildings in front.",
       "url": "/images/c3/c3-14-p.jpg",
       "width": 5472,
       "height": 3648,
@@ -171,7 +171,7 @@
     },
     {
       "title": "",
-      "description": "You can see the Empire State Building on the left.  At center is one of the new pencil building under construction.",
+      "description": "You can see the Empire State Building on the left.  At center is one of the pencil buildings under construction.",
       "url": "/images/c3/c3-17-p.jpg",
       "width": 5472,
       "height": 3648,
