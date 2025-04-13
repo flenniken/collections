@@ -380,6 +380,54 @@ function setRequiredSuite() {
   test(fn, requiredId, true)
 }
 
+function isElementText(elementId: string, text: string) {
+  // Validate that the given element has the given text.
+  const element = get(elementId) as HTMLElement
+  let gotText: string
+  if (element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement) {
+    gotText = element.value
+  } else {
+    gotText = element.textContent || ''
+  }
+  gotExpected(gotText, text, `${elementId} text`)
+}
+
+function testSetText(elementId: string, requiredId: RequiredIdType, text: string) {
+  setText(elementId, requiredId, text)
+  isElementText(elementId, text)
+  if (text == "")
+    isRequiredStatus(requiredId, true)
+  else
+    isRequiredStatus(requiredId, false)
+}
+
+function setTextSuite() {
+  log("setTextSuite")
+  const fn = testSetText
+  test(fn, "collection-title", "collection-title-required", "the title")
+  test(fn, "post-date", "post-date-required", "2025-04-12")
+  test(fn, "description", "description-required", "the description")
+  test(fn, "image-title", null, "image title")
+
+  test(fn, "collection-title", "collection-title-required", "")
+  test(fn, "post-date", "post-date-required", "")
+  test(fn, "description", "description-required", "")
+  test(fn, "image-title", null, "")
+}
+
+function testEncoding(elementId: string, text: string) {
+  setText(elementId, null, text)
+  isElementText(elementId, text)
+}
+
+function encodingSuite() {
+  log("encodingSuite")
+  const fn = testEncoding
+  test(fn, "test-paragraph", "This is a test & < > \" '")
+  test(fn, "test-paragraph2", "<h1>hello</h1>")
+}
+
 function testMaker() {
   log("Running testMaker...")
   gotExpectedSuite()
@@ -392,6 +440,8 @@ function testMaker() {
   createCollectionOrderSuite()
   parseNonNegativeIntSuite()
   setRequiredSuite()
+  setTextSuite()
+  encodingSuite()
 
   if (errorCount == 0)
     log("All tests passed.")
@@ -401,6 +451,30 @@ function testMaker() {
   return 0
 }
 
+function appendTestContent() {
+  // Add a test elements to the end of the page for testing
+  // that text is encoded correctly.
+
+  const container = document.createElement("div");
+  document.body.appendChild(container);
+
+  // Create a test heading in the test container.
+  const testHeading = document.createElement("h1");
+  testHeading.textContent = "Test Encoding";
+  container.appendChild(testHeading);
+
+  const testParagraph = document.createElement("p");
+  testParagraph.id = "test-paragraph";
+  testParagraph.textContent = "p";
+  container.appendChild(testParagraph);
+
+  const testParagraph2 = document.createElement("p");
+  testParagraph2.id = "test-paragraph2";
+  testParagraph2.textContent = "p2";
+  container.appendChild(testParagraph2);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  appendTestContent()
   testMaker();
 });

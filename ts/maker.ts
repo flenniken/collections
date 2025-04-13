@@ -118,6 +118,8 @@ function cmdAltClick(order: number[], collectionIndex: number) {
   // Handle cmd-click on a collection box. Shift the collection images
   // up or down.
   log(`Cmd/Alt clicked on collection box ${collectionIndex}.`);
+  if (!cinfo)
+    return
   if (!order)
     return
 
@@ -126,10 +128,10 @@ function cmdAltClick(order: number[], collectionIndex: number) {
 
   // Update the collection images to match the new order.
   for (let ix = 0; ix < 8; ix++) {
-    setImage(`ci${ix}`, `cb${ix}`, order[ix])
+    setImage(cinfo.images, `ci${ix}`, `cb${ix}`, order[ix])
   }
   for (let ix = 8; ix < 16; ix++) {
-    setImage(`ci${ix}`, null, order[ix])
+    setImage(cinfo.images, `ci${ix}`, null, order[ix])
   }
 }
 
@@ -179,62 +181,59 @@ function parseNonNegativeInt(numberStr: string): number {
   throw new Error("not a valid non-negative integer");
 }
 
-async function fetchCJson(num: number): Promise<CJson.Collection> {
+async function fetchCJson(num: number): Promise<OptionalCinfo> {
   // Load the collection's cjson file given the collection number.
 
   // Add the time to the url so it is not found in the cache.
   const timestamp = new Date().getTime()
   const url = `/images/c${num}/c${num}.json?t=${timestamp}`
-
   const response = await fetch(url)
   if (!response.ok) {
     log(`Unable to fetch the url: ${url}`)
-    throw new Error(`HTTP status: ${response.status}`)
+    return null
   }
   return await response.json()
 }
 
-// todo: make sure the text we put on the page is encoded.
-function encodeHtml(text: string) {
-  // Return the given text where the html special characters are
-  // encoded with their equivalent safe entities, < to &lt; etc.
-  return document.createElement('div').textContent = text
-}
-
-function setText(element_id: string, requiredId: RequiredIdType, text: string) {
+function setText(elementId: string, requiredId: RequiredIdType, text: string) {
   // Set the text of the page element and update its required status.
-  const element = get(element_id) as HTMLElement
-  element.textContent = text
-  setRequired(requiredId, text ? false : true)
+  const element = get(elementId) as HTMLElement;
+
+  if (element instanceof HTMLInputElement ||
+      element instanceof HTMLTextAreaElement) {
+    element.value = text
+  } else {
+    element.textContent = text
+  }
+
+  setRequired(requiredId, text ? false : true);
+  // log(`Set text for element "${elementId}": ${text}`);
 }
 
 async function selectCollection(event: Event) {
   // Handle collection select event.  Populate the page with the
   // selected collection.
 
-  if (cinfo) {
-    log("cinfo already populated.")
-    return
-  }
-
+  // Determine the selected collection number.
   const target = event.target as HTMLSelectElement;
+  const name = target.options[target.selectedIndex].text
   const selected = target.value
-  log("Selected value:", selected);
-
+  log(`Collection ${name} (${selected}) selected`)
   const num = parseNonNegativeInt(selected)
-  log(`collection num: ${num}`)
 
   // Read the cjson file.
-  try {
-    cinfo = await fetchCJson(num)
-  }
-  catch (error) {
-    log(`Fetch of cjson failed: ${error}`);
+  let newCinfo = await fetchCJson(num)
+  if (!newCinfo)
     return
-  }
-  log(cinfo)
 
-  populateCollection(cinfo)
+  // Populate the page with the collection info.
+  const result = populateCollection(newCinfo)
+
+  // Set the globals.
+  cinfo = result.cinfo
+  currentImageIx = result.imageIx
+  currentThumbnailIx = result.thumbnailIx
+  log("cinfo: ", cinfo)
 }
 
 function isRequired(collectionImages: number[], boxIx: number) {
@@ -281,7 +280,7 @@ function createCollectionOrder(order: number[], max: number, availableCount: num
   // maximum number of images in a collection and availableCount is
   // the number of available images.
 
-  let collectionImages = []
+  let collectionImages: number[] = []
   for (let ix = 0; ix < max; ix++) {
     collectionImages.push(-1)
   }
@@ -304,19 +303,24 @@ function createCollectionOrder(order: number[], max: number, availableCount: num
   return collectionImages
 }
 
-async function populateCollection(cinfo: OptionalCinfo) {
-  // Populate the page with the given collection info.
-  if (!cinfo)
-    return
+type PopulateResult = {
+  cinfo: CJson.Collection,
+  imageIx: number,
+  thumbnailIx: number
+}
 
-  setText("post-date", "post-date-required", cinfo.posted)
-  setText("description", "description-required", cinfo.description)
-  setText("index-description", "index-description-required", cinfo.indexDescription)
-  setText("collection-title", "collection-title-required", cinfo.title)
+function populateCollection(newCinfo: CJson.Collection): PopulateResult {
+  // Populate the page with the given collection info. Return the
+  // cinfo, current image index and current thumbnail index.
+
+  setText("collection-title", "collection-title-required", newCinfo.title)
+  setText("post-date", "post-date-required", newCinfo.posted)
+  setText("description", "description-required", newCinfo.description)
+  setText("index-description", "index-description-required", newCinfo.indexDescription)
 
   // Create cinfo.order.
-  cinfo.order = createCollectionOrder(cinfo.order!, 16, cinfo.images.length)
-  log(`cinfo.order: ${cinfo.order}`)
+  newCinfo.order = createCollectionOrder(newCinfo.order!, 16, newCinfo.images.length)
+  log(`cinfo.order: ${newCinfo.order}`)
 
   // Loop through the images and put them in the collection images on
   // the left or in the available images on the right. Hide the
@@ -329,8 +333,8 @@ async function populateCollection(cinfo: OptionalCinfo) {
   // All images go in and remain in the available section. We hide and
   // show them when clicked.
   for (let ix = 0; ix < 20; ix++) {
-    if (ix < cinfo.images.length) {
-      setImage(`ai${ix}`, null, ix)
+    if (ix < newCinfo.images.length) {
+      setImage(newCinfo.images, `ai${ix}`, null, ix)
     }
     else {
       // Hide the blank available boxes.
@@ -341,12 +345,12 @@ async function populateCollection(cinfo: OptionalCinfo) {
   // Fill in the collection images on the left and hide them in the
   // available images section.
   for (let ix = 0; ix < 16; ix++) {
-    const imageIx = cinfo.order[ix]
+    const imageIx = newCinfo.order[ix]
 
-    const required = isRequired(cinfo.order, ix)
+    const required = isRequired(newCinfo.order, ix)
     setRequired(`cb${ix}`, required)
 
-    setImage(`ci${ix}`, null, imageIx)
+    setImage(newCinfo.images, `ci${ix}`, null, imageIx)
 
     // Hide the available image if we put a real image in the
     // collection (not -1).
@@ -358,15 +362,23 @@ async function populateCollection(cinfo: OptionalCinfo) {
 
   // Set the index thumbnail image to the one specified in the cinfo
   // if it is part of the collection, else set it to the first image.
-  const thumbnailIndex = findThumbnailIx(cinfo.order, cinfo.images,
-    cinfo.indexThumbnail)
-  currentThumbnailIx = (thumbnailIndex != -1) ? thumbnailIndex : 0
-  setImage("index-thumbnail", "index-thumbnail-required", currentThumbnailIx)
-  log(`currentThumbnail: ${currentThumbnailIx}`)
+  let thumbnailIndex = findThumbnailIx(newCinfo.order, newCinfo.images,
+    newCinfo.indexThumbnail)
+  thumbnailIndex = (thumbnailIndex != -1) ? thumbnailIndex : 0
+  setImage(newCinfo.images, "index-thumbnail", "index-thumbnail-required", thumbnailIndex)
+  log(`thumbnailIndex: ${thumbnailIndex}`)
 
   // Set the image details section with the first image in the
   // collection.
-  setImgDetails(cinfo.images, currentImageIx)
+  const imageIndex = 0
+  setImgDetails(newCinfo.images, imageIndex)
+
+  const populateResult = {
+    cinfo: newCinfo,
+    imageIx: imageIndex,
+    thumbnailIx: thumbnailIndex
+  }
+  return populateResult
 }
 
 function findThumbnailIx(order: number[], images: CJson.Image[],
@@ -391,9 +403,6 @@ function setImgDetails(images: CJson.Image[], currentImageIx: number) {
   // Set the image details section with the image, image title and
   // image description for the given image index along with their
   // required state.
-  if (!cinfo)
-    return
-
   let imageTitle: string
   let imageDescription: string
   if (currentImageIx == -1) {
@@ -405,25 +414,25 @@ function setImgDetails(images: CJson.Image[], currentImageIx: number) {
     imageTitle = image.title
     imageDescription = image.description
   }
-  setImage("image-details", "image-details-required", currentImageIx)
+  setImage(images, "image-details", "image-details-required", currentImageIx)
   setText("image-title", null, imageTitle)
   setText("image-description", "image-description-required", imageDescription)
 }
 
-function setImage(id: string, requiredId: RequiredIdType,
+function setImage(images: CJson.Collection["images"], id: string, requiredId: RequiredIdType,
     imageIndex: number) {
   // Set the image page element to the collection image with the given
   // imageIndex. If the imageIndex is -1, set it blank. Set the
   // required status of the element.
   let required: boolean
   const element = get(id) as HTMLImageElement
-  if (!cinfo || imageIndex == -1) {
+  if (imageIndex == -1) {
     element.src = "icons/blank.svg"
     element.alt = ""
     required = true
   }
   else {
-    const image = cinfo.images[imageIndex]
+    const image = images[imageIndex]
     element.src = image.thumbnail
     element.alt = image.title
     required = false
@@ -435,16 +444,13 @@ async function collectionImageClick(order: number[], collectionIndex: number) {
   // Handle click on a collection image.  "Move" the image to the
   // available images section.
   log(`Collection image ${collectionIndex} clicked.`)
-
+  if (!cinfo)
+    return
   if (!order)
     return
-  if (order[collectionIndex] == -1) {
-    log("No image here.")
-    return
-  }
 
   // Blank out the collection box.
-  setImage(`ci${collectionIndex}`, `cb${collectionIndex}`, -1)
+  setImage(cinfo.images, `ci${collectionIndex}`, `cb${collectionIndex}`, -1)
   order[collectionIndex] = -1
 
   // Make the available image fade in with an opacity animation.
@@ -470,7 +476,8 @@ async function availableImageClick(order: number[], availIndex: number) {
   // Handle available image click.  Fill in the next free spot
   // with the clicked image then hide the available image.
   log(`Available image ${availIndex} clicked.`)
-
+  if (!cinfo)
+    return
   if (!order)
     return
 
@@ -488,7 +495,7 @@ async function availableImageClick(order: number[], availIndex: number) {
   abox.style.display = "none"
 
   // Set the collection box with the available image.
-  setImage(`ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
+  setImage(cinfo.images, `ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
 
   // Add the image to the order list.
   order[firstBlankIx] = availIndex
@@ -530,7 +537,7 @@ function getPreviousNext(orderList: number[], imageIndex: number) {
 
   // Make a list of the non-negative image indexes from the order
   // list.
-  let imageIndexes = []
+  let imageIndexes: number[] = []
   for (let ix = 0; ix < orderList.length; ix++) {
     const imageIx = orderList[ix]
     if (imageIx != -1) {
@@ -568,7 +575,7 @@ function goPreviousNext(order: number[], id: string, requiredId: RequiredIdType,
     imageIndex: number, goNext: boolean) {
   // Set the page element image to the previous or next image in the
   // collection and set its required state. Return the new image index.
-  if (!order)
+  if (!cinfo)
     return 0
 
   const [previous, next] = getPreviousNext(order, imageIndex)
@@ -576,32 +583,32 @@ function goPreviousNext(order: number[], id: string, requiredId: RequiredIdType,
     return 0
 
   const index = goNext ? next : previous
-  setImage(id, requiredId, index)
+  setImage(cinfo.images, id, requiredId, index)
 
   return index
 }
 
 function previousImage() {
   // Set the image details image to the previous collection image.
-  if (!cinfo || cinfo.order == null)
+  if (!cinfo || !cinfo.order)
     return
-  currentImageIx = goPreviousNext(cinfo?.order, "image-details", "image-details-required",
+  currentImageIx = goPreviousNext(cinfo.order, "image-details", "image-details-required",
     currentImageIx, false)
   setImgDetails(cinfo.images, currentImageIx)
 }
 
 function nextImage() {
   // Set the image details image to the next collection image.
-  if (!cinfo || cinfo.order == null)
+  if (!cinfo || !cinfo.order)
     return
-  currentImageIx = goPreviousNext(cinfo?.order, "image-details", "image-details-required",
+  currentImageIx = goPreviousNext(cinfo.order, "image-details", "image-details-required",
     currentImageIx, true)
   setImgDetails(cinfo.images, currentImageIx)
 }
 
 function indexPreviousImage() {
   // Set the index thumbnail to the previous collection image.
-  if (!cinfo || cinfo.order == null)
+  if (!cinfo || !cinfo.order)
     return
   currentThumbnailIx = goPreviousNext(cinfo.order, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, false)
@@ -609,7 +616,7 @@ function indexPreviousImage() {
 
 function indexNextImage() {
   // Set the index thumbnail to the next collection image.
-  if (!cinfo || cinfo.order == null)
+  if (!cinfo || !cinfo.order)
     return
   currentThumbnailIx = goPreviousNext(cinfo.order, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx, true)
