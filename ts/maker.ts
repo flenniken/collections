@@ -336,6 +336,7 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
   for (let ix = 0; ix < 20; ix++) {
     if (ix < newCinfo.images.length) {
       setImage(newCinfo.images, `ai${ix}`, null, ix)
+      get(`ab${ix}`).style.display = "block"
     }
     else {
       // Hide the blank available boxes.
