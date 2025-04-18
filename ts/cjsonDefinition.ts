@@ -34,6 +34,14 @@ namespace CJson {
     // Full desciption of the collection for the thumbnails page.
     description: string;
 
+    // Collecton states:
+    // * validated -- passes the maker command validation.
+    // * ready -- meets all page requirements, ready to build image
+    //   and thumbnail pages.
+    // * publish — extra images have been removed and images reordered
+    //   and order list removed, ready to publish.
+    state: string;
+
     // Thumbnail url for the index page. The index thumbnails are
     // copied to the tin folder so the are publicly visible. While
     // developing the collection the maker page will set it empty or
