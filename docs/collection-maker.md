@@ -45,13 +45,12 @@ done
 # Maker Command
 
 You run the maker command to create the collection's local image
-folder from the folder of images you created. You do this on your
-desktop running the website with localhost.
+folder from the folder of images you created.
 
 The command creates the collection's cjson file in the folder which
-describes collection. It contains empty titles and descriptions and an
-arbitrary image order.  You will fill in this information later with
-the maker page.
+describes the collection.  It contains empty titles and descriptions
+and an arbitrary image order.  You will fill in this information later
+with the maker page.
 
 Run the command and specify the folder:
 
@@ -61,8 +60,8 @@ scripts/maker -c 3
 Created a new local collection: images/c3
 ~~~
 
-The command validates the files and if a problem is found, it stops so
-you can correct it. It validates:
+If a problem is found, it stops so you can correct the problem. It
+validates:
 
 * that the collection is the next available collection. It checks the
   S3 /db prefix files.
@@ -93,7 +92,7 @@ You use the maker page to determine which images to included in the
 collection (from the initial 20), to determine their order, and to
 enter descriptive text.
 
-As an admin you click the maker icon to load the maker page. You
+As an admin you click the maker icon to visit the maker page. You
 select the collection to edit from the dropdown menu. You do this
 while running from localhost on your desktop.
 
@@ -105,7 +104,7 @@ changes with the Save button.
 You will lose your changes if you refresh the page or select a
 different collection to edit!
 
-When you save the cjson file is downloaded to the download folder.
+When you save, the cjson file is downloaded to the download folder.
 You need to move it to the images folder. For example to move the c1
 json file:
 
