@@ -52,8 +52,6 @@ namespace CJson {
     posted: string;
 
     collection: number;
-    imagePageUrl: string;
-    thumbnailsPageUrl: string;
 
     // The optional order variable is a list of 16 image indexes.  It
     // defines which images are in the collection and their order. An

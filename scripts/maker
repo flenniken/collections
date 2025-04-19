@@ -260,8 +260,6 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     "collection": num,
     "width": thumbnailDim,
     "height": thumbnailDim,
-    "imagePageUrl": f"/images/c{num}/image-{num}.html",
-    "thumbnailsPageUrl": f"/images/c{num}/thumbnails-{num}.html",
     "order": order,
     "images": images,
   }
@@ -1029,8 +1027,6 @@ class TestMaker(unittest.TestCase):
       gotExpected(cinfo['collection'], num)
       gotExpected(cinfo['width'], thumbnailDim)
       gotExpected(cinfo['height'], thumbnailDim)
-      gotExpected(cinfo['imagePageUrl'], f"/images/c{num}/image-{num}.html")
-      gotExpected(cinfo['thumbnailsPageUrl'], f"/images/c{num}/thumbnails-{num}.html")
       # gotExpected(len(cinfo['order']), 0)
       # gotExpected(len(cinfo['images']), 8)
       for ix, image in enumerate(cinfo['images']):

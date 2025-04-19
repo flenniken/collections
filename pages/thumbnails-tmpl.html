@@ -31,7 +31,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ nextline t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
-<!--$ : url = s.imagePageUrl -->
+<!--$ : num = s.collection -->
+<!--$ : url = format("/images/c{num}/image-{num}.html") -->
     <a href="{url}"><img class="thumbnail" src="{image.thumbnail}" alt="{image.title}"></a>
   </div>
 <!--$ block -->
