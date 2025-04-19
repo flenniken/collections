@@ -2,8 +2,8 @@
 
 How to create a new collection.
 
-* create a folder with images following the manual steps
-* create the collection's cjson file by running the maker command
+* create a folder with images following the initial manual steps
+* create the collection's cjson file by running the maker -new command
 * determine the images in the collection and their order with the maker page
 * enter the image descriptions with the maker page
 * define the zoom points
@@ -11,7 +11,7 @@ How to create a new collection.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# Manual Steps
+# Initial Steps
 
 You use Adobe applications to find and edit images for a collection.
 
@@ -42,9 +42,9 @@ done
 
 [⬇](#Contents)
 
-# Maker Command
+# Make New
 
-You run the maker command to create the collection's local image
+You run the maker -new command to create the collection's local image
 folder from the folder of images you created.
 
 The command creates the collection's cjson file in the folder which
@@ -86,7 +86,7 @@ After after successful validation it:
 
 [⬇](#Contents)
 
-# Maker Page
+# Edit Collection
 
 You use the maker page to determine which images to included in the
 collection (from the initial 20), to determine their order, and to
@@ -133,8 +133,24 @@ The maker page elements:
 * at the top you enter the collection’s title and post date and below
   you enter the descriptive text for the collection and images
 
+[⬇](#Contents)
+
+# Collection.json
+
+You create the collections.json file with the maker -c command. It
+contains information about the collection and is used to build the
+index and maker pages. The command creates the collections json file
+by scanning all the cjson files.
+
+~~~
+maker —c
+~~~
+
+Besides the index and maker page the collections.json file determines which collections the gulp command builds.
+
 # Contents
 
-* [Manual Steps](#manual-steps) -- the steps to create images for a new collection.
-* [Maker Command](#maker-command) -- how to create the starting cjson file.
-* [Maker Page](#maker-page) -- how to order and describe the new collection.
+* [Initial Steps](#initial-steps) -- the initial manual steps to create a new collection.
+* [Make New](#make-new) -- how to create the starting cjson file for a collection.
+* [Edit Collection](#edit-collection) -- how to order and describe the new collection.
+* [Collection.json](#collection-json) -- how to create the collections.json file for building the index.
