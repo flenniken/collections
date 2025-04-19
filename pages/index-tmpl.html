@@ -18,9 +18,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-status-bar-style"
       content="black-translucent">
 <!--$ endblock -->
-<!--$ nextline -->
-<!--$ : g.siteTitle = html(s.indexJson.siteTitle, "body") -->
-  <title>{g.siteTitle}</title>
+  <title>Flenniken.net Collections</title>
   <meta name="description"
     content="Flenniken.net Collections">
   <meta name="author" content="Steve Flenniken">
@@ -75,8 +73,8 @@ the source there too.
         </li>
       </ul>
       <p>
-<!--$ nextline g.totalCollections = html(string(s.indexJson.totalCollections), "body") -->
-        There are <span id="collection-count">{g.totalCollections}</span> collections.
+<!--$ nextline totalCollections = string(len(s.indexJson.collections)) -->
+        There are <span id="collection-count">{totalCollections}</span> collections.
       </p>
     </div>
   </div>

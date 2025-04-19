@@ -452,7 +452,8 @@ def collections():
   collectionFolders.sort(reverse=True)
 
   # Read the cjson files and create the collections.json file.
-  collections = []
+  collectionsJson = {"collections": []}
+  collections = collectionsJson["collections"]
   for folder in collectionFolders:
     cjsonFilename = os.path.join("dist/images", folder, f"{folder}.json")
     with open(cjsonFilename, "r") as fh:
@@ -477,7 +478,7 @@ def collections():
   # Write the collections.json file.
   filename = os.path.join("pages", "collections.json")
   with open(filename, "w") as fh:
-    fh.write(json.dumps(collections, indent=2))
+    fh.write(json.dumps(collectionsJson, indent=2))
 
   print(f"Created the file: {filename}")
 

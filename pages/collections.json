@@ -1,32 +1,34 @@
-[
-  {
-    "collection": 3,
-    "state": "ready",
-    "title": "Brooklyn Bridge",
-    "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
-    "thumbnail": "/images/c3/c3-1-t.jpg",
-    "posted": "2025-03-21",
-    "iCount": 18,
-    "totalSize": 47298563
-  },
-  {
-    "collection": 2,
-    "state": "ready",
-    "title": "Manzanita 2023",
-    "indexDescription": "2023 Summer vacation in Manzanita Oregon.",
-    "thumbnail": "/images/c2/c2-1-t.jpg",
-    "posted": "2024-02-01",
-    "iCount": 16,
-    "totalSize": 48298930
-  },
-  {
-    "collection": 1,
-    "state": "ready",
-    "title": "Many Glaciers Lodge",
-    "indexDescription": "Photos from Glacier National Park & Many Glaciers lodge.",
-    "thumbnail": "/images/c1/c1-5-t.jpg",
-    "posted": "2023-06-12",
-    "iCount": 8,
-    "totalSize": 27600543
-  }
-]
+{
+  "collections": [
+    {
+      "collection": 3,
+      "state": "ready",
+      "title": "Brooklyn Bridge",
+      "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
+      "thumbnail": "/images/c3/c3-1-t.jpg",
+      "posted": "2025-03-21",
+      "iCount": 18,
+      "totalSize": 47298563
+    },
+    {
+      "collection": 2,
+      "state": "ready",
+      "title": "Manzanita 2023",
+      "indexDescription": "2023 Summer vacation in Manzanita Oregon.",
+      "thumbnail": "/images/c2/c2-1-t.jpg",
+      "posted": "2024-02-01",
+      "iCount": 16,
+      "totalSize": 48298930
+    },
+    {
+      "collection": 1,
+      "state": "ready",
+      "title": "Many Glaciers Lodge",
+      "indexDescription": "Photos from Glacier National Park & Many Glaciers lodge.",
+      "thumbnail": "/images/c1/c1-5-t.jpg",
+      "posted": "2023-06-12",
+      "iCount": 8,
+      "totalSize": 27600543
+    }
+  ]
+}
