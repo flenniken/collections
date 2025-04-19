@@ -9,6 +9,7 @@
   "height": 480,
   "imagePageUrl": "/images/c1/image-1.html",
   "thumbnailsPageUrl": "/images/c1/thumbnails-1.html",
+  "posted": "2023-06-12",
   "images": [
     {
       "url": "/images/c1/c1-1-p.jpg",
@@ -57,7 +58,8 @@
       "description": "We walked around Swiftcurrent Lake and Lake Josephine. They are connected with a slow moving river shown here. You can see Mount Henkel, the red mountain in the background.",
       "width": 4032,
       "height": 3024,
-      "size": 87322
+      "size": 4843825,
+      "sizet": 87322
     },
     {
       "url": "/images/c1/c1-6-p.jpg",
@@ -277,6 +279,5 @@
     -1,
     -1,
     -1
-  ],
-  "posted": "2023-06-12"
+  ]
 }
