@@ -1,9 +1,9 @@
 // Main code file for the index page. The login.ts and download.ts
 // files are concatenated with this file.
 
-// The indexJson is defined in the index.html file from data in the
-// index.json file.
-var indexJson: IndexJson
+// The csjson is defined in the index.html file from data in the
+// collections.json file.
+var csjson: CollectionsJson
 
 // Whether the app was started by clicking a desktop icon or not.
 let runningFromIcon = false
@@ -145,7 +145,7 @@ async function handleLoad() {
   const cache = await openCreateCache()
 
   // Add a banner over the collections that are not cached.
-  indexJson.collections.forEach(async (collection, ix) => {
+  csjson.collections.forEach(async (collection, ix) => {
     const cNum = collection.collection
     const readyRequest = new Request(`c${cNum}-ready`)
     const readyResponse = await cache.match(readyRequest);

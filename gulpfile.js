@@ -250,16 +250,18 @@ gulp.task("index", function (cb) {
 /*
 statictea \
   -t pages/index-tmpl.html \
-  -s pages/index.json \
+  -s pages/collections.json \
   -o pages/header.tea \
+  -o pages/index.tea \
   -s env/aws-settings.json
   -r tmp/index.html
 */
   log("Compiling index template.")
   const parameters = [
     "-t", "pages/index-tmpl.html",
-    "-s", "pages/index.json",
+    "-s", "pages/collections.json",
     "-o", "pages/header.tea",
+    "-o", "pages/index.tea",
     "-s", "env/aws-settings.json",
     "-r", "tmp/index.html",
   ]

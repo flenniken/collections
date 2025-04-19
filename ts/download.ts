@@ -8,12 +8,13 @@ function assert(condition: any, msg?: string): asserts condition {
 }
 
 interface IndexCollection {
-  // The typescript definition of an index.json collection.
+  // The typescript definition of an collections.json collection.
   collection: number
-  url: string
-  thumbnail: string
+  state: string
   title: string
   indexDescription: string
+  url: string
+  thumbnail: string
   posted: string
 
   // The number of images in the collection.
@@ -23,10 +24,8 @@ interface IndexCollection {
   totalSize: number
 }
 
-interface IndexJson {
-  // The index.json typescript definition.
-  siteTitle: string
-  totalCollections: number
+interface CollectionsJson {
+  // The collections.json typescript definition.
   collections: IndexCollection[]
 }
 
@@ -55,9 +54,9 @@ function getCollection(cNum: number): IndexCollection {
   // Return the collection given the collection cNum.  Throw an
   // exception when not found.
 
-  for (let ix = 0; ix < indexJson.collections.length; ix++) {
-    if (cNum == indexJson.collections[ix].collection)
-      return indexJson.collections[ix]
+  for (let ix = 0; ix < csjson.collections.length; ix++) {
+    if (cNum == csjson.collections[ix].collection)
+      return csjson.collections[ix]
   }
   throw new Error(`Invalid collection number: ${cNum}`);
 }

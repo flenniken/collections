@@ -1,0 +1,15 @@
+# The index tea file.
+
+index-collections = func(ix: int, value: dict, collections: list) bool
+  ## Append the collections that should appear in the index.
+  collections &= if( (value.state == "ready" or value.state == "publish"), value)
+  return(false)
+
+# Filter out the collections under construction.
+collections = []
+loop(s.collections, collections, index-collections)
+
+o.csjson = dict()
+o.csjson.collections = collections
+
+  

@@ -1,11 +1,11 @@
 <!--$ # You build the index.html page from this template and the -->
 <!--$ # index.json file with the gulpfile index task. -->
-
+<!--$ # -->
 <!--$ # The svg icons, MIT licensed, come from: -->
 <!--$ # https://github.com/n3r4zzurr0/svg-spinners/ -->
 <!--$ # https://www.svgrepo.com/collection/interface-set/ -->
 <!--$ # https://iconduck.com/icons/ -->
-
+<!--$ # -->
 <!--$ replace t.content = o.header -->
 <!DOCTYPE html>
 <html lang="en">
@@ -30,9 +30,9 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <link rel="manifest" href="collections.webmanifest">
   <script src="js/index.js" defer></script>
   <script>
-//$ block indexJson = string(s.indexJson, "json")
+//$ block csjson = string(o.csjson, "json")
 //$ : settings = string(s.settings, "json")
-  var indexJson = {indexJson}
+  var csjson = {csjson}
   var settings = {settings}
 //$ endblock
 </script>
@@ -73,8 +73,8 @@ the source there too.
         </li>
       </ul>
       <p>
-<!--$ nextline totalCollections = string(len(s.indexJson.collections)) -->
-        There are <span id="collection-count">{totalCollections}</span> collections.
+<!--$ nextline totalCollections = string(len(o.csjson.collections)) -->
+        There are {totalCollections} collections.
       </p>
     </div>
   </div>
@@ -89,8 +89,8 @@ Screen".</p>
   </div>
   <div class="collections">
 <!--$ block -->
-<!--$ : t.repeat = len(s.indexJson.collections) -->
-<!--$ : c = s.indexJson.collections[t.row] -->
+<!--$ : t.repeat = len(o.csjson.collections) -->
+<!--$ : c = o.csjson.collections[t.row] -->
 <!--$ : num = c.collection -->
 <!--$ : cid = format("c{num}") -->
 <!--$ : src = c.thumbnail -->
