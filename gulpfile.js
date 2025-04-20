@@ -344,7 +344,7 @@ gulp.task("maker", function (cb) {
 /*
 statictea \
   -t pages/maker-tmpl.html \
-  -s pages/maker.json \
+  -s pages/collections.json \
   -o pages/header.tea \
   -r dist/maker.html
 */
@@ -354,7 +354,7 @@ statictea \
   const distFilename = 'dist/maker.html'
   const parameters = [
     "-t", "pages/maker-tmpl.html",
-    "-s", `pages/maker.json`,
+    "-s", `pages/collections.json`,
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]
