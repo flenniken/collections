@@ -63,6 +63,15 @@ h1, h2 {
   min-width: 200px;
 }
 
+#status-icon {
+  width: 2em;
+  vertical-align: middle;
+}
+
+#remove-unused-button {
+  display: none;
+}
+
 .html-button button {
   padding: 8px 16px;
   background-color: #4CAF50;

@@ -10,24 +10,14 @@
   "posted": "2023-06-12",
   "images": [
     {
-      "url": "/images/c1/c1-1-p.jpg",
-      "thumbnail": "/images/c1/c1-1-t.jpg",
-      "title": "Many Glaciers Fireplace",
-      "description": "I was amazed how well the fireplace hood worked. The one we made for the cabin that smoked like crazy so we cut it up and turned it into a planter.",
-      "width": 3024,
-      "height": 4032,
-      "size": 2797506,
-      "sizet": 71810
-    },
-    {
-      "url": "/images/c1/c1-2-p.jpg",
-      "thumbnail": "/images/c1/c1-2-t.jpg",
+      "url": "/images/c1/c1-5-p.jpg",
+      "thumbnail": "/images/c1/c1-5-t.jpg",
       "title": "Swiftcurrent Lake",
-      "description": "A evening view south from Many Glaciers Lodge over Swiftcurrent Lake.",
+      "description": "We walked around Swiftcurrent Lake and Lake Josephine. They are connected with a slow moving river shown here. You can see Mount Henkel, the red mountain in the background.",
       "width": 4032,
       "height": 3024,
-      "size": 3871458,
-      "sizet": 70466
+      "size": 4843825,
+      "sizet": 87322
     },
     {
       "url": "/images/c1/c1-3-p.jpg",
@@ -40,6 +30,16 @@
       "sizet": 81188
     },
     {
+      "url": "/images/c1/c1-1-p.jpg",
+      "thumbnail": "/images/c1/c1-1-t.jpg",
+      "title": "Many Glaciers Fireplace",
+      "description": "I was amazed how well the fireplace hood worked. The one we made for the cabin that smoked like crazy so we cut it up and turned it into a planter.",
+      "width": 3024,
+      "height": 4032,
+      "size": 2797506,
+      "sizet": 71810
+    },
+    {
       "url": "/images/c1/c1-4-p.jpg",
       "thumbnail": "/images/c1/c1-4-t.jpg",
       "title": "Mount Grinnell",
@@ -50,14 +50,24 @@
       "sizet": 71680
     },
     {
-      "url": "/images/c1/c1-5-p.jpg",
-      "thumbnail": "/images/c1/c1-5-t.jpg",
+      "url": "/images/c1/c1-7-p.jpg",
+      "thumbnail": "/images/c1/c1-7-t.jpg",
+      "title": "Lake Trail",
+      "description": "We hiked around the two lakes near the Many Glaciers Lodge with our bear spray handy.",
+      "width": 3024,
+      "height": 4032,
+      "size": 2458238,
+      "sizet": 120478
+    },
+    {
+      "url": "/images/c1/c1-2-p.jpg",
+      "thumbnail": "/images/c1/c1-2-t.jpg",
       "title": "Swiftcurrent Lake",
-      "description": "We walked around Swiftcurrent Lake and Lake Josephine. They are connected with a slow moving river shown here. You can see Mount Henkel, the red mountain in the background.",
+      "description": "A evening view south from Many Glaciers Lodge over Swiftcurrent Lake.",
       "width": 4032,
       "height": 3024,
-      "size": 4843825,
-      "sizet": 87322
+      "size": 3871458,
+      "sizet": 70466
     },
     {
       "url": "/images/c1/c1-6-p.jpg",
@@ -68,16 +78,6 @@
       "height": 3024,
       "size": 3265476,
       "sizet": 62027
-    },
-    {
-      "url": "/images/c1/c1-7-p.jpg",
-      "thumbnail": "/images/c1/c1-7-t.jpg",
-      "title": "Lake Trail",
-      "description": "We hiked around the two lakes near the Many Glaciers Lodge with our bear spray handy.",
-      "width": 3024,
-      "height": 4032,
-      "size": 2458238,
-      "sizet": 120478
     },
     {
       "url": "/images/c1/c1-8-p.jpg",
@@ -259,23 +259,5 @@
         "ty": -334.57
       }
     ]
-  },
-  "order": [
-    4,
-    2,
-    0,
-    3,
-    6,
-    1,
-    5,
-    7,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1
-  ]
+  }
 }
