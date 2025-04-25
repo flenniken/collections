@@ -2,13 +2,13 @@
   "collections": [
     {
       "collection": 3,
-      "cState": "build",
+      "cState": "ready",
       "title": "Brooklyn Bridge",
       "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
       "thumbnail": "/images/c3/c3-1-t.jpg",
       "posted": "2025-03-21",
-      "iCount": 18,
-      "totalSize": 47298563
+      "iCount": 12,
+      "totalSize": 32484357
     },
     {
       "collection": 2,

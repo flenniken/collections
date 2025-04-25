@@ -16,34 +16,28 @@ const minimize = false
 
 let help = `
 Tasks:
-* ts -- Compile and optionally minimize ts files to dist/js.
-          i -- Compile image.ts
-          t -- Compile thumbnails.ts
-          x -- Compile index.ts
-         sw -- Compile sw.ts
-         cm -- Compile maker.ts
+* ts: Compile and optionally minimize ts files to dist/js.
+        i -- Compile image.ts
+        t -- Compile thumbnails.ts
+        x -- Compile index.ts
+       sw -- Compile sw.ts
+       cm -- Compile maker.ts
 
-* pages -- Create all the pages from templates.
-      index -- Create the main index page.
-thumbnails1 -- Create the thumbnails page for collection 1.
-thumbnails2 -- Create the thumbnails page for collection 2.
-     image1 -- Create the image page for collection 1.
-     image2 -- Create the image page for collection 2.
-      maker -- Create the collection maker.
+* pages: Create all the pages from templates.
+    index -- Create the main index page.
+    maker -- Create the collection maker page.
+        p -- Create the images and thumbnails pages for the ready collections.
 
-* vpages -- Validate all the html files.
-      vindex -- Validate index html
-vthumbnails1 -- Validate thumbnails html for collection 1.
-vthumbnails2 -- Validate thumbnails html for collection 2.
-     vimage1 -- Validate image html for collection 1.
-     vimage2 -- Validate image html for collection 2.
-      vmaker -- Validate maker html.
+* vpages: Validate all the html files.
+   vindex -- Validate index html
+   vmaker -- Validate maker html.
+        v -- Validate images and thumbnails html for the ready collections.
 
-*        css -- Minimize the collection.css file.
-*      m-css -- Minimize the maker.css file.
-* syncronize -- Syncronize the template's replace blocks with header.tea content.
-*     readme -- Show the readme file with glow.
-*        all -- Compile everything in parallel, tasks ts, pages, vpages and css.
+*     css: Minimize the collection.css file.
+*   m-css: Minimize the maker.css file.
+*    sync: Sync the template's replace blocks with header.tea content.
+*  readme: Show the readme file with glow.
+*     all: Compile everything in parallel, tasks ts, pages, vpages and css.
 `
 
 const target = "es2017"
@@ -145,14 +139,18 @@ function validateHtml(filename) {
   log(`Validating html file: ${filename}.`)
 
   // See https://www.npmjs.com/package/w3c-html-validator
-  // You can use a file "--ignore-config=valid-ignore.txt".
-  // You can also support multiple with | regex.
 
-  // html-validator '--ignore=/Consider/' dist/images/c1/thumbnails-1.html
+  // To ignore multiple warnings:
+  //   * use a file "--ignore-config=valid-ignore.txt".
+  //   * use | regex
+  //   * you cannot specify more than one --ignore option.
 
-  const ignore = "Consider avoiding viewport values that prevent users from resizing documents."
+  // Ignore these:
+  // Consider avoiding viewport values that prevent users from resizing documents.
+  // Empty heading
+
   const parameters = [
-    `--ignore=/${ignore}/`,
+    "--ignore=/Consider avoiding viewport values that|Empty heading/",
     `${filename}`
   ]
 
@@ -173,27 +171,29 @@ gulp.task("vindex", function (cb) {
   cb()
 })
 
-gulp.task("vimage1", function (cb) {
-  // Validate the image html file.
-  validateHtml("dist/images/c1/image-1.html")
-  cb()
-})
+function getReadyCollections() {
+  // Return a list of the ready collections by reading the collecions.json file.
+  const filename = "pages/collections.json"
+  const data = JSON.parse(fs.readFileSync(filename, "utf8"));
+  let readyCollections = [];
+  data.collections.forEach(collection => {
+    if (collection.cState === "ready") {
+      readyCollections.push(collection.collection);
+    }
+  });
+  return readyCollections;
+}
 
-gulp.task("vimage2", function (cb) {
-  // Validate the image html file.
-  validateHtml("dist/images/c2/image-2.html")
-  cb()
-})
-
-gulp.task("vthumbnails1", function (cb) {
-  // Validate the thumbnails html file.
-  validateHtml("dist/images/c1/thumbnails-1.html")
-  cb()
-})
-
-gulp.task("vthumbnails2", function (cb) {
-  // Validate the thumbnails html file.
-  validateHtml("dist/images/c2/thumbnails-2.html")
+gulp.task("v", function (cb) {
+  // Validate the ready collection thumbnails and images pages.
+  const readyCollections = getReadyCollections()
+  log(`${readyCollections.length} ready collections`)
+  for (let ix = 0; ix < readyCollections.length; ix++) {
+    const num = readyCollections[ix]
+    log(`Validate: ${num}`)
+    validateHtml(`dist/images/c${num}/image-${num}.html`)
+    validateHtml(`dist/images/c${num}/thumbnails-${num}.html`)
+  }
   cb()
 })
 
@@ -203,8 +203,7 @@ gulp.task("vmaker", function (cb) {
   cb()
 })
 
-gulp.task("vpages", gulp.parallel(
-  "vindex", "vthumbnails1", "vthumbnails2", "vimage1", "vimage2", "vmaker"));
+gulp.task("vpages", gulp.parallel("vindex", "vmaker", "v"));
 
 function compareContents(sourceFilename, destFilename) {
   // Return true when two files contain the same bytes. The source
@@ -270,14 +269,20 @@ statictea \
   runStaticteaTask(parameters, "tmp/index.html", "dist/index.html", cb)
 })
 
-gulp.task("thumbnails1", function (cb) {
-  // Create the thumbnails page for collection 1.
-  thumbnailsPage(1, cb)
-})
-
-gulp.task("thumbnails2", function (cb) {
-  // Create the thumbnails page for collection 2.
-  thumbnailsPage(2, cb)
+gulp.task("p", function (cb) {
+  // Create the thumbnails and image pages for the ready collections.
+  const readyCollections = getReadyCollections()
+  const numReady = readyCollections.length
+  log(`${numReady} ready collections`)
+  if (numReady == 0)
+    return cb()
+  for (let ix = 0; ix < numReady; ix++) {
+    const num = readyCollections[ix]
+    // log(`collection number: ${num}`)
+    thumbnailsPage(num, ()=>{})
+    imagePage(num, ()=>{})
+  }
+  cb()
 })
 
 function thumbnailsPage(collectionNumber, cb) {
@@ -292,7 +297,7 @@ statictea \
 */
 
   const num = collectionNumber
-  log(`Compiling the thumbnails template for collection ${num}.`)
+  log(`Building thumbnails page ${num}.`)
   const tmpFilename = `tmp/thumbnails-${num}.html`
   const distFilename = `dist/images/c${num}/thumbnails-${num}.html`
   const parameters = [
@@ -303,18 +308,6 @@ statictea \
   ]
   runStaticteaTask(parameters, tmpFilename, distFilename, cb)
 }
-
-gulp.task("image1", function (cb) {
-  // Create the image page for collection 1.
-  imagePage(1, cb)
-  cb()
-})
-
-gulp.task("image2", function (cb) {
-  // Create the image page for collection 2.
-  imagePage(2, cb)
-  cb()
-})
 
 function imagePage(collectionNumber, cb) {
   // Create the image page for the given collection.
@@ -328,7 +321,7 @@ statictea \
 */
 
   const num = collectionNumber
-  log(`Compiling image template for collection ${collectionNumber}.`)
+  log(`Building images page ${num}.`)
   const tmpFilename = `tmp/image-${num}.html`
   const distFilename = `dist/images/c${num}/image-${num}.html`
   const parameters = [
@@ -366,7 +359,7 @@ statictea \
 
 })
 
-gulp.task("syncronize", function (cb) {
+gulp.task("sync", function (cb) {
   // Syncronize index template's replace blocks with header.tea.
 /*
 statictea -u -o pages/header.tea -t pages/index-tmpl.html
@@ -403,8 +396,7 @@ gulp.task("m-css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
-gulp.task("pages", gulp.parallel("index", "thumbnails1", "thumbnails2",
-  "image1", "image2", "maker"));
+gulp.task("pages", gulp.parallel("index", "maker", "p"));
 
 gulp.task('readme', function () {
   const parameters = [
