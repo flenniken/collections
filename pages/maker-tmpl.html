@@ -19,7 +19,7 @@
 <!--$ : t.repeat = len(s.collections) -->
 <!--$ : c = s.collections[t.row] -->
 <!--$ : num = c.collection -->
-<!--$ : title = c.title -->
+<!--$ : title = format("{c.title} ({num})") -->
           <option value="{num}">{title}</option>
         </select>
       </div>

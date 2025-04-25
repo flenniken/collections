@@ -3,7 +3,7 @@
   "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
   "description": "We walked the Brooklyn Bridge Sep 13, 2019 when we visited Alex and Agatha in New York. I highly recommend it because of the great views of the city and the people watching.",
   "indexThumbnail": "/images/c3/c3-1-t.jpg",
-  "cState": "build",
+  "cState": "ready",
   "collection": 3,
   "width": 480,
   "height": 480,
@@ -21,13 +21,13 @@
     },
     {
       "title": "",
-      "description": "",
-      "url": "/images/c3/c3-2-p.jpg",
-      "width": 5310,
-      "height": 3540,
-      "size": 2753764,
-      "thumbnail": "/images/c3/c3-2-t.jpg",
-      "sizet": 82318
+      "description": "We're walking towards the bridge.",
+      "url": "/images/c3/c3-5-p.jpg",
+      "width": 3648,
+      "height": 5472,
+      "size": 2484071,
+      "thumbnail": "/images/c3/c3-5-t.jpg",
+      "sizet": 106151
     },
     {
       "title": "",
@@ -41,36 +41,6 @@
     },
     {
       "title": "",
-      "description": "",
-      "url": "/images/c3/c3-4-p.jpg",
-      "width": 5472,
-      "height": 3648,
-      "size": 2658564,
-      "thumbnail": "/images/c3/c3-4-t.jpg",
-      "sizet": 91720
-    },
-    {
-      "title": "",
-      "description": "We're walking towards the bridge.",
-      "url": "/images/c3/c3-5-p.jpg",
-      "width": 3648,
-      "height": 5472,
-      "size": 2484071,
-      "thumbnail": "/images/c3/c3-5-t.jpg",
-      "sizet": 106151
-    },
-    {
-      "title": "",
-      "description": "",
-      "url": "/images/c3/c3-6-p.jpg",
-      "width": 5472,
-      "height": 3648,
-      "size": 2561017,
-      "thumbnail": "/images/c3/c3-6-t.jpg",
-      "sizet": 77449
-    },
-    {
-      "title": "",
       "description": "When you first enter the bridge the surface is asphalt, later it becomes wood.  The trail was divided for pedestrians and bikes when these pictures were taken.  Since then the bike path was moved down on the road so there is more room for the walkers. You can see Alex, Agatha and Kathleen.",
       "url": "/images/c3/c3-7-p.jpg",
       "width": 5472,
@@ -81,6 +51,16 @@
     },
     {
       "title": "",
+      "description": "From the Brooklyn you can see the Manhattan Bridge and the carousel we passed to get here.",
+      "url": "/images/c3/c3-11-p.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 2468483,
+      "thumbnail": "/images/c3/c3-11-t.jpg",
+      "sizet": 90585
+    },
+    {
+      "title": "",
       "description": "Their are great views of Manhatten and the East River.",
       "url": "/images/c3/c3-8-p.jpg",
       "width": 5389,
@@ -88,6 +68,16 @@
       "size": 2247953,
       "thumbnail": "/images/c3/c3-8-t.jpg",
       "sizet": 93426
+    },
+    {
+      "title": "",
+      "description": "Kathleen Flenniken.  You feel safe walking the path because you cannot see directly down so there is no sense of height.",
+      "url": "/images/c3/c3-16-p.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 2225571,
+      "thumbnail": "/images/c3/c3-16-t.jpg",
+      "sizet": 96192
     },
     {
       "title": "",
@@ -111,23 +101,13 @@
     },
     {
       "title": "",
-      "description": "From the Brooklyn you can see the Manhattan Bridge and the carousel we passed to get here.",
-      "url": "/images/c3/c3-11-p.jpg",
+      "description": "The Chrysler Building with one of the new pencil buildings in front.",
+      "url": "/images/c3/c3-14-p.jpg",
       "width": 5472,
       "height": 3648,
-      "size": 2468483,
-      "thumbnail": "/images/c3/c3-11-t.jpg",
-      "sizet": 90585
-    },
-    {
-      "title": "",
-      "description": "",
-      "url": "/images/c3/c3-12-p.jpg",
-      "width": 5217,
-      "height": 3478,
-      "size": 1367990,
-      "thumbnail": "/images/c3/c3-12-t.jpg",
-      "sizet": 80268
+      "size": 2977965,
+      "thumbnail": "/images/c3/c3-14-t.jpg",
+      "sizet": 85619
     },
     {
       "title": "",
@@ -141,36 +121,6 @@
     },
     {
       "title": "",
-      "description": "The Chrysler Building with one of the new pencil buildings in front.",
-      "url": "/images/c3/c3-14-p.jpg",
-      "width": 5472,
-      "height": 3648,
-      "size": 2977965,
-      "thumbnail": "/images/c3/c3-14-t.jpg",
-      "sizet": 85619
-    },
-    {
-      "title": "",
-      "description": "You can see the road below on either side of the walkway.  It's not that noisy.  ",
-      "url": "/images/c3/c3-15-p.jpg",
-      "width": 5472,
-      "height": 3648,
-      "size": 2205374,
-      "thumbnail": "/images/c3/c3-15-t.jpg",
-      "sizet": 92101
-    },
-    {
-      "title": "",
-      "description": "Kathleen Flenniken.  You feel safe walking the path because you cannot see directly down so there is no sense of height.",
-      "url": "/images/c3/c3-16-p.jpg",
-      "width": 5472,
-      "height": 3648,
-      "size": 2225571,
-      "thumbnail": "/images/c3/c3-16-t.jpg",
-      "sizet": 96192
-    },
-    {
-      "title": "",
       "description": "You can see the Empire State Building on the left.  At center is one of the pencil buildings under construction.",
       "url": "/images/c3/c3-17-p.jpg",
       "width": 5472,
@@ -178,34 +128,7 @@
       "size": 2058858,
       "thumbnail": "/images/c3/c3-17-t.jpg",
       "sizet": 76421
-    },
-    {
-      "title": "Bridge Center",
-      "description": "Alex and Agatha near the center of the bridge.  John Dillon said ESCO, the company where he used to work, made thousands of new brackets for the cables.",
-      "url": "/images/c3/c3-18-p.jpg",
-      "width": 3529,
-      "height": 5294,
-      "size": 2738852,
-      "thumbnail": "/images/c3/c3-18-t.jpg",
-      "sizet": 104789
     }
   ],
-  "order": [
-    0,
-    4,
-    2,
-    6,
-    10,
-    7,
-    15,
-    8,
-    9,
-    13,
-    12,
-    16,
-    -1,
-    -1,
-    -1,
-    -1
-  ]
+  "zoomPoints": {}
 }
