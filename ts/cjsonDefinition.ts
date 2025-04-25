@@ -20,7 +20,11 @@ namespace CJson {
   }
 
   export interface ZoomPoints {
-    // The wxh array contains a element for each image in the collection.
+    // A ZoomPoints object contains elements for different width and
+    // height combinations. The key is a string of the form "widthxheight"
+    // where width and height are the image dimensions in pixels. The value
+    // is an array of ZoomPoint objects the same length as the
+    // image array.
     [wxh: string]: ZoomPoint[];
   }
 

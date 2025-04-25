@@ -604,7 +604,7 @@ async function saveCollection(event: Event) {
 
 function removeUnusedImages(cjsoninfo: CJson.Collection) {
   // Remove the unused images and reorder the image list to match the order
-  // list.
+  // list. Reorder the zoom points too.
   log("removeUnusedImages")
 
   if (!cjsoninfo || !cjsoninfo.order) {
@@ -612,22 +612,52 @@ function removeUnusedImages(cjsoninfo: CJson.Collection) {
     return
   }
 
-  const usedImages: CJson.Image[] = []
-  for (let ix = 0; ix < 16; ix++) {
-    const imageIx = cjsoninfo.order[ix]
-    if (imageIx == -1)
-      break
-    usedImages.push(cjsoninfo.images[imageIx])
+  cjsoninfo.images = reorderImages(cjsoninfo.order, cjsoninfo.images)
+  if (!cjsoninfo.zoomPoints) {
+    cjsoninfo.zoomPoints = reorderZoomPoints(cjsoninfo.order, cjsoninfo.zoomPoints)
   }
-  if (usedImages.length < 8) {
-    log("Error: the collection has less than 8 images.")
-    return
-  }
-  cjsoninfo.images = usedImages
+
   delete(cjsoninfo.order)
   log(cjsoninfo.images)
   populateCollection(cjsoninfo)
 }
+
+function reorderImages(order: number[], images: CJson.Image[]) {
+  // Reorder the images to match the order list. Remove unused images
+  // and return the new images list.
+  const newImages: CJson.Image[] = []
+  for (let ix = 0; ix < order.length; ix++) {
+    const imageIx = order[ix]
+    if (imageIx != -1) {
+      newImages.push(images[imageIx])
+    }
+  }
+  return newImages
+}
+
+function reorderZoomPoints(order: number[], zoomPoints: CJson.ZoomPoints) {
+  // Reorder the zoom points to match the order list and return the new list.
+
+  // Loop through each set of zoom points and create a new zoom based on the
+  // order list.
+  const newZoomPoints: CJson.ZoomPoints = {}
+  for (const wxh in zoomPoints) {
+    // Get the zoom points for the current wxh.
+    const wxhZoomPoints = zoomPoints[wxh]
+    const newWxhZoomPoints: CJson.ZoomPoint[] = []
+    for (let ix = 0; ix < order.length; ix++) {
+      const imageIx = order[ix]
+      if (imageIx != -1) {
+        // Get the zoom points for the image.
+        const wxhZoomPoint = wxhZoomPoints[imageIx]
+        newWxhZoomPoints.push(wxhZoomPoint)
+      }
+    }
+    newZoomPoints[wxh] = newWxhZoomPoints
+  }
+  return newZoomPoints
+}
+
 function getPreviousNext(orderList: number[], imageIndex: number) {
   // Return the previous and next index for the given image index
   // wrapping around if necessary, i.e: [ix-1, ix+1]. If the image

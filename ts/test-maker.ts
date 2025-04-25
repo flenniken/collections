@@ -428,6 +428,134 @@ function encodingSuite() {
   test(fn, "test-paragraph2", "<h1>hello</h1>")
 }
 
+function testReorderImages(order: number[], images: CJson.Image[],
+  eIds: number[]) {
+  // Test the reorderImages function.
+  let imageIds: number[] = []
+  for (const image of images) {
+    imageIds.push(parseInt(image.uniqueId))
+  }
+  const gotImages = reorderImages(order, images)
+  let gotIds: number[] = []
+  for (const image of gotImages) {
+    gotIds.push(parseInt(image.uniqueId))
+  }
+  const msg = `order: ${JSON.stringify(order)}, images: ${JSON.stringify(imageIds)}`
+  gotExpected(gotIds, eIds, msg)
+}
+
+function reorderImagesSuite() {
+  log("reorderImagesSuite")
+  const fn = testReorderImages
+  const images = createTestImages(3)
+  test(fn, [0, 1, 2], images, [0, 1, 2])
+  test(fn, [-1, 1, 2], images, [1, 2])
+  test(fn, [-1, 1, -1], images, [1])
+  test(fn, [-1, 2, -1], images, [2])
+  test(fn, [-1, -1, -1], images, [])
+}
+
+interface TestZoomPoint {
+  num: number;
+}
+
+interface TestZoomPoints {
+  [wxh: string]: TestZoomPoint[];
+}
+
+function tzpsToZps(tzps: TestZoomPoints): CJson.ZoomPoints {
+  // Convert the TestZoomPoints object to a ZoomPoints object.
+  let zoomPoints: CJson.ZoomPoints = {};
+  for (const [key, points] of Object.entries(tzps)) {
+    zoomPoints[key] = points.map(point => ({
+      scale: point.num,
+      tx: 0,
+      ty: 0,
+    }));
+  }
+  return zoomPoints;
+}
+
+function zpsToTzps(zps: CJson.ZoomPoints): TestZoomPoints {
+  // Convert the ZoomPoints object to a TestZoomPoints object.
+  let tzps: TestZoomPoints = {};
+  for (const [key, points] of Object.entries(zps)) {
+    tzps[key] = points.map(point => ({
+      num: point.scale,
+    }));
+  }
+  return tzps;
+}
+
+function testZps() {
+  const tzps = {"2x3": [{ num: 1 }, { num: 2 }, { num: 3 }]}
+  const gZps = tzpsToZps(tzps)
+  gotExpected(gZps,
+    {"2x3":[{"scale":1,"tx":0,"ty":0},{"scale":2,"tx":0,"ty":0},{"scale":3,"tx":0,"ty":0}]})
+  const gotTzps = zpsToTzps(gZps)
+  gotExpected(tzps, gotTzps)
+}
+
+function testZps2() {
+  const tzps = {
+    "2x3": [{ num: 1 }, { num: 2 }, { num: 3 }],
+    "3x2": [{ num: 4 }, { num: 5 }, { num: 6 }]
+  }
+  const gZps = tzpsToZps(tzps)
+  gotExpected(gZps, {
+    "2x3": [
+      {"scale":1,"tx":0,"ty":0},
+      {"scale":2,"tx":0,"ty":0},
+      {"scale":3,"tx":0,"ty":0}
+    ],
+    "3x2": [
+      {"scale":4,"tx":0,"ty":0},
+      {"scale":5,"tx":0,"ty":0},
+      {"scale":6,"tx":0,"ty":0}
+    ]
+  })
+  const gotTzps = zpsToTzps(gZps)
+  gotExpected(tzps, gotTzps)
+}
+
+function createZoomPointsSuite() {
+  // Test the tzpsToZps and zpsToTzps functions.
+  log("createZoomPointsSuite")
+  test(testZps)
+  test(testZps2)
+}
+
+function testReorderZoomPoints(order: number[], tzps: TestZoomPoints,
+    eTzps: TestZoomPoints) {
+  // Test the reorderZoomPoints function.
+  const zps = tzpsToZps(tzps)
+  const gotZps = reorderZoomPoints(order, zps)
+  const gotTzps = zpsToTzps(gotZps)
+  const msg = `order: ${JSON.stringify(order)}, zoomPoints: ${JSON.stringify(tzps)}`
+  gotExpected(gotTzps, eTzps, msg)
+}
+
+function reorderZoomPointsSuite() {
+  // Test the reorderZoomPoints function.
+  log("reorderZoomPointsSuite")
+  const fn = testReorderZoomPoints
+  test(fn, [0, 1],
+    {"2x3": [{ num: 1 }, { num: 2 }, { num: 3 }], "3x2": [{ num: 4 }, { num: 5 }, { num: 6 }]},
+    {"2x3": [{ num: 1 }, { num: 2 }], "3x2": [{ num: 4 }, { num: 5 }]});
+  test(fn, [1, 0],
+    {"2x3": [{ num: 0 }, { num: 1 }], "3x2": [{ num: 4 }, { num: 5 }]},
+    {"2x3": [{ num: 1 }, { num: 0 }], "3x2": [{ num: 5 }, { num: 4 }]});
+  test(fn, [1, 0],
+    {"2x3": [{ num: 0 }, { num: 1 }]},
+  {"2x3": [{ num: 1 }, { num: 0 }]});
+  test(fn, [1, -1],
+    {"2x3": [{ num: 0 }, { num: 1 }], "3x2": [{ num: 4 }, { num: 5 }]},
+    {"2x3": [{ num: 1 }], "3x2": [{ num: 5 }]});
+  test(fn, [0, -1],
+    {"2x3": [{ num: 0 }, { num: 1 }], "3x2": [{ num: 4 }, { num: 5 }]},
+    {"2x3": [{ num: 0 }], "3x2": [{ num: 4 }]});
+}
+
 function testMaker() {
   log("Running testMaker...")
   gotExpectedSuite()
@@ -442,6 +570,9 @@ function testMaker() {
   setRequiredSuite()
   setTextSuite()
   encodingSuite()
+  reorderImagesSuite();
+  createZoomPointsSuite();
+  reorderZoomPointsSuite();
 
   if (errorCount == 0)
     log("All tests passed.")
