@@ -1,9 +1,14 @@
-// Test code:
+// Test maker.ts.
 
 /// <reference path="./win.ts" />
 /// <reference path="./all.ts" />
 /// <reference path="./cjsonDefinition.ts" />
 /// <reference path="./maker.ts" />
+
+document.addEventListener("DOMContentLoaded", () => {
+  appendTestContent()
+  testMaker();
+});
 
 function gotExpected(got: any, expected: any, message?: string) {
   // Check if the got value is the same as the expected value.
@@ -42,14 +47,44 @@ function test(fn: (...args: any[]) => void, ...args: any[]): void {
   // Run the test function with the provided arguments and log the result.
   try {
     fn(...args);
-    log(`${testNumber}: ✅ pass`);
+    log(`✅ ${testNumber} pass`);
   }
   catch (error) {
-    log(`${testNumber}: ❌ fail`);
+    log(`❌ ${testNumber} fail`);
     log(error instanceof Error ? error.message : error);
     errorCount += 1;
   }
   testNumber += 1;
+}
+
+function getFunctionName(fn: Function): string {
+  const fnString = fn.toString();
+  // log(fnString)
+  // function shiftImagesSuite() {...
+  const argsMatch = fnString.match(/^[\s]*function[\s]*([^(]*)/);
+  let name = "unknown"
+  if (argsMatch && argsMatch.length > 1) {
+    const matchName = argsMatch[1]
+    if (matchName)
+      name = matchName
+  }
+  return name
+}
+
+type SuiteFunction = (...args: any[]) => void;
+function testGetFunctionName(fn: SuiteFunction, eName: string) {
+  gotExpected(getFunctionName(fn), eName)
+}
+
+function getFunctionNameSuite() {
+  test(testGetFunctionName, runSuite, "runSuite")
+  test(testGetFunctionName, testExpectedError, "testExpectedError")
+  test(testGetFunctionName, testGetPreviousNext, "testGetPreviousNext")
+}
+
+function runSuite(fn: () => void) {
+  log("🏃‍♂️‍➡️ " + getFunctionName(fn));
+  fn();
 }
 
 function testExpectedError() {
@@ -83,7 +118,6 @@ expected: [2]
 }
 
 function gotExpectedSuite() {
-  log("gotExpectedSuite")
   test(gotExpected, [1], [1])
   test(testExpectedError, [1], [2], "comparing arrays")
 }
@@ -96,7 +130,6 @@ function testShiftImages(orderList: number[], collectionIndex: number,
 }
 
 function shiftImagesSuite() {
-  log("shiftImagesSuite")
   const fn = testShiftImages
   test(fn, [0, 1, 2], 0, [0, 1, 2])
   test(fn, [0, 1, 2], 1, [0, 1, 2])
@@ -111,7 +144,6 @@ function shiftImagesSuite() {
 }
 
 function getPreviousNextSuite() {
-  log("getPreviousNextSuite")
   const [previous, next] = getPreviousNext([], 0)
   test(gotExpected, previous, -1)
   test(gotExpected, next, -1)
@@ -164,7 +196,6 @@ function testBoxes99(filledBoxes: number[], eOrder: number[]) {
 }
 
 function testBoxes99Suite() {
-  log("testBoxes99Suite")
   const fn = testBoxes99
   test(fn, [], [-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1])
   test(fn, [0], [99,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1])
@@ -193,7 +224,6 @@ function testIsRequired(filledBoxes: number[], eRequiredTrue: number[]) {
 }
 
 function isRequireSuite() {
-  log("isRequireSuite")
   const fn = testIsRequired
 
   // Full box is not required.
@@ -235,7 +265,6 @@ function testCreateTestImage(unique: number) {
 }
 
 function createTestImageSuite() {
-  log("createTestImageSuite")
   test(testCreateTestImage, 0)
   test(testCreateTestImage, 1)
   test(testCreateTestImage, 2)
@@ -258,7 +287,6 @@ function testFindThumbnailIx(order: number[], images: CJson.Image[],
 }
 
 function findThumbnailIxSuite() {
-  log("findThumbnailIxSuite")
   const fn = testFindThumbnailIx
   let order = [0, 2]
   const images = createTestImages(3)
@@ -284,7 +312,6 @@ function testCreateCollectionOrder(order: number[], availableCount: number, eOrd
 }
 
 function createCollectionOrderSuite() {
-  log("createCollectionOrderSuite")
   const fn = testCreateCollectionOrder
 
   test(fn, undefined, 1, [0, -1, -1])
@@ -318,7 +345,6 @@ function testParseNonNegativeIntError(numberStr: string) {
 }
 
 function parseNonNegativeIntSuite() {
-  log("parseNonNegativeIntSuite")
   const fn = testParseNonNegativeInt
   test(fn, "0", 0)
   test(fn, "3", 3)
@@ -357,7 +383,6 @@ function testSetRequired(requiredId: RequiredIdType, status: boolean) {
 }
 
 function setRequiredSuite() {
-  log("setRequiredSuite")
   const requiredIds: RequiredIdType[] = [
     "image-details-required",
     "image-description-required",
@@ -403,7 +428,6 @@ function testSetText(elementId: string, requiredId: RequiredIdType, text: string
 }
 
 function setTextSuite() {
-  log("setTextSuite")
   const fn = testSetText
   test(fn, "collection-title", "collection-title-required", "the title")
   test(fn, "post-date", "post-date-required", "2025-04-12")
@@ -422,7 +446,6 @@ function testEncoding(elementId: string, text: string) {
 }
 
 function encodingSuite() {
-  log("encodingSuite")
   const fn = testEncoding
   test(fn, "test-paragraph", "This is a test & < > \" '")
   test(fn, "test-paragraph2", "<h1>hello</h1>")
@@ -445,7 +468,6 @@ function testReorderImages(order: number[], images: CJson.Image[],
 }
 
 function reorderImagesSuite() {
-  log("reorderImagesSuite")
   const fn = testReorderImages
   const images = createTestImages(3)
   test(fn, [0, 1, 2], images, [0, 1, 2])
@@ -520,7 +542,6 @@ function testZps2() {
 
 function createZoomPointsSuite() {
   // Test the tzpsToZps and zpsToTzps functions.
-  log("createZoomPointsSuite")
   test(testZps)
   test(testZps2)
 }
@@ -537,7 +558,6 @@ function testReorderZoomPoints(order: number[], tzps: TestZoomPoints,
 
 function reorderZoomPointsSuite() {
   // Test the reorderZoomPoints function.
-  log("reorderZoomPointsSuite")
   const fn = testReorderZoomPoints
   test(fn, [0, 1],
     {"2x3": [{ num: 1 }, { num: 2 }, { num: 3 }], "3x2": [{ num: 4 }, { num: 5 }, { num: 6 }]},
@@ -554,32 +574,6 @@ function reorderZoomPointsSuite() {
   test(fn, [0, -1],
     {"2x3": [{ num: 0 }, { num: 1 }], "3x2": [{ num: 4 }, { num: 5 }]},
     {"2x3": [{ num: 0 }], "3x2": [{ num: 4 }]});
-}
-
-function testMaker() {
-  log("Running testMaker...")
-  gotExpectedSuite()
-  getPreviousNextSuite()
-  shiftImagesSuite()
-  testBoxes99Suite()
-  isRequireSuite()
-  createTestImageSuite()
-  findThumbnailIxSuite()
-  createCollectionOrderSuite()
-  parseNonNegativeIntSuite()
-  setRequiredSuite()
-  setTextSuite()
-  encodingSuite()
-  reorderImagesSuite();
-  createZoomPointsSuite();
-  reorderZoomPointsSuite();
-
-  if (errorCount == 0)
-    log("All tests passed.")
-  else
-    log(`❌ ${errorCount} tests failed.`)
-
-  return 0
 }
 
 function appendTestContent() {
@@ -606,7 +600,29 @@ function appendTestContent() {
   container.appendChild(testParagraph2);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  appendTestContent()
-  testMaker();
-});
+function testMaker() {
+  log("Running testMaker...")
+  runSuite(gotExpectedSuite)
+  runSuite(getFunctionNameSuite)
+  runSuite(getPreviousNextSuite)
+  runSuite(shiftImagesSuite)
+  runSuite(testBoxes99Suite)
+  runSuite(isRequireSuite)
+  runSuite(createTestImageSuite)
+  runSuite(findThumbnailIxSuite)
+  runSuite(createCollectionOrderSuite)
+  runSuite(parseNonNegativeIntSuite)
+  runSuite(setRequiredSuite)
+  runSuite(setTextSuite)
+  runSuite(encodingSuite)
+  runSuite(reorderImagesSuite)
+  runSuite(createZoomPointsSuite)
+  runSuite(reorderZoomPointsSuite)
+
+  if (errorCount == 0)
+    log("✅ All tests passed.")
+  else
+    log(`❌ ${errorCount} tests failed.`)
+
+  return 0
+}

@@ -99,8 +99,10 @@ const image_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/image.t
 const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/thumbnails.ts"]
 const index_ts = ["ts/all.ts", "ts/win.ts", "ts/login.ts", "ts/download.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
-const maker_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/maker.ts",
-                  "ts/test-maker.ts"]
+
+let maker_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/maker.ts"]
+if (!minimize)
+  maker_ts.push("ts/test-maker.ts");
 
 // image page
 gulp.task('i', function () {
