@@ -94,7 +94,9 @@ enter descriptive text.
 
 As an admin you click the maker icon to visit the maker page. You
 select the collection to edit from the dropdown menu. You do this
-while running from localhost on your desktop.
+while running from localhost on your desktop. You do all your testing
+on localhost. Not until it passed all tests do you publish it to the
+world.
 
 ***Saving***
 
@@ -111,8 +113,6 @@ json file:
 ~~~
 mv ~/Downloads/c1.json dist/images/c1/
 ~~~
-
-Eventually saving will be done automatically on every change.
 
 ***Maker Page UI***
 
@@ -137,16 +137,26 @@ The maker page elements:
 
 # Collection.json
 
-You create the collections.json file with the maker -c command. It
-contains information about the collection and is used to build the
-index and maker pages. The command creates the collections json file
-by scanning all the cjson files.
+The gulp command creates the collections.json file from the cjson
+files used when building the web pages.
 
-~~~
-maker —c
-~~~
+[⬇](#Contents)
 
-Besides the index and maker page the collections.json file determines which collections the gulp command builds.
+# Zoom Points
+
+After you specify the required elements and click the "remove extra
+images" button this marks the collection ready.  The next step is to
+build the collection pages and set the zoom points.
+
+On the image page you size and pan each image to set its zoom
+points. You save the zoom points by downloading the cjson and copying
+it to the collection folder.
+
+[⬇](#Contents)
+
+# Deploy
+
+Deploy the collection to the world.
 
 # Contents
 
@@ -154,3 +164,5 @@ Besides the index and maker page the collections.json file determines which coll
 * [Make New](#make-new) -- how to create the starting cjson file for a collection.
 * [Edit Collection](#edit-collection) -- how to order and describe the new collection.
 * [Collection.json](#collection-json) -- how to create the collections.json file for building the index.
+* [Zoom Points](#zoom-points) -- how to set the collection zoom points.
+* [Deploy](#deploy) -- how to publish the collection to the world.
