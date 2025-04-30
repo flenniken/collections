@@ -82,7 +82,9 @@ clicking the maker link.  Select the collection to edit from the
 dropdown menu. Perform all testing on `localhost` before publishing
 the collection.
 
-## Saving Changes
+[⬇](#Contents)
+
+# Saving Changes
 
 Edits to the maker page update the `cjson` file. Save your changes
 using the **Save** button to avoid losing them. Refreshing the page or
@@ -96,45 +98,49 @@ folder. Move it to the `images` directory. For example:
 mv ~/Downloads/c1.json dist/images/c1/
 ~~~
 
-## Maker Page UI
+[⬇](#Contents)
+
+# Maker Page UI
 
 The maker page includes the following elements:
 
 * **Left Panel**: A 2-column by 8-row table showing the collection images and their order.
 * **Right Panel**: A table of 20 available images.
-* **Interactions**:
-  * Click an image in the right panel to add it to the next available collection box.
-  * Click an image in the left panel to move it back to the available images.
-  * Cmd-click a collection box to open or close an empty box.
 * **Top Section**: Fields for entering the collection’s title and post date.
 * **Bottom Section**: Fields for entering descriptive text for the collection and its images.
 
-[⬇](#Contents)
+**Interactions**:
 
-# Collections.json
-
-The `gulp` command generates the `collections.json` file from the
-`cjson` files. This file is used to build the web pages.
+* Click an image in the right panel to add it to the next available collection box.
+* Click an image in the left panel to move it back to the available images.
+* Cmd-click a collection box to open or close an empty box.
 
 [⬇](#Contents)
 
 # Zoom Points
 
 After specifying the required elements and clicking the **Remove Extra
-Images** button, the collection is marked as ready. The ready state is
-picked up by Collections.json and the collection pages are built.
+Images** button, the collection is marked as ready.
 
-On the image page, size and pan each image to define its zoom
+The `gulp` command generates the `collections.json` file from the
+`cjson` files. This file is used to build the web pages.
+
+On the new image page, size and pan each image to define its zoom
 points. Save the zoom points by downloading the updated `cjson` file
 and copying it to the collection folder.
 
-Build in the final zoom points and test the image pages again.
+Run the `gulp` command to build in the final zoom points and test the
+image pages again.
 
 [⬇](#Contents)
 
 # Deploy
 
-Publish the collection to make it available to the world.
+Deploy the collection to publish it to the world.
+
+~~~
+scripts/deploy -s
+~~~
 
 [⬇](#Contents)
 
@@ -143,6 +149,7 @@ Publish the collection to make it available to the world.
 * [Initial Steps](#initial-steps) -- the initial manual steps to create a new collection.
 * [Make New](#make-new) -- how to create the starting `cjson` file for a collection.
 * [Edit Collection](#edit-collection) -- how to order and describe the new collection.
-* [Collections.json](#collections-json) -- how to create the `collections.json` file for building the pages.
+* [Saving Changes](#saving-changes) -- how to save your changes.
+* [Maker Page UI](#maker-page-ui) -- discribes the make page UI components and interactions.
 * [Zoom Points](#zoom-points) -- how to set the collection zoom points.
 * [Deploy](#deploy) -- how to publish the collection to the world.
