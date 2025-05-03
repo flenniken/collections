@@ -22,7 +22,7 @@ cat > lifecycle.json  <<EOF
     {
       "ID": "DeleteAfter30Days",
       "Status": "Enabled",
-      "Prefix": "/logs",
+      "Prefix": "logs",
       "Expiration": {
         "Days": 30
       }
