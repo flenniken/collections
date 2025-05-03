@@ -12,5 +12,5 @@ This page links to documents of interest to developers.
 * [Authenticate Image Requests](authenticate-image-requests.md) — how image requests are authenticated on the server.
 * [Request Logging](request-logging.md) — how you view https request logs for both cloudfront and lambda.
 * [Collections Style Guide](collections-style-guide.md) — how to write documents for this project.
-* [Create User](create-user.md) — how to create new users.
+* [Create User](create-user.md) — how to create a new user.
 * [Login Flow](login-flow.md) — how use the login-flow command to verify the authentication flow and troubleshoot issues.

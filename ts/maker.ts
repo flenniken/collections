@@ -455,6 +455,7 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
       requiredIcon.src = "icons/green-circle.svg"
       removeUnusedButton.style.display = "none"
       cjsoninfo.cState = "ready"
+      cjsoninfo.modified = true
     }
   }
 }

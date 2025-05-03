@@ -37,10 +37,93 @@ Tasks:
 *   m-css: Minimize the maker.css file.
 *    sync: Sync the template's replace blocks with header.tea content.
 *  readme: Show the readme file with glow.
+*   clist: Generate the collections.json file from the images folder.
+*  unused: Remove unused collection images and thumbnails for the modified collections.
+*     tin: Copy the index thumbnail to the shared folder for the modified collections.
 *     all: Compile everything in parallel, tasks ts, pages, vpages and css.
 `
-
 const target = "es2017"
+
+function removeUnusedImages(num) {
+  return
+  // Remove unused images and thumbnails for the given collection number.
+  // Compare the images in the cjson file with the images in the
+  // images folder. Remove the images that are not in the cjson file.
+  const imagesDir = path.join(__dirname, 'dist/images/c' + num);
+  const cjsonFile = path.join(imagesDir, 'c' + num + '.json');
+  if (!fs.existsSync(cjsonFile)) {
+    throw new Error(`No cjson file found for collection ${num}. Skipping.`);
+  }
+
+  // Read the image and thumbnail basenames from the cjson file. The image
+  // comes from the url field and the thumbnail comes from the thumbnail field.
+  // "url": "/images/c1/c1-7-p.jpg",
+  // "thumbnail": "/images/c1/c1-7-t.jpg",
+  const cjson = JSON.parse(fs.readFileSync(cjsonFile, 'utf8'));
+  const collectionImages = new Set(cjson.images.map(image => path.basename(image.url)));
+  collectionImages.push(...cjson.images.map(image => path.basename(image.thumbnail)));
+  log(`Collection ${num} has ${collectionImages.length} images.`);
+
+  // Process all files in the images directory.
+  const allFiles = fs.readdirSync(imagesDir);
+  allFiles.filter(file => {
+    // Remove a JPEG image if it is not a collection image or a thumbnail.
+    if (file.endsWith('.jpg') && !collectionImages.has(file)) {
+      // Remove the file from the images directory.
+      //fs.unlinkSync(path.join(imagesDir, file));
+      log(`Removed: ${file}`);
+    }
+  });
+}
+
+function generateCollectionsJson() {
+  // Generate the collections.json file from the images folder.
+  const imagesDir = path.join(__dirname, 'dist/images');
+  const outputFile = path.join(__dirname, 'pages/collections.json');
+
+  // Ensure the images directory exists.
+  if (!fs.existsSync(imagesDir))
+    throw new Error(`Error: Images directory not found: ${imagesDir}`);
+
+  // Find all collection folders in the images directory.
+  const collectionFolders = fs.readdirSync(imagesDir).filter(folder => {
+    const folderPath = path.join(imagesDir, folder);
+    return fs.statSync(folderPath).isDirectory();
+  });
+
+  // Sort collection folders from newest to oldest.
+  collectionFolders.sort((a, b) => parseInt(b.slice(1)) - parseInt(a.slice(1)));
+
+  // Create the list of collections.
+  const collectionsJson = { collections: [] };
+  for (const folder of collectionFolders) {
+    const cjsonFile = path.join(imagesDir, folder, `${folder}.json`);
+    if (!fs.existsSync(cjsonFile))
+      throw new Error(`Error: Missing cjson: ${cjsonFile}`);
+
+    const cinfo = JSON.parse(fs.readFileSync(cjsonFile, 'utf8'));
+    console.log(`Processing collection: ${cinfo.collection}`);
+
+    const collection = {
+      collection: cinfo.collection,
+      cState: cinfo.cState,
+      title: cinfo.title,
+      indexDescription: cinfo.indexDescription,
+      thumbnail: cinfo.indexThumbnail,
+      posted: cinfo.posted,
+      iCount: cinfo.images.length,
+      totalSize: cinfo.images.reduce((total, image) => total + image.size + image.sizet, 0),
+      modified: cinfo.modified,
+    };
+    collectionsJson.collections.push(collection);
+  }
+
+  // Write the collections.json file.
+  fs.writeFileSync(outputFile, JSON.stringify(collectionsJson, null, 2), 'utf8');
+  console.log(`Created the file: ${outputFile}`);
+}
+
+
 
 gulp.task("default", function(cb){
   console.log(help)
@@ -172,7 +255,7 @@ gulp.task("vindex", function (cb) {
 })
 
 function getReadyCollections() {
-  // Return a list of the ready collections by reading the collecions.json file.
+  // Return a list of the ready collections by reading the collections.json file.
   const filename = "pages/collections.json"
   const data = JSON.parse(fs.readFileSync(filename, "utf8"));
   let readyCollections = [];
@@ -412,6 +495,24 @@ gulp.task("missing-folders", function (cb) {
   gulp.src('*.*', {read: false}).pipe(gulp.dest('./dist/images'))
   return cb()
 })
+
+gulp.task("clist", function (cb) {
+  // Generate the collections.json file from the images folder.
+  generateCollectionsJson();
+  return cb()
+})
+
+gulp.task("unused", function (cb) {
+  // Remove unused collection images and thumbnails for the modified collections.
+  const readyCollections = getReadyCollections()
+  // todo: get the modified collections not the ready ones.`
+  for (let ix = 0; ix < readyCollections.length; ix++) {
+    const num = readyCollections[ix]
+    log(`Removing unused images for collection ${num}.`)
+    removeUnusedImages(num)
+  }
+  return cb()
+});
 
 gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
   ["ts", "pages", "css", "m-css", "vpages"])]));
