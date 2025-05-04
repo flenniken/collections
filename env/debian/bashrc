@@ -13,17 +13,37 @@ alias ll='ls -l'
 # Use it as a pipe:  cat my.json | jqless
 alias jqless='jq -C | less -RF'
 
-# Run the gulp command.
-alias g='gulp'
-
-# Watch for source file changes and automatically build them.
-alias gw='g watch &'
+# Run the gulp command using the gulpfile in the tmp folder without
+# changing the working directory.
+alias g='gulp --cwd . --gulpfile tmp/gulpfile.js'
 
 # Allow less to open compressed files as well as normal text files.
 export LESSOPEN="| /usr/bin/lesspipe %s"
 export LESSCLOSE="/usr/bin/lesspipe %s %s"
 
+# Show the most recent files in a directory.
+alias l=mylisttail
+function mylisttail {
+  dir=$1
+  ls -ltr $dir | tail
+}
 
+# List directories.
+alias lsd=mylistdir
+function mylistdir {
+  dir=$1
+  if [ "$dir" == "" ] ; then
+    dir='.'
+  fi
+  Blue='\033[1;34m'
+  Cyan='\033[0;36m'
+  NC='\033[0m'
+  printf "$Blue"
+  find $dir -maxdepth 1 -type d -printf "%p\n" | grep -v "^${dir}$" | sed "s@${dir}/@@"
+  printf "$Cyan"
+  find $dir -maxdepth 1 -type l -xtype d -printf "%p\n" | grep -v "^${dir}$" | sed "s@${dir}/@@"
+  printf "$NC"
+}
 
 # Check that the configuration settings exist.
 

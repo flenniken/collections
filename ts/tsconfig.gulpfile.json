@@ -1,0 +1,23 @@
+{
+  // Typescript options used when compiling ts/gulpfile.txt to tmp/gulpfile.js.
+
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "../tmp",
+    "types": [
+      "node",
+      "gulp",
+      "gulp-uglify",
+      "fancy-log",
+      "gulp-clean-css",
+      "gulp-if",
+      "gulp-typescript"
+    ],
+    "lib": ["es2017"],
+  },
+  "include": ["gulpfile.ts", "typings.d.ts", "cjsonDefinitions.ts"],
+}

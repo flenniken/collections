@@ -1,15 +1,21 @@
 // Build tasks. Type "g" to see the available tasks.
 
-const gulp = require("gulp");
-const uglify = require("gulp-uglify");
-const log = require("fancy-log");
-const child_process = require("child_process");
-const cleanCSS = require("gulp-clean-css");
-const using = require('gulp-using');
-const gulpif = require('gulp-if');
-const ts = require('gulp-typescript');
-const fs = require("fs");
-const path = require("path");
+"use strict";
+
+import gulp from "gulp";
+import uglify from "gulp-uglify";
+import log from "fancy-log";
+import child_process from "child_process";
+import cleanCSS from "gulp-clean-css";
+import using from 'gulp-using';
+import gulpif from 'gulp-if';
+import ts from 'gulp-typescript';
+import fs from "fs";
+import path from "path";
+import { TaskCallback } from "undertaker";
+
+// Include the ts files that get concatenated with this file.
+/// <reference path="ts/cjsonDefinition.ts" />
 
 // Minimize the javascript.
 const minimize = false
@@ -27,59 +33,79 @@ Tasks:
     index -- Create the main index page.
     maker -- Create the collection maker page.
         p -- Create the images and thumbnails pages for the ready collections.
+      css -- Minimize the collection.css file.
+    m-css -- Minimize the maker.css file.
+    tsync -- Update the template's replace blocks in sync with the header.tea content.
 
 * vpages: Validate all the html files.
    vindex -- Validate index html
    vmaker -- Validate maker html.
         v -- Validate images and thumbnails html for the ready collections.
 
-*     css: Minimize the collection.css file.
-*   m-css: Minimize the maker.css file.
-*    sync: Sync the template's replace blocks with header.tea content.
+* all: Compile most everything in parallel: ts, pages, vpages (not tsync).
+
+* Miscellaneous:
 *  readme: Show the readme file with glow.
-*   clist: Generate the collections.json file from the images folder.
+*  ixjson: Generate the collections.json file from the images folder.
 *  unused: Remove unused collection images and thumbnails for the modified collections.
 *     tin: Copy the index thumbnail to the shared folder for the modified collections.
-*     all: Compile everything in parallel, tasks ts, pages, vpages and css.
 `
 const target = "es2017"
 
-function removeUnusedImages(num) {
-  return
+
+interface IndexCollection {
+  // These fields come from the cjson file directly or are
+  // derived from it.
+  collection: number,
+  cState: string,
+  title: string,
+  indexDescription: string,
+  thumbnail: string,
+  posted: string,
+  iCount: number,
+  totalSize: number,
+  modified: boolean,
+};
+
+interface IndexCollections {
+  indexCollections: IndexCollection[];
+}
+
+function removeUnusedImages(num: number) {
   // Remove unused images and thumbnails for the given collection number.
   // Compare the images in the cjson file with the images in the
   // images folder. Remove the images that are not in the cjson file.
-  const imagesDir = path.join(__dirname, 'dist/images/c' + num);
-  const cjsonFile = path.join(imagesDir, 'c' + num + '.json');
-  if (!fs.existsSync(cjsonFile)) {
-    throw new Error(`No cjson file found for collection ${num}. Skipping.`);
-  }
+  // const imagesDir = path.join(__dirname, 'dist/images/c' + num);
+  // const cjsonFile = path.join(imagesDir, 'c' + num + '.json');
+  // if (!fs.existsSync(cjsonFile)) {
+  //   throw new Error(`No cjson file found for collection ${num}. Skipping.`);
+  // }
 
-  // Read the image and thumbnail basenames from the cjson file. The image
-  // comes from the url field and the thumbnail comes from the thumbnail field.
-  // "url": "/images/c1/c1-7-p.jpg",
-  // "thumbnail": "/images/c1/c1-7-t.jpg",
-  const cjson = JSON.parse(fs.readFileSync(cjsonFile, 'utf8'));
-  const collectionImages = new Set(cjson.images.map(image => path.basename(image.url)));
-  collectionImages.push(...cjson.images.map(image => path.basename(image.thumbnail)));
-  log(`Collection ${num} has ${collectionImages.length} images.`);
+  // // Read the image and thumbnail basenames from the cjson file. The image
+  // // comes from the url field and the thumbnail comes from the thumbnail field.
+  // // "url": "/images/c1/c1-7-p.jpg",
+  // // "thumbnail": "/images/c1/c1-7-t.jpg",
+  // const cjson = JSON.parse(fs.readFileSync(cjsonFile, 'utf8'));
+  // const collectionImages = new Set(cjson.images.map(image => path.basename(image.url)));
+  // collectionImages.push(...cjson.images.map(image => path.basename(image.thumbnail)));
+  // log(`Collection ${num} has ${collectionImages.length} images.`);
 
-  // Process all files in the images directory.
-  const allFiles = fs.readdirSync(imagesDir);
-  allFiles.filter(file => {
-    // Remove a JPEG image if it is not a collection image or a thumbnail.
-    if (file.endsWith('.jpg') && !collectionImages.has(file)) {
-      // Remove the file from the images directory.
-      //fs.unlinkSync(path.join(imagesDir, file));
-      log(`Removed: ${file}`);
-    }
-  });
+  // // Process all files in the images directory.
+  // const allFiles = fs.readdirSync(imagesDir);
+  // allFiles.filter(file => {
+  //   // Remove a JPEG image if it is not a collection image or a thumbnail.
+  //   if (file.endsWith('.jpg') && !collectionImages.has(file)) {
+  //     // Remove the file from the images directory.
+  //     //fs.unlinkSync(path.join(imagesDir, file));
+  //     log(`Removed: ${file}`);
+  //   }
+  // });
 }
 
 function generateCollectionsJson() {
   // Generate the collections.json file from the images folder.
-  const imagesDir = path.join(__dirname, 'dist/images');
-  const outputFile = path.join(__dirname, 'pages/collections.json');
+  const imagesDir = 'dist/images'
+  const outputFile = 'pages/collections.json'
 
   // Ensure the images directory exists.
   if (!fs.existsSync(imagesDir))
@@ -95,7 +121,7 @@ function generateCollectionsJson() {
   collectionFolders.sort((a, b) => parseInt(b.slice(1)) - parseInt(a.slice(1)));
 
   // Create the list of collections.
-  const collectionsJson = { collections: [] };
+  const indexCollections: IndexCollections = { indexCollections: [] };
   for (const folder of collectionFolders) {
     const cjsonFile = path.join(imagesDir, folder, `${folder}.json`);
     if (!fs.existsSync(cjsonFile))
@@ -104,7 +130,7 @@ function generateCollectionsJson() {
     const cinfo = JSON.parse(fs.readFileSync(cjsonFile, 'utf8'));
     console.log(`Processing collection: ${cinfo.collection}`);
 
-    const collection = {
+    const indexCollection: IndexCollection = {
       collection: cinfo.collection,
       cState: cinfo.cState,
       title: cinfo.title,
@@ -112,14 +138,16 @@ function generateCollectionsJson() {
       thumbnail: cinfo.indexThumbnail,
       posted: cinfo.posted,
       iCount: cinfo.images.length,
-      totalSize: cinfo.images.reduce((total, image) => total + image.size + image.sizet, 0),
+      totalSize: cinfo.images.reduce(
+        (total: number, image: { size: number; sizet: number; }) =>
+          total + image.size + image.sizet, 0),
       modified: cinfo.modified,
     };
-    collectionsJson.collections.push(collection);
+    indexCollections.indexCollections.push(indexCollection);
   }
 
   // Write the collections.json file.
-  fs.writeFileSync(outputFile, JSON.stringify(collectionsJson, null, 2), 'utf8');
+  fs.writeFileSync(outputFile, JSON.stringify(indexCollections, null, 2), 'utf8');
   console.log(`Created the file: ${outputFile}`);
 }
 
@@ -130,7 +158,8 @@ gulp.task("default", function(cb){
   cb()
 });
 
-function ts2js(srcList, destFile, destDir, tsOptions=null) {
+function ts2js(srcList: string[], destFile: string, destDir: string,
+  tsOptions: ts.Settings | null) {
   // Compile a list of typescript files to one javascript file and
   // optionally minimize it.
 
@@ -140,7 +169,8 @@ function ts2js(srcList, destFile, destDir, tsOptions=null) {
       "lib": ["ES2017", "dom"],
       "target": target,
       "strict": true,
-      "outFile": `${destFile}`
+      "outFile": `${destFile}`,
+      skipLibCheck: true,
     }
   }
 
@@ -197,12 +227,13 @@ gulp.task('x', function () {
 });
 
 gulp.task('sw', function () {
-  options = {
+  const options: ts.Settings = {
     "noImplicitAny": true,
     "target": target,
     "lib": ["ES2017", "webworker"],
     "strict": true,
-    "outFile": "sw.js"
+    "outFile": "sw.js",
+    skipLibCheck: true,
   }
   // Store sw.js in the root so it has control of all files in the
   // root and subfolders below.
@@ -216,7 +247,7 @@ gulp.task('cm', function () {
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw", "cm"]))
 
-function validateHtml(filename) {
+function validateHtml(filename: string) {
   // Validate an html file.
 
   log(`Validating html file: ${filename}.`)
@@ -240,12 +271,11 @@ function validateHtml(filename) {
   const validator = child_process.spawn("html-validator", parameters, {stdio: "inherit"});
   validator.on('close', (code) => {
     if (code !== 0) {
-      log(`validator exited with code ${code}`);
-      error() // todo: fail more elegantly.
+      const msg = `html-validator exited with code ${code}.`;
+      log(msg);
+      throw new Error(msg)
     }
   });
-
-  return 0
 }
 
 gulp.task("vindex", function (cb) {
@@ -254,14 +284,22 @@ gulp.task("vindex", function (cb) {
   cb()
 })
 
-function getReadyCollections() {
+function getReadyCollections(): number[] {
   // Return a list of the ready collections by reading the collections.json file.
   const filename = "pages/collections.json"
-  const data = JSON.parse(fs.readFileSync(filename, "utf8"));
-  let readyCollections = [];
-  data.collections.forEach(collection => {
-    if (collection.cState === "ready") {
-      readyCollections.push(collection.collection);
+  if (!fs.existsSync(filename)) {
+    throw new Error(`missing: ${filename}`)
+  }
+
+  // Read the collections.json file and find all the ready collection numbers.
+  const indexCollections: IndexCollections = JSON.parse(fs.readFileSync(filename, "utf8"));
+  if (! ("indexCollections" in indexCollections) ) {
+    throw new Error(`indexCollections field missing from ${filename}`)
+  }
+  let readyCollections: number[] = [];
+  indexCollections.indexCollections.forEach(indexCollection => {
+    if (indexCollection.cState === "ready") {
+      readyCollections.push(indexCollection.collection);
     }
   });
   return readyCollections;
@@ -288,7 +326,7 @@ gulp.task("vmaker", function (cb) {
 
 gulp.task("vpages", gulp.parallel("vindex", "vmaker", "v"));
 
-function compareContents(sourceFilename, destFilename) {
+function compareContents(sourceFilename: string, destFilename: string) {
   // Return true when two files contain the same bytes. The source
   // file is required but the destination can be missing. Both files
   // are read into memory then compared.
@@ -302,7 +340,8 @@ function compareContents(sourceFilename, destFilename) {
   return sourceContent.equals(destContent)
 }
 
-function runStaticteaTask(parameters, tmpFilename, distFilename, cb) {
+function runStaticteaTask(parameters: string[], tmpFilename: string,
+  distFilename: string, cb: TaskCallback) {
   // Run a statictea task and copy the result to the dist folder when it
   // changes.
 
@@ -368,7 +407,7 @@ gulp.task("p", function (cb) {
   cb()
 })
 
-function thumbnailsPage(collectionNumber, cb) {
+function thumbnailsPage(collectionNumber: number, cb: TaskCallback) {
   // Create the thumbnails page for the given collection.
 
 /*
@@ -392,7 +431,7 @@ statictea \
   runStaticteaTask(parameters, tmpFilename, distFilename, cb)
 }
 
-function imagePage(collectionNumber, cb) {
+function imagePage(collectionNumber: number, cb: TaskCallback) {
   // Create the image page for the given collection.
 
 /*
@@ -442,7 +481,7 @@ statictea \
 
 })
 
-gulp.task("sync", function (cb) {
+gulp.task("tsync", function (cb) {
   // Syncronize index template's replace blocks with header.tea.
 /*
 statictea -u -o pages/header.tea -t pages/index-tmpl.html
@@ -479,7 +518,7 @@ gulp.task("m-css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
-gulp.task("pages", gulp.parallel("index", "maker", "p"));
+gulp.task("pages", gulp.parallel("index", "maker", "p", "css", "m-css"));
 
 gulp.task('readme', function () {
   const parameters = [
@@ -496,7 +535,7 @@ gulp.task("missing-folders", function (cb) {
   return cb()
 })
 
-gulp.task("clist", function (cb) {
+gulp.task("ixjson", function (cb) {
   // Generate the collections.json file from the images folder.
   generateCollectionsJson();
   return cb()

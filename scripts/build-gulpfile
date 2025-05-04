@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Compile ts/gulpfile.ts to tmp/gulpfile.js.
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+if [[ $(pwd) != "/home/coder/collections" ]]; then
+  echo "Run this from the collections folder."
+  exit
+fi
+
+filename=tmp/gulpfile.js
+rm -f $filename
+
+tsc --project ts/tsconfig.gulpfile.json
+
+if [[ -e $filename ]]; then
+  echo "created $filename"
+else
+  echo "build failed"
+fi

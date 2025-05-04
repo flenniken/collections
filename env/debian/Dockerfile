@@ -75,11 +75,18 @@ USER coder
 
 # You can add more gulp plugins / node modules. In the docker container
 # install the plugin you want, for example for the "gulp-if" plugin:
+#
 #   npm install --save-dev gulp-if
-# Then copy the modified package.json to the debian folder overwriting
-# the existing one:
-#   cp ../package.json env/debian/
-# Then build a new docker image and container.
+#
+# This will update the packages.json file. Copy the file to the debian
+# environment so the package will be installed the next time you build
+# the docker container.
+#
+#   cp ~/package.json env/debian/
+#
+# Note: sharing the node_modules folder between the Mac and Debian
+# doesn't work very well because gulp scans the modules folder which
+# adds a 2 second delay to running it.
 
 # Configure nginx.
 COPY nginx-config /etc/nginx/sites-available/default
