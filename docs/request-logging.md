@@ -13,7 +13,7 @@ bucket and there is no extra charge for standard logs.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# Gather Logs
+# Log Folders
 
 We configured CloudFront to copy its edge logs to the
 `logs/cloudfront` in S3. From there you can copy them locally for
@@ -30,14 +30,9 @@ logs/
     lambda/
 ~~~
 
-Once the files are in S3 you can sync them locally with the sync-logs
-command:
+[⬇](#Contents)
 
-~~~
-# from docker container
-cd ~/collections
-scripts/sync-logs
-~~~
+# Configure Logs
 
 The Cloudfront log copy to S3 is configured in the console. Look for
 "Standard log destinations" and log to your bucket e.g. `sflennikco`
@@ -63,107 +58,27 @@ leading slash, it will go to the wrong location (to a S3 folder called
 * select the bucket name `sflennikco` and enter `logs/lambda` for "S3 bucket prefix"
 * click Export
 
-[⬇](#Contents)
+# Sync Logs
 
-# Download ID
-
-You use the download id to match up a particular download with the
-Cloudfront and Lambda log lines. When you click the Collections
-download button the code generates an 8 digit random base 62 number
-called the download id. This id is added as a query parameter to each
-image request in the collection.  You can see this in your browser
-network tab.  The id is yFrj66VM in the example below.
-
-Cloudfront logs the id in the cs-uri-query field, field number 14, for
-example:
+Once the files are in S3 you can sync them locally with the sync-logs
+command:
 
 ~~~
-cs-uri-query: id=yFrj66VM&user=0861d3e0-00a1-7058-ad19-4d7b1880d276
-~~~
-
-Your browser developer tools shows the query parameters too:
-
-~~~
-id: yFrj66VM
-user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
-~~~
-
-[⬇](#Contents)
-
-# Show Fields
-
-Each line of the cloud front log contains 39 spaces separated
-fields. The following command shows the fields for the first line with
-the name on the left and the value on the right:
-
-~~~
-# from container
+# from docker container
 cd ~/collections
-scripts/show-fields
+scripts/sync-logs
 ~~~
 
-You can pass a unique request id to view its details:
+[⬇](#Contents)
 
-~~~
-scripts/show-fields hf88XrNR
-~~~
-
-Sample output:
-
-~~~
-1               timestamp: 1738535441
-2          DistributionId: EHLMG1T8SOX48
-3                    date: 2025-02-02
-4                    time: 22:30:41
-5         x-edge-location: SEA900-P1
-6                sc-bytes: 2562
-7                    c-ip: 67.160.57.33
-8               cs-method: GET
-9                cs(Host): d2jmpxl8sy7hj7.cloudfront.net
-10            cs-uri-stem: /pages/image-1.html
-11              sc-status: 200
-12            cs(Referer): https://collections.sflennik.com/sw.js
-13         cs(User-Agent): Mozilla/5.0%20(Macintosh;%20Intel%20Mac%20OS%20X%2010_15_7)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/130.0.0.0%20Safari/537.36
-14           cs-uri-query: id=yFrj66VM&user=0861d3e0-00a1-7058-ad19-4d7b1880d276
-15             cs(Cookie): -
-16     x-edge-result-type: Miss
-17      x-edge-request-id: tgmtZK2wqyr8ZGwFkBYXB2xzkk4xr3IDyDRrqeKFiG9dOIinPsZMug==
-18          x-host-header: collections.sflennik.com
-19            cs-protocol: https
-20               cs-bytes: 79
-21             time-taken: 0.500
-22        x-forwarded-for: -
-23           ssl-protocol: TLSv1.3
-24             ssl-cipher: TLS_AES_128_GCM_SHA256
-25   x-edge-response-result-type: Miss
-26    cs-protocol-version: HTTP/2.0
-27             fle-status: -
-28   fle-encrypted-fields: -
-29                 c-port: 53251
-30     time-to-first-byte: 0.498
-31   x-edge-detailed-result-type: Miss
-32        sc-content-type: text/html
-33         sc-content-len: -
-34         sc-range-start: -
-35           sc-range-end: -
-36          timestamp(ms): 1738535441041
-37             origin-fbl: 0.051
-38             origin-lbl: 0.053
-39                    asn: 7922
-~~~
-
-The fields are documented here:
-
-* [Log Reference](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html) -- the cloudfront standard log reference.
 
 [⬇](#Contents)
 
 # View Requests
 
 Run the view-requests command to see all the Cloudfront requests.  It
-shows the important fields 3, 4, 5, 11, 14, 14, 17, 31, 21, 10 from log lines,
-instead of all of them, to make reading and studying the information
-much easier.
+shows the important fields from log lines, instead of all of them, to
+make reading and studying the information much easier.
 
 ~~~
 scripts/view-requests
@@ -218,6 +133,71 @@ Partial Output:
 2025-03-21 21:35:57 SEA900-P1 200 W4hv4D7m 0861d3e0       Miss 2.131 /images/c2/c2-15-p.jpg
 2025-03-21 21:35:57 SEA900-P1 200 W4hv4D7m 0861d3e0       Miss 2.131 /images/c2/c2-16-p.jpg
 ~~~
+
+[⬇](#Contents)
+
+# View Request Details
+
+You can use the show-fields command to see all the details about a
+request.
+
+Each line of the cloud front log contains 39 spaces separated
+fields. The following command shows the fields for a request with
+the field name on the left and the value on the right:
+
+~~~
+# from container
+cd ~/collections
+scripts/show-fields hf88XrNR
+~~~
+
+Sample output:
+
+~~~
+1               timestamp: 1738535441
+2          DistributionId: EHLMG1T8SOX48
+3                    date: 2025-02-02
+4                    time: 22:30:41
+5         x-edge-location: SEA900-P1
+6                sc-bytes: 2562
+7                    c-ip: 67.160.57.33
+8               cs-method: GET
+9                cs(Host): d2jmpxl8sy7hj7.cloudfront.net
+10            cs-uri-stem: /pages/image-1.html
+11              sc-status: 200
+12            cs(Referer): https://collections.sflennik.com/sw.js
+13         cs(User-Agent): Mozilla/5.0%20(Macintosh;%20Intel%20Mac%20OS%20X%2010_15_7)%20AppleWebKit/537.36%20(KHTML,%20like%20Gecko)%20Chrome/130.0.0.0%20Safari/537.36
+14           cs-uri-query: id=yFrj66VM&user=0861d3e0-00a1-7058-ad19-4d7b1880d276
+15             cs(Cookie): -
+16     x-edge-result-type: Miss
+17      x-edge-request-id: tgmtZK2wqyr8ZGwFkBYXB2xzkk4xr3IDyDRrqeKFiG9dOIinPsZMug==
+18          x-host-header: collections.sflennik.com
+19            cs-protocol: https
+20               cs-bytes: 79
+21             time-taken: 0.500
+22        x-forwarded-for: -
+23           ssl-protocol: TLSv1.3
+24             ssl-cipher: TLS_AES_128_GCM_SHA256
+25   x-edge-response-result-type: Miss
+26    cs-protocol-version: HTTP/2.0
+27             fle-status: -
+28   fle-encrypted-fields: -
+29                 c-port: 53251
+30     time-to-first-byte: 0.498
+31   x-edge-detailed-result-type: Miss
+32        sc-content-type: text/html
+33         sc-content-len: -
+34         sc-range-start: -
+35           sc-range-end: -
+36          timestamp(ms): 1738535441041
+37             origin-fbl: 0.051
+38             origin-lbl: 0.053
+39                    asn: 7922
+~~~
+
+The fields are documented here:
+
+* [Log Reference](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/standard-logs-reference.html) -- the cloudfront standard log reference.
 
 [⬇](#Contents)
 
@@ -328,6 +308,31 @@ out.
 
 [⬇](#Contents)
 
+# Download ID
+
+You use the download id to match up a particular download with the
+Cloudfront and Lambda log lines. When you click the Collections
+download button the code generates an 8 digit random base 62 number
+called the download id. This id is added as a query parameter to each
+image request in the collection.  You can see this in your browser
+network tab.  The id is yFrj66VM in the example below.
+
+Cloudfront logs the id in the cs-uri-query field, field number 14, for
+example:
+
+~~~
+cs-uri-query: id=yFrj66VM&user=0861d3e0-00a1-7058-ad19-4d7b1880d276
+~~~
+
+Your browser developer tools shows the query parameters too:
+
+~~~
+id: yFrj66VM
+user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
+~~~
+
+[⬇](#Contents)
+
 # Remove Old Logs
 
 The S3 bucket is configured to remove log files that are older than 30
@@ -376,13 +381,15 @@ find logs -mtime +30 | wc -l
 
 # Contents
 
-* [Gather Logs](#gather-logs) -— how to find the logs and copy them locally.
-* [Download ID](#download-id) -- how the download id ties together the Cloudfront and Lambda logs.
-* [Show Fields](#show-fields) -— lists the Cloudfront log fields and a link to their documentation.
+* [Log Folders](#log-folders) -— where the logs are stored on S3 and locally.
+* [Configure Logs](#configure-logs) -— how to configure the logs so they're copied to S3.
+* [Sync Logs](#sync-logs) -— how to copy the logs locally.
 * [View Requests](#view-requests) -- how to view all the Cloudfront requests.
 * [View Download](#view-download) -- how to view a download's Cloudfront and Lambda logs.
+* [View Request Details](#view-request-details) -— lists the Cloudfront log fields and a link to their documentation.
 * [Lambda Logs](#lambda-logs) -- information about the log lines and how they are grouped.
 * [Test Cloudfront Cache](#test-cloudfront-cache) -- test that the Cloudfront cache is hit.
 * [Test Lambda Cache](#test-lambda-cache) -- test that the Lambda key cache is hit.
+* [Download ID](#download-id) -- how the download id ties together the Cloudfront and Lambda logs.
 * [Status Codes](#status-codes) -- how to count the status code types and investigate them.
 * [Remove Old Logs](#remove-old-logs) -- how old logs are deleted.

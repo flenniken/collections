@@ -102,6 +102,8 @@ mv ~/Downloads/c1.json dist/images/c1/
 
 # Maker Page UI
 
+[![Maker Page](docs/maker.png)](#)
+
 The maker page includes the following elements:
 
 * **Left Panel**: A 2-column by 8-row table showing the collection images and their order.

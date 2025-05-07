@@ -218,9 +218,32 @@ dist
     `-- c2-1-t.jpg
 ~~~
 
+[⬇](#Contents)
+
+# Node Modules
+
+In VS Code the gulpfile typescript file shows errors about importing
+the modules. This happens because the node modules are not visible to
+the IDE. This is not an issue with the other typescript files because
+they don’t import any modules.
+
+I tried moving the node modules folder to the shared folder.  This
+actually works as long as you install all the modules from the debian
+container and not from the Mac.  The IDE on the Mac can see the
+modules and the imports are not flagged as errors and intellisence
+works.
+
+However running the gulp file tasks take 2 seconds to start. I’m not
+sure why. I tested with a minimal gulp file both when node modules are
+shared and not.  The shared case was about 1.5 seconds slower.
+
+I hear there is a VS Code plugin for editing inside a docker
+container.
+
 # Contents
 
 * [Build Setup](#build-setup) -- how to download the code and create the docker build container.
 * [Build All](#build-all) -- how to build all.
 * [Build Tasks](#build-tasks) -- how to build individual files: html, js, css, readme, etc.
 * [Build Folder](#build-folder) -- talks about the build folder.
+* [Node Modules](#node-modules) -- the node modules folder, VS Code and missing imports.
