@@ -13,10 +13,58 @@ if [[ $(pwd) != "/home/coder/collections" ]]; then
   exit
 fi
 
+
+# Create the typings file.
+cat > typings.d.ts << EOF
+declare module 'gulp-using' {
+  interface UsingOptions {
+    prefix?: string; // Prefix for log messages
+    path?: 'relative' | 'absolute'; // Path format
+    filesize?: boolean; // Whether to display file sizes
+    color?: string; // Color for log messages
+  }
+
+  function using(options?: UsingOptions): NodeJS.ReadWriteStream;
+
+  export = using;
+}
+EOF
+
+
+# Create the typescript config file.
+cat > tsconfig.gulpfile.json << EOF
+{
+  // Typescript options used when compiling ts/gulpfile.txt to tmp/gulpfile.js.
+
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "tmp",
+    "types": [
+      "node",
+      "gulp",
+      "gulp-uglify",
+      "fancy-log",
+      "gulp-clean-css",
+      "gulp-if",
+      "gulp-typescript"
+    ],
+    "lib": ["es2017"],
+  },
+  "include": ["ts/gulpfile.ts", "typings.d.ts", "ts/cjsonDefinitions.ts"],
+}
+EOF
+
 filename=tmp/gulpfile.js
 rm -f $filename
 
-tsc --project ts/tsconfig.gulpfile.json
+tsc --project tsconfig.gulpfile.json
+
+rm -f tsconfig.gulpfile.json
+rm -f typings.d.ts
 
 if [[ -e $filename ]]; then
   echo "created $filename"
