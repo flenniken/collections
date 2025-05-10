@@ -54,13 +54,10 @@ filename=tmp/test-gulpfile.js
 rm -f $filename
 
 tsc --project tsconfig.test-gulpfile.json
-# tsc --project tsconfig.test-gulpfile.json --listFiles
-
 
 rm -f tsconfig.test-gulpfile.json
 
 if [[ -e $filename ]]; then
-  # echo "created $filename"
   # Run the test.
   node $filename
 else

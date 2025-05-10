@@ -5,14 +5,15 @@ export { gotExpected, fail, getFunctionName, testThrow, test, runSuite };
 const log = console.log
 
 function gotExpected(got: any, expected: any, message?: string) {
-  // Check if the got value is the same as the expected value.
-  // Convert the values to JSON then compare them.  The optional
-  // message is shown when the values are different.
+  // Verify the got value matches the expected value. When they don't
+  // show the differences and throw an exception. Convert the values
+  // to JSON to compare them.  The optional message is shown when the
+  // values are different.
 
   const gotJson = JSON.stringify(got);
   const expectedJson = JSON.stringify(expected);
 
-  // Use a default message if none is provided.
+  // Use a blank line message when none is provided.
   const errorMessage = message || "";
 
   if (gotJson !== expectedJson) {
@@ -24,7 +25,7 @@ expected: ${expectedJson}
 `;
     throw new Error(fullMessage);
   }
- }
+}
 
 function fail(message: string) {
   // Fail a test with the given message.
@@ -46,58 +47,74 @@ function getFunctionName(fn: Function): string {
   return name
 }
 
+// Keep track of the current test number and the number of errors.
 let testNumber = 1
 let errorCount = 0
 
-function testThrow(eMessage: string, fn: (...args: any[]) => void, ...args: any[]): void {
-  // Run the test function with the provided arguments.
-  // The function passes when it generates an exception with the expected
-  // message.
-  try {
-    fn(...args);
-    log(`❌ ${testNumber} fail`);
-    log("No error was thrown");
+function feedback(message: string) {
+  // Tell whether the test passed or failed and keep stats. If the
+  // specified message is "", the test passed, otherwise it failed and
+  // the message tells why.
+  if (message == "")
+    log(`✅ ${testNumber} pass`)
+  else {
+    log(`❌ ${testNumber} fail`)
+    log(message)
     errorCount += 1;
   }
+  testNumber += 1;
+}
+
+function testThrow(eMessage: string, fn: (...args: any[]) => void, ...args: any[]): void {
+  const message = testThrow2(eMessage, fn, ...args)
+  feedback(message)
+}
+
+function testThrow2(eMessage: string, fn: (...args: any[]) => void, ...args: any[]): string {
+  // Run the test function with the provided arguments and return an
+  // error message. If the error message is "", the test passedd..
+  // The function passes when it generates an exception with the
+  // expected message.
+
+  let passed = false
+  try {
+    fn(...args);
+    return "The test did not generate the expected exception."
+  }
   catch (error) {
-    // Check if the error message is the same as the expected message.
     if (! (error instanceof Error)) {
-      log(`❌ ${testNumber} fail`);
-      errorCount += 1;
-      log("Error is not an instance of Error");
-      return;
+      return "The exception object is not an instance of Error"
     }
+    // Verify the error message is the same as the expected message.
     try {
-      gotExpected(error.message, eMessage, "Unexpected error message:");
+      gotExpected(error.message, eMessage, "Unexpected error message:")
     }
     catch (error) {
-      log(`❌ ${testNumber} fail`);
-      log(error instanceof Error ? error.message : error);
-      errorCount += 1;
-      return
+      if (error instanceof Error) {
+        return error.message
+      }
+      else
+        return "Unexpected error."
     }
-    log(`✅ ${testNumber} pass`);
+    return "" // success
   }
-  testNumber += 1;
 }
 
 function test(fn: (...args: any[]) => void, ...args: any[]): void {
   // Run the test function with the provided arguments and log the result.
   // The function passes when it doesn't generate an exception.
+  let message = ""
   try {
     fn(...args);
-    log(`✅ ${testNumber} pass`);
   }
   catch (error) {
-    log(`❌ ${testNumber} fail`);
-    log(error instanceof Error ? error.message : error);
-    errorCount += 1;
+    message = (error instanceof Error ? error.message : "Unexpected exception type.")
   }
-  testNumber += 1;
+  feedback(message)
 }
 
 function runSuite(fn: () => void) {
-  // Log then run a function that runs a set of tests.
+  // Log the suite name then run its set of tests.
   log("🏃‍♂️‍➡️ " + getFunctionName(fn));
   fn();
 }
