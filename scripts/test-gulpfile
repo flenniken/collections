@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# This script tests the tmp/gulpfile.js file.
+# It compiles ts/test-gulpfile.ts to tmp/test-gulpfile.js
+# then runs it.
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+# Make sure we're in the collections folder.
+if [[ $(pwd) != "/home/coder/collections" ]]; then
+  echo "Run this from the collections folder."
+  exit
+fi
+
+# Make sure the gulpfile.js file exists.
+if [[ ! ( -e "tmp/gulpfile.js" ) ]]; then
+  echo "tmp/gulpfile.js does not exist. Run scripts/build-gulpfile.sh first."
+  exit
+fi
+
+# Create the typescript config file.
+cat > tsconfig.test-gulpfile.json << EOF
+{
+  // Typescript options used when compiling ts/test-gulpfile.txt to
+  // tmp/test-gulpfile.js.
+
+  "compilerOptions": {
+    "target": "es2017",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "outDir": "tmp",
+    "types": [
+      "node",
+      "gulp",
+      "gulp-uglify",
+      "fancy-log",
+      "gulp-clean-css",
+      "gulp-if",
+      "gulp-typescript"
+    ],
+    "lib": ["es2017"],
+  },
+  "include": ["ts/test-gulpfile.ts", "ts/cjsonDefinitions.ts", "ts/sweet-tester.ts"]
+}
+EOF
+
+filename=tmp/test-gulpfile.js
+rm -f $filename
+
+tsc --project tsconfig.test-gulpfile.json
+# tsc --project tsconfig.test-gulpfile.json --listFiles
+
+
+rm -f tsconfig.test-gulpfile.json
+
+if [[ -e $filename ]]; then
+  # echo "created $filename"
+  # Run the test.
+  node $filename
+else
+  echo "build failed"
+fi

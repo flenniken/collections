@@ -604,8 +604,10 @@ async function saveCollection(event: Event) {
 }
 
 function removeUnusedImages(cjsoninfo: CJson.Collection) {
-  // Remove the unused images and reorder the image list to match the order
-  // list. Reorder the zoom points too.
+  // Remove the unused images from the images list and reorder it to match the order
+  // list, then remove the order list. Reorder the zoom points too.
+  // The filenames are not changed, and the unused
+  // images are not removed from the folder.
   log("removeUnusedImages")
 
   if (!cjsoninfo || !cjsoninfo.order) {
