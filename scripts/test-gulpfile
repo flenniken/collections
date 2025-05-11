@@ -22,6 +22,22 @@ if [[ ! ( -e "tmp/gulpfile.js" ) ]]; then
   exit
 fi
 
+# Create the typings file.
+cat > typings.d.ts << EOF
+declare module 'gulp-using' {
+  interface UsingOptions {
+    prefix?: string; // Prefix for log messages
+    path?: 'relative' | 'absolute'; // Path format
+    filesize?: boolean; // Whether to display file sizes
+    color?: string; // Color for log messages
+  }
+
+  function using(options?: UsingOptions): NodeJS.ReadWriteStream;
+
+  export = using;
+}
+EOF
+
 # Create the typescript config file.
 cat > tsconfig.test-gulpfile.json << EOF
 {
@@ -46,7 +62,7 @@ cat > tsconfig.test-gulpfile.json << EOF
     ],
     "lib": ["es2017"],
   },
-  "include": ["ts/test-gulpfile.ts", "ts/cjsonDefinitions.ts", "ts/sweet-tester.ts"]
+  "include": ["ts/test-gulpfile.ts", "typings.d.ts", "ts/cjsonDefinitions.ts", "ts/sweet-tester.ts"]
 }
 EOF
 
@@ -56,6 +72,7 @@ rm -f $filename
 tsc --project tsconfig.test-gulpfile.json
 
 rm -f tsconfig.test-gulpfile.json
+rm -f typings.d.ts
 
 if [[ -e $filename ]]; then
   # Run the test.

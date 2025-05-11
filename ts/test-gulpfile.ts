@@ -3,7 +3,14 @@
 import { runSuite, testThrow, test, gotExpected } from "./sweet-tester";
 import * as fs from 'fs';
 import * as path from 'path';
-// import { getUnusedImages } from 'tmp/gulpfile';
+import {
+  ImageName,
+  parseImageName,
+  getCollectionImages,
+  getUnusedImageFiles,
+  removeUnusedImages,
+  UnusedPathsAndImages,
+} from './gulpfile';
 
 const tempFolder = '/home/coder/collections/tmp/testGulpFile/images'
 
@@ -12,7 +19,7 @@ if (!process.env.coder_env) {
   process.exit(1);
 }
 
-function createTestCjsonFile(folder: string, cNum: number,
+function createFakeCjsonFile(folder: string, cNum: number,
     usedImages: number[]): string {
   // Create a test cjson file in the given folder with the given
   // collection number and images list based on the given image numbers.
@@ -36,21 +43,21 @@ function createTestCjsonFile(folder: string, cNum: number,
   return cjsonFilename
 }
 
-function createTempFolder(cNum: number): string {
-    // Create a temp image folder for the given collection number. The
-    // folder name is based on the collection number.
-    // The image folder is created in the tempFolder directory.
-    const folder = path.join(tempFolder, `c${cNum}`)
-    fs.mkdirSync(folder, { recursive: true });
-    return folder;
-  }
+function createFolderFromNumber(cNum: number): string {
+  // Create a temp image folder for the given collection number. The
+  // folder name is based on the collection number.
+  // The image folder is created in the tempFolder directory.
+  const folder = path.join(tempFolder, `c${cNum}`)
+  fs.mkdirSync(folder, { recursive: true });
+  return folder;
+}
 
-  function removeFolder(folder: string) {
-    // Remove the folder and its contents.
-    fs.rmSync(folder, { recursive: true });
-  }
+function removeFolder(folder: string) {
+  // Remove the folder and its contents.
+  fs.rmSync(folder, { recursive: true });
+}
 
-function createTestImageFolder(cNum: number, usedNumbers: number[],
+function fakeImageFolderFromNumbers(cNum: number, usedNumbers: number[],
     unusedNumbers: number[]): string {
   // Create a temp image folder with the given collection number.
   // Inside the folder create a cjson file that contains fake images
@@ -58,8 +65,8 @@ function createTestImageFolder(cNum: number, usedNumbers: number[],
   // images with names based on the unused numbers.
 
   // Create the test folder then create a cjson file inside it.
-  const testFolder = createTempFolder(cNum)
-  const cjsonFilename = createTestCjsonFile(testFolder, cNum, usedNumbers)
+  const testFolder = createFolderFromNumber(cNum)
+  const cjsonFilename = createFakeCjsonFile(testFolder, cNum, usedNumbers)
 
   // Create the fake used images using the standard pattern e.g.:
   // c1-2-t.jpg, c1-2-p.jpg
@@ -111,7 +118,7 @@ function testCreateTempFolder(cNum: number, leaveFolder?: boolean) {
   // tmp/testGulpFile/images directory. The folder name is based on the
   // collection number. It leaveFolder is false, the folder is removed after the test.
 
-  const folder = createTempFolder(cNum)
+  const folder = createFolderFromNumber(cNum)
   const expectedFolder = path.join(tempFolder, `c${cNum}`)
   gotExpected(folder, expectedFolder)
   // Check that the folder was created.
@@ -142,9 +149,9 @@ function urlToNumber(url: string): number {
   throw new Error(`Invalid image url: ${url}.`)
 }
 
-function testCreateTestCjson(cNum: number, usedImages: number[]) {
-  const folder = createTempFolder(cNum)
-  const cjsonFilename = createTestCjsonFile(folder, cNum, usedImages)
+function testCreateFakeCjsonFile(cNum: number, usedImages: number[]) {
+  const folder = createFolderFromNumber(cNum)
+  const cjsonFilename = createFakeCjsonFile(folder, cNum, usedImages)
   const expectedFilename = path.join(folder, `${cNum}.json`)
   gotExpected(cjsonFilename, expectedFilename)
 
@@ -167,10 +174,10 @@ function testCreateTestCjson(cNum: number, usedImages: number[]) {
   removeFolder(folder)
 }
 
-function createTestCjsonFileSuite() {
+function createFakeCjsonFileSuite() {
   // Test the createTestCjsonFile function.
-  test(testCreateTestCjson, 1, [1, 2])
-  test(testCreateTestCjson, 2, [1, 2, 3])
+  test(testCreateFakeCjsonFile, 1, [1, 2])
+  test(testCreateFakeCjsonFile, 2, [1, 2, 3])
 }
 
 function testUrlToNumber(url: string, expected: number) {
@@ -187,13 +194,10 @@ function urlToNumberSuite() {
   testThrow("Invalid image url: c1-3-t.jpg.", testUrlToNumber, 'c1-3-t.jpg')
 }
 
-// function createTestImageFolder(cNum: number, usedNumbers: number[],
-//   unusedNumbers: number[]): string {
-
-function testCreateTestImageFolder(cNum: number, usedNumbers: number[],
+function testFakeImageFolderFromNumbers(cNum: number, usedNumbers: number[],
   unusedNumbers: number[]) {
 
-  const testFolder = createTestImageFolder(cNum, usedNumbers, unusedNumbers)
+  const testFolder = fakeImageFolderFromNumbers(cNum, usedNumbers, unusedNumbers)
 
   const expectedFolder = path.join(tempFolder, `c${cNum}`)
   gotExpected(testFolder, expectedFolder)
@@ -239,18 +243,153 @@ function testCreateTestImageFolder(cNum: number, usedNumbers: number[],
   removeFolder(testFolder)
 }
 
+function fakeImageFolderFromNumbersSuite() {
+  test(testFakeImageFolderFromNumbers, 1, [1, 2], [3, 4])
+}
 
-function createTestImageFolderSuite() {
-  test(testCreateTestImageFolder, 1, [1, 2], [3, 4])
+function testParseImageName(basename: string, eImageName: ImageName | null) {
+  // Test the parseBasename function.  The basename is in the form
+  // c1-2-p.jpg or c1-2-t.jpg. The expected values are the collection
+  // number, image number and type.
+  const imageName = parseImageName(basename)
+  const message = `parseImageName(${basename})`
+  gotExpected(imageName, eImageName, message)
+}
+
+function parseImageNameSuite() {
+  test(testParseImageName, 'c1-2-p.jpg', {cNum: 1, iNum: 2, pt: 'p'})
+  test(testParseImageName, 'c1-2-t.jpg', {cNum: 1, iNum: 2, pt: 't'})
+  test(testParseImageName, 'c1-2-q.jpg', null)
+  test(testParseImageName, 'c1-2-p.jpgg', null)
+  test(testParseImageName, '/images/c1/c1-2-t.jpg', null)
+}
+
+function testGetCollectionImages(cNum: number, eImageNumbers: number[]) {
+  const images = getCollectionImages(cNum)
+  // Note: we assume the image and thumbnails come in pairs
+  // so we only record one number.
+  const imageNumbers = images.map((image: CJson.Image) => {
+    const iNum = urlToNumber(image.url)
+    return iNum
+  })
+  gotExpected(imageNumbers, eImageNumbers)
+}
+
+function getCollectionImagesSuite() {
+  test(testGetCollectionImages, 1, [5,3,1,4,7,2,6,8])
+  test(testGetCollectionImages, 2, [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+  test(testGetCollectionImages, 3, [1,5,3,7,11,8,16,9,10,14,13,17])
+}
+
+function fakeImagesFromNumbers(cNum: number, iNums: number[]): CJson.Image[] {
+  // Create a list of images from the given image numbers used for testing.
+  const images: CJson.Image[] = []
+  iNums.forEach(iNum => {
+    const image: CJson.Image = {
+      url: `c${cNum}-${iNum}-p.jpg`,
+      thumbnail: `c${cNum}-${iNum}-t.jpg`,
+      title: `Image ${iNum}`,
+      description: `Description for image ${iNum}`,
+      width: 0,
+      height: 0,
+      size: 0,
+      sizet: 0,
+      uniqueId: ""
+    }
+    images.push(image)
+  })
+  return images
+}
+
+function basenamesFromNumbers(cNum: number, iNums: number[]): string[] {
+  // Create a list of basenames from the given image numbers.
+  const basenames: string[] = []
+  iNums.forEach(iNum => {
+    const basename = `c${cNum}-${iNum}-p.jpg`
+    basenames.push(basename)
+  })
+  return basenames
+}
+
+function testGetUnusedImageFiles(cNum: number, usedNumbers: number[],
+    allNumbers: number[], eUnusedNumbers: number[]) {
+  const images = fakeImagesFromNumbers(cNum, usedNumbers)
+  const allFiles = basenamesFromNumbers(cNum, allNumbers)
+  const unusedImages = getUnusedImageFiles(images, allFiles)
+  const eUnusedImages = basenamesFromNumbers(cNum, eUnusedNumbers)
+  gotExpected(unusedImages, eUnusedImages)
+
+  const imageNumbers = images.map((image: CJson.Image) => {
+    const iNum = urlToNumber(image.url)
+    return iNum
+  })
+  gotExpected(imageNumbers, usedNumbers)
+}
+
+function getUnusedImageFilesSuite() {
+  test(testGetUnusedImageFiles, 99, [4, 5], [4, 5], [])
+  test(testGetUnusedImageFiles, 99, [1, 2], [1, 2, 3, 4], [3, 4])
+  test(testGetUnusedImageFiles, 99, [4, 5], [1, 2, 3, 4, 5], [1, 2, 3])
+}
+
+function getImageNumbers(images: CJson.Image[]): number[] {
+  // Convert the list of images to a list of image numbers.
+  let imageNumbers: number[] = []
+  images.forEach((image: CJson.Image) => {
+    const iNum = urlToNumber(image.url)
+    imageNumbers.push(iNum)
+  })
+  return imageNumbers
+}
+
+function getNumbersFromPaths(cNum: number, paths: string[]): number[] {
+  // Convert the list of paths to a list of image numbers.
+  let imageNumbers: number[] = []
+  paths.forEach((fullPath: string) => {
+    const folder = path.dirname(fullPath)
+    const basename = path.basename(fullPath)
+    const imageName = parseImageName(basename)
+    if (imageName === null) {
+      return
+    }
+    if (imageName.cNum !== cNum) {
+      throw new Error(`Collection number ${imageName.cNum} does not match ${cNum}.`)
+    }
+    imageNumbers.push(imageName.iNum)
+  })
+  return imageNumbers
+}
+
+function testRemoveUnusedImages(cNum: number, shouldDelete: boolean,
+    eUnusedNumbers: number[], eImageNumbers: number[]) {
+  const unusedPathsAndImages = removeUnusedImages(cNum, shouldDelete)
+
+  const unusedNumbers = getNumbersFromPaths(cNum, unusedPathsAndImages.unusedPaths)
+  gotExpected(unusedNumbers, eUnusedNumbers, "unused numbers")
+  const imageNumbers = getImageNumbers(unusedPathsAndImages.images)
+  gotExpected(imageNumbers, eImageNumbers, "image numbers")
+}
+
+function removeUnusedImagesSuite() {
+  test(testRemoveUnusedImages, 1, false, [], [5,3,1,4,7,2,6,8])
+  test(testRemoveUnusedImages, 2, false, [],
+    [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
+  test(testRemoveUnusedImages, 3, false, [12,12,15,15,18,18,2,2,4,4,6,6],
+    [1,5,3,7,11,8,16,9,10,14,13,17])
 }
 
 function testGulpfile() {
   // Run the test suite for the gulpfile.
   console.log("Test gulpfile.ts")
-  runSuite(urlToNumberSuite)
-  runSuite(createTempFolderSuite)
-  runSuite(createTestCjsonFileSuite)
-  runSuite(createTestImageFolderSuite)
+  runSuite(parseImageNameSuite)
+  runSuite(getCollectionImagesSuite)
+  runSuite(getUnusedImageFilesSuite)
+  runSuite(removeUnusedImagesSuite)
+
+  // runSuite(urlToNumberSuite)
+  // runSuite(createTempFolderSuite)
+  // runSuite(createTestCjsonFileSuite)
+  // runSuite(createTestImageFolderSuite)
 }
 
 testGulpfile()
