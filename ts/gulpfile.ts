@@ -446,7 +446,8 @@ interface IndexCollections {
 
 export interface ImageName {
   // The image name is a string that contains the collection number,
-  // image number and image type.
+  // image number and image type, for example: c1-4-p.jpg or
+  // c1-4-t.jpg.  c{cNum}-{iNum}-[pt].jpg
   cNum: number,
   iNum: number,
   pt: string,
@@ -471,21 +472,50 @@ export function parseImageName(filename: string): ImageName | null {
 
 function getCollectionFiles(cNum: number): string[] {
   // Return a list of all the files in the collection folder.
+
   const folder = `dist/images/c${cNum}`
   return fs.readdirSync(folder);
 }
 
 export function getCollectionImages(cNum: number): CJson.Image[] {
-  // Return a list of all the images in the collection folder.
+  // Return the images in the collection.
+
   const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`
   const cjson: CJson.Collection = JSON.parse(
     fs.readFileSync(cjsonFilename, 'utf8'));
   return cjson.images;
 }
 
+export function getUnusedImageFiles(images: CJson.Image[], allFiles: string[]): string[] {
+  // Return the image files from allFiles that are not part of the
+  // image list. The allFiles items do not have path information.
+
+  // Add the image and thumbnail names to a set for fast lookup.
+  const imageBasenames = new Set();
+  images.forEach(image => {
+    imageBasenames.add(path.basename(image.url));
+    imageBasenames.add(path.basename(image.thumbnail));
+  });
+
+  let unusedImages: string[] = []
+  allFiles.filter(basename => {
+    const imageName = parseImageName(basename)
+
+    // Skip non-image files.
+    if (imageName == null)
+      return
+
+    // Skip files in the collection.
+    if (imageBasenames.has(basename))
+      return
+
+    unusedImages.push(basename)
+  });
+  return unusedImages
+}
+
 export interface UnusedPathsAndImages {
-  // The paths of the unused images and the list of images in the
-  // collection.
+  // The unused images files and the images in the collection.
   unusedPaths: string[],
   images: CJson.Image[],
 }
@@ -497,9 +527,12 @@ export function removeUnusedImages(cNum: number, shouldDelete: boolean):
   // images in the collection.  When shouldDelete is
   // false, the files not deleted.
 
+  // Get the unused image files.
   const allFiles = getCollectionFiles(cNum);
   const images = getCollectionImages(cNum);
   const unusedImages = getUnusedImageFiles(images, allFiles);
+
+  // Remove the unused images when specified.
   const imagesDir = `dist/images/c${cNum}`
   let unusedPaths: string[] = []
   const imageFiles = unusedImages.filter(filename => {
@@ -508,36 +541,14 @@ export function removeUnusedImages(cNum: number, shouldDelete: boolean):
       fs.unlinkSync(fullPath);
     unusedPaths.push(fullPath);
   });
+
+  // Return the unused image files and the collection's images.
   return {"unusedPaths": unusedPaths, "images": images}
 }
 
-export function getUnusedImageFiles(images: CJson.Image[], allFiles: string[]): string[] {
-  // Return a list of unused image files. The images list tells what
-  // image files are used and allFiles lists all the files (no path
-  // info) in the image folder. An image files follow the standard
-  // naming convention, for example: c1-3-p.jpg and c1-3-t.jpg.
-
-  // Add the image and thumbnail names to a set for fast lookup.
-  const imageBasenames = new Set();
-  images.forEach(image => {
-    imageBasenames.add(path.basename(image.url));
-    imageBasenames.add(path.basename(image.thumbnail));
-  });
-
-  let unusedImages: string[] = []
-  allFiles.filter(filename => {
-    const imageName = parseImageName(filename)
-    if (imageName == null)
-      return
-    if (imageBasenames.has(filename))
-      return
-    unusedImages.push(filename)
-  });
-  return unusedImages
-}
-
 function generateCollectionsJson() {
-  // Generate the collections.json file from the images folder.
+  // Generate the collections.json file from the collection folders.
+
   const imagesDir = 'dist/images'
   const outputFile = 'pages/collections.json'
 
