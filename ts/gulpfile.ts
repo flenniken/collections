@@ -48,8 +48,11 @@ Tasks:
 *  readme: Show the readme file with glow.
 *  csjson: Generate the collections.json file from the images folder.
 *  unused: Remove unused collection images and thumbnails for the modified collections.
-*     tin: Copy the index thumbnail to the shared folder for the modified collections.
 `
+
+// todo: set the modified state.
+// *     tin: Copy the index thumbnail to the shared folder for the modified collections.
+
 const target = "es2017"
 
 
@@ -246,6 +249,7 @@ statictea \
   -r tmp/index.html
 */
   fancyLog("Compiling index template.")
+  generateCollectionsJsonOnce()
   const parameters = [
     "-t", "pages/index-tmpl.html",
     "-s", "pages/collections.json",
@@ -333,6 +337,7 @@ statictea \
 */
 
   fancyLog('Compiling the maker template')
+  generateCollectionsJsonOnce()
   const tmpFilename = 'tmp/maker.html'
   const distFilename = 'dist/maker.html'
   const parameters = [
@@ -414,7 +419,7 @@ gulp.task("unused", function (cb) {
   for (let ix = 0; ix < readyCollections.length; ix++) {
     const num = readyCollections[ix]
     fancyLog(`Removing unused images for collection ${num}.`)
-    const unusedPathsAndImages = removeUnusedImages(num, true)
+    const unusedPathsAndImages = removeUnusedImages(num, false) // todo: true
     unusedPathsAndImages.unusedPaths.forEach(path => {
       fancyLog(`Removed: ${path}`)
     })
@@ -424,6 +429,16 @@ gulp.task("unused", function (cb) {
 
 gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
   ["ts", "pages", "css", "m-css", "vpages"])]));
+
+
+let builtOnce = false
+function generateCollectionsJsonOnce() {
+  // Build the collections.json file once per gulp run.
+  if (builtOnce)
+    return
+  generateCollectionsJson()
+  builtOnce = true
+}
 
 
 interface IndexCollection {
@@ -477,12 +492,15 @@ function getCollectionFiles(cNum: number): string[] {
   return fs.readdirSync(folder);
 }
 
+function readJsonFile(filename: string) {
+  return JSON.parse(fs.readFileSync(filename, 'utf8'))
+}
+
 export function getCollectionImages(cNum: number): CJson.Image[] {
   // Return the images in the collection.
 
   const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`
-  const cjson: CJson.Collection = JSON.parse(
-    fs.readFileSync(cjsonFilename, 'utf8'));
+  const cjson: CJson.Collection = readJsonFile(cjsonFilename)
   return cjson.images;
 }
 
@@ -572,7 +590,7 @@ function generateCollectionsJson() {
     if (!fs.existsSync(cjsonFile))
       throw new Error(`Error: Missing cjson: ${cjsonFile}`);
 
-    const cinfo = JSON.parse(fs.readFileSync(cjsonFile, 'utf8'));
+    const cinfo = readJsonFile(cjsonFile)
     console.log(`Processing collection: ${cinfo.collection}`);
 
     const indexCollection: IndexCollection = {
@@ -598,13 +616,16 @@ function generateCollectionsJson() {
 
 function getReadyCollections(): number[] {
   // Return a list of the ready collections by reading the collections.json file.
+
+  generateCollectionsJsonOnce()
+
   const filename = "pages/collections.json"
   if (!fs.existsSync(filename)) {
     throw new Error(`missing: ${filename}`)
   }
 
   // Read the collections.json file and find all the ready collection numbers.
-  const indexCollections: IndexCollections = JSON.parse(fs.readFileSync(filename, "utf8"));
+  const indexCollections: IndexCollections = readJsonFile(filename)
   if (! ("indexCollections" in indexCollections) ) {
     throw new Error(`indexCollections field missing from ${filename}`)
   }
