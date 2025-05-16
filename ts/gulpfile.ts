@@ -193,10 +193,10 @@ gulp.task("v", function (cb) {
   const readyCollections = getReadyCollections()
   fancyLog(`${readyCollections.length} ready collections`)
   for (let ix = 0; ix < readyCollections.length; ix++) {
-    const num = readyCollections[ix]
-    fancyLog(`Validate: ${num}`)
-    validateHtml(`dist/images/c${num}/image-${num}.html`)
-    validateHtml(`dist/images/c${num}/thumbnails-${num}.html`)
+    const cNum = readyCollections[ix].collection
+    fancyLog(`Validate: ${cNum}`)
+    validateHtml(`dist/images/c${cNum}/image-${cNum}.html`)
+    validateHtml(`dist/images/c${cNum}/thumbnails-${cNum}.html`)
   }
   cb()
 })
@@ -269,15 +269,15 @@ gulp.task("p", function (cb) {
   if (numReady == 0)
     return cb()
   for (let ix = 0; ix < numReady; ix++) {
-    const num = readyCollections[ix]
-    // log(`collection number: ${num}`)
-    thumbnailsPage(num, ()=>{})
-    imagePage(num, ()=>{})
+    const cNum = readyCollections[ix].collection
+    // log(`collection number: ${cNum}`)
+    thumbnailsPage(cNum, ()=>{})
+    imagePage(cNum, ()=>{})
   }
   cb()
 })
 
-function thumbnailsPage(collectionNumber: number, cb: TaskCallback) {
+function thumbnailsPage(cNum: number, cb: TaskCallback) {
   // Create the thumbnails page for the given collection.
 
 /*
@@ -288,20 +288,19 @@ statictea \
   -r dist/images/cx/thumbnails-x.html
 */
 
-  const num = collectionNumber
-  fancyLog(`Building thumbnails page ${num}.`)
-  const tmpFilename = `tmp/thumbnails-${num}.html`
-  const distFilename = `dist/images/c${num}/thumbnails-${num}.html`
+  fancyLog(`Building thumbnails page ${cNum}.`)
+  const tmpFilename = `tmp/thumbnails-${cNum}.html`
+  const distFilename = `dist/images/c${cNum}/thumbnails-${cNum}.html`
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
-    "-s", `dist/images/c${num}/c${num}.json`,
+    "-s", `dist/images/c${cNum}/c${cNum}.json`,
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]
   runStaticteaTask(parameters, tmpFilename, distFilename, cb)
 }
 
-function imagePage(collectionNumber: number, cb: TaskCallback) {
+function imagePage(cNum: number, cb: TaskCallback) {
   // Create the image page for the given collection.
 
 /*
@@ -312,13 +311,12 @@ statictea \
   -r dist/images/cx/image-x.html
 */
 
-  const num = collectionNumber
-  fancyLog(`Building images page ${num}.`)
-  const tmpFilename = `tmp/image-${num}.html`
-  const distFilename = `dist/images/c${num}/image-${num}.html`
+  fancyLog(`Building images page ${cNum}.`)
+  const tmpFilename = `tmp/image-${cNum}.html`
+  const distFilename = `dist/images/c${cNum}/image-${cNum}.html`
   const parameters = [
     "-t", "pages/image-tmpl.html",
-    "-s", `dist/images/c${num}/c${num}.json`,
+    "-s", `dist/images/c${cNum}/c${cNum}.json`,
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]
@@ -417,9 +415,9 @@ gulp.task("unused", function (cb) {
   const readyCollections = getReadyCollections()
   // todo: get the modified collections not the ready ones.`
   for (let ix = 0; ix < readyCollections.length; ix++) {
-    const num = readyCollections[ix]
-    fancyLog(`Removing unused images for collection ${num}.`)
-    const unusedPathsAndImages = removeUnusedImages(num, false) // todo: true
+    const cNum = readyCollections[ix].collection
+    fancyLog(`Removing unused images for collection ${cNum}.`)
+    const unusedPathsAndImages = removeUnusedImages(cNum, false) // todo: true
     unusedPathsAndImages.unusedPaths.forEach(path => {
       fancyLog(`Removed: ${path}`)
     })
@@ -436,27 +434,9 @@ function generateCollectionsJsonOnce() {
   // Build the collections.json file once per gulp run.
   if (builtOnce)
     return
+  // Create pages/collections.json.
   generateCollectionsJson()
   builtOnce = true
-}
-
-
-interface IndexCollection {
-  // These fields come from the cjson file directly or are
-  // derived from it.
-  collection: number,
-  cState: string,
-  title: string,
-  indexDescription: string,
-  thumbnail: string,
-  posted: string,
-  iCount: number,
-  totalSize: number,
-  modified: boolean,
-};
-
-interface IndexCollections {
-  indexCollections: IndexCollection[];
 }
 
 export interface ImageName {
@@ -565,7 +545,7 @@ export function removeUnusedImages(cNum: number, shouldDelete: boolean):
 }
 
 function generateCollectionsJson() {
-  // Generate the collections.json file from the collection folders.
+  // Generate the pages/collections.json file from the cjson files.
 
   const imagesDir = 'dist/images'
   const outputFile = 'pages/collections.json'
@@ -584,7 +564,7 @@ function generateCollectionsJson() {
   collectionFolders.sort((a, b) => parseInt(b.slice(1)) - parseInt(a.slice(1)));
 
   // Create the list of collections.
-  const indexCollections: IndexCollections = { indexCollections: [] };
+  const csjson: CJson.Csjson = { indexCollections: [] };
   for (const folder of collectionFolders) {
     const cjsonFile = path.join(imagesDir, folder, `${folder}.json`);
     if (!fs.existsSync(cjsonFile))
@@ -593,7 +573,7 @@ function generateCollectionsJson() {
     const cinfo = readJsonFile(cjsonFile)
     console.log(`Processing collection: ${cinfo.collection}`);
 
-    const indexCollection: IndexCollection = {
+    const indexCollection: CJson.IndexCollection = {
       collection: cinfo.collection,
       cState: cinfo.cState,
       title: cinfo.title,
@@ -606,33 +586,30 @@ function generateCollectionsJson() {
           total + image.size + image.sizet, 0),
       modified: cinfo.modified,
     };
-    indexCollections.indexCollections.push(indexCollection);
+    csjson.indexCollections.push(indexCollection);
   }
 
   // Write the collections.json file.
-  fs.writeFileSync(outputFile, JSON.stringify(indexCollections, null, 2), 'utf8');
+  fs.writeFileSync(outputFile, JSON.stringify(csjson, null, 2), 'utf8');
   console.log(`Created the file: ${outputFile}`);
 }
 
-function getReadyCollections(): number[] {
+function getReadyCollections(): CJson.IndexCollection[] {
   // Return a list of the ready collections by reading the collections.json file.
 
+  // Create pages/collections.json.
   generateCollectionsJsonOnce()
-
   const filename = "pages/collections.json"
-  if (!fs.existsSync(filename)) {
-    throw new Error(`missing: ${filename}`)
-  }
 
   // Read the collections.json file and find all the ready collection numbers.
-  const indexCollections: IndexCollections = readJsonFile(filename)
-  if (! ("indexCollections" in indexCollections) ) {
+  const csjson: CJson.Csjson = readJsonFile(filename)
+  if (! ("indexCollections" in csjson) ) {
     throw new Error(`indexCollections field missing from ${filename}`)
   }
-  let readyCollections: number[] = [];
-  indexCollections.indexCollections.forEach(indexCollection => {
+  let readyCollections: CJson.IndexCollection[] = [];
+  csjson.indexCollections.forEach(indexCollection => {
     if (indexCollection.cState === "ready") {
-      readyCollections.push(indexCollection.collection);
+      readyCollections.push(indexCollection);
     }
   });
   return readyCollections;

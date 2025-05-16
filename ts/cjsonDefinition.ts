@@ -1,5 +1,5 @@
 namespace CJson {
-  // The collection json's typescript definition.
+  // The collection json's typescript definition (cjson).
 
   export interface Image {
     url: string;
@@ -53,6 +53,7 @@ namespace CJson {
     posted: string;
 
     // The collection number. Collections are in sequential order.
+    // todo: rename collection to cNum.
     collection: number;
 
     // The optional order variable is a list of 16 image indexes.  It
@@ -77,5 +78,25 @@ namespace CJson {
     // * removes any unused collection image files
     // * removes this field when done
     modified?: boolean;
+  }
+
+  // The csjson.json file's (csjson) definition.
+
+  export interface IndexCollection {
+    // These fields come from the cjson file directly or are
+    // derived from it.
+    collection: number,
+    cState: string,
+    title: string,
+    indexDescription: string,
+    thumbnail: string,
+    posted: string,
+    iCount: number,
+    totalSize: number,
+    modified: boolean,
+  };
+
+  export interface Csjson {
+    indexCollections: IndexCollection[];
   }
 }
