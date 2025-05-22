@@ -21,8 +21,8 @@ import { TaskCallback } from "undertaker";
 const minimize = false
 
 let help = `
-Tasks:
 * ts: Compile and optionally minimize ts files to dist/js.
+
         i -- Compile image.ts
         t -- Compile thumbnails.ts
         x -- Compile index.ts
@@ -30,25 +30,30 @@ Tasks:
        cm -- Compile maker.ts
 
 * pages: Create all the pages from templates.
+
     index -- Create the main index page.
     maker -- Create the collection maker page.
-        p -- Create the images and thumbnails pages for the ready collections.
+    ready -- Create the images and thumbnails pages for ready collections.
+ modified -- Update index thumbnails and remove unused images for modified colections.
       css -- Minimize the collection.css file.
     m-css -- Minimize the maker.css file.
     tsync -- Update the template's replace blocks in sync with the header.tea content.
 
 * vpages: Validate all the html files.
+
    vindex -- Validate index html
    vmaker -- Validate maker html.
-        v -- Validate images and thumbnails html for the ready collections.
+   vready -- Validate images and thumbnails pages for the ready collections.
 
 * all: Compile most everything in parallel: ts, pages, vpages (not tsync).
-
-* Miscellaneous:
-*  readme: Show the readme file with glow.
-*  csjson: Generate the collections.json file from the images folder.
-*  unused: Remove unused collection images and thumbnails for the modified collections.
 `
+
+
+// * Miscellaneous:
+// *  readme: Show the readme file with glow.
+// *  csjson: Generate the collections.json file from the images folder.
+// *  unused: Remove unused collection images and thumbnails for the modified collections.
+
 
 // todo: set the modified state.
 // *     tin: Copy the index thumbnail to the shared folder for the modified collections.
@@ -188,7 +193,7 @@ gulp.task("vindex", function (cb) {
   cb()
 })
 
-gulp.task("v", function (cb) {
+gulp.task("vready", function (cb) {
   // Validate the ready collection thumbnails and images pages.
   const readyCollections = getReadyCollections()
   fancyLog(`${readyCollections.length} ready collections`)
@@ -207,7 +212,7 @@ gulp.task("vmaker", function (cb) {
   cb()
 })
 
-gulp.task("vpages", gulp.parallel("vindex", "vmaker", "v"));
+gulp.task("vpages", gulp.parallel("vindex", "vmaker", "vready"));
 
 function runStaticteaTask(parameters: string[], tmpFilename: string,
   distFilename: string, cb: TaskCallback) {
@@ -261,7 +266,7 @@ statictea \
   runStaticteaTask(parameters, "tmp/index.html", "dist/index.html", cb)
 })
 
-gulp.task("p", function (cb) {
+gulp.task("ready", function (cb) {
   // Create the thumbnails and image pages for the ready collections.
   const readyCollections = getReadyCollections()
   const numReady = readyCollections.length
@@ -387,7 +392,7 @@ gulp.task("m-css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
-gulp.task("pages", gulp.parallel("index", "maker", "p", "css", "m-css"));
+gulp.task("pages", gulp.parallel("index", "maker", "ready", "css", "m-css"));
 
 gulp.task('readme', function () {
   const parameters = [
