@@ -448,7 +448,8 @@ gulp.task("modified", function (cb) {
       }
     });
 
-    // todo: Remove the modified field from the cjson.
+    // Remove the modified field from the cjson.
+    removeModifiedFlag(cNum)
   }
   return cb()
 });
@@ -653,4 +654,13 @@ function compareContents(sourceFilename: string, destFilename: string) {
   const sourceContent = fs.readFileSync(sourceFilename)
   const destContent = fs.readFileSync(destFilename)
   return sourceContent.equals(destContent)
+}
+
+function removeModifiedFlag(cNum: number) {
+  // Remove the modified flag from the cjson file.
+
+  const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`
+  const cjson: CJson.Collection = readJsonFile(cjsonFilename)
+  delete cjson.modified
+  fs.writeFileSync(cjsonFilename, JSON.stringify(cjson, null, 2), 'utf8');
 }
