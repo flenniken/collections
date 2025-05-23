@@ -47,20 +47,11 @@ let help = `
 
 * all: Compile most everything in parallel: ts, pages, vpages (not tsync).
 `
-
-
 // * Miscellaneous:
 // *  readme: Show the readme file with glow.
 // *  csjson: Generate the collections.json file from the images folder.
-// *  unused: Remove unused collection images and thumbnails for the modified collections.
-
-
-// todo: set the modified state.
-// *     tin: Copy the index thumbnail to the shared folder for the modified collections.
 
 const target = "es2017"
-
-
 
 gulp.task("default", function(cb){
   console.log(help)
@@ -415,17 +406,49 @@ gulp.task("csjson", function (cb) {
   return cb()
 })
 
-gulp.task("unused", function (cb) {
-  // Remove unused collection images and thumbnails for the modified collections.
+gulp.task("modified", function (cb) {
+  // Update index thumbnails and remove unused images for ready and
+  // modified collections. Remove the modified flag when done.
+
   const readyCollections = getReadyCollections()
-  // todo: get the modified collections not the ready ones.`
+
   for (let ix = 0; ix < readyCollections.length; ix++) {
-    const cNum = readyCollections[ix].collection
-    fancyLog(`Removing unused images for collection ${cNum}.`)
-    const unusedPathsAndImages = removeUnusedImages(cNum, false) // todo: true
+    const indexCollection = readyCollections[ix]
+    if (!("modified" in indexCollection))
+      continue
+    const cNum = indexCollection.collection
+
+    fancyLog(`Clean up modified collection: ${cNum}`)
+
+    const unusedPathsAndImages = removeUnusedImages(cNum, true)
     unusedPathsAndImages.unusedPaths.forEach(path => {
+      let msg: string
       fancyLog(`Removed: ${path}`)
     })
+
+    // Copy the collection's index thumbnail when missing.
+    const thumbnailBasename = path.basename(indexCollection.thumbnail)
+    const destFilename = path.join("dist/tin", thumbnailBasename)
+    if (!fs.existsSync(destFilename)) {
+      const srcFilename = path.join(`dist/images/c${cNum}`, thumbnailBasename)
+      fs.copyFile(srcFilename, destFilename, (err) => {
+        if (err)
+          throw err
+        fancyLog(`Copied ${thumbnailBasename} to tin folder.`)
+      })
+    }
+
+    // Remove the old collection's index thumbnail if it exists.
+    const tinFolder = path.join("dist/tin")
+    fs.readdirSync(tinFolder).filter(file => {
+      if (file.startsWith(`c${cNum}-`) && file != thumbnailBasename) {
+        const fullPath = path.join(tinFolder, file)
+        fs.unlinkSync(fullPath);
+        fancyLog(`Removed old ${fullPath} from the tin folder.`)
+      }
+    });
+
+    // todo: Remove the modified field from the cjson.
   }
   return cb()
 });
@@ -576,7 +599,6 @@ function generateCollectionsJson() {
       throw new Error(`Error: Missing cjson: ${cjsonFile}`);
 
     const cinfo = readJsonFile(cjsonFile)
-    console.log(`Processing collection: ${cinfo.collection}`);
 
     const indexCollection: CJson.IndexCollection = {
       collection: cinfo.collection,
@@ -596,7 +618,6 @@ function generateCollectionsJson() {
 
   // Write the collections.json file.
   fs.writeFileSync(outputFile, JSON.stringify(csjson, null, 2), 'utf8');
-  console.log(`Created the file: ${outputFile}`);
 }
 
 function getReadyCollections(): CJson.IndexCollection[] {

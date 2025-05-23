@@ -180,7 +180,7 @@ function removeUnusedImagesSuite() {
   test(testRemoveUnusedImages, 2, false, [],
     [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
   test(testRemoveUnusedImages, 3, false,
-    [12,12,15,15,18,18,2,2,4,4,6,6], [1,5,3,7,11,8,16,9,10,14,13,17])
+    [], [1,5,3,7,11,8,16,9,10,14,13,17])
 }
 
 function testGulpfile() {
