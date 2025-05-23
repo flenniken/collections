@@ -62,7 +62,7 @@ async function handleLoad() {
   startTimer.log("load event")
 
   // Show the admin icons when an admin is logged in.
-  // showAdminIcons("image")
+  showAdminIcons()
 
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
@@ -693,4 +693,77 @@ function handleScrollEnd() {
   // When the scrollend event is supported by all browsers, we can do
   // away with the handleScroll method.
   log("image", "The scrollEnd event exists.")
+}
+
+// todo: move UserInfo to a common file.
+interface UserInfo {
+  // The typescript definition of user login information.
+  givenName: string
+  familyName: string
+  email: string
+  userId: string
+  // todo: make this a boolean?
+  admin: string // either "true" or "false"
+  access_token: string
+}
+
+// todo: move fetchUserInfo to a common file.
+function fetchUserInfo() {
+  // Return the user info from local storage or return null when it
+  // doesn't exist. The existence of user info means the user is
+  // logged in.
+  const userInfoJson = localStorage.getItem('userInfo')
+  if (userInfoJson == null)
+    return null
+  return JSON.parse(userInfoJson) as UserInfo;
+}
+
+function showAdminIcons() {
+  // Show the admin icons when an admin is logged in.
+
+  // Check if the user is an admin by looking at the
+  // user information in local storage.
+  let isAdmin = false
+  const userInfo = fetchUserInfo()
+  if (userInfo != null) {
+    isAdmin = userInfo.admin === 'true'
+  }
+
+  // Show or hide the admin content.
+  document.querySelectorAll('.admin').forEach(el => {
+    if (isAdmin) {
+      el.classList.add('visible');
+    } else {
+      el.classList.remove('visible');
+    }
+  });
+
+  if (isAdmin) {
+    log("Admin content is now visible.");
+  } else {
+    log("User is not an admin, hiding admin content.");
+  }
+}
+
+// todo: move this to a common file. share with maker page.
+function downloadCjson() {
+  // Download the current collection json data as a file.
+
+  const json = JSON.stringify(cJson, null, 2)
+  const blob = new Blob([json], {type: "application/json"})
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = `c${cJson.collection}.json`
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+function logCjson() {
+  // Log the current collection json data to the console.
+
+  const json = JSON.stringify(cJson, null, 2)
+  log(json)
 }

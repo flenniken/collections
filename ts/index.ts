@@ -113,9 +113,16 @@ function showHideAdminUI(pageId: string) {
   // Show the admin icons on the index page when an admin is logged
   // in.
   const parent = get(pageId)
-  forClasses(parent, "admin", (element) => {
-    element.style.display = isAdmin() ? "block" : "none"
-  })
+
+  // todo: share this code.
+  // Show or hide the admin content.
+  document.querySelectorAll('.admin').forEach(el => {
+    if (isAdmin()) {
+      el.classList.add('visible');
+    } else {
+      el.classList.remove('visible');
+    }
+  });
 }
 
 async function handleLoad() {

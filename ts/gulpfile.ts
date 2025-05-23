@@ -284,7 +284,7 @@ statictea \
   -r dist/images/cx/thumbnails-x.html
 */
 
-  fancyLog(`Building thumbnails page ${cNum}.`)
+  fancyLog(`Building collection ${cNum} thumbnails page.`)
   const tmpFilename = `tmp/thumbnails-${cNum}.html`
   const distFilename = `dist/images/c${cNum}/thumbnails-${cNum}.html`
   const parameters = [
@@ -307,7 +307,7 @@ statictea \
   -r dist/images/cx/image-x.html
 */
 
-  fancyLog(`Building images page ${cNum}.`)
+  fancyLog(`Building collection ${cNum} images page.`)
   const tmpFilename = `tmp/image-${cNum}.html`
   const distFilename = `dist/images/c${cNum}/image-${cNum}.html`
   const parameters = [
@@ -383,29 +383,6 @@ gulp.task("m-css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
-gulp.task("pages", gulp.parallel("index", "maker", "ready", "css", "m-css"));
-
-gulp.task('readme', function () {
-  const parameters = [
-    "-p",
-    "readme.md",
-  ]
-  return child_process.spawn("glow", parameters, {stdio: "inherit"});
-});
-
-gulp.task("missing-folders", function (cb) {
-  // Create the images folders, it is missing the first time you run
-  // after making a new docker container.
-  gulp.src('*.*', {read: false}).pipe(gulp.dest('./dist/images'))
-  return cb()
-})
-
-gulp.task("csjson", function (cb) {
-  // Generate the collections.json file from the cjson files in the images folder.
-  generateCollectionsJson();
-  return cb()
-})
-
 gulp.task("modified", function (cb) {
   // Update index thumbnails and remove unused images for ready and
   // modified collections. Remove the modified flag when done.
@@ -453,6 +430,30 @@ gulp.task("modified", function (cb) {
   }
   return cb()
 });
+
+gulp.task("pages", gulp.parallel("index", "maker", "ready", "modified",
+  "css", "m-css"));
+
+gulp.task('readme', function () {
+  const parameters = [
+    "-p",
+    "readme.md",
+  ]
+  return child_process.spawn("glow", parameters, {stdio: "inherit"});
+});
+
+gulp.task("missing-folders", function (cb) {
+  // Create the images folders, it is missing the first time you run
+  // after making a new docker container.
+  gulp.src('*.*', {read: false}).pipe(gulp.dest('./dist/images'))
+  return cb()
+})
+
+gulp.task("csjson", function (cb) {
+  // Generate the collections.json file from the cjson files in the images folder.
+  generateCollectionsJson();
+  return cb()
+})
 
 gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
   ["ts", "pages", "css", "m-css", "vpages"])]));

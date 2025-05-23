@@ -257,6 +257,14 @@
   display: none;
 }
 
+.admin.visible {
+  display: inline;
+}
+
+li.admin.visible {
+  display: list-item;
+}
+
 #about-box .icon {
   width: 2em;
   float: none;
