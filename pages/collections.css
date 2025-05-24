@@ -36,8 +36,6 @@
   clear: both;
   margin-top: 5px;
   background-color: lightgray;
-  border-top-left-radius: 20px;
-  border-bottom-left-radius: 20px;
   overflow: hidden;
   padding-top: 5px;
   padding-left: 20px;
@@ -268,6 +266,13 @@ li.admin.visible {
 #about-box .icon {
   width: 2em;
   float: none;
-  margin-left: -14px;
-  margin-top: -4px;
+  margin-left: -18px;
+  margin-top: -8px;
+}
+
+#user-info .icon {
+  width: 1.5em;
+  float: none;
+  margin-left: -27px;
+  margin-top: -12px;
 }

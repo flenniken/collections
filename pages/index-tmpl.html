@@ -47,10 +47,13 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
     <span id="first-letter" class="right"
       onclick="logMeIn()" title="login">S</span>
     <div id="user-info" onclick="hideUserInformation(this)">
-      <span id="given-name"></span>
-      <span id="family-name"></span>
-      <span id="admin"></span>
-      <br>
+      <img id="close-user-info" class="icon" src="icons/x-letter.svg"
+        alt="close dialog" onclick="hideUserInformation(this)">
+      <div>
+        <span id="given-name"></span>
+        <span id="family-name"></span>
+        <span id="admin"></span>
+      </div>
       <input id="logout" type="button" value="Logout" onclick="logout()">
     </div>
     <div id="about-box">
