@@ -1,7 +1,7 @@
 {
   "indexCollections": [
     {
-      "collection": 3,
+      "cNum": 3,
       "cState": "ready",
       "title": "Brooklyn Bridge",
       "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
@@ -11,7 +11,7 @@
       "totalSize": 32484357
     },
     {
-      "collection": 2,
+      "cNum": 2,
       "cState": "ready",
       "title": "Manzanita 2023",
       "indexDescription": "2023 Summer vacation in Manzanita Oregon.",
@@ -21,7 +21,7 @@
       "totalSize": 48298930
     },
     {
-      "collection": 1,
+      "cNum": 1,
       "cState": "ready",
       "title": "Many Glaciers Lodge",
       "indexDescription": "Photos from Glacier National Park & Many Glaciers lodge.",

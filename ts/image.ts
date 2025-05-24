@@ -754,7 +754,7 @@ function downloadCjson() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
-  a.download = `c${cJson.collection}.json`
+  a.download = `c${cJson.cNum}.json`
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)

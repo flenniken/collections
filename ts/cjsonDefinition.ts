@@ -53,8 +53,7 @@ namespace CJson {
     posted: string;
 
     // The collection number. Collections are in sequential order.
-    // todo: rename collection to cNum.
-    collection: number;
+    cNum: number;
 
     // The optional order variable is a list of 16 image indexes.  It
     // defines which images are in the collection and their order. An
@@ -85,7 +84,7 @@ namespace CJson {
   export interface IndexCollection {
     // These fields come from the cjson file directly or are
     // derived from it.
-    collection: number,
+    cNum: number,
     cState: string,
     title: string,
     indexDescription: string,

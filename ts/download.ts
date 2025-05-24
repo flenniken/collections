@@ -7,9 +7,10 @@ function assert(condition: any, msg?: string): asserts condition {
   }
 }
 
+// todo: remove this duplicate interface.
 interface IndexCollection {
   // The typescript definition of an collections.json collection.
-  collection: number
+  cNum: number
   state: string
   title: string
   indexDescription: string
@@ -55,7 +56,7 @@ function getCollection(cNum: number): IndexCollection {
   // exception when not found.
 
   for (let ix = 0; ix < csjson.collections.length; ix++) {
-    if (cNum == csjson.collections[ix].collection)
+    if (cNum == csjson.collections[ix].cNum)
       return csjson.collections[ix]
   }
   throw new Error(`Invalid collection number: ${cNum}`);
@@ -66,7 +67,7 @@ async function enoughSpace(collection: IndexCollection) {
   // collection.
 
   const sizeString = humanFileSize(collection.totalSize)
-  log(`Collection ${collection.collection} size: ${sizeString}`)
+  log(`Collection ${collection.cNum} size: ${sizeString}`)
   log(await getUsageQuotaString())
 
   const estimate = await navigator.storage.estimate()

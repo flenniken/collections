@@ -189,7 +189,7 @@ gulp.task("vready", function (cb) {
   const readyCollections = getReadyCollections()
   fancyLog(`${readyCollections.length} ready collections`)
   for (let ix = 0; ix < readyCollections.length; ix++) {
-    const cNum = readyCollections[ix].collection
+    const cNum = readyCollections[ix].cNum
     fancyLog(`Validate: ${cNum}`)
     validateHtml(`dist/images/c${cNum}/image-${cNum}.html`)
     validateHtml(`dist/images/c${cNum}/thumbnails-${cNum}.html`)
@@ -265,7 +265,7 @@ gulp.task("ready", function (cb) {
   if (numReady == 0)
     return cb()
   for (let ix = 0; ix < numReady; ix++) {
-    const cNum = readyCollections[ix].collection
+    const cNum = readyCollections[ix].cNum
     // log(`collection number: ${cNum}`)
     thumbnailsPage(cNum, ()=>{})
     imagePage(cNum, ()=>{})
@@ -393,7 +393,7 @@ gulp.task("modified", function (cb) {
     const indexCollection = readyCollections[ix]
     if (!("modified" in indexCollection))
       continue
-    const cNum = indexCollection.collection
+    const cNum = indexCollection.cNum
 
     fancyLog(`Clean up modified collection: ${cNum}`)
 
@@ -603,7 +603,7 @@ function generateCollectionsJson() {
     const cinfo = readJsonFile(cjsonFile)
 
     const indexCollection: CJson.IndexCollection = {
-      collection: cinfo.collection,
+      cNum: cinfo.cNum,
       cState: cinfo.cState,
       title: cinfo.title,
       indexDescription: cinfo.indexDescription,

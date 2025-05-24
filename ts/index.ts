@@ -153,7 +153,7 @@ async function handleLoad() {
 
   // Add a banner over the collections that are not cached.
   csjson.collections.forEach(async (collection, ix) => {
-    const cNum = collection.collection
+    const cNum = collection.cNum
     const readyRequest = new Request(`c${cNum}-ready`)
     const readyResponse = await cache.match(readyRequest);
     if (readyResponse) {
