@@ -92,6 +92,7 @@ namespace CJson {
     // These fields come from the cjson file directly or are
     // derived from it.
     cNum: number,
+    building: boolean;
     ready: boolean,
     title: string,
     indexDescription: string,

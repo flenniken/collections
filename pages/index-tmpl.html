@@ -105,7 +105,8 @@ Screen".</p>
 <!--$ : titleAttr = html(c.title, "attribute") -->
 <!--$ : posted = html(c.posted, "body") -->
 <!--$ : indexDescription = html(c.indexDescription, "body") -->
-    <div class="collection" id="{cid}">
+<!--$ : building = if( (c.building), " admin", "") -->
+    <div class="collection{building}" id="{cid}">
       <p class="title">{title}</p>
       <p class="posted">{posted}</p>
       <div class="parent">

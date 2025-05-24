@@ -262,6 +262,7 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     "height": thumbnailDim,
     "order": order,
     "images": images,
+    "building": True,
   }
   return cinfo
 
@@ -504,7 +505,7 @@ def parseCommandLine():
   description=textwrap.dedent(__doc__))
 
   parser.add_argument("-t", "--test", action="store_true",
-    help="""run internal unit test(s). "scripts/maker -t     shutil.rmtree(folder)    shutil.rmtree(folder)    shutil.rmtree(folder)    shutil.rmtree(folder)    shutil.rmtree(folder).test_me" or use alone to run all tests.""")
+    help="""run internal unit tests""")
   parser.add_argument("-n", "--new", type=int, metavar="collectionNum",
     help="create a new local collection folder from a directory of images")
   parser.add_argument("-c", "--collections", action="store_true",

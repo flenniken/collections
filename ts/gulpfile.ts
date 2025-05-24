@@ -604,6 +604,7 @@ function generateCollectionsJson() {
 
     const indexCollection: CJson.IndexCollection = {
       cNum: cinfo.cNum,
+      building: "building" in cinfo ? cinfo.building : false,
       ready: cinfo.ready,
       title: cinfo.title,
       indexDescription: cinfo.indexDescription,
@@ -613,7 +614,7 @@ function generateCollectionsJson() {
       totalSize: cinfo.images.reduce(
         (total: number, image: { size: number; sizet: number; }) =>
           total + image.size + image.sizet, 0),
-      modified: cinfo.modified,
+      modified: "modified" in cinfo ? cinfo.modified : false,
     };
     csjson.indexCollections.push(indexCollection);
   }
