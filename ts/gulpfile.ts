@@ -604,7 +604,7 @@ function generateCollectionsJson() {
 
     const indexCollection: CJson.IndexCollection = {
       cNum: cinfo.cNum,
-      cState: cinfo.cState,
+      ready: cinfo.ready,
       title: cinfo.title,
       indexDescription: cinfo.indexDescription,
       thumbnail: cinfo.indexThumbnail,
@@ -636,7 +636,7 @@ function getReadyCollections(): CJson.IndexCollection[] {
   }
   let readyCollections: CJson.IndexCollection[] = [];
   csjson.indexCollections.forEach(indexCollection => {
-    if (indexCollection.cState === "ready") {
+    if (indexCollection.ready) {
       readyCollections.push(indexCollection);
     }
   });

@@ -37,12 +37,6 @@ namespace CJson {
     // Full desciption of the collection for the thumbnails page.
     description: string;
 
-    // Collecton states:
-    // * build -- the collection has not met all the requirements.
-    // * ready -- the collection has met all the requirements. The
-    //            ready collections appear in the index.
-    cState: string;
-
     // Thumbnail url for the index page. The index thumbnails are
     // copied to the tin folder so they are publicly visible. While
     // developing the collection the maker page will set it empty or
@@ -69,9 +63,22 @@ namespace CJson {
     // A dictionary of zoom points.
     zoomPoints: ZoomPoints;
 
-    // An optional boolean that tells the build process that the
-    // collection has been modified or is new.  When true, the build
-    // process:
+    // The building field determines who can see the collection. When
+    // it exists, the collection is only visible by an admin. When the
+    // collection has been tested, the field is manually removed
+    // opening the collection for everyone to see. The maker command
+    // creates the flag when the collection is created.
+    building?: boolean;
+
+    // The ready field when true means the collection has met all the
+    // maker page requirements. The build process builds the ready
+    // collections and adds them to the index. Whether they are
+    // visible by everyone or just by admins is dependent on the
+    // building flag.  The ready flag is set by the maker page.
+    ready: boolean;
+
+    // The modified field tells the build process that the collection
+    // has been modified or is new.  When true, the build process:
     // * copies the tin thumbnail file to the shared location
     // * removes the old tin thumbnail if it exists
     // * removes any unused collection image files
@@ -85,7 +92,7 @@ namespace CJson {
     // These fields come from the cjson file directly or are
     // derived from it.
     cNum: number,
-    cState: string,
+    ready: boolean,
     title: string,
     indexDescription: string,
     thumbnail: string,

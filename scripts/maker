@@ -461,7 +461,7 @@ def collections():
       print(f"Processing collection: {cinfo['collection']}")
       collection = {}
       collection['collection'] = cinfo["collection"]
-      collection['cState'] = cinfo["cState"]
+      collection['ready'] = cinfo["ready"]
       collection['title'] = cinfo['title']
       collection['indexDescription'] = cinfo['indexDescription']
       collection['thumbnail'] = cinfo["indexThumbnail"]

@@ -413,7 +413,7 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
 }
 
 function updateStatusMessage(cjsoninfo: CJson.Collection) {
-  // Show the status of the collection and update its cState.
+  // Show the status of the collection and update its ready flag.
   // Maintain the status icon, message and used image button.
 
   // Count the number of used images.
@@ -438,7 +438,7 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
     statusMessage.textContent = "Please fill in the required fields."
     requiredIcon.src = "icons/red-circle.svg"
     removeUnusedButton.style.display = "none"
-    cjsoninfo.cState = "build"
+    cjsoninfo.ready = false
   }
   else {
     // No required fields, show the good message or the unused message.
@@ -448,13 +448,13 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
       statusMessage.textContent = `All required fields are filled in. You can remove the ${unusedCount} unused images.`
       requiredIcon.src = "icons/red-circle.svg"
       removeUnusedButton.style.display = "block"
-      cjsoninfo.cState = "build"
+      cjsoninfo.ready = false
     }
     else {
       statusMessage.textContent = "All required fields are filled in. The collection is ready."
       requiredIcon.src = "icons/green-circle.svg"
       removeUnusedButton.style.display = "none"
-      cjsoninfo.cState = "ready"
+      cjsoninfo.ready = true
       cjsoninfo.modified = true
     }
   }
