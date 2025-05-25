@@ -114,13 +114,34 @@ async function verifyJwt(token, ignoreExpiration) {
   return payload;
 }
 
+function allowName(url) {
+  // Allow some image folder files to be accessed without authentication.
+
+  // Allow urls outside the image folder to be accessed without
+  // authentication.
+  if (!(url.startsWith("/images/") || url.startsWith("images/")))
+    return true
+
+  // Use a regular expression to match the allowed file types.
+  const allowedTypes = [
+    /\/thumbnails-\d*.html$/,
+    /\/image-\d*\.html$/,
+    /\/c\d*.json$/,
+  ]
+  for (const type of allowedTypes) {
+    if (type.test(url)) {
+      return true
+    }
+  }
+  return false
+}
+
 async function validateRequest(url, token, id, user, ignoreExpiration) {
   // Return true when the request is valid.
 
-  // Allow all non-image requests.
-  if (!url.startsWith('/images/')) {
+  // Allow some files to be accessed without authentication.
+  if (allowName(url))
     return true
-  }
 
   // Make sure the id and user exist.
   if (!id && !user) {
@@ -221,4 +242,4 @@ async function handler(event, context) {
 }
 
 module.exports = { getJwks, verifyJwt, handler, region, userPoolId, client_id, iss,
-                   parseQueryString, validateRequest};
+                   parseQueryString, validateRequest, allowName};

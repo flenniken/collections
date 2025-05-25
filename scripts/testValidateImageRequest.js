@@ -19,7 +19,8 @@
 
   // Import the functions to test.
   const { getJwks, verifyJwt, handler, region, parseQueryString,
-          validateRequest, userPoolId, client_id, iss } = require('./validateImageRequest');
+          validateRequest, userPoolId, client_id, iss , allowName
+        } = require('./validateImageRequest');
 
   const fs = require('fs');
 
@@ -103,6 +104,13 @@ expected: ${expected}
     // values are shown and the test fails.
     const result = parseQueryString(queryString)
     gotExpected(toString(result), toString(expected), `parsing: "${queryString}"`)
+  }
+
+  function testAllowName(url, expected) {
+    // Test allowName.
+    console.log(`Testing allowName("${url}")`)
+    const result = allowName(url)
+    gotExpected(result, expected, `allowName("${url}")`)
   }
 
   async function testHandler(event, context, eValid) {
@@ -277,7 +285,20 @@ expected: ${expected}
   event = makeEvent("/images/test.html", access_token, `id=12345678&user=${testUser}`)
   await testHandler(event, ignoreExpiration, allow)
 
-
+  logProgress('Test allowName');
+  testAllowName("images/c1/c1-1-p.jpg", false)
+  testAllowName("/images/c1/c1-1-p.jpg", false)
+  testAllowName("name", true)
+  testAllowName("/images/c1/thumbnails-1.html", true)
+  testAllowName("images/c1/thumbnails-1.html", true)
+  testAllowName("/images/c1/image-1.html", true)
+  testAllowName("/images/c1/image-123.html", true)
+  testAllowName("/images/c1/images-1.html", false)
+  testAllowName("/images/c1/c1.json", true)
+  testAllowName("/images/c1/c1.json?name=Test", false)
+  testAllowName("/images/c1/thumbnails-1a.html", false)
+  testAllowName("/images/c1/athumbnails-1.html", false)
+  testAllowName("/images/c1/thumbnails-1.htm", false)
 
   // error('Test for red.')
   if (errorCount)
