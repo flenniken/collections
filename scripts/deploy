@@ -24,143 +24,195 @@ import boto3
 from datetime import datetime
 from boto_client import getBotoClient, getAwsSettings
 import time
+import hashlib
 
 class DeployException(Exception):
   """ An exception we plan for. """
   pass
 
-def listS3(s3Client, bucket_name):
-  """ List the first 1000 S3 files in the collection's bucket. """
+def getFileInfo(s3Client, bucket_name, exclude_prefix):
+    """
+    Get information about the files in the given bucket with the
+    given prefix. Supports pagination and filters out items that
+    start with the exclude_prefix.
+    """
+    fileInfo = []
+    continuation_token = None
 
-  fileInfo = getFileInfo(s3Client, bucket_name)
-  for info in fileInfo:
-    timeStr = str(info['LastModified'])[0:-6]
-    print(f"{timeStr} {info['Size']:8.0f} {info['Key']}")
+    while True:
+      # Prepare the request parameters
+      request_params = {"Bucket": bucket_name}
+      if continuation_token:
+        request_params["ContinuationToken"] = continuation_token
 
-def getFileInfo(s3Client, bucket_name):
-  """ Get information about the first 1000 files in the given bucket. """
+      # Fetch the response
+      response = s3Client.list_objects_v2(**request_params)
 
-  # Python boto3 docs for S3:
-  # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/s3.html
+      # Process the response
+      for info in response.get("Contents", []):
+        key = info["Key"]
+        # Exclude items that start with the exclude_prefix.
+        if not key.startswith(exclude_prefix):
+          fileInfo.append(info)
 
-  response = s3Client.list_objects_v2(Bucket=bucket_name)
-  # print(json.dumps(response, default=str))
-  # "Contents": [
-  #   {
-  #     "Key": "collections.css",
-  #     "LastModified": "2024-11-23 20:19:33+00:00",
-  #     "ETag": "\"9a0da3be7efd0bff1fb5e94874eb5f16\"",
-  #     "Size": 2970,
-  #     "StorageClass": "STANDARD"
-  #   },
-  fileInfo = []
-  for info in response.get("Contents"):
-    fileInfo.append(info)
-  return fileInfo
+      # Check if there are more pages
+      if response.get("IsTruncated"):
+        continuation_token = response["NextContinuationToken"]
+      else:
+        break
+
+    return fileInfo
+
+def copyFilesToS3(s3Client, bucket_name, filenames):
+  """
+  Copy the given list of filenames to the given S3 bucket.
+  The filenames are relative to the dist folder.
+  """
+  if not filenames:
+    return
+
+  for filename in filenames:
+    # Ensure the filename does not start with a forward slash
+    assert(not filename.startswith("/"))
+
+    # Construct the local path in the dist folder
+    localPath = os.path.join("dist", filename)
+
+    # Print the operation for debugging
+    print(f"Copying {localPath} to s3://{bucket_name}/{filename}")
+
+    # Upload the file to S3
+    s3Client.upload_file(localPath, bucket_name, filename)
 
 def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   """
-  Copy the modified website files to S3 and invalidate them in the
-  cloudfront cache. Print the S3 files invalidated.
+  Copy the modified website files to S3 and invalidate them in the CloudFront cache.
+  Print the S3 files invalidated.
   """
-  modifiedFiles = getModifiedFiles(s3Client, bucket_name, sync=True)
+  modifiedFiles = getModifiedFiles(s3Client, bucket_name)
+  if not modifiedFiles:
+    print("No modified files found.")
+    return
 
-  # Invalidate and print the modified files on S3. Strip off the
-  # leading "dist" from the modified files to match the location on
-  # S3.
-  paths = []
   for filename in modifiedFiles:
-    assert(filename.startswith("dist"))
-    # Remove the leading "dist", leaving /index.htm for example.
-    path = filename[4:]
-    paths.append(path)
-    print(path)
+    print(filename)
 
-  invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths)
+  # Copy the modified files to S3.
+  copyFilesToS3(s3Client, bucket_name, modifiedFiles)
+
+  # Invalidate the modified files in the CloudFront cache.
+  invalidation_id = invalidateCloudFrontCache(cloudfrontClient, distribution_id, modifiedFiles)
+
+  # Wait for the CloudFront invalidation to complete.
+  if invalidation_id:
+    waitForDeployed(cloudfrontClient, distribution_id, invalidation_id)
 
 def invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths):
   """
-  Invalidate the cloudfront distribution cache for the given list
-  of filenames.
+  Invalidate the CloudFront distribution cache for the given list
+  of filenames. Return the invalidation ID.
   """
   if not paths:
-    return
+    return None
 
-  # Invalidate a list of filenames on S3.
+  # Ensure all paths start with a forward slash
+  normalized_paths = [f"/{path}" if not path.startswith("/") else path for path in paths]
+
   response = cloudfrontClient.create_invalidation(
     DistributionId=distribution_id,
     InvalidationBatch={
       'Paths': {
-        'Quantity': len(paths),
-        'Items': paths
+          'Quantity': len(normalized_paths),
+          'Items': normalized_paths
       },
       'CallerReference': str(datetime.now().timestamp())
     }
   )
+  return response['Invalidation']['Id']
 
-def waitForDeployed(cloudfrontClient, distribution_id):
+def waitForDeployed(cloudfrontClient, distribution_id, invalidation_id):
   """
-  Wait for the cloudfront distribution to deploy.
-
-  id=EHLMG1T8SOX48
-  aws cloudfront get-distribution --id $id --query 'Distribution.Status' --output text
+  Wait for the CloudFront invalidation to complete.
   """
-
-  showDeploying = True
+  print("Waiting for the CloudFront invalidation to complete...")
   count = 0
-  waitSeconds = 5
-  while (1):
-    response = cloudfrontClient.get_distribution(Id=distribution_id)
-    distribution_status = response['Distribution']['Status']
-    # print(f"distribution_status: {distribution_status}")
-    if distribution_status == "Deployed":
-      if not showDeploying:
-        print("")
-      if count == 0:
-        print(f"deployed")
-      else:
-        print(f"deployed, waited: {count*waitSeconds} seconds")
+  wait_seconds = 5
+
+  while True:
+    response = cloudfrontClient.get_invalidation(
+      DistributionId=distribution_id, Id=invalidation_id
+    )
+    invalidation_status = response['Invalidation']['Status']
+    # Print the status for debugging
+    print(f"Invalidation status: {invalidation_status}")
+
+    if invalidation_status == "Completed":
+      print(f"Invalidation completed, waited: {count * wait_seconds} seconds")
       break
-    if showDeploying:
-      print("deploying", end="")
-      showDeploying = False
-    else:
-      print(".", end="")
+
     count += 1
     sys.stdout.flush()
-    time.sleep(waitSeconds)
+    time.sleep(wait_seconds)
 
 def listModified(s3Client, bucket_name):
   """
   List the modified website files.
   """
-  modifiedFiles = getModifiedFiles(s3Client, bucket_name, sync=False)
+  modifiedFiles = getModifiedFiles(s3Client, bucket_name)
   for filename in modifiedFiles:
     print(filename)
 
-def getModifiedFiles(s3Client, bucket_name, sync=False):
+def getFileHashes(path):
   """
-  Get the modified website files in the dist folder and optionally sync them to S3.
+  Get the md5 hashes of the files in the given folder.
   """
-  # sample output from the sync command:
-  # (dryrun) upload: dist/index.html to s3://sflennikco/index.html
-  # (dryrun) upload: dist/js/image.js to s3://sflennikco/js/image.js
+  fileHashes = {}
+  for root, dirs, files in os.walk('dist'):
+    for filename in files:
+      filepath = os.path.join(root, filename)
+      if not os.path.isfile(filepath):
+        continue
+      with open(filepath, 'rb') as f:
+        file_content = f.read()
+        md5_hash = hashlib.md5(file_content).hexdigest()
+        # Store the relative path to the file in the dist folder.
+        relative_path = os.path.relpath(filepath, 'dist')
+        fileHashes[relative_path] = md5_hash
+  return fileHashes
 
-  if sync:
-    command = f"aws s3 sync --no-progress dist s3://{bucket_name}" + " | awk '{print $2}'"
-  else:
-    command = f"aws s3 sync --no-progress --dryrun dist s3://{bucket_name}" + " | awk '{print $3}'"
-  # print(command)
-  result = subprocess.run(command, shell=True, capture_output=True, text=True)
-  text = result.stdout
+def getS3FileHashes(s3Client, bucket_name):
+  """
+  Get the md5 hashes of the files in the given S3 bucket excluding
+  the logs/ entries.
+  """
+  fileInfo = getFileInfo(s3Client, bucket_name, "logs/")
+  s3FileHashes = {}
+  for info in fileInfo:
+    filename = info['Key']
+    # The ETag is the md5 hash of the file content.
+    md5_hash = info['ETag'].strip('"')
+    s3FileHashes[filename] = md5_hash
+  return s3FileHashes
 
-  # Return a list of the modified filenames.
-  filenames = []
-  lines = text.split('\n')
-  for line in lines:
-    if line:
-      filenames.append(line)
-  return filenames
+def getModifiedFiles(s3Client, bucket_name):
+  """
+  Return the modified website files in the dist folder.
+  """
+  modified = []
+  # Get the dist files and their md5 hashes. Return a dictionary mapping
+  # the filename to the md5 hash.
+  s3FileHashes = getS3FileHashes(s3Client, bucket_name)
+  distFileHashes = getFileHashes("dist")
+
+  for filename, md5 in distFileHashes.items():
+    s3hash = s3FileHashes.get(filename, None)
+    if s3hash is None:
+      modified.append(filename)
+      continue
+    if s3hash != md5:
+      modified.append(filename)
+
+  return modified
 
 def process(args):
   """ Handle the command specified by the user. """
@@ -170,10 +222,7 @@ def process(args):
   bucket_name = settings['bucket_name']
   distribution_id = settings['distribution_id']
 
-  if args.listS3:
-    s3Client = getBotoClient('s3')
-    listS3(s3Client, bucket_name)
-  elif args.sync:
+  if args.sync:
     s3Client = getBotoClient('s3')
     cloudfrontClient = getBotoClient('cloudfront')
     syncModifiedFiles(s3Client, bucket_name, cloudfrontClient,
@@ -181,9 +230,6 @@ def process(args):
   elif args.listModified:
     s3Client = getBotoClient('s3')
     listModified(s3Client, bucket_name)
-  elif args.wait:
-    cloudfrontClient = getBotoClient('cloudfront')
-    waitForDeployed(cloudfrontClient, distribution_id)
   else:
     raise DeployException("Invalid argument")
 
@@ -214,17 +260,11 @@ def parseCommandLine():
     help="""run all or one internal unit tests. You can run just one like this:
     scripts/deploy -t TestModule.test_me""")
 
-  parser.add_argument("-l", "--listS3", action='store_true',
-    help="list the first 1,000 collections files in S3 ")
-
   parser.add_argument("-s", "--sync", action='store_true',
     help="copy the modified files to S3 and invalidate them in the cloudfront cache")
 
   parser.add_argument("-m", "--listModified", action='store_true',
     help="list the modified files")
-
-  parser.add_argument("-w", "--wait", action='store_true',
-    help="wait for the distribution to deploy. Show status and return when deployed.")
 
   args = parser.parse_args(sys.argv[1:])
   return args
@@ -298,10 +338,8 @@ class TestModule(unittest.TestCase):
   def test_getFileInfo(self):
     awsSettings = getAwsSettings()
     settings = awsSettings['settings']
-    result = getFileInfo(tc.s3Client, settings['bucket_name'])
-    # print(json.dumps(result, indent=2, default=str))
-    self.assertTrue(len(result) <= 1000)
-    for info in result:
+    fileinfo = getFileInfo(tc.s3Client, settings['bucket_name'], 'logs/')
+    for info in fileinfo:
       # print(info['Key'])
       assert('Key' in info)
       assert('LastModified' in info)
@@ -309,12 +347,33 @@ class TestModule(unittest.TestCase):
       assert('StorageClass' in info)
       assert('ETag' in info)
       self.assertEqual(info['StorageClass'], "STANDARD")
+      self.assertTrue(not info['Key'].startswith("logs/"))
+      self.assertTrue(len(info['Key']) > 0)
+      self.assertTrue(info["Size"] >= 0)
 
-  def test_getModifiedFiles(self):
+  def test_getFileHashes(self):
+    fileHashes = getFileHashes('dist')
+    # print("")
+    # for filename, md5 in fileHashes.items():
+    #   print(f"{md5}: {filename}")
+    self.assertTrue(len(fileHashes) > 0)
+    for filename, md5 in fileHashes.items():
+      self.assertTrue(len(filename) > 0)
+      self.assertEqual(len(md5), 32)
+      self.assertTrue(md5.isalnum())
+
+  def test_getS3FileHashes(self):
     awsSettings = getAwsSettings()
     settings = awsSettings['settings']
-    modifiedFiles = getModifiedFiles(tc.s3Client, settings['bucket_name'], sync=True)
-    # print(f"modifiedFiles: {modifiedFiles}")
+    fileHashes = getS3FileHashes(tc.s3Client, settings['bucket_name'])
+    # print("")
+    # for filename, md5 in fileHashes.items():
+    #   print(f"{md5}: {filename}")
+    self.assertTrue(len(fileHashes) > 0)
+    for filename, md5 in fileHashes.items():
+      self.assertTrue(len(filename) > 0)
+      self.assertEqual(len(md5), 32)
+      self.assertTrue(md5.isalnum())
 
 if __name__ == '__main__':
   args = parseCommandLine()

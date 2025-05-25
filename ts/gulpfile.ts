@@ -87,11 +87,7 @@ function ts2js(srcList: string[], destFile: string, destDir: string,
     .pipe(gulpif(
       // Only copy to dest if files are different
       file => {
-        const unchanged = compareContents(tmpPath, destPath);
-        if (unchanged) {
-          fancyLog(`${destPath} is unchanged.`);
-        }
-        return !unchanged;
+        return !compareContentsLog(tmpPath, destPath);
       },
       gulp.dest(destDir)
     ));
@@ -219,14 +215,11 @@ function runStaticteaTask(parameters: string[], tmpFilename: string,
 
     // Copy the template result to the dist folder when it is
     // different than before.
-    if (compareContents(tmpFilename, distFilename))
-      fancyLog(`${distFilename} is unchanged.`)
-    else {
+    if (!compareContentsLog(tmpFilename, distFilename)) {
       fs.copyFile(tmpFilename, distFilename, (err) => {
         if (err)
-          throw err
-        fancyLog(`Copied ${path.basename(tmpFilename)} to dist folder.`)
-      })
+          throw err;
+      });
     }
     cb()
   })
@@ -656,6 +649,19 @@ function compareContents(sourceFilename: string, destFilename: string) {
   const sourceContent = fs.readFileSync(sourceFilename)
   const destContent = fs.readFileSync(destFilename)
   return sourceContent.equals(destContent)
+}
+
+function compareContentsLog(srcPath: string, destPath: string): boolean {
+  // Compare the contents of two files and log the result. Return true
+  // when the files are the same, false when they are different.
+
+  const same = compareContents(srcPath, destPath);
+  if (same) {
+    fancyLog(`${destPath} is unchanged.`);
+  } else {
+      fancyLog(`---> Copy to ${destPath}`);
+  }
+  return same;
 }
 
 function removeModifiedFlag(cNum: number) {
