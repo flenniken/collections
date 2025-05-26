@@ -164,8 +164,7 @@ You can login when developing on localhost:8000.  There are redirect
 urls for this. Note that downloading from localhost downloads from the
 local images folder and does not go to cloudfront.
 
-Admin users see the debugging refresh and airplane icons at the bottom
-of the index page and the airplane on the image page.
+Admin users see the refresh and download icons.
 
 Collections uses the AWS Cognito service to handle login.  This allows
 collections to be a public static website without a backend server

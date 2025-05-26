@@ -160,7 +160,6 @@ dist
 |-- favicon.ico
 |-- icons
 |   |-- 6-dots-rotate.svg
-|   |-- airplane.svg
 |   |-- blank.svg
 |   |-- camera.svg
 |   |-- download.svg

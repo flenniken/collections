@@ -213,8 +213,9 @@ List the icons:
 ~~~
 aws s3 ls s3://sflennikco/icons/ # variable
 
-2024-11-16 23:52:33        692 6-dots-rotate.svg
-2024-11-16 23:52:33       1614 airplane.svg
+2024-11-23 20:19:33        692 6-dots-rotate.svg
+2025-03-21 21:32:17        167 blank.svg
+2024-11-23 20:19:33        693 camera.svg
 …
 ~~~
 
