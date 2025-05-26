@@ -440,49 +440,6 @@ def new(num):
   print(f"Reserved collection {num}.")
   print(f"Created a collection folder and moved it to: {localDestFolder}")
 
-def collections():
-  """
-  Create a collections.json file from all the cjson files in the local images folder.
-  """
-  # Get the list of all the collection folders.
-  collectionFolders = []
-  for entry in os.scandir("dist/images"):
-    if entry.is_dir():
-      collectionFolders.append(entry.name)
-  # Sort the collection folders from newest to oldest.
-  collectionFolders.sort(reverse=True)
-
-  # Read the cjson files and create the collections.json file.
-  collectionsJson = {"collections": []}
-  collections = collectionsJson["collections"]
-  for folder in collectionFolders:
-    cjsonFilename = os.path.join("dist/images", folder, f"{folder}.json")
-    with open(cjsonFilename, "r") as fh:
-      cinfo = json.load(fh)
-      print(f"Processing collection: {cinfo['collection']}")
-      collection = {}
-      collection['collection'] = cinfo["collection"]
-      collection['ready'] = cinfo["ready"]
-      collection['title'] = cinfo['title']
-      collection['indexDescription'] = cinfo['indexDescription']
-      collection['thumbnail'] = cinfo["indexThumbnail"]
-      collection['posted'] = cinfo["posted"]
-      collection["iCount"] = len(cinfo["images"])
-      totalSize = 0
-      for image in cinfo["images"]:
-        totalSize += image["size"]
-        totalSize += image["sizet"]
-      collection["totalSize"] = totalSize
-
-      collections.append(collection)
-
-  # Write the collections.json file.
-  filename = os.path.join("pages", "collections.json")
-  with open(filename, "w") as fh:
-    fh.write(json.dumps(collectionsJson, indent=2))
-
-  print(f"Created the file: {filename}")
-
 def parseCommandLine():
   """
   Parse the command line arguments.
@@ -508,8 +465,6 @@ def parseCommandLine():
     help="""run internal unit tests""")
   parser.add_argument("-n", "--new", type=int, metavar="collectionNum",
     help="create a new local collection folder from a directory of images")
-  parser.add_argument("-c", "--collections", action="store_true",
-    help="create a collections.json file from all the cjson files")
 
   args = parser.parse_args(sys.argv[1:])
 
@@ -527,8 +482,6 @@ def process(args):
   """
   if args.new:
     new(args.new)
-  elif args.collections:
-    collections()
 
 def main(args):
   def signalHandler(sig, frame):
