@@ -2,39 +2,81 @@
   "indexCollections": [
     {
       "cNum": 3,
-      "building": true,
+      "building": false,
       "ready": true,
       "title": "Brooklyn Bridge",
+      "modified": false,
       "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
       "thumbnail": "/tin/c3-1-t.jpg",
       "posted": "2025-03-21",
       "iCount": 12,
       "totalSize": 32484357,
-      "modified": false
+      "iNumList": [
+        1,
+        5,
+        3,
+        7,
+        11,
+        8,
+        16,
+        9,
+        10,
+        14,
+        13,
+        17
+      ]
     },
     {
       "cNum": 2,
       "building": false,
       "ready": true,
       "title": "Manzanita 2023",
+      "modified": false,
       "indexDescription": "2023 Summer vacation in Manzanita Oregon.",
       "thumbnail": "/tin/c2-1-t.jpg",
       "posted": "2024-02-01",
       "iCount": 16,
       "totalSize": 48298930,
-      "modified": false
+      "iNumList": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ]
     },
     {
       "cNum": 1,
-      "building": true,
+      "building": false,
       "ready": true,
       "title": "Many Glaciers Lodge",
+      "modified": false,
       "indexDescription": "Photos from Glacier National Park & Many Glaciers lodge.",
       "thumbnail": "/tin/c1-5-t.jpg",
       "posted": "2023-06-12",
       "iCount": 8,
       "totalSize": 27600543,
-      "modified": false
+      "iNumList": [
+        5,
+        3,
+        1,
+        4,
+        7,
+        2,
+        6,
+        8
+      ]
     }
   ]
 }

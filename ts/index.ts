@@ -1,9 +1,13 @@
 // Main code file for the index page. The login.ts and download.ts
 // files are concatenated with this file.
 
+/// <reference path="./win.ts" />
+/// <reference path="./all.ts" />
+/// <reference path="./cjsonDefinition.ts" />
+
 // The csjson is defined in the index.html file from data in the
 // collections.json file.
-var csjson: CollectionsJson
+var csjson: CJson.Csjson
 
 // Whether the app was started by clicking a desktop icon or not.
 let runningFromIcon = false
@@ -151,15 +155,19 @@ async function handleLoad() {
   // Open or create the cache.
   const cache = await openCreateCache()
 
+  if (!csjson.indexCollections) {
+    logError(`Missing csjson.indexCollections!`)
+    return
+  }
+
   // Add a banner over the collections that are not cached.
-  csjson.collections.forEach(async (collection, ix) => {
-    const cNum = collection.cNum
+  csjson.indexCollections.forEach(async (indexCollections: CJson.IndexCollection) => {
+    const cNum = indexCollections.cNum
     const readyRequest = new Request(`c${cNum}-ready`)
     const readyResponse = await cache.match(readyRequest);
     if (readyResponse) {
       // The collection is completely cached.
       setCollectionState(cNum, "withImages")
-
     } else {
       log(`Collection ${cNum} is not cached yet.`);
       setCollectionState(cNum, "withoutImages")
@@ -241,8 +249,13 @@ async function removeCollection(cNum: number) {
 
 Are you sure you want to delete this collection's images from the cache?`
   if (confirm(message) == true) {
+    const indexCollection = getCollection(cNum)
+    if (indexCollection.iNumList == null) {
+      logError("missing iNumList")
+      return
+    }
     log(`remove collection ${cNum} from the app cache`)
-    const urls = getCollectionUrls(cNum)
+    const urls = getCollectionUrls(cNum, indexCollection.iNumList)
     const cache = await openCreateCache()
 
     setCollectionState(cNum, "withoutImages")

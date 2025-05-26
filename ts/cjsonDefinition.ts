@@ -2,6 +2,7 @@ namespace CJson {
   // The collection json's typescript definition (cjson).
 
   export interface Image {
+    // todo: Replace url and thumbnail with iNum?
     url: string;
     thumbnail: string;
     title: string;
@@ -94,13 +95,18 @@ namespace CJson {
     cNum: number,
     building: boolean;
     ready: boolean,
+    modified: boolean,
     title: string,
     indexDescription: string,
+    // The collection's thumbnail used in the index.
     thumbnail: string,
     posted: string,
+    // The number of previews in the collection.
     iCount: number,
+    // The total byte size of all the images.
     totalSize: number,
-    modified: boolean,
+    // The iNums of the images in the collection.
+    iNumList: number[],
   };
 
   export interface Csjson {

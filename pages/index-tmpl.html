@@ -79,10 +79,6 @@ the source there too.
         &mdash; create and edit collections
         </li>
       </ul>
-      <p>
-<!--$ nextline totalCollections = string(len(o.csjson.collections)) -->
-        There are {totalCollections} collections.
-      </p>
     </div>
   </div>
   <div id="install-banner">
@@ -96,8 +92,8 @@ Screen".</p>
   </div>
   <div class="collections">
 <!--$ block -->
-<!--$ : t.repeat = len(o.csjson.collections) -->
-<!--$ : c = o.csjson.collections[t.row] -->
+<!--$ : t.repeat = len(o.csjson.indexCollections) -->
+<!--$ : c = o.csjson.indexCollections[t.row] -->
 <!--$ : num = c.cNum -->
 <!--$ : cid = format("c{num}") -->
 <!--$ : src = c.thumbnail -->

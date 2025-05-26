@@ -25,6 +25,7 @@ from datetime import datetime
 from boto_client import getBotoClient, getAwsSettings
 import time
 import hashlib
+import mimetypes
 
 class DeployException(Exception):
   """ An exception we plan for. """
@@ -78,11 +79,14 @@ def copyFilesToS3(s3Client, bucket_name, filenames):
     # Construct the local path in the dist folder
     localPath = os.path.join("dist", filename)
 
-    # Print the operation for debugging
-    print(f"Copying {localPath} to s3://{bucket_name}/{filename}")
+    content_type, _ = mimetypes.guess_type(localPath)
+    if content_type is None:
+      content_type = 'binary/octet-stream'
 
     # Upload the file to S3
-    s3Client.upload_file(localPath, bucket_name, filename)
+    print(f"Copying {localPath} to s3 as {content_type}")
+    s3Client.upload_file(localPath, bucket_name, filename,
+      ExtraArgs={'ContentType': content_type})
 
 def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   """
@@ -93,9 +97,6 @@ def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   if not modifiedFiles:
     print("No modified files found.")
     return
-
-  for filename in modifiedFiles:
-    print(filename)
 
   # Copy the modified files to S3.
   copyFilesToS3(s3Client, bucket_name, modifiedFiles)
@@ -144,7 +145,7 @@ def waitForDeployed(cloudfrontClient, distribution_id, invalidation_id):
     )
     invalidation_status = response['Invalidation']['Status']
     # Print the status for debugging
-    print(f"Invalidation status: {invalidation_status}")
+    print(f"status: {invalidation_status}")
 
     if invalidation_status == "Completed":
       print(f"Invalidation completed, waited: {count * wait_seconds} seconds")

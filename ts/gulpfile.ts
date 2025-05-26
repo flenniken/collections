@@ -100,7 +100,8 @@ function ts2js(srcList: string[], destFile: string, destDir: string,
 // objects.
 const image_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/image.ts"]
 const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/thumbnails.ts"]
-const index_ts = ["ts/all.ts", "ts/win.ts", "ts/login.ts", "ts/download.ts", "ts/index.ts"]
+const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts",
+                  "ts/login.ts", "ts/download.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
 
 let maker_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/maker.ts"]
@@ -595,19 +596,28 @@ function generateCollectionsJson() {
 
     const cinfo = readJsonFile(cjsonFile)
 
+    let totalSize = 0
+    let iNumList: number[] = []
+    for (const image of cinfo.images) {
+      totalSize += image.size + image.sizet
+      const imageName = parseImageName(path.basename(image.url))
+      if (imageName == null)
+        throw new Error(`Error: not a valid image.url: ${image.url}`);
+      iNumList.push(imageName.iNum)
+    }
+
     const indexCollection: CJson.IndexCollection = {
       cNum: cinfo.cNum,
       building: "building" in cinfo ? cinfo.building : false,
       ready: cinfo.ready,
       title: cinfo.title,
+      modified: "modified" in cinfo ? cinfo.modified : false,
       indexDescription: cinfo.indexDescription,
       thumbnail: cinfo.indexThumbnail,
       posted: cinfo.posted,
       iCount: cinfo.images.length,
-      totalSize: cinfo.images.reduce(
-        (total: number, image: { size: number; sizet: number; }) =>
-          total + image.size + image.sizet, 0),
-      modified: "modified" in cinfo ? cinfo.modified : false,
+      totalSize: totalSize,
+      iNumList: iNumList,
     };
     csjson.indexCollections.push(indexCollection);
   }

@@ -7,29 +7,6 @@ function assert(condition: any, msg?: string): asserts condition {
   }
 }
 
-// todo: remove this duplicate interface.
-interface IndexCollection {
-  // The typescript definition of an collections.json collection.
-  cNum: number
-  state: string
-  title: string
-  indexDescription: string
-  url: string
-  thumbnail: string
-  posted: string
-
-  // The number of images in the collection.
-  iCount: number
-
-  // The total size the of the images in the collection in bytes.
-  totalSize: number
-}
-
-interface CollectionsJson {
-  // The collections.json typescript definition.
-  collections: IndexCollection[]
-}
-
 // https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerGlobalScope/fetch_event
 // The fetch event is fired in the service worker's global scope
 // when the main app thread makes a network request. This includes
@@ -51,18 +28,20 @@ function fetchOk(url: string, options: RequestInit) {
   });
 }
 
-function getCollection(cNum: number): IndexCollection {
+// todo: rename getCollection to getIndexCollection
+function getCollection(cNum: number): CJson.IndexCollection {
   // Return the collection given the collection cNum.  Throw an
   // exception when not found.
 
-  for (let ix = 0; ix < csjson.collections.length; ix++) {
-    if (cNum == csjson.collections[ix].cNum)
-      return csjson.collections[ix]
+  for (const indexCollection of csjson.indexCollections) {
+    if (indexCollection.cNum == cNum) {
+      return indexCollection
+    }
   }
   throw new Error(`Invalid collection number: ${cNum}`);
 }
 
-async function enoughSpace(collection: IndexCollection) {
+async function enoughSpace(collection: CJson.IndexCollection) {
   // Return true when there is enough space to download the
   // collection.
 
@@ -100,23 +79,22 @@ async function downloadCollection(cNum: number) {
   // Open or create the cache.
   const cache = await openCreateCache()
 
-  downloadCollectionImages(cache, cNum, collection.iCount)
+  downloadCollectionImages(cache, collection)
 }
 
-function getCollectionUrls(cNum: number): string[] {
+function getCollectionUrls(cNum: number, iNumList: number[]): string[] {
   // Return a list of the collection's urls. This includes the images
   // and the html pages -- everything needed to view the collection
   // thumbnails and image pages.
 
-  const collection = getCollection(cNum)
   let urls: string[] = []
 
   // Try to download a file that doesn't exist for testing the error path.
   // urls.push("js/missing.js")
 
-  for (let imageNum = 1; imageNum <= collection.iCount; imageNum++) {
-    urls.push(`images/c${cNum}/c${cNum}-${imageNum}-p.jpg`)
-    urls.push(`images/c${cNum}/c${cNum}-${imageNum}-t.jpg`)
+  for (const iNum of iNumList) {
+    urls.push(`images/c${cNum}/c${cNum}-${iNum}-p.jpg`)
+    urls.push(`images/c${cNum}/c${cNum}-${iNum}-t.jpg`)
   }
   urls.push(`images/c${cNum}/image-${cNum}.html`)
   urls.push(`images/c${cNum}/thumbnails-${cNum}.html`)
@@ -173,11 +151,12 @@ async function downloadUrls(urls: string[]) {
   await Promise.all(promises)
 }
 
-async function downloadCollectionImages(cache: Cache, cNum: number,
-    iCount: number) {
+async function downloadCollectionImages(cache: Cache,
+    collection: CJson.IndexCollection) {
   // Download the collection's images and cache them. When successful,
   // add a collection ready key to the cache.
 
+  const cNum = collection.cNum
   setCollectionState(cNum, "waitForImages")
 
   const readyRequest = new Request(`c${cNum}-ready`)
@@ -190,7 +169,7 @@ async function downloadCollectionImages(cache: Cache, cNum: number,
   // Time the download.
   const downloadTimer = new Timer()
 
-  const urls = getCollectionUrls(cNum)
+  const urls = getCollectionUrls(cNum, collection.iNumList)
   downloadTimer.log(`Download collection ${cNum} which has ${urls.length} files.`)
 
   try {
