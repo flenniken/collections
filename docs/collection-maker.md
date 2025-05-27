@@ -128,17 +128,23 @@ The `gulp` command generates the `collections.json` file from the
 `cjson` files. This file is used to build the web pages.
 
 On the new image page, size and pan each image to define its zoom
-points. Save the zoom points by downloading the updated `cjson` file
-and copying it to the collection folder.
+points. The download works on an iphone.  You download, then air-drop
+it to yourself. This saves it in downloads on your desktop machine.
+Then you move it to the collection's folder.
 
-Run the `gulp` command to build in the final zoom points and test the
-image pages again.
+Run the `gulp` command to build in the final zoom points, deploy and
+test the image pages again.
 
 [⬇](#Contents)
 
 # Deploy
 
-Deploy the collection to publish it to the world.
+The deploy command copies the files to S3 and updateds Cloudfront. The
+collections in "building" state are only visible to admins.  This
+allows admins to set zoom points and test the collection.
+
+Once the collection looks good, you remove the "building" field from
+the cjson, build all, then deploy.  This publishes it to the world.
 
 ~~~
 scripts/deploy -s
