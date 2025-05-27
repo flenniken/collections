@@ -118,7 +118,7 @@ function showHideAdminUI(pageId: string) {
   // in.
   const parent = get(pageId)
 
-  // todo: share this code.
+  // todo: share show hide admin content  with the image page.
   // Show or hide the admin content.
   document.querySelectorAll('.admin').forEach(el => {
     if (isAdmin()) {

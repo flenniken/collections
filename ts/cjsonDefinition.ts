@@ -2,7 +2,7 @@ namespace CJson {
   // The collection json's typescript definition (cjson).
 
   export interface Image {
-    // todo: Replace url and thumbnail with iNum?
+    // todo: Replace Image url and thumbnail with iNum?
     url: string;
     thumbnail: string;
     title: string;

@@ -380,7 +380,7 @@ def process(args):
     fetchUrl(url, filename)
   else:
     showHelp()
-# todo: no showHelp
+# todo: implement or remove showHelp in login-flow
 
 def parseCommandLine():
   """

@@ -7,7 +7,7 @@ interface UserInfo {
   familyName: string
   email: string
   userId: string
-  // todo: make this a boolean?
+  // todo: make admin a boolean?
   admin: string // either "true" or "false"
   access_token: string
 }

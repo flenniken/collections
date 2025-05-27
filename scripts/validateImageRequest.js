@@ -222,7 +222,7 @@ async function handler(event, context) {
   if (headers.auth)
     access_token = headers.auth[0].value
 
-  // todo: change this to false after testing.
+  // todo: support expiring passwords.
   const ignoreExpiration = true
 
   const ok = await validateRequest(url, access_token, queryParams.id,

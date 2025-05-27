@@ -3,7 +3,7 @@ import boto3
 import json
 from collections import namedtuple
 
-# todo, pass in the exception everywhere
+# todo, what to do with the exception parameter of getBotoClient?
 def getBotoClient(serviceName, exception=None):
   """
   Return the boto3 client for the given AWS service. Services names

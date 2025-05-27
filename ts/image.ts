@@ -695,14 +695,14 @@ function handleScrollEnd() {
   log("image", "The scrollEnd event exists.")
 }
 
-// todo: move UserInfo to a common file.
+// todo: move UserInfo interface to a common file.
 interface UserInfo {
   // The typescript definition of user login information.
   givenName: string
   familyName: string
   email: string
   userId: string
-  // todo: make this a boolean?
+  // todo: make admin a boolean?
   admin: string // either "true" or "false"
   access_token: string
 }
@@ -745,7 +745,7 @@ function showAdminIcons() {
   }
 }
 
-// todo: move this to a common file. share with maker page.
+// todo: share downloadCjson with maker page and image page.
 function downloadCjson() {
   // Download the current collection json data as a file.
 
