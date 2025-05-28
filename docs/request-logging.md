@@ -71,9 +71,6 @@ scripts/sync-logs
 
 [⬇](#Contents)
 
-
-[⬇](#Contents)
-
 # View Requests
 
 Run the view-requests command to see all the Cloudfront requests.  It

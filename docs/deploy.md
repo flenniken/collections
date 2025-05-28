@@ -18,6 +18,17 @@ script does this.
 
 [⬇](#Contents)
 
+# List Modified
+
+You can use the deploy script to list the modified files without
+copying them with the -m option.
+
+~~~
+deploy —m
+~~~
+
+[⬇](#Contents)
+
 # Sync
 
 To deploy you run the deploy script with the -s option from the
@@ -29,37 +40,8 @@ nothing was copied.
 scripts/deploy -s
 ~~~
 
-[⬇](#Contents)
-
-# List Modified
-
-You can use the deploy script to list the modified files without
-copying them with the -m option. You can also list the collections s3
-bucket contents with the -l option. You can download one file from
-cloudfront using login-flow.
-
-~~~
-deploy —m
-~~~
-
-[⬇](#Contents)
-
-# Poll Status
-
-You can tell when your code is deployed by using the -w option. It
-polls the distribution status and tells you when the code has been
-fully deployed.  It checks every five seconds and outputs a dot.
-
-~~~
-deploy —w
-
-deploying……
-deployed in 20 seconds
-~~~
-
 # Contents
 
 * [Cache Behavior](#cache-behavior) -- how the cloudfront cache works.
-* [Sync](#sync) -- how to deploy changed files.
 * [List Modified](#list-modified) -- how to list the files that need to be deployed.
-* [Poll Status](#poll-status) -- how to determine when the deploy has finished.
+* [Sync](#sync) -- how to deploy changed files.

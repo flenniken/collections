@@ -7,7 +7,7 @@ downloading images with direct urls and from scripts.
 
 When the user requests a collection the code adds the user’s access
 token to the image https requests. The images are only returned when
-the token id is valid for the user.
+the token is valid for the user.
 
 [⬇](#Contents) (table of contents at the bottom)
 
