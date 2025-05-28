@@ -378,9 +378,6 @@ def process(args):
   elif args.fetchUrl:
     url, filename = args.fetchUrl
     fetchUrl(url, filename)
-  else:
-    showHelp()
-# todo: implement or remove showHelp in login-flow
 
 def parseCommandLine():
   """
