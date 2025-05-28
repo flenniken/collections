@@ -114,21 +114,3 @@ namespace CJson {
     indexCollections: IndexCollection[];
   }
 }
-
-function downloadCjson(cinfo: CJson.Collection) {
-  // Create and download a cjson file.
-
-  // Convert collection info to a json string.
-  const cjson = JSON.stringify(cinfo, null, 2)
-
-  // Create a download link and click it.
-  const blob = new Blob([cjson], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `c${cinfo.cNum}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
