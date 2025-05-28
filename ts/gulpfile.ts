@@ -104,7 +104,6 @@ const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/thumbnails.ts"]
 const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "ts/login.ts", "ts/download.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
-
 let maker_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/maker.ts"]
 if (!minimize)
   maker_ts.push("ts/test-maker.ts");

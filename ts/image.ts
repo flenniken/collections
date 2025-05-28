@@ -715,26 +715,3 @@ function showAdminIcons() {
     log("User is not an admin, hiding admin content.");
   }
 }
-
-// todo: share downloadCjson with maker page and image page.
-function downloadCjson() {
-  // Download the current collection json data as a file.
-
-  const json = JSON.stringify(cJson, null, 2)
-  const blob = new Blob([json], {type: "application/json"})
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `c${cJson.cNum}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
-
-function logCjson() {
-  // Log the current collection json data to the console.
-
-  const json = JSON.stringify(cJson, null, 2)
-  log(json)
-}

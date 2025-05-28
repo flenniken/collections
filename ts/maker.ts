@@ -585,22 +585,7 @@ async function saveCollection(event: Event) {
     return
   }
 
-  // Convert collection info to a json string.
-  const cjson = JSON.stringify(cinfo, null, 2)
-
-  // Create a download link.
-  const blob = new Blob([cjson], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `c${cinfo.cNum}.json`
-
-  // Trigger download.
-  document.body.appendChild(a)
-  a.click()
-
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
+  downloadCjson(cinfo)
 }
 
 function removeUnusedImages(cjsoninfo: CJson.Collection) {
