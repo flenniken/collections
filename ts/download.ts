@@ -28,8 +28,7 @@ function fetchOk(url: string, options: RequestInit) {
   });
 }
 
-// todo: rename getCollection to getIndexCollection
-function getCollection(cNum: number): CJson.IndexCollection {
+function getIndexCollection(cNum: number): CJson.IndexCollection {
   // Return the collection given the collection cNum.  Throw an
   // exception when not found.
 
@@ -69,9 +68,9 @@ async function downloadCollection(cNum: number) {
     return
   }
 
-  const collection = getCollection(cNum)
+  const indexCollection = getIndexCollection(cNum)
 
-  if (!await enoughSpace(collection)) {
+  if (!await enoughSpace(indexCollection)) {
     window.alert(["There is not enough space for the collection's images."])
     return
   }
@@ -79,7 +78,7 @@ async function downloadCollection(cNum: number) {
   // Open or create the cache.
   const cache = await openCreateCache()
 
-  downloadCollectionImages(cache, collection)
+  downloadCollectionImages(cache, indexCollection)
 }
 
 function getCollectionUrls(cNum: number, iNumList: number[]): string[] {

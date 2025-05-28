@@ -101,8 +101,8 @@ async function setCollectionState(cNum: number, collectionState: string) {
   const cache = await openCreateCache()
   const c2ReadyRequest = new Request(`c${cNum}-ready`)
   if (collectionState == "withImages") {
-    const collection = getCollection(cNum)
-    const text = `cNum: ${collection.iCount}`
+    const indexCollection = getIndexCollection(cNum)
+    const text = `cNum: ${indexCollection.iCount}`
     const c2ReadyResponse = new Response(text)
     await cache.put(c2ReadyRequest, c2ReadyResponse)
 
@@ -249,7 +249,7 @@ async function removeCollection(cNum: number) {
 
 Are you sure you want to delete this collection's images from the cache?`
   if (confirm(message) == true) {
-    const indexCollection = getCollection(cNum)
+    const indexCollection = getIndexCollection(cNum)
     if (indexCollection.iNumList == null) {
       logError("missing iNumList")
       return
