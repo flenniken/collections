@@ -695,50 +695,21 @@ function handleScrollEnd() {
   log("image", "The scrollEnd event exists.")
 }
 
-// todo: move UserInfo interface to a common file.
-interface UserInfo {
-  // The typescript definition of user login information.
-  givenName: string
-  familyName: string
-  email: string
-  userId: string
-  // todo: make admin a boolean?
-  admin: string // either "true" or "false"
-  access_token: string
-}
-
-// todo: move fetchUserInfo to a common file.
-function fetchUserInfo() {
-  // Return the user info from local storage or return null when it
-  // doesn't exist. The existence of user info means the user is
-  // logged in.
-  const userInfoJson = localStorage.getItem('userInfo')
-  if (userInfoJson == null)
-    return null
-  return JSON.parse(userInfoJson) as UserInfo;
-}
-
 function showAdminIcons() {
   // Show the admin icons when an admin is logged in.
 
-  // Check if the user is an admin by looking at the
-  // user information in local storage.
-  let isAdmin = false
-  const userInfo = fetchUserInfo()
-  if (userInfo != null) {
-    isAdmin = userInfo.admin === 'true'
-  }
+  const admin = isAdmin()
 
   // Show or hide the admin content.
   document.querySelectorAll('.admin').forEach(el => {
-    if (isAdmin) {
+    if (admin) {
       el.classList.add('visible');
     } else {
       el.classList.remove('visible');
     }
   });
 
-  if (isAdmin) {
+  if (admin) {
     log("Admin content is now visible.");
   } else {
     log("User is not an admin, hiding admin content.");

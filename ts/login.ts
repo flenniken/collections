@@ -1,17 +1,6 @@
 // Handle login on the index page. This file is concatenated with
 // index.ts.
 
-interface UserInfo {
-  // The typescript definition of user login information.
-  givenName: string
-  familyName: string
-  email: string
-  userId: string
-  // todo: make admin a boolean?
-  admin: string // either "true" or "false"
-  access_token: string
-}
-
 // See aws_settings.json. It is created in the cognito.py file.
 interface Settings {
   // The typescript definition of [aws_settings.json].
@@ -235,33 +224,10 @@ function clearUserInfo() {
   localStorage.removeItem("userInfo")
 }
 
-function fetchUserInfo() {
-  // Return the user info from local storage or return null when it
-  // doesn't exist. The existence of user info means the user is
-  // logged in.
-  const userInfoJson = localStorage.getItem('userInfo')
-  if (userInfoJson == null)
-    return null
-  return JSON.parse(userInfoJson) as UserInfo;
-}
-
 function hasLoggedIn(): boolean {
   // Return true when the user has logged in. Determine this by
   // looking for the user information in local storage.
   return (localStorage.getItem("userInfo")) ? true : false
-}
-
-function isAdmin(userInfo?: UserInfo): boolean {
-  // Return true when the user has logged in and is an admin. UserInfo
-  // is fetched when not passed in.
-  let uinfo
-  if (typeof userInfo === 'undefined')
-    uinfo = fetchUserInfo()
-  else
-    uinfo = userInfo
-  if (uinfo != null && uinfo.admin == 'true')
-    return true
-  return false
 }
 
 function showUserInformation(userInfo: UserInfo) {

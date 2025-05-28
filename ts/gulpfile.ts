@@ -98,9 +98,10 @@ function ts2js(srcList: string[], destFile: string, destDir: string,
 // with all four.  The win.ts file is concatenated with all except
 // sw.ts which doesn't have access to the DOM, window or document
 // objects.
-const image_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/image.ts"]
+const image_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
+                  "ts/image.ts"]
 const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/thumbnails.ts"]
-const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts",
+const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "ts/login.ts", "ts/download.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
 
