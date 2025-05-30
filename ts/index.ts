@@ -102,12 +102,13 @@ async function setCollectionState(cNum: number, collectionState: string) {
   const c2ReadyRequest = new Request(`c${cNum}-ready`)
   if (collectionState == "withImages") {
     const indexCollection = getIndexCollection(cNum)
-    const text = `cNum: ${indexCollection.iCount}`
+    const count = indexCollection.iCount
+    const text = `cNum: ${count}`
     const c2ReadyResponse = new Response(text)
     await cache.put(c2ReadyRequest, c2ReadyResponse)
 
     // const text = await readyResponse.text()
-    log(`Collection ${cNum} is ready: ${text}`);
+    log(`Collection ${cNum} is ready. ${count} images.`);
   } else if (collectionState == "withoutImages") {
     await cache.delete(c2ReadyRequest)
   }
