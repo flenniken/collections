@@ -243,7 +243,7 @@ function isRequireSuite() {
 function createTestImage(unique: number): CJson.Image {
   let image: CJson.Image = {
     iPreview: `iPreview ${unique}`,
-    thumbnail: `thumbnail ${unique}`,
+    iThumbnail: `iThumbnail ${unique}`,
     title: `title ${unique}`,
     description: `description ${unique}`,
     width: 2040+unique,
@@ -258,7 +258,7 @@ function createTestImage(unique: number): CJson.Image {
 function testCreateTestImage(unique: number) {
   const image = createTestImage(unique)
   const msg = `image: ${JSON.stringify(image, null, 2)}`
-  gotExpected(image.thumbnail, `thumbnail ${unique}`, msg)
+  gotExpected(image.iThumbnail, `thumbnail ${unique}`, msg)
   gotExpected(image.iPreview, `image url ${unique}`, msg)
   gotExpected(image.width, 2040 + unique, msg)
   gotExpected(image.uniqueId, `${unique}`, msg)

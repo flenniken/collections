@@ -68,7 +68,7 @@ function fakeImagesFromNumbers(cNum: number, iNums: number[]): CJson.Image[] {
   iNums.forEach(iNum => {
     const image: CJson.Image = {
       iPreview: `c${cNum}-${iNum}-p.jpg`,
-      thumbnail: `c${cNum}-${iNum}-t.jpg`,
+      iThumbnail: `c${cNum}-${iNum}-t.jpg`,
       title: `Image ${iNum}`,
       description: `Description for image ${iNum}`,
       width: 0,

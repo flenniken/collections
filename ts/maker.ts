@@ -379,7 +379,7 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
     newCinfo.indexThumbnail)
   if (thumbnailIndex == -1) {
     thumbnailIndex = 0
-    newCinfo.indexThumbnail = newCinfo.images[thumbnailIndex].thumbnail
+    newCinfo.indexThumbnail = newCinfo.images[thumbnailIndex].iThumbnail
   }
   currentThumbnailIx = thumbnailIndex
   setImage(newCinfo.images, "index-thumbnail", "index-thumbnail-required", thumbnailIndex)
@@ -470,7 +470,7 @@ function findThumbnailIx(order: number[], images: CJson.Image[],
     if (imageIx == -1)
       continue
     const image = images[imageIx]
-    if (image.thumbnail == indexThumbnail) {
+    if (image.iThumbnail == indexThumbnail) {
       thumbnailIx = imageIx
       break
     }
@@ -512,7 +512,7 @@ function setImage(images: CJson.Collection["images"], id: string, requiredId: Re
   }
   else {
     const image = images[imageIndex]
-    element.src = image.thumbnail
+    element.src = image.iThumbnail
     element.alt = image.title
     required = false
   }
@@ -722,7 +722,7 @@ function storeThumbnailImage(thumbnailIndex: number) {
   // Store the index thumbnail image in the collection info.
   if (!cinfo)
     return
-  cinfo.indexThumbnail = cinfo.images[thumbnailIndex].thumbnail
+  cinfo.indexThumbnail = cinfo.images[thumbnailIndex].iThumbnail
   const thumbnailImg = get("index-thumbnail") as HTMLImageElement
   log("Stored thumbnail image:")
   log(thumbnailImg)

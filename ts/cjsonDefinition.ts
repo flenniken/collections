@@ -4,7 +4,7 @@ namespace CJson {
   export interface Image {
     // todo: Replace Image url and thumbnail with basename only?
     iPreview: string;
-    thumbnail: string;
+    iThumbnail: string;
     title: string;
     description: string;
     width: number;
@@ -99,7 +99,7 @@ namespace CJson {
     title: string,
     indexDescription: string,
     // The collection's thumbnail used in the index.
-    thumbnail: string,
+    iThumbnail: string,
     posted: string,
     // The number of previews in the collection.
     iCount: number,

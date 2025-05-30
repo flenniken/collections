@@ -398,7 +398,7 @@ gulp.task("modified", function (cb) {
     })
 
     // Copy the collection's index thumbnail when missing.
-    const thumbnailBasename = path.basename(indexCollection.thumbnail)
+    const thumbnailBasename = path.basename(indexCollection.iThumbnail)
     const destFilename = path.join("dist/tin", thumbnailBasename)
     if (!fs.existsSync(destFilename)) {
       const srcFilename = path.join(`dist/images/c${cNum}`, thumbnailBasename)
@@ -516,7 +516,7 @@ export function getUnusedImageFiles(images: CJson.Image[], allFiles: string[]): 
   const imageBasenames = new Set();
   images.forEach(image => {
     imageBasenames.add(path.basename(image.iPreview));
-    imageBasenames.add(path.basename(image.thumbnail));
+    imageBasenames.add(path.basename(image.iThumbnail));
   });
 
   let unusedImages: string[] = []
@@ -613,7 +613,7 @@ function generateCollectionsJson() {
       title: cinfo.title,
       modified: "modified" in cinfo ? cinfo.modified : false,
       indexDescription: cinfo.indexDescription,
-      thumbnail: cinfo.indexThumbnail,
+      iThumbnail: cinfo.indexThumbnail,
       posted: cinfo.posted,
       iCount: cinfo.images.length,
       totalSize: totalSize,
