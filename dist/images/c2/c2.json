@@ -10,7 +10,7 @@
   "posted": "2024-02-01",
   "images": [
     {
-      "url": "/images/c2/c2-1-p.jpg",
+      "iPreview": "/images/c2/c2-1-p.jpg",
       "thumbnail": "/images/c2/c2-1-t.jpg",
       "title": "Ecola State Park",
       "description": "We’re looking south from Ecola State Park very close to the parking lot. From here we hiked 2 miles north on Indian Beach Trial to Indian Beach.",
@@ -20,7 +20,7 @@
       "sizet": 110190
     },
     {
-      "url": "/images/c2/c2-2-p.jpg",
+      "iPreview": "/images/c2/c2-2-p.jpg",
       "thumbnail": "/images/c2/c2-2-t.jpg",
       "title": "Indian Beach",
       "description": "Indian Beach on the Oregon coast. You can get to it by driving to the end of Ecole State park road, or hike to it like we did.",
@@ -30,7 +30,7 @@
       "sizet": 134481
     },
     {
-      "url": "/images/c2/c2-3-p.jpg",
+      "iPreview": "/images/c2/c2-3-p.jpg",
       "thumbnail": "/images/c2/c2-3-t.jpg",
       "title": "Hot Tub House",
       "description": "We call this the hot tub house. It's near the end of Beach Street. Doug was happy that it has an electric car charger in the garage.",
@@ -40,7 +40,7 @@
       "sizet": 163082
     },
     {
-      "url": "/images/c2/c2-4-p.jpg",
+      "iPreview": "/images/c2/c2-4-p.jpg",
       "thumbnail": "/images/c2/c2-4-t.jpg",
       "title": "Sand Dune",
       "description": "Sand dune with beach grass.",
@@ -50,7 +50,7 @@
       "sizet": 130901
     },
     {
-      "url": "/images/c2/c2-5-p.jpg",
+      "iPreview": "/images/c2/c2-5-p.jpg",
       "thumbnail": "/images/c2/c2-5-t.jpg",
       "title": "Lighthouse",
       "description": "Sandcastle lighthouse, stairs and an arch.",
@@ -60,7 +60,7 @@
       "sizet": 109672
     },
     {
-      "url": "/images/c2/c2-6-p.jpg",
+      "iPreview": "/images/c2/c2-6-p.jpg",
       "thumbnail": "/images/c2/c2-6-t.jpg",
       "title": "Esher Stairs",
       "description": "Our attempt at making the impossible Esher staircases in sand.",
@@ -70,7 +70,7 @@
       "sizet": 128412
     },
     {
-      "url": "/images/c2/c2-7-p.jpg",
+      "iPreview": "/images/c2/c2-7-p.jpg",
       "thumbnail": "/images/c2/c2-7-t.jpg",
       "title": "Wall Sandcastle",
       "description": "Sandcastle with Neahkahni mountain in the background.",
@@ -80,7 +80,7 @@
       "sizet": 96107
     },
     {
-      "url": "/images/c2/c2-8-p.jpg",
+      "iPreview": "/images/c2/c2-8-p.jpg",
       "thumbnail": "/images/c2/c2-8-t.jpg",
       "title": "Beach and Mountain",
       "description": "Wide angle view of Manzanita Beach and Neahkahnie Mountain.\nThis and the next image make one panoramic image.",
@@ -90,7 +90,7 @@
       "sizet": 74608
     },
     {
-      "url": "/images/c2/c2-9-p.jpg",
+      "iPreview": "/images/c2/c2-9-p.jpg",
       "thumbnail": "/images/c2/c2-9-t.jpg",
       "title": "Beach and Mountain",
       "description": "I want to walk barefoot through the sand.",
@@ -100,7 +100,7 @@
       "sizet": 97283
     },
     {
-      "url": "/images/c2/c2-10-p.jpg",
+      "iPreview": "/images/c2/c2-10-p.jpg",
       "thumbnail": "/images/c2/c2-10-t.jpg",
       "title": "Beach Sunset",
       "description": "Sunset blue hour.",
@@ -110,7 +110,7 @@
       "sizet": 98831
     },
     {
-      "url": "/images/c2/c2-11-p.jpg",
+      "iPreview": "/images/c2/c2-11-p.jpg",
       "thumbnail": "/images/c2/c2-11-t.jpg",
       "title": "Beach Sunset",
       "description": "Looking south.",
@@ -120,7 +120,7 @@
       "sizet": 80614
     },
     {
-      "url": "/images/c2/c2-12-p.jpg",
+      "iPreview": "/images/c2/c2-12-p.jpg",
       "thumbnail": "/images/c2/c2-12-t.jpg",
       "title": "Beach Sunset",
       "description": "The tide is coming in over a sandbar.",
@@ -130,7 +130,7 @@
       "sizet": 121565
     },
     {
-      "url": "/images/c2/c2-13-p.jpg",
+      "iPreview": "/images/c2/c2-13-p.jpg",
       "thumbnail": "/images/c2/c2-13-t.jpg",
       "title": "Beach Sunset",
       "description": "I love taking pictures here in the evening.",
@@ -140,7 +140,7 @@
       "sizet": 119994
     },
     {
-      "url": "/images/c2/c2-14-p.jpg",
+      "iPreview": "/images/c2/c2-14-p.jpg",
       "thumbnail": "/images/c2/c2-14-t.jpg",
       "title": "Manzanita Beach",
       "description": "Manzanita beach looking south. You can barely make out the Nehalem river jetty in the distance.",
@@ -150,7 +150,7 @@
       "sizet": 99989
     },
     {
-      "url": "/images/c2/c2-15-p.jpg",
+      "iPreview": "/images/c2/c2-15-p.jpg",
       "thumbnail": "/images/c2/c2-15-t.jpg",
       "title": "Elk Run Trail",
       "description": "Doug and I rode our bikes to the end of Elk Run trail to the Nehalem River. This view is across the marsh and on the left out of view is the river.",
@@ -160,7 +160,7 @@
       "sizet": 192499
     },
     {
-      "url": "/images/c2/c2-16-p.jpg",
+      "iPreview": "/images/c2/c2-16-p.jpg",
       "thumbnail": "/images/c2/c2-16-t.jpg",
       "title": "Elk Run Trail",
       "description": "Doug’s bike at the end of Elk Run trail.",

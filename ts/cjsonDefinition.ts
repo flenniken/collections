@@ -3,8 +3,7 @@ namespace CJson {
 
   export interface Image {
     // todo: Replace Image url and thumbnail with basename only?
-    // todo: Rename url to preview.
-    url: string;
+    iPreview: string;
     thumbnail: string;
     title: string;
     description: string;

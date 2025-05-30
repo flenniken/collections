@@ -144,13 +144,14 @@ async function handleLoad() {
   // Show the admin icons when an admin is logged in.
   showHideAdminUI("index")
 
-  log("Download shared collection files.")
-  const sharedCollectionUrls = [
-    "js/image.js",
-    "js/thumbnails.js",
-    "icons/index.svg",
-  ]
-  downloadUrls(sharedCollectionUrls)
+  // This fails when you are not logged in. Is it ever needed?
+  // log("Download shared collection files.")
+  // const sharedCollectionUrls = [
+  //   "js/image.js",
+  //   "js/thumbnails.js",
+  //   "icons/index.svg",
+  // ]
+  // downloadUrls(sharedCollectionUrls)
 
   // Open or create the cache.
   const cache = await openCreateCache()

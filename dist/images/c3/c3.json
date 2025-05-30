@@ -12,7 +12,7 @@
     {
       "title": "Famous Picture Area",
       "description": "After stepping out of the nearest subway station, you find yourself at one of Brooklyn’s most iconic photo spots. Framed between red-brick buildings, the towering Manhattan Bridge dominates the view, with the Brooklyn Bridge just off to the left. It’s a popular place for photos. Once I learned about it, I started noticing it everywhere. Most recently, I spotted it in the golf documentary series Full Swing.",
-      "url": "/images/c3/c3-1-p.jpg",
+      "iPreview": "/images/c3/c3-1-p.jpg",
       "width": 3648,
       "height": 5472,
       "size": 3084388,
@@ -22,7 +22,7 @@
     {
       "title": "",
       "description": "We're walking towards the bridge.",
-      "url": "/images/c3/c3-5-p.jpg",
+      "iPreview": "/images/c3/c3-5-p.jpg",
       "width": 3648,
       "height": 5472,
       "size": 2484071,
@@ -32,7 +32,7 @@
     {
       "title": "",
       "description": "The bridge opened in 1883 and was the longest suspension bridge in the world.",
-      "url": "/images/c3/c3-3-p.jpg",
+      "iPreview": "/images/c3/c3-3-p.jpg",
       "width": 3518,
       "height": 5277,
       "size": 2704705,
@@ -42,7 +42,7 @@
     {
       "title": "",
       "description": "When you first enter the bridge the surface is asphalt, later it becomes wood.  The trail was divided for pedestrians and bikes when these pictures were taken.  Since then the bike path was moved down on the road so there is more room for the walkers. You can see Alex, Agatha and Kathleen.",
-      "url": "/images/c3/c3-7-p.jpg",
+      "iPreview": "/images/c3/c3-7-p.jpg",
       "width": 5472,
       "height": 3648,
       "size": 2745338,
@@ -52,7 +52,7 @@
     {
       "title": "",
       "description": "From the Brooklyn you can see the Manhattan Bridge and the carousel we passed to get here.",
-      "url": "/images/c3/c3-11-p.jpg",
+      "iPreview": "/images/c3/c3-11-p.jpg",
       "width": 5472,
       "height": 3648,
       "size": 2468483,
@@ -62,7 +62,7 @@
     {
       "title": "",
       "description": "Their are great views of Manhatten and the East River.",
-      "url": "/images/c3/c3-8-p.jpg",
+      "iPreview": "/images/c3/c3-8-p.jpg",
       "width": 5389,
       "height": 3593,
       "size": 2247953,
@@ -72,7 +72,7 @@
     {
       "title": "",
       "description": "Kathleen Flenniken.  You feel safe walking the path because you cannot see directly down so there is no sense of height.",
-      "url": "/images/c3/c3-16-p.jpg",
+      "iPreview": "/images/c3/c3-16-p.jpg",
       "width": 5472,
       "height": 3648,
       "size": 2225571,
@@ -82,7 +82,7 @@
     {
       "title": "",
       "description": "Alex is taking a picture of the Statue of Liberty off in the distance.  From here it looks small.",
-      "url": "/images/c3/c3-9-p.jpg",
+      "iPreview": "/images/c3/c3-9-p.jpg",
       "width": 5472,
       "height": 3648,
       "size": 3236207,
@@ -92,7 +92,7 @@
     {
       "title": "",
       "description": "The Statue of Liberty.",
-      "url": "/images/c3/c3-10-p.jpg",
+      "iPreview": "/images/c3/c3-10-p.jpg",
       "width": 5414,
       "height": 3609,
       "size": 2116363,
@@ -102,7 +102,7 @@
     {
       "title": "",
       "description": "The Chrysler Building with one of the new pencil buildings in front.",
-      "url": "/images/c3/c3-14-p.jpg",
+      "iPreview": "/images/c3/c3-14-p.jpg",
       "width": 5472,
       "height": 3648,
       "size": 2977965,
@@ -112,7 +112,7 @@
     {
       "title": "",
       "description": "I really like the path.",
-      "url": "/images/c3/c3-13-p.jpg",
+      "iPreview": "/images/c3/c3-13-p.jpg",
       "width": 3648,
       "height": 5472,
       "size": 3007427,
@@ -122,7 +122,7 @@
     {
       "title": "",
       "description": "You can see the Empire State Building on the left.  At center is one of the pencil buildings under construction.",
-      "url": "/images/c3/c3-17-p.jpg",
+      "iPreview": "/images/c3/c3-17-p.jpg",
       "width": 5472,
       "height": 3648,
       "size": 2058858,

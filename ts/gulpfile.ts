@@ -515,7 +515,7 @@ export function getUnusedImageFiles(images: CJson.Image[], allFiles: string[]): 
   // Add the image and thumbnail names to a set for fast lookup.
   const imageBasenames = new Set();
   images.forEach(image => {
-    imageBasenames.add(path.basename(image.url));
+    imageBasenames.add(path.basename(image.iPreview));
     imageBasenames.add(path.basename(image.thumbnail));
   });
 
@@ -600,9 +600,9 @@ function generateCollectionsJson() {
     let iNumList: number[] = []
     for (const image of cinfo.images) {
       totalSize += image.size + image.sizet
-      const imageName = parseImageName(path.basename(image.url))
+      const imageName = parseImageName(path.basename(image.iPreview))
       if (imageName == null)
-        throw new Error(`Error: not a valid image.url: ${image.url}`);
+        throw new Error(`Error: not a valid image.iPreview: ${image.iPreview}`);
       iNumList.push(imageName.iNum)
     }
 

@@ -22,12 +22,12 @@ function getImageNumbers(cNum: number, images: CJson.Image[]): number[] {
 
   let imageNumbers: number[] = []
   images.forEach((image: CJson.Image) => {
-    const basename = path.basename(image.url)
+    const basename = path.basename(image.iPreview)
     const imageName = parseImageName(basename)
     if (imageName == null)
-      throw new Error("Invalid ${image.url}")
+      throw new Error("Invalid ${image.iPreview}")
     if (imageName.cNum != cNum)
-      throw new Error("The collection ${cNum} is not part of the url: ${image.url}")
+      throw new Error("The collection ${cNum} is not part of the preview: ${image.iPreview}")
     imageNumbers.push(imageName.iNum)
   })
   return imageNumbers
@@ -67,7 +67,7 @@ function fakeImagesFromNumbers(cNum: number, iNums: number[]): CJson.Image[] {
   const images: CJson.Image[] = []
   iNums.forEach(iNum => {
     const image: CJson.Image = {
-      url: `c${cNum}-${iNum}-p.jpg`,
+      iPreview: `c${cNum}-${iNum}-p.jpg`,
       thumbnail: `c${cNum}-${iNum}-t.jpg`,
       title: `Image ${iNum}`,
       description: `Description for image ${iNum}`,
