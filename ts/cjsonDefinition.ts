@@ -2,7 +2,7 @@ namespace CJson {
   // The collection json's typescript definition (cjson).
 
   export interface Image {
-    // todo: Replace Image url and thumbnail with basename only?
+    // iPreview is the basename of the image, e.g. c2-1-p.jpg. iThumbnail too.
     iPreview: string;
     iThumbnail: string;
     title: string;

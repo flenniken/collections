@@ -33,7 +33,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ : id = add(t.row, 1) -->
 <!--$ : num = s.cNum -->
 <!--$ : url = format("/images/c{num}/image-{num}.html") -->
-    <a href="{url}"><img class="thumbnail" src="{image.iThumbnail}" alt="{image.title}"></a>
+<!--$ : thumbnailUrl = format("/images/c{num}/{image.iThumbnail}") -->
+    <a href="{url}"><img class="thumbnail" src="{thumbnailUrl}" alt="{image.title}"></a>
   </div>
 <!--$ block -->
 <!--$ : description = html(s.description, "body") -->

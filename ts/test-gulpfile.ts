@@ -22,12 +22,11 @@ function getImageNumbers(cNum: number, images: CJson.Image[]): number[] {
 
   let imageNumbers: number[] = []
   images.forEach((image: CJson.Image) => {
-    const basename = path.basename(image.iPreview)
-    const imageName = parseImageName(basename)
+    const imageName = parseImageName(image.iPreview)
     if (imageName == null)
-      throw new Error("Invalid ${image.iPreview}")
+      throw new Error(`Invalid image basename: ${image.iPreview}`)
     if (imageName.cNum != cNum)
-      throw new Error("The collection ${cNum} is not part of the preview: ${image.iPreview}")
+      throw new Error(`The collection ${cNum} is not part of the preview: ${image.iPreview}`)
     imageNumbers.push(imageName.iNum)
   })
   return imageNumbers
@@ -117,8 +116,9 @@ function testGetCollectionImages(cNum: number, eImageNumbers: number[]) {
 
   const images = getCollectionImages(cNum)
 
+  const msg = `cNum: ${cNum}, eImageNumbers: ${eImageNumbers}`
   const imageNumbers = getImageNumbers(cNum, images)
-  gotExpected(imageNumbers, eImageNumbers)
+  gotExpected(imageNumbers, eImageNumbers, msg)
 }
 
 function getCollectionImagesSuite() {

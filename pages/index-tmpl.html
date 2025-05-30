@@ -96,7 +96,7 @@ Screen".</p>
 <!--$ : c = o.csjson.indexCollections[t.row] -->
 <!--$ : num = c.cNum -->
 <!--$ : cid = format("c{num}") -->
-<!--$ : src = c.iThumbnail -->
+<!--$ : tinUrl = format("/tin/{c.iThumbnail}") -->
 <!--$ : title = html(c.title, "body") -->
 <!--$ : titleAttr = html(c.title, "attribute") -->
 <!--$ : posted = html(c.posted, "body") -->
@@ -107,7 +107,7 @@ Screen".</p>
       <p class="posted">{posted}</p>
       <div class="parent">
         <div class="needs withoutImages">images need downloading</div>
-        <img class="thumbnail" src="{src}" alt="{titleAttr}">
+        <img class="thumbnail" src="{tinUrl}" alt="{titleAttr}">
       </div>
       <p class="description">{indexDescription}</p>
       <div class="bottom-menu">
