@@ -43,7 +43,7 @@
   padding-right: 15px;
 }
 
-#install-banner {
+.note-banner {
   display: none;
   font-size: 1.5em;
   margin: 1em;

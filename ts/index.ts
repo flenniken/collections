@@ -184,30 +184,93 @@ async function handleLoad() {
   }
 }
 
+function isCollectionsRunning() {
+  // Detect whether Collections is already running. This only works on
+  // Safari.
+  // @ts-ignore
+  return window.navigator.standalone === true;
+}
+
+function isIosSafari() {
+  // Return true when the running on the Safari browser and not the
+  // other browsers on an iPhone.  Apple requires all browsers to use
+  // webkit so they look very similar.
+
+  const ua = window.navigator.userAgent;
+
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  const isWebKit = /WebKit/.test(ua);
+  const isNotChrome = !/CriOS/.test(ua);
+  const isNotFirefox = !/FxiOS/.test(ua);
+  const isNotOpera = !/OPiOS/.test(ua);
+  const isNotEdge = !/EdgiOS/.test(ua);
+
+  return isIOS && isWebKit && isNotChrome && isNotFirefox && isNotOpera && isNotEdge;
+}
+
+
 function installBanner() {
   // Show an install banner if appropriate.
 
+  log(`userAgent: ${navigator.userAgent}`)
+
+  // Detect running from the desktop icon.
   if (window.matchMedia("(display-mode: standalone)").matches) {
     runningFromIcon = true
     log("Running from the desktop icon.")
     return
   }
-
-  // On an iPhone, when installing is allowed, we want to show a banner when the
-  // user has not installed it yet.
+  // Not running from the icon.
 
   log(`navigator.platform: ${navigator.platform}`)
+
+  // When the user is on a non-iPhone platform don't show any banner.
   if (navigator.platform != "iPhone") {
+    log("No banner.")
     return
   }
+  log("We're running on an iPhone.")
 
-  if (!("GestureEvent" in window)) {
-    log("not running safari")
+  // Detect whether we're running on Safari.
+  if (!isIosSafari()) {
+    log("Not running safari.")
+
+    get("switch-browser").style.display = "block"
+
+    // Hide the bottom menu.
+    // Don't allow downloading when the user should be running from the icon.
+
+    forClasses(get("index"), "bottom-menu", (element) => {
+      element.style.display = "none"
+    })
     return
   }
+  log("Running on Safari.")
 
-  log("show install banner")
+  // Detect whether Collections is already running.
+  if (isCollectionsRunning()) {
+    log("On an iPhone on Safari and Collections is already running.")
+
+    // You're already running the Collections app full screen switch
+    // over to it.
+    return
+  }
+  log("Not already running, show install banner.")
+
+  // You can’t detect:
+  // * If the user has installed your PWA but is not running it right now.
+  // * If the app is installed but the user opened it from Safari anyway.
+
+  // On an iPhone on Safari but not running from the icon, show the
+  // install banner.
   get("install-banner").style.display = "block"
+
+  // Hide the bottom menu.
+  // Don't allow downloading when the user should be running from the icon.
+
+  forClasses(get("index"), "bottom-menu", (element) => {
+    element.style.display = "none"
+  })
 }
 
 addEventListener("message", (event) => {
