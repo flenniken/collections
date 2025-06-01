@@ -782,7 +782,6 @@ function setRequired(requiredId: RequiredIdType, status: boolean) {
     // We have it, remove the required class.
     element.classList.replace('required', 'good')
   }
-  // todo: is there a better place for updating the status?
   if (cinfo)
     updateStatusMessage(cinfo)
 }
