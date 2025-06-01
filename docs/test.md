@@ -2,7 +2,8 @@
 
 [![icon](rounded-icon.png)](#)
 
-This page tells how to test and debug Collections.
+This page tells how to manually test and debug Collections on
+different browsers and configurations.
 
 [⬇](#Contents) (table of contents at the bottom)
 
@@ -12,12 +13,12 @@ You can test on Chrome, Safari or xcode simulator.
 
 For Chrome you use the local server that’s running in the docker
 container at http://localhost:8000 and work in a phone view. You
-enable the mouse to simulate touch, see Test Touch. You set up at
+enable the mouse to simulate touch, see Configure Touch. You set up at
 least two phone views for a “iPhone 14 Pro Max”, portrait 430 x 933
 and landscape 932 x 430.
 
 For Safari you plug your iphone into your mac and debug remotely, see
-Test on iphone.
+Debug on iPhone.
 
 For xcode simulator, you get it by installing xcode.  Launch it and
 run an iphone 14 max.  Like chrome you use the local server that’s
@@ -28,7 +29,7 @@ desktop safari like you do when debugging a plugged in iphone.
 
 [⬇](#Contents)
 
-# Test Touch
+# Configure Touch
 
 You can test one finger touch with your mouse in Chrome on your
 desktop by turning on a setting in the developers tools.
@@ -41,7 +42,7 @@ desktop by turning on a setting in the developers tools.
 
 [⬇](#Contents)
 
-# Test on iphone
+# Debug on iPhone
 
 You can use safari on your mac to debug collections on an iphone
 connected with a wire.  Safari works as if the app was on your mac.
@@ -86,7 +87,6 @@ When making changes to the image page test them with these steps:
 # Contents
 
 * [How to Test](#how-to-test) -- how to test on Safari, Chrome and xcode simulator.
-* [Test Touch](#test-touch) -- how to configure touch on the desktop Chrome.
-* [Test on iphone](#test-on-iphone) -- how to test on an iphone connected with a wire.
+* [Configure Touch](#configure-touch) -- how to configure touch on the desktop Chrome.
+* [Debug on iPhone](#debug-on-iphone) -- how to debug on an iPhone connected with a wire.
 * [Image Page Tests](#image-page-tests) -- how to run regression tests for the image page.
-* [Login-flow Script](#login-flow-script) -- how to debug the login process and look at tokens.
