@@ -25,9 +25,9 @@ let currentImageIx: number = 0;
 
 addChangeListener("collection-dropdown", selectCollection)
 addClickListener("save-button", saveCollection)
-addClickListener("remove-unused-button", () => {
+addClickListener("optimize-button", () => {
   if (cinfo)
-    removeUnusedImages(cinfo)
+    optimizeCollection(cinfo)
 })
 addBlurListener("collection-title", "title", "collection-title-required")
 addBlurListener("description", "description", "description-required")
@@ -133,10 +133,10 @@ function cmdAltClick(order: number[], collectionIndex: number) {
 
   // Update the collection images to match the new order.
   for (let ix = 0; ix < 8; ix++) {
-    setImage(cinfo.images, `ci${ix}`, `cb${ix}`, order[ix])
+    setImage(cinfo.cNum, cinfo.images, `ci${ix}`, `cb${ix}`, order[ix])
   }
   for (let ix = 8; ix < 16; ix++) {
-    setImage(cinfo.images, `ci${ix}`, null, order[ix])
+    setImage(cinfo.cNum, cinfo.images, `ci${ix}`, null, order[ix])
   }
 }
 
@@ -222,12 +222,13 @@ async function selectCollection(event: Event) {
   // Determine the selected collection number.
   const target = event.target as HTMLSelectElement;
   const name = target.options[target.selectedIndex].text
+  log(`Selected collection: ${name}`)
   const selected = target.value
-  log(`Collection ${name} (${selected}) selected`)
-  const num = parseNonNegativeInt(selected)
+  const cNum = parseNonNegativeInt(selected)
+  log(`cNum: ${cNum}`)
 
   // Read the cjson file.
-  let newCinfo = await fetchCJson(num)
+  let newCinfo = await fetchCJson(cNum)
   if (!newCinfo)
     return
 
@@ -239,7 +240,7 @@ async function selectCollection(event: Event) {
   cinfo.order = result.order
   currentImageIx = result.imageIx
   currentThumbnailIx = result.thumbnailIx
-  log("cinfo: ", cinfo)
+  log("Populated page with cinfo: ", cinfo)
 }
 
 function isRequired(collectionImages: number[], boxIx: number) {
@@ -338,15 +339,17 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
   // the left or in the available images on the right. Hide the
   // available image boxes not used.
 
-  // cb0 is the element id for box 0 and ci0 is the element index of
-  // its collection image and the same goes for available images, ab0
-  // and ai0.
+  // cb0 is the element id for image box 0
+  // ci0 is the element index for image box 0
+
+  // ab0 is the element id for available box 0
+  // ai0 is the element index for available box 0
 
   // All images go in and remain in the available section. We hide and
   // show them when clicked.
   for (let ix = 0; ix < 20; ix++) {
     if (ix < newCinfo.images.length) {
-      setImage(newCinfo.images, `ai${ix}`, null, ix)
+      setImage(newCinfo.cNum, newCinfo.images, `ai${ix}`, null, ix)
       get(`ab${ix}`).style.display = "block"
     }
     else {
@@ -363,7 +366,7 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
     const required = isRequired(newOrder, ix)
     setRequired(`cb${ix}`, required)
 
-    setImage(newCinfo.images, `ci${ix}`, null, imageIx)
+    setImage(newCinfo.cNum, newCinfo.images, `ci${ix}`, null, imageIx)
 
     // Hide the available image if we put a real image in the
     // collection (not -1).
@@ -382,7 +385,7 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
     newCinfo.indexThumbnail = newCinfo.images[thumbnailIndex].iThumbnail
   }
   currentThumbnailIx = thumbnailIndex
-  setImage(newCinfo.images, "index-thumbnail", "index-thumbnail-required", thumbnailIndex)
+  setImage(newCinfo.cNum, newCinfo.images, "index-thumbnail", "index-thumbnail-required", thumbnailIndex)
   log(`thumbnailIndex: ${thumbnailIndex}`)
   const thumbnailImg = get("index-thumbnail") as HTMLImageElement
   log(thumbnailImg)
@@ -392,7 +395,7 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
   let imageIndex = newOrder[0]
   if (imageIndex == -1)
     imageIndex = 0
-  setImgDetails(newCinfo.images, imageIndex)
+  setImgDetails(newCinfo.cNum, newCinfo.images, imageIndex)
 
   // Hide the test container.
   const testContainer = get("test-container") as HTMLElement
@@ -427,37 +430,42 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
       }
     }
   }
+  log(`updateStatusMessage: usedImageCount: ${usedImageCount}`)
 
   const requiredIcon = get("status-icon") as HTMLImageElement
   const requiredFields = document.querySelectorAll('.required')
   const statusMessage = get("status-message") as HTMLElement
-  const removeUnusedButton = get("remove-unused-button") as HTMLButtonElement
+  const optimizeButton = get("optimize-button") as HTMLButtonElement
 
   if (requiredFields.length > 0) {
     // There are required fields, show the required message.
     statusMessage.textContent = "Please fill in the required fields."
     requiredIcon.src = "icons/red-circle.svg"
-    removeUnusedButton.style.display = "none"
+    optimizeButton.style.display = "none"
     cjsoninfo.ready = false
   }
   else {
-    // No required fields, show the good message or the unused message.
+    // No required fields, show the good message or the optimize message.
 
     if (cjsoninfo.order || usedImageCount != cjsoninfo.images.length) {
       const unusedCount = cjsoninfo.images.length - usedImageCount
-      statusMessage.textContent = `All required fields are filled in. You can remove the ${unusedCount} unused images.`
+      // log(`cjsoninfo.images.length: ${cjsoninfo.images.length}`)
+      // log(`usedImageCount: ${usedImageCount}`)
+
+      statusMessage.textContent = "All required fields are filled in, optimize internals."
       requiredIcon.src = "icons/red-circle.svg"
-      removeUnusedButton.style.display = "block"
+      optimizeButton.style.display = "block"
       cjsoninfo.ready = false
     }
     else {
-      statusMessage.textContent = "All required fields are filled in. The collection is ready."
+      statusMessage.textContent = "All required fields are filled in, save the collection."
       requiredIcon.src = "icons/green-circle.svg"
-      removeUnusedButton.style.display = "none"
+      optimizeButton.style.display = "none"
       cjsoninfo.ready = true
       cjsoninfo.modified = true
     }
   }
+  log(statusMessage.textContent)
 }
 
 function findThumbnailIx(order: number[], images: CJson.Image[],
@@ -478,7 +486,7 @@ function findThumbnailIx(order: number[], images: CJson.Image[],
   return thumbnailIx
 }
 
-function setImgDetails(images: CJson.Image[], currentImageIx: number) {
+function setImgDetails(cNum: number, images: CJson.Image[], currentImageIx: number) {
   // Set the image details section with the image, image title and
   // image description for the given image index along with their
   // required state.
@@ -493,13 +501,13 @@ function setImgDetails(images: CJson.Image[], currentImageIx: number) {
     imageTitle = image.title
     imageDescription = image.description
   }
-  setImage(images, "image-details", "image-details-required", currentImageIx)
+  setImage(cNum, images, "image-details", "image-details-required", currentImageIx)
   setText("image-title", null, imageTitle)
   setText("image-description", "image-description-required", imageDescription)
 }
 
-function setImage(images: CJson.Collection["images"], id: string, requiredId: RequiredIdType,
-    imageIndex: number) {
+function setImage(cNum: number, images: CJson.Collection["images"],
+    id: string, requiredId: RequiredIdType, imageIndex: number) {
   // Set the image page element to the collection image with the given
   // imageIndex. If the imageIndex is -1, set it blank. Set the
   // required status of the element.
@@ -512,7 +520,7 @@ function setImage(images: CJson.Collection["images"], id: string, requiredId: Re
   }
   else {
     const image = images[imageIndex]
-    element.src = image.iThumbnail
+    element.src = `/images/c${cNum}/${image.iThumbnail}`
     element.alt = image.title
     required = false
   }
@@ -524,12 +532,13 @@ async function collectionImageClick(order: number[], collectionIndex: number) {
   // available images section.
   if (!cinfo)
     return
-  log(`Collection image ${collectionIndex} clicked.`)
+  log(`Clicked collection image ${collectionIndex}.`)
 
   // Blank out the collection box.
-  setImage(cinfo.images, `ci${collectionIndex}`, `cb${collectionIndex}`, -1)
   const availableIx = order[collectionIndex]
   order[collectionIndex] = -1
+  log(`Removed ${collectionIndex} from the image order list: ${order}`)
+  setImage(cinfo.cNum, cinfo.images, `ci${collectionIndex}`, `cb${collectionIndex}`, -1)
 
   // Make the available image fade in with an opacity animation.
   const availableBox = get(`ab${availableIx}`) as HTMLElement
@@ -545,7 +554,6 @@ async function collectionImageClick(order: number[], collectionIndex: number) {
     availableImg.style.opacity = '1'
   })
 
-  log(`Removed ${collectionIndex} from the image order list: ${order}`)
 }
 
 async function availableImageClick(order: number[], availIndex: number) {
@@ -562,18 +570,18 @@ async function availableImageClick(order: number[], availIndex: number) {
     log("The collection is full.")
     return
   }
-  log(`The first available collection index: ${firstBlankIx}`)
+  log(`The first blank collection index: ${firstBlankIx}`)
 
   // Hide the available box.
   const abox = get(`ab${availIndex}`) as HTMLElement
   abox.style.display = "none"
 
-  // Set the collection box with the available image.
-  setImage(cinfo.images, `ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
-
   // Add the image to the order list.
   order[firstBlankIx] = availIndex
   log(`Added to the image order list. order: ${order}`)
+
+  // Set the collection box with the available image.
+  setImage(cinfo.cNum, cinfo.images, `ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
 }
 
 async function saveCollection(event: Event) {
@@ -588,12 +596,12 @@ async function saveCollection(event: Event) {
   downloadCjson(cinfo)
 }
 
-function removeUnusedImages(cjsoninfo: CJson.Collection) {
+function optimizeCollection(cjsoninfo: CJson.Collection) {
   // Remove the unused images from the images list and reorder it to match the order
   // list, then remove the order list. Reorder the zoom points too.
   // The filenames are not changed, and the unused
   // images are not removed from the folder.
-  log("removeUnusedImages")
+  log("optimizeCollection")
 
   if (!cjsoninfo || !cjsoninfo.order) {
     log("No unused images.")
@@ -607,7 +615,16 @@ function removeUnusedImages(cjsoninfo: CJson.Collection) {
 
   delete(cjsoninfo.order)
   log(cjsoninfo.images)
-  populateCollection(cjsoninfo)
+
+  const result = populateCollection(cjsoninfo)
+
+  // Set the globals.
+  cinfo = result.cinfo
+  cinfo.order = result.order
+  currentImageIx = result.imageIx
+  currentThumbnailIx = result.thumbnailIx
+
+  log("Populated page with cinfo: ", result.cinfo)
 }
 
 function reorderImages(order: number[], images: CJson.Image[]) {
@@ -704,8 +721,8 @@ function previousImage() {
   if (!cinfo || !cinfo.order)
     return
   currentImageIx = goPreviousNext(cinfo.order, currentImageIx, false)
-  setImage(cinfo.images, "image-details", "image-details-required", currentImageIx)
-  setImgDetails(cinfo.images, currentImageIx)
+  setImage(cinfo.cNum, cinfo.images, "image-details", "image-details-required", currentImageIx)
+  setImgDetails(cinfo.cNum, cinfo.images, currentImageIx)
 }
 
 function nextImage() {
@@ -713,9 +730,9 @@ function nextImage() {
   if (!cinfo || !cinfo.order)
     return
   currentImageIx = goPreviousNext(cinfo.order, currentImageIx, true)
-  setImage(cinfo.images, "image-details", "image-details-required",
+  setImage(cinfo.cNum, cinfo.images, "image-details", "image-details-required",
     currentImageIx)
-  setImgDetails(cinfo.images, currentImageIx)
+  setImgDetails(cinfo.cNum, cinfo.images, currentImageIx)
 }
 
 function storeThumbnailImage(thumbnailIndex: number) {
@@ -734,7 +751,7 @@ function indexPreviousImage() {
     return
   currentThumbnailIx = goPreviousNext(cinfo.order, currentThumbnailIx,
     false)
-  setImage(cinfo.images, "index-thumbnail", "index-thumbnail-required",
+  setImage(cinfo.cNum, cinfo.images, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx)
   storeThumbnailImage(currentThumbnailIx)
 }
@@ -744,7 +761,7 @@ function indexNextImage() {
   if (!cinfo || !cinfo.order)
     return
   currentThumbnailIx = goPreviousNext(cinfo.order, currentThumbnailIx, true)
-  setImage(cinfo.images, "index-thumbnail", "index-thumbnail-required",
+  setImage(cinfo.cNum, cinfo.images, "index-thumbnail", "index-thumbnail-required",
     currentThumbnailIx)
   storeThumbnailImage(currentThumbnailIx)
 }
@@ -765,6 +782,7 @@ function setRequired(requiredId: RequiredIdType, status: boolean) {
     // We have it, remove the required class.
     element.classList.replace('required', 'good')
   }
+  // todo: is there a better place for updating the status?
   if (cinfo)
     updateStatusMessage(cinfo)
 }

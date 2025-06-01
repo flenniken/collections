@@ -10,6 +10,7 @@ document.addEventListener("DOMContentLoaded", () => {
   testMaker();
 });
 
+// todo: use sweet-tester?
 function gotExpected(got: any, expected: any, message?: string) {
   // Check if the got value is the same as the expected value.
   // Convert the values to JSON then compare them.
@@ -242,8 +243,8 @@ function isRequireSuite() {
 
 function createTestImage(unique: number): CJson.Image {
   let image: CJson.Image = {
-    iPreview: `iPreview ${unique}`,
-    iThumbnail: `iThumbnail ${unique}`,
+    iPreview: `image url ${unique}`,
+    iThumbnail: `thumbnail ${unique}`,
     title: `title ${unique}`,
     description: `description ${unique}`,
     width: 2040+unique,
