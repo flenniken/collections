@@ -1,7 +1,7 @@
 {
     "name": "Flenniken.net Collections",
     "short_name": "Collections",
-    "description": "A progressive web app for viewing curated collections of photos on an iphone.",
+    "description": "A website for privately sharing your photos with friends and family on an iphone.",
     "id": "/index.html",
     "icons": [
         {

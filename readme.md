@@ -32,7 +32,8 @@ logged in and you click the icon, you see your name and the logout
 button.
 
 You must be logged in to download and view new collections. You can
-continue to view already downloaded collections when not logged in.
+continue to view already downloaded collections when not logged in or
+when off online.
 
 The icons do the following:
 
