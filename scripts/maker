@@ -48,9 +48,6 @@ workingDir='/home/coder/collections'
 # Folder where the new collection folder exists.
 tmpFolder=f'{workingDir}/tmp'
 
-collectionPrefix = 'db/c'
-publishedPrefix = 'db/published-'
-
 # True when the internet connection is working.
 internet = True
 
@@ -301,97 +298,36 @@ def renameFiles(num, folder, ftg):
     os.rename(previewName, stdImageName)
     os.rename(thumbnailName, stdThumbnailName)
 
-def getNextCollectionNum(s3Client):
+def checkNumber(s3Client, num):
   """
-  Return the next available collection number.
+  Check that num is the next available number.
   """
+  if num < 0:
+    raise MakerException(f"Error: invalid collection number: {num}.")
+
+  s3client = getBotoClient('s3')
   awsSettings = getAwsSettings()
   settings = awsSettings['settings']
   bucket_name = settings['bucket_name']
 
-  prefixes = readDbPrefixes(s3Client, bucket_name)
+  # Make sure the number is not already used.
+  if keyExists(s3Client, bucket_name, f"images/c{num}/c{num}.json"):
+    raise MakerException("Error: the collection number is already used.")
 
-  num = nextDbNum(prefixes)
-  return num
+  # Make sure the previous number is used.
+  if num > 1:
+    if not keyExists(s3Client, bucket_name, f"images/c{num-1}/c{num-1}.json"):
+      raise MakerException("Error: the collection number is not next.")
 
-def nextDbNum(prefixes):
+def keyExists(s3Client, bucket_name, key):
   """
-  Return the next collection number given a list of db prefixes.
+  Return true when the file exists in the s3 bucket else return false.
   """
-  num = 0
-  for prefix in prefixes:
-    if prefix.startswith(collectionPrefix):
-      start = len(collectionPrefix)
-    elif prefix.startswith(publishedPrefix):
-      start = len(publishedPrefix)
-    else:
-      continue
-    pnum = int(prefix[start:])
-    if pnum > num:
-      num = pnum
-  nextNum = num + 1
-  return nextNum
-
-def reserveCollectionNum(s3Client, num):
-  """
-  Reserve the collection number.
-  """
-  # Determine the next from the current list the db prefix items.
-
-  awsSettings = getAwsSettings()
-  settings = awsSettings['settings']
-  bucket_name = settings['bucket_name']
-
-  prefixes = readDbPrefixes(s3Client, bucket_name)
-
-  nextNum = nextDbNum(prefixes)
-  if nextNum != num:
-    raise MakerException(f"Error: the collection number is not available, use: {nextNum}.")
-
-  writeDbPrefix(s3Client, bucket_name, "c", nextNum)
-  return nextNum
-
-def readDbPrefixes(s3Client, bucket_name):
-  """
-  Read the prefixes that start with db/.
-  """
-  bucket_name = 'sflennikco'
-  prefix = "db/"
-  response = s3Client.list_objects_v2(Bucket=bucket_name, Prefix=prefix)
-  prefixes = []
-  if 'Contents' in response:
-    for obj in response['Contents']:
-      prefixes.append(obj['Key'])
-  return prefixes
-
-def makeDbPrefix(kind, num):
-  assert int(num) > 0
-  if kind == "c":
-    prefix = f"{collectionPrefix}{num}"
-    content = 'collection under development'
-  elif kind == "published":
-    prefix = f"{publishedPrefix}{num}"
-    content = 'published collection'
-  else:
-    raise MakerException(f"Error: invalid prefix kind.")
-  return prefix, content
-
-def writeDbPrefix(s3Client, bucket_name, kind, num):
-  """
-  Write the db prefix. kind is "c" or "published" and num is the
-  collection number.
-  """
-  prefix, content = makeDbPrefix(kind, num)
-  s3Client.put_object(Bucket=bucket_name, Key=prefix, Body=content)
-
-def deleteDbPrefix(s3Client, bucket_name, kind, num):
-  """
-  Remove a db prefix.  kind is "c" or "published" and num is the
-  collection number.
-  """
-  prefix, content = makeDbPrefix(kind, num)
-
-  s3Client.delete_object(Bucket=bucket_name, Key=prefix)
+  try:
+    s3Client.head_object(Bucket=bucket_name, Key=key)
+    return True
+  except Exception:
+    return False
 
 def new(num):
   """
@@ -404,9 +340,7 @@ def new(num):
     raise MakerException(f"Missing the collection folder: {sourceFolder}")
 
   s3client = getBotoClient('s3')
-  nextNum = getNextCollectionNum(s3client)
-  if num != nextNum:
-    raise MakerException(f"Error: the collection number is not available, use: {nextNum}.")
+  checkNumber(s3client, num)
 
   localDestFolder = f"dist/images/c{num}"
   if os.path.exists(localDestFolder):
@@ -428,16 +362,12 @@ def new(num):
   with open(cjsonFilename, "w") as fh:
     fh.write(json.dumps(cinfo, indent=2))
 
-  # Reserve the collection number for this collection.
-  reserveCollectionNum(s3client, num)
-
   # Rename the images in the tmp folder to their standard names.
   renameFiles(num, sourceFolder, ftg)
 
   # Move the tmp folder to the local images folder.
   os.rename(sourceFolder, localDestFolder)
 
-  print(f"Reserved collection {num}.")
   print(f"Created a collection folder and moved it to: {localDestFolder}")
 
 def parseCommandLine():
@@ -774,100 +704,26 @@ class TestMaker(unittest.TestCase):
     #  pv("pii", pii)
     gotExpected(len(piiList), 8)
 
-  def test_readDbPrefixes(self):
+  def test_keyExists(self):
     if not internet:
       return
-    awsSettings = getAwsSettings()
-    settings = awsSettings['settings']
-    bucket_name = settings['bucket_name']
-    prefixes = readDbPrefixes(tc.s3Client, bucket_name)
-    assert len(prefixes) > 0
-    # for prefix in prefixes:
-    #   pv("prefix", prefix)
-    # prefix: db/c3
-    # prefix: db/published-2
-    working = 0
-    published = 0
-    for prefix in prefixes:
-      if prefix.startswith("db/c"):
-        working += 1
-      elif prefix.startswith("db/published-"):
-        published += 1
-    gotExpected(published, 1)
+    bucket_name = "sflennikco"
+    assert keyExists(tc.s3Client, bucket_name, "images/c1/c1-1-p.jpg") == True
+    assert keyExists(tc.s3Client, bucket_name, "images/c1/c1-1-t.jpg") == True
+    assert keyExists(tc.s3Client, bucket_name, "images/c1/xyz.jpg") == False
 
-  def test_nextDbNum(prefixes):
+  def test_checkNumber(self):
     if not internet:
       return
-    gotExpected(nextDbNum(["db/published-2"]), 3)
-    gotExpected(nextDbNum(["db/published-2", "db/c3"]), 4)
-    gotExpected(nextDbNum(["db/published-2", "db/c1", "db/c2"]), 3)
-    gotExpected(nextDbNum(["db/published-2", "db/c3", "db/c1"]), 4)
-    gotExpected(nextDbNum(["db/published-2", "db/c3", "db/c4"]), 5)
-
-  def test_makeDbPrefixC(self):
-    if not internet:
-      return
-    prefix, content = makeDbPrefix('c', 4)
-    gotExpected(prefix, "db/c4")
-    gotExpected(content, "collection under development")
-
-  def test_makeDbPrefixPublished(self):
-    if not internet:
-      return
-    prefix, content = makeDbPrefix('published', 4)
-    gotExpected(prefix, "db/published-4")
-    gotExpected(content, "published collection")
-
-  def test_writeDbPrefix(self):
-    # Test writing a db prefix.
-    if not internet:
-      return
-    awsSettings = getAwsSettings()
-    settings = awsSettings['settings']
-    bucket_name = settings['bucket_name']
-
-    prefixes1 = readDbPrefixes(tc.s3Client, bucket_name)
-    #pv("prefixes1", prefixes1)
-    num = nextDbNum(prefixes1)
-
-    writeDbPrefix(tc.s3Client, bucket_name, "c", num)
-
-    prefixes2 = readDbPrefixes(tc.s3Client, bucket_name)
-    num2 = nextDbNum(prefixes2)
-    gotExpected(num2, num + 1)
-
-    deleteDbPrefix(tc.s3Client, bucket_name, "c", num)
-    prefixes3 = readDbPrefixes(tc.s3Client, bucket_name)
-    #pv("prefixes3", prefixes3)
-    num3 = nextDbNum(prefixes3)
-    gotExpected(num3, num)
-    gotExpected(prefixes3, prefixes1)
-
-  def test_dbPrefixes(self):
-    if not internet:
-      return
-
-    # If you want to test, comment out the return an set e_num
-    # correctly.
     return
 
-    e_num = 4
+    checkNumber(tc.s3Client, 4)
 
-    # Test getting and setting the db prefixes.
-    num = getNextCollectionNum(tc.s3Client)
-    gotExpected(num, e_num)
+    with self.assertRaises(MakerException):
+      checkNumber(tc.s3Client, 3)
 
-    writeDbPrefix(tc.s3Client, "sflennikco", "c", e_num)
-    num = getNextCollectionNum(tc.s3Client)
-    gotExpected(num, e_num+1)
-
-    writeDbPrefix(tc.s3Client, "sflennikco", "c", e_num+1)
-    num = getNextCollectionNum(tc.s3Client)
-    gotExpected(num, e_num+2)
-
-    deleteDbPrefix(tc.s3Client, "sflennikco", "c", e_num)
-    deleteDbPrefix(tc.s3Client, "sflennikco", "c", e_num+1)
-    deleteDbPrefix(tc.s3Client, "sflennikco", "c", e_num+2)
+    with self.assertRaises(MakerException):
+      checkNumber(tc.s3Client, 5)
 
   def test_getFileInfoList(self):
     fileInfoList = getFileInfoList("dist")

@@ -44,7 +44,7 @@ The `cjson` file describes the collection, including empty titles,
 descriptions, and an arbitrary image order. You will update this
 information later using the maker page.
 
-Run the command and specify the folder:
+Run the command and specify the temp folder number:
 
 ~~~
 scripts/maker -c 3
@@ -55,7 +55,6 @@ Created a new local collection: images/c3
 If a problem is found, the process stops so you can correct it. The
 command validates:
 
-* The collection is the next available collection (checks the S3 `/db` prefix files).
 * All images are JPG files.
 * There are at least 8 images and no more than 20.
 * Preview files are at least 933 x 933 pixels.
@@ -65,7 +64,6 @@ command validates:
 
 After successful validation, the command:
 
-* Reserves the collection name (e.g., `c3`) by adding the `db/c3` prefix file to S3.
 * Moves the new folder to the `images` directory.
 * Creates and writes the `cjson` file to the folder.
 * Sets the `cjson` order list to `-1`, indicating no images are in the collection yet.
