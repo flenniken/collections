@@ -178,23 +178,27 @@ __Interactions__
 
 # Zoom Points
 
-After specifying the required elements and clicking the **Remove Extra
-Images** button, the collection is marked as ready.
+Build and deploy the code then set the zoom points.
 
-The `gulp` command generates the `collections.json` file from the
-`cjson` files. This file is used to build the web pages.
+After specifying the required elements and clicking the **Remove Extra
+Images** button, the collection is marked as ready. Gulp builds ready
+collections.
 
 ~~~
 g all
+scripts/deploy -s
 ~~~
 
-On the new image page, size and pan each image to define its zoom
-points. The download works on an iphone.  You download, then air-drop
-it to yourself. This saves it in the downloads folder on your desktop
+On your iphone, on the image page, size and pan each image to define
+its zoom points. Click the download icon then air-drop it to
+yourself. This saves it in the downloads folder on your desktop
 machine.  Then you move it to the collection's folder.
 
-Run the `gulp` command to build in the final zoom points, deploy and
-test the image pages again.
+♫ Note: air-drop doesn't work when your iphone is plugged into your
+mac.
+
+Run the `gulp` command to build in the final zoom points, then deploy
+and test the image pages again.
 
 [⬇](#Contents)
 
