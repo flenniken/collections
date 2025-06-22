@@ -151,7 +151,7 @@ def getImageInfoList(folder, fileInfoList, previews=True):
     if ii.kind != "JPEG":
       raise MakerException(f"""\
 Error: image must be a jpg.
-file: ({pii.width} x {pii.height}) {fullPath}
+file: {ii.kind} ({ii.width} x {ii.height}) {fullPath}
 """)
     if previews:
       if ii.width < previewMinDim or ii.height < previewMinDim:
@@ -220,9 +220,14 @@ def validateCollectionFolder(num, ftg):
           f"Error: invalid thumbnails html name for this collection: {fileInfo.basename}")
 
   if numOther:
-    first = ftg.other[0].basename
-    raise MakerException(
-      f"Error: there are {numOther} extra files in the folder, first: {first}")
+    for other in ftg.other:
+      # Ignore the hidden files.
+      if other.basename.startswith("."):
+        numOther =- 1
+        continue
+      first = other.basename
+      raise MakerException(
+        f"Error: there are {numOther} extra files in the folder, first: {first}")
 
 def createCollectionCinfo(num, ftg, previewImageInfoList):
   """
@@ -233,6 +238,7 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
   order = []
 
   for ix, fileInfo in enumerate(ftg.previews):
+    previewFileInfo = ftg.previews[ix]
     thumbnailFileInfo = ftg.thumbnails[ix]
     previewImageInfo = previewImageInfoList[ix]
 
@@ -240,30 +246,34 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     collectionImage['title'] = ""
     collectionImage['description'] = ""
 
-    collectionImage['url'] = getStdImageName(num, ix, "preview", "path")
+    collectionImage['iPreview'] = getStdImageName(num, ix, "preview")
+    collectionImage['iThumbnail'] = getStdImageName(num, ix, "thumbnail")
     collectionImage['width'] = previewImageInfo.width
     collectionImage['height'] = previewImageInfo.height
     collectionImage['size'] = fileInfo.size
 
-    collectionImage['thumbnail'] = getStdImageName(num, ix, "thumbnail", "path")
     collectionImage['sizet'] = thumbnailFileInfo.size
     images.append(collectionImage)
     order.append(-1)
 
   # Create the collection info (cinfo).
   cinfo = {
-    "title": "",
+    "title": "title",
+    "indexDescription": "",
     "description": "",
-    "collection": num,
+    "indexThumbnail": "",
+    "cNum": num,
+    "posted": "",
     "width": thumbnailDim,
     "height": thumbnailDim,
     "order": order,
     "images": images,
     "building": True,
+    "ready": True,
   }
   return cinfo
 
-def getStdImageName(num, ix, kind, part):
+def getStdImageName(num, ix, kind):
   if kind == 'preview':
     prefix = 'p'
   elif kind == 'thumbnail':
@@ -272,14 +282,7 @@ def getStdImageName(num, ix, kind, part):
     raise MakerException(f"Invalid kind, expected preview or thumbnail.")
 
   name = f"c{num}-{ix+1}-{prefix}.jpg"
-
-  if part == 'basename':
-    return name
-  elif part == 'path':
-    return f"/images/c{num}/{name}"
-  else:
-    raise MakerException(f"Invalid part, expected basename or path.")
-
+  return name
 
 def renameFiles(num, folder, ftg):
   """
@@ -292,8 +295,8 @@ def renameFiles(num, folder, ftg):
     previewName = os.path.join(folder, ftg.previews[ix].basename)
     thumbnailName = os.path.join(folder, ftg.thumbnails[ix].basename)
 
-    stdImageName = os.path.join(folder, getStdImageName(num, ix, "preview", "basename"))
-    stdThumbnailName = os.path.join(folder, getStdImageName(num, ix, "thumbnail", "basename"))
+    stdImageName = os.path.join(folder, getStdImageName(num, ix, "preview"))
+    stdThumbnailName = os.path.join(folder, getStdImageName(num, ix, "thumbnail"))
 
     os.rename(previewName, stdImageName)
     os.rename(thumbnailName, stdThumbnailName)
@@ -609,14 +612,10 @@ class TestMaker(unittest.TestCase):
     shutil.rmtree(folder)
 
   def test_getStdImageName(self):
-    gotExpected(getStdImageName(2, 3, "preview", "basename"), "c2-4-p.jpg")
-    gotExpected(getStdImageName(23, 15, "preview", "basename"), "c23-16-p.jpg")
-    gotExpected(getStdImageName(2, 3, "thumbnail", "basename"), "c2-4-t.jpg")
-    gotExpected(getStdImageName(23, 15, "thumbnail", "basename"), "c23-16-t.jpg")
-    gotExpected(getStdImageName(2, 3, "preview", "path"), "/images/c2/c2-4-p.jpg")
-    gotExpected(getStdImageName(23, 15, "preview", "path"), "/images/c23/c23-16-p.jpg")
-    gotExpected(getStdImageName(2, 3, "thumbnail", "path"), "/images/c2/c2-4-t.jpg")
-    gotExpected(getStdImageName(23, 15, "thumbnail", "path"), "/images/c23/c23-16-t.jpg")
+    gotExpected(getStdImageName(2, 3, "preview"), "c2-4-p.jpg")
+    gotExpected(getStdImageName(23, 15, "preview"), "c23-16-p.jpg")
+    gotExpected(getStdImageName(2, 3, "thumbnail"), "c2-4-t.jpg")
+    gotExpected(getStdImageName(23, 15, "thumbnail"), "c23-16-t.jpg")
 
   def test_makeTestFolder(self):
     num = 4
@@ -833,26 +832,29 @@ class TestMaker(unittest.TestCase):
       cjson = json.dumps(cinfo, indent=2)
       # print(cjson)
 
-      gotExpected(cinfo['title'], "")
-      gotExpected(cinfo['description'], "")
-      gotExpected(cinfo['collection'], num)
+      gotExpected(cinfo['title'], "title")
+      gotExpected(cinfo['indexDescription'], "")
+      gotExpected(cinfo['cNum'], num)
       gotExpected(cinfo['width'], thumbnailDim)
       gotExpected(cinfo['height'], thumbnailDim)
+      gotExpected(cinfo['building'], True)
+      gotExpected(cinfo['ready'], True)
       # gotExpected(len(cinfo['order']), 0)
       # gotExpected(len(cinfo['images']), 8)
       for ix, image in enumerate(cinfo['images']):
         #print(json.dumps(image, indent=2))
-        expected = f"""{{
-  "title": "",
-  "description": "",
-  "url": "{getStdImageName(num, ix, "preview", "path")}",
-  "width": {933+ix},
-  "height": {933+ix},
-  "size": {18+ix},
-  "thumbnail": "{getStdImageName(num, ix, "thumbnail", "path")}",
-  "sizet": {20+ix}
-}}"""
-        gotExpected(json.dumps(image, indent=2), expected)
+        gotExpected(image['title'], "")
+        gotExpected(image['description'], "")
+        gotExpected(image['iPreview'], getStdImageName(num, ix, "preview"))
+        gotExpected(image['iThumbnail'], getStdImageName(num, ix, "thumbnail"))
+        # self.assertTrue(image['iPreview'].startswith(f"p{ix+1:02d}-"))
+        # self.assertTrue(image['iPreview'].endswith("-p.jpg"))
+        # self.assertTrue(image['iThumbnail'].startswith(f"t{ix+1:02d}-"))
+        # self.assertTrue(image['iThumbnail'].endswith("-t.jpg"))
+        gotExpected(image['width'], 933+ix)
+        gotExpected(image['height'], 933+ix)
+        gotExpected(image['size'], 18+ix)
+        gotExpected(image['sizet'], 20+ix)
 
       renameFiles(num, folder, ftg)
 
@@ -862,15 +864,75 @@ class TestMaker(unittest.TestCase):
 
       for ix, fileInfo in enumerate(ftg.previews):
         # pv('fileInfo', fileInfo)
-        gotExpected(fileInfo.basename, getStdImageName(num, ix, "preview", "basename"))
+        gotExpected(fileInfo.basename, getStdImageName(num, ix, "preview"))
       for ix, fileInfo in enumerate(ftg.thumbnails):
         # pv('fileInfo', fileInfo)
-        gotExpected(fileInfo.basename, getStdImageName(num, ix, "thumbnail", "basename"))
+        gotExpected(fileInfo.basename, getStdImageName(num, ix, "thumbnail"))
 
       validateCollectionFolder(num, ftg)
 
     finally:
       shutil.rmtree(folder)
+
+  def test_createCollectionCinfo_max(self):
+    """
+    Test that the new collection json keys match the existing json keys.
+    """
+    num = 4
+    try:
+      folder = makeTestFolder(num, previews=20, thumbnails=20,
+        cjson=0, imageHtml=0, thumbnailHtml=0, others=0)
+      fileInfoList = getFileInfoList(folder)
+
+      ftg = FileTypeGroups(fileInfoList)
+      validateCollectionFolder(num, ftg)
+
+      previewImageInfoList = getTestImageInfoList(ftg.previews)
+
+      cinfoNew = createCollectionCinfo(num, ftg, previewImageInfoList)
+    finally:
+      shutil.rmtree(folder)
+
+    with open("dist/images/c3/c3.json", 'r') as file:
+      cinfo3 = json.load(file)
+
+    newKeys = cinfoNew.keys()
+    c3Keys = cinfo3.keys()
+
+    # print("new keys:")
+    # print(cinfoNew.keys())
+    # print("c3 keys:")
+    # print(cinfo3.keys())
+
+    success = True
+    for c3Key in c3Keys:
+      if c3Key not in newKeys:
+        if c3Key == "zoomPoints":
+          continue
+        print(f"c3Key '{c3Key}' not in newKeys.")
+        success = False
+
+    for newKey in newKeys:
+      if newKey not in c3Keys:
+        if newKey in ["order", "building"]:
+          continue
+        print(f"newKey '{newKey}' not in c3Keys.")
+        success = False
+
+    c3FirstImageKeys = cinfo3['images'][0].keys()
+    newFirstImageKeys = cinfoNew['images'][0].keys()
+
+    for c3FirstImageKey in c3FirstImageKeys:
+      if c3FirstImageKey not in newFirstImageKeys:
+        print(f"c3FirstImageKey '{c3FirstImageKey}' not in newFirstImageKeys.")
+        success = False
+
+    for newFirstImageKey in newFirstImageKeys:
+      if newFirstImageKey not in c3FirstImageKeys:
+        print(f"newFirstImageKey '{newFirstImageKey}' not in c3FirstImageKeys.")
+        success = False
+
+    self.assertTrue(success)
 
 if __name__ == '__main__':
   args = parseCommandLine()

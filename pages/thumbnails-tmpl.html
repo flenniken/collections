@@ -20,15 +20,12 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <link rel="stylesheet" href="/collections.css">
   <script src="/js/thumbnails.js"></script>
 </head>
-<!--$ block c = len(s.images) -->
-<!--$ : if((c != 8 and c != 10 and c != 12 and c != 14 and c != 16), +-->
-<!--$ :   warn(format("Got {c} images, expected 8, 10, 12, 14 or 16."))) -->
-<!--$ endblock -->
 <body id="thumbnails">
   <div id="top-bar">
   </div>
   <div id="container">
 <!--$ nextline t.repeat = len(s.images) -->
+<!--$ : if((t.row > 16), return("stop")) -->
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
 <!--$ : num = s.cNum -->

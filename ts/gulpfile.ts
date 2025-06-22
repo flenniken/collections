@@ -476,6 +476,8 @@ export function parseImageName(filename: string): ImageName | null {
   // Return the collection number (cNum) and the image number (iNum)
   // and the image type (p or t) when the name is a valid image
   // basename, else return null.
+  if (!filename)
+    return null
 
   const match = filename.match(/^c(\d+)-(\d+)-([pt])\.jpg$/)
   let imageName = null
@@ -602,7 +604,7 @@ function generateCollectionsJson() {
       totalSize += image.size + image.sizet
       const imageName = parseImageName(image.iPreview)
       if (imageName == null)
-        throw new Error(`Error: not a valid image.iPreview: ${image.iPreview}`);
+        throw new Error(`Error: not a valid image iPreview: ${image.iPreview}`);
       iNumList.push(imageName.iNum)
     }
 
