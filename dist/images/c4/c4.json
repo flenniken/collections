@@ -1,148 +1,16 @@
 {
-  "title": "title",
-  "indexDescription": "",
-  "description": "",
-  "indexThumbnail": "",
+  "title": "Santa Fe",
+  "indexDescription": "We vacationed in Santa Fe, New Mexico with Ken and Dianne from June 4th to the June 11th.",
+  "description": "We vacationed in Santa Fe, New Mexico with Ken and Dianne from June 4th to the June 11th.",
+  "indexThumbnail": "c4-12-t.jpg",
   "cNum": 4,
-  "posted": "",
+  "posted": "2025-06-22",
   "width": 480,
   "height": 480,
-  "order": [
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1,
-    -1
-  ],
   "images": [
     {
       "title": "",
-      "description": "",
-      "iPreview": "c4-1-p.jpg",
-      "iThumbnail": "c4-1-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 3191993,
-      "sizet": 119055
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-2-p.jpg",
-      "iThumbnail": "c4-2-t.jpg",
-      "width": 2740,
-      "height": 2055,
-      "size": 711202,
-      "sizet": 81558
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-3-p.jpg",
-      "iThumbnail": "c4-3-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 3638106,
-      "sizet": 131860
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-4-p.jpg",
-      "iThumbnail": "c4-4-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 3213546,
-      "sizet": 134188
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-5-p.jpg",
-      "iThumbnail": "c4-5-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 4148372,
-      "sizet": 142204
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-6-p.jpg",
-      "iThumbnail": "c4-6-t.jpg",
-      "width": 3024,
-      "height": 4032,
-      "size": 1512255,
-      "sizet": 75623
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-7-p.jpg",
-      "iThumbnail": "c4-7-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 1779116,
-      "sizet": 89102
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-8-p.jpg",
-      "iThumbnail": "c4-8-t.jpg",
-      "width": 3726,
-      "height": 2794,
-      "size": 1266123,
-      "sizet": 63562
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-9-p.jpg",
-      "iThumbnail": "c4-9-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 2503942,
-      "sizet": 132461
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-10-p.jpg",
-      "iThumbnail": "c4-10-t.jpg",
-      "width": 2952,
-      "height": 3935,
-      "size": 1646669,
-      "sizet": 110160
-    },
-    {
-      "title": "",
-      "description": "",
-      "iPreview": "c4-11-p.jpg",
-      "iThumbnail": "c4-11-t.jpg",
-      "width": 3024,
-      "height": 2320,
-      "size": 869862,
-      "sizet": 96595
-    },
-    {
-      "title": "",
-      "description": "",
+      "description": "We rented this adobe style house. It's about 15 minutes from town in the foothills.  All the buildings have the curved mud colored exterior and blend into the surroundings. ",
       "iPreview": "c4-12-p.jpg",
       "iThumbnail": "c4-12-t.jpg",
       "width": 4032,
@@ -152,17 +20,37 @@
     },
     {
       "title": "",
-      "description": "",
-      "iPreview": "c4-13-p.jpg",
-      "iThumbnail": "c4-13-t.jpg",
-      "width": 3024,
-      "height": 4032,
-      "size": 1420432,
-      "sizet": 93677
+      "description": "The hill on the left is visible from our house is Sun Mountain.  It's a local landmark.  You can see it from town.  It's about 200 meters above us and there is a trail up it starting from the main road.  Santa Fe is about 7,000 feet in elevation.  Just walking up stairs made me winded.",
+      "iPreview": "c4-18-p.jpg",
+      "iThumbnail": "c4-18-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3080993,
+      "sizet": 119433
+    },
+    {
+      "title": "Rental House",
+      "description": "The entry to the rental house.  It had a long dirt driveway.  We parked in the garage. It was my job to jump out and type in the code to open the door.",
+      "iPreview": "c4-1-p.jpg",
+      "iThumbnail": "c4-1-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3191993,
+      "sizet": 119055
     },
     {
       "title": "",
-      "description": "",
+      "description": "The Palace of the Governors shown here is where Native American artists sell their work.  They sit on the ground and display their wares in front.  There is a lottery for a spot. ",
+      "iPreview": "c4-15-p.jpg",
+      "iThumbnail": "c4-15-t.jpg",
+      "width": 3636,
+      "height": 2727,
+      "size": 1538421,
+      "sizet": 118261
+    },
+    {
+      "title": "Necklaces",
+      "description": "Necklaces in an art gallery.",
       "iPreview": "c4-14-p.jpg",
       "iThumbnail": "c4-14-t.jpg",
       "width": 2618,
@@ -172,17 +60,17 @@
     },
     {
       "title": "",
-      "description": "",
-      "iPreview": "c4-15-p.jpg",
-      "iThumbnail": "c4-15-t.jpg",
-      "width": 3636,
-      "height": 2727,
-      "size": 1538421,
-      "sizet": 118261
+      "description": "Native edge bowl.  The cracks are filled with turquoise.",
+      "iPreview": "c4-17-p.jpg",
+      "iThumbnail": "c4-17-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 1953816,
+      "sizet": 111926
     },
     {
-      "title": "",
-      "description": "",
+      "title": "The Cathedral Basilica of St. Francis of Assisi",
+      "description": "This picture was taken at the corner of the plaza next to La Fonda looking up E San Francisco St to the cathedral.",
       "iPreview": "c4-16-p.jpg",
       "iThumbnail": "c4-16-t.jpg",
       "width": 3706,
@@ -192,45 +80,197 @@
     },
     {
       "title": "",
-      "description": "",
-      "iPreview": "c4-17-p.jpg",
-      "iThumbnail": "c4-17-t.jpg",
-      "width": 3024,
-      "height": 4032,
-      "size": 1953816,
-      "sizet": 111926
+      "description": "The church at night.",
+      "iPreview": "c4-10-p.jpg",
+      "iThumbnail": "c4-10-t.jpg",
+      "width": 2952,
+      "height": 3935,
+      "size": 1646669,
+      "sizet": 110160
     },
     {
       "title": "",
-      "description": "",
-      "iPreview": "c4-18-p.jpg",
-      "iThumbnail": "c4-18-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 3080993,
-      "sizet": 119433
+      "description": "We took a trip to Ghost Ranch. Georgia O’Keeffe frequently painted the Pedernal mountain in the distance.  Early on the ranch as famous for horse and cattle rustling.  It was a dude ranch for a while.  Now it is a church getaway and tourist spot.  ",
+      "iPreview": "c4-2-p.jpg",
+      "iThumbnail": "c4-2-t.jpg",
+      "width": 2740,
+      "height": 2055,
+      "size": 711202,
+      "sizet": 81558
     },
     {
       "title": "",
-      "description": "",
-      "iPreview": "c4-19-p.jpg",
-      "iThumbnail": "c4-19-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 2730495,
-      "sizet": 138738
-    },
-    {
-      "title": "",
-      "description": "",
+      "description": "The skull and horns is the icon of Ghost Ranch.  I bought a cap with it on the front.",
       "iPreview": "c4-20-p.jpg",
       "iThumbnail": "c4-20-t.jpg",
       "width": 2670,
       "height": 3560,
       "size": 1453762,
       "sizet": 75355
+    },
+    {
+      "title": "",
+      "description": "We took a short walk at the ranch to the labyrinth.  There is a great view of the red and white rock cliffs.  The vertical walls and color remind me of Zion.",
+      "iPreview": "c4-3-p.jpg",
+      "iThumbnail": "c4-3-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3638106,
+      "sizet": 131860
+    },
+    {
+      "title": "Ghost Ranch Chartres Labyrinth",
+      "description": "We walked the labyrinth to get to the center.  Its a path where you meditate as you cover the complete area of the circle.",
+      "iPreview": "c4-5-p.jpg",
+      "iThumbnail": "c4-5-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 4148372,
+      "sizet": 142204
+    },
+    {
+      "title": "",
+      "description": "The historic La Fonda hotel and restaurant has a roof top bar great for margaritas and the view. The company and drinks were great. We ordered snacks too. Threatening thunder clouds can be seen in the background.  We timed it right by getting the last table and finishing when the wind and clouds arrived.",
+      "iPreview": "c4-11-p.jpg",
+      "iThumbnail": "c4-11-t.jpg",
+      "width": 3024,
+      "height": 2320,
+      "size": 869862,
+      "sizet": 96595
+    },
+    {
+      "title": "",
+      "description": "We watched the lighting in the bright cloud visible in the distance.  Ken called it \"heat lightning\" where you see the lightning but don't hear the thunder.",
+      "iPreview": "c4-13-p.jpg",
+      "iThumbnail": "c4-13-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 1420432,
+      "sizet": 93677
+    },
+    {
+      "title": "",
+      "description": "Walking the dirt roads close to home in the evening right before sunset.",
+      "iPreview": "c4-9-p.jpg",
+      "iThumbnail": "c4-9-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2503942,
+      "sizet": 132461
+    },
+    {
+      "title": "",
+      "description": "Horse and rider galloping into the sunset.  This artwork was in the corner of a yard near the road.  I thought it looked Chinese, but it might be a samurai. ",
+      "iPreview": "c4-8-p.jpg",
+      "iThumbnail": "c4-8-t.jpg",
+      "width": 3726,
+      "height": 2794,
+      "size": 1266123,
+      "sizet": 63562
     }
   ],
   "building": true,
-  "ready": true
+  "ready": true,
+  "zoomPoints": {
+    "1085x943": [
+      {
+        "scale": 0.2690972222222222,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2690972222222222,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2690972222222222,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2984048404840484,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2701231738756803,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.23387896825396826,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.29276848354020507,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.23964421855146126,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.395985401459854,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2648876404494382,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2690972222222222,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2690972222222222,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.3587962962962963,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.23387896825396826,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2690972222222222,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.29119699409554484,
+        "tx": 0,
+        "ty": 0
+      }
+    ]
+  },
+  "order": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ]
 }

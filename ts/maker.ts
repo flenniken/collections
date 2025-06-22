@@ -547,6 +547,7 @@ async function collectionImageClick(order: number[], collectionIndex: number) {
   // Set initial state for animation
   availableImg.style.transition = 'opacity  0.75s ease-in-out'
   availableBox.style.display = "block"
+  // availableBox.style.visibility = "visible"
   availableImg.style.opacity = '0'
 
   // Ensure the initial state is rendered.
@@ -574,7 +575,10 @@ async function availableImageClick(order: number[], availIndex: number) {
 
   // Hide the available box.
   const abox = get(`ab${availIndex}`) as HTMLElement
+  // abox.style.display = "none"
+  log("hide the available box")
   abox.style.display = "none"
+  // abox.style.visibility = "hidden"
 
   // Add the image to the order list.
   order[firstBlankIx] = availIndex

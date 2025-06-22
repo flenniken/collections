@@ -6,6 +6,7 @@
 // and cJsonOriginal are defined in the image html page.
 var cJson: CJson.Collection
 var cJsonOriginal: CJson.Collection
+// todo: rename cJson to cinfo.
 
 // The available screen area.
 let availWidth = 0
@@ -716,18 +717,21 @@ function showAdminIcons() {
   }
 }
 
-function downloadCjson(cinfo: CJson.Collection) {
+function downloadCjson() {
   // Create and download a cjson file.
 
   // Convert collection info to a json string.
-  const cjson = JSON.stringify(cinfo, null, 2)
+  const cjson = JSON.stringify(cJson, null, 2)
 
-  // Create a download link and click it.
   const blob = new Blob([cjson], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `c${cinfo.cNum}.json`
+
+  const filename = `c${cJson.cNum}.json`
+  log(`Download ${filename}`)
+
+  a.download = filename
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
