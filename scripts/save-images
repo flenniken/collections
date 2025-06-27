@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Save the Collections image folder to the disk store.
+
+SOURCE="dist/images/"
+DEST="/Volumes/home/pictures/collections/images/"
+
+# Note: we're using the a new version of rsync, not the mac version.
+# Note: I turned on the rsync service on the network drive.
+
+cmdPrefix="/opt/homebrew/bin/rsync -av --progress"
+
+# Make sure we're running on the host.
+if [[ ! -z "${coder_env}" ]]; then
+  echo "Error: run on the host."
+  exit
+fi
+
+date
+
+
+echo "Running as user: $(whoami)"
+
+if [ ! -d "$SOURCE" ]; then
+  echo "The source does not exist: $SOURCE"
+  exit
+fi
+
+if [ ! -d "$DEST" ]; then
+  echo "The destination does not exist: $DEST"
+  exit
+fi
+
+echo "syncing the collection's image folder to DiskStore."
+echo "$cmdPrefix \"$SOURCE\" \"$DEST\""
+
+$cmdPrefix "$SOURCE" "$DEST"
+
+echo "done"
+date

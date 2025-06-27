@@ -2,7 +2,7 @@
   "indexCollections": [
     {
       "cNum": 4,
-      "building": true,
+      "building": false,
       "ready": true,
       "title": "Santa Fe",
       "modified": false,
