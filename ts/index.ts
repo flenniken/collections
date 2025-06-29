@@ -14,6 +14,12 @@ let runningFromIcon = false
 
 window.addEventListener("load", handleLoad)
 window.addEventListener("resize", handleResize)
+window.addEventListener("scroll", () => {
+  // Save the page scroll position so we can maintain it when coming
+  // back from the thumbnails or images pages.
+  const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+  localStorage.setItem("indexScrollPosition", scrollTop.toString());
+})
 
 function registerServerWorker() {
   // Register the Service Worker if it is supported.
@@ -175,6 +181,19 @@ async function handleLoad() {
       setCollectionState(cNum, "withoutImages")
     }
   })
+
+  // Scroll to the saved scroll position if it exists.
+  const savedScrollPosition = localStorage.getItem("indexScrollPosition");
+  if (savedScrollPosition) {
+    log(`savedScrollPosition: ${savedScrollPosition}`)
+    const scrollTop = parseInt(savedScrollPosition, 10);
+    document.documentElement.scrollTop = scrollTop;
+    document.body.scrollTop = scrollTop;
+  }
+
+  // Show the page now to cut down on page flashing.
+  document.body.style.visibility = "visible"
+  document.body.style.opacity = "1"
 
   // If the user just logged in (state starts with loggedIn), set the
   // UI for a logged in user.

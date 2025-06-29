@@ -35,7 +35,14 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   var csjson = {csjson}
   var settings = {settings}
 //$ endblock
-</script>
+  </script>
+  <style>
+body {
+//$ # The page is hidden until it finishes loading so it does not flash.
+  visibility: hidden;
+  opacity: 0;
+}
+  </style>
 </head>
 <body id="index">
   <div class="top-menu">
