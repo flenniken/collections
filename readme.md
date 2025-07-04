@@ -53,7 +53,7 @@ The icons do the following:
 The thumbnails page shows the collection’s thumbnails.
 
 Past the bottom of the thumbnails you see the collection's title and a
-more in depth description of the collection then on the index page.
+more in depth description of the collection than on the index page.
 
 You go back to the index page by scrolling to the bottom and tapping
 the index icon.
