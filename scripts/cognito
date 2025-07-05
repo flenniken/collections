@@ -121,8 +121,9 @@ def listUsers(poolName, cognitoClient=None):
     if pagination_token:
       params['PaginationToken'] = pagination_token
 
-    # Make the API call
+    # Ask cognito for the user info.
     response = cognitoClient.list_users(**params)
+    # printDict("user info", response)
 
     # Add users from this page to our list
     users.extend(response['Users'])
@@ -143,7 +144,8 @@ def listUsers(poolName, cognitoClient=None):
       adminStr = "admin"
     else:
       adminStr = "user"
-    print(f"{adminStr:>5}: {given_name} {family_name} <{email}>")
+    userId = a.get('sub')
+    print(f"{adminStr:>5}: {given_name} {family_name} <{email}> {userId}")
 
 def promptForEmailConfiguration(sesv2Client=None, stsClient=None):
   """
@@ -785,6 +787,88 @@ def getPoolSettings(poolName, cognitoClient=None):
 
   return settings
 
+def createUser(poolName, email, given_name, family_name, admin, cognitoClient=None):
+  """
+  Create a new user in the given cognito user pool.
+  """
+  if cognitoClient is None:
+    cognitoClient = getBotoClient('cognito-idp')
+  pools = poolNamesToIds(cognitoClient)
+  if poolName not in pools:
+    raise CognitoException("The user pool doesn't exist.")
+
+  try:
+    response = cognitoClient.admin_create_user(
+      UserPoolId=pools[poolName],
+      Username=email,
+      UserAttributes=[
+        {
+          "Name": "given_name",
+           "Value": given_name
+        },
+        {
+          "Name": "family_name",
+           "Value": family_name
+        },
+        {
+          "Name": "email",
+           "Value": email
+        },
+        {
+          "Name": "email_verified",
+          "Value": "true"
+        },
+        {
+          "Name": "custom:admin",
+           "Value": admin
+        },
+      ],
+      DesiredDeliveryMediums=['EMAIL'])
+  except botocore.exceptions.ClientError as error:
+    if error.response['Error']['Code'] == 'UsernameExistsException':
+      raise CognitoException("The user already exists.")
+    else:
+      raise error
+
+  # printDict("response", response)
+
+  userId = response["User"]["Username"]
+
+  # Set a temporary password.
+  digits = ''.join(random.choice(string.digits) for x in range(4))
+  password = f"Pass+{digits}"
+  response = cognitoClient.admin_set_user_password(
+    UserPoolId=pools[poolName],
+      Username=email,
+      Password=password,
+      Permanent=False
+  )
+
+  print(f"""\
+
+Created User:
+          admin: {admin}
+     given_name: {given_name}
+    family_name: {family_name}
+          email: {email}
+         userId: {userId}
+  temp password: {password}""")
+
+  # printDict("response", response)
+
+def inputBoolean(message):
+  """
+  Prompt for a True or False. Return True, False or None.
+  """
+  result = input(message)
+  if result == '':
+    return None
+  if result != "True" and result != "False":
+    raise CognitoException("Invalid True or False setting.")
+  if result == "True":
+    return True
+  return False
+
 def process(args):
   """
   """
@@ -798,6 +882,9 @@ def process(args):
     createPool(collectionsPool)
   elif args.writeAwsSettings:
     writeAwsSettings(collectionsPool)
+  elif args.createUser:
+    email, give_name, family_name, admin = args.createUser
+    createUser(collectionsPool, email, give_name, family_name, admin)
   else:
     raise CognitoException(f"""No implementation for args:
 {args}
@@ -841,6 +928,10 @@ def parseCommandLine():
   parser.add_argument("-w", "--writeAwsSettings", action="store_true",
     help="""write the aws-settings.json file containing aws information
 needed by the website and scripts""")
+
+  parser.add_argument("--createUser", metavar=(
+    "email", "given_name", "family_name", "admin"), nargs=4, required=False,
+    help="create a new user. Use the console to delete the user.")
 
   parser.add_argument("-l", "--listUsers", action="store_true",
     help="list the pool users")
