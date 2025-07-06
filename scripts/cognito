@@ -843,6 +843,7 @@ def createUser(poolName, email, given_name, family_name, admin, cognitoClient=No
       Password=password,
       Permanent=False
   )
+  # printDict("response", response)
 
   print(f"""\
 
@@ -854,7 +855,25 @@ Created User:
          userId: {userId}
   temp password: {password}""")
 
-  # printDict("response", response)
+  email = f"""\
+
+
+Welcome to Collections.
+
+Sign in with your email and the temporary password below. It will step
+you through creating a new password.
+
+It’s best to run Collections on an iPhone. If you are, copy and paste
+the link into the Safari browser:
+
+https://collections.sflennik.com/index.html
+
+user name: {email}
+Password: {password}
+
+Steve
+"""
+  print(email)
 
 def inputBoolean(message):
   """
