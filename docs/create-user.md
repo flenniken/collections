@@ -1,87 +1,83 @@
 # Create User
 
-This note tells how to create a new website user. You add a new user
-using the AWS Cognito console in two steps, first create the user then
-set their name.
+This note tells how to create a new website user so they can login,
+how to list users and how to use the AWS Cognito console for other
+tasks.
 
 [⬇](#Contents) (table of contents at the bottom)
 
 # Create New User
 
-You create a new website user by specifying their email address and a
-temporary password. In the console find the "Create user" button at
-this path:
+You add a new user with the cognito createUser command.  It creates
+the user in AWS Cognito then it outputs text for an email that you
+manually send.
+
+You need the user’s email and their first and last name. For example,
+to add the John Doe user:
 
 ~~~
-Amazon Cognito > User pools > collections-pool > Users > Create user
+scripts/cognito --createUser \
+  john@doe.com \
+  John \
+  Doe \
+  False
 ~~~
 
-* select "Send an email invitation"
-* add email: e.g. steve.Flenniken+steps@gmail.com
-* enter a temporary password: e.g. Password1$
-* push "Create user" button
+The last parameter is whether the user is an admin. It’s often
+convenient to use plus sign emails for admins, see the Plus Sign
+Emails section about these type of email addresses.
 
-[⬇](#Contents)
-
-# Set User Name
-
-In the console edit the user and set their name.
-
-* User attributes > Edit
-* click "Add Attribute"
-* in the Attribute Name editbox type "given_name"
-* in the Value edit box type name, e.g. "Steve"
-* Click add another
-* in the Attribute Name editbox type their "family_name"
-* in the Value edit box type their name, e.g. "Flenniken"
-* optionally add custom:admin, true
-* push the Save button
-
-The user will receive an email telling them their email address and
-password.  The password will expire if not used in 7 days.  The first
-time they login, they set a permanent password.
-
-[⬇](#Contents)
-
-# Reset Password
-
-You can reset a user's password from the command line:
+The command outputs the text for an email that you manually send. For
+example:
 
 ~~~
-# from container
-aws cognito-idp admin-set-user-password \
-  --user-pool-id us-west-2_4czmlJC5x \
-  --username f86103f0-7021-705f-290b-aa443e8605c2 \
-  --password Temp1pass= --no-permanent
-~~~
+Welcome to Collections.
 
-It takes a few minutes for the user to receive their email.
+Sign in with your email and the temporary password below. It will step you through creating a new password.
+
+It’s best to run Collections on an iPhone. If you are, copy and paste the link into the Safari browser:
+
+https://collections.sflennik.com/index.html
+
+user name: john@doe.com
+Password: temppass1234
+
+Steve
+~~~
 
 # Plus Sign Emails
 
-You can use the plus sign in emails for testing so multiple unique
-email addresses go to the same place. For example:
+You can use the plus sign in emails to make multiple unique email
+addresses that go to the same place. For example:
 
 * steve.flenniken@gmail.com
 * steve.flenniken+admin@gmail.com
 
 [⬇](#Contents)
 
-# Verify User
+# List Users
 
-Verify the new user by listing all the users:
+You can list all the users with the -l option. The last value is the
+user id:
 
 ~~~
 scripts/cognito -l
 
-admin: Steve Flenniken <steve.flenniken+admin@gmail.com>
- user: Steve Flenniken <steve.flenniken@gmail.com>
+admin: Steve Flenniken <steve.flenniken+admin@gmail.com> 0801f3d0-8041-70db-6366-c3161ab7589f
+ user: Steve Flenniken <steve.flenniken@gmail.com> 0861d3e0-00a1-7058-ad19-4d7b1880d276
+...
 ~~~
+
+# AWS Cognito Console
+
+You use the Cognito console to disable or delete users and other tasks
+not covered by the cognito script.
 
 # Contents
 
-* [Create New User](#create-new-user) -- how to create a new website user.
-* [Set User Name](#set-user-name) -- how to set the new user's name.
-* [Reset Password](#reset-password) -- how to reset a user's password.
-* [Plus Sign Emails](#plus-sign-emails) -- how to use the plus sign for multiple emails to the same location
-* [Verify User](#verify-user) -- how to verify the new user got created correctly.
+* [Create New User](#create-new-user) -- how to create a new website user so they can login.
+* [Plus Sign Emails](#plus-sign-emails) -- how to use the plus sign for multiple emails to the same location.
+* [List Users](#list-users) -- how to list all the users.
+* [AWS Cognito Console](#aws-congnito-console) -- how to use the cognito console for user management.
+
+<style>body { max-width: 40em}</style>
