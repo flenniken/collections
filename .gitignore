@@ -1,6 +1,5 @@
 .DS_Store
 logs/
-save/
 tmp/
 dist/js/
 dist/index.html
@@ -12,8 +11,6 @@ dist/images/*/*.html
 dist/tin/
 dist/collections.css
 dist/maker.css
-dist/local/
-working-images/
 tokens.json
 env/aws-settings.json
 .vscode/
