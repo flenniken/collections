@@ -598,6 +598,8 @@ function generateCollectionsJson() {
 
     const cinfo = readJsonFile(cjsonFile)
 
+    // Validate the cinfo.
+
     let totalSize = 0
     let iNumList: number[] = []
     for (const image of cinfo.images) {

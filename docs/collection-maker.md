@@ -35,6 +35,9 @@ __Mac Photos__
 
 Here are the steps you can use to collect the files with the Mac Photos app.
 
+♫ Note: you can select the images ahead of time by creating a photo
+album on your phone.
+
 * launch Photos
 * select 8 to 20 images. Use the cmd-click to add to the selection.
 * select export menu: File > Export > Export Unmodified Originals for 20 Photos
@@ -52,34 +55,45 @@ for each image.
 
 * Remove the .mov files
 * Open the HEIC files in Photoshop
-* edit then save each file as jpg (use File > Save)
-* uncheck "Embed Color Profile: Display P3"
+* edit then save each file as jpg (use File > Save) -- uncheck "Embed
+  Color Profile: Display P3"
 
-♫ Note: When using Photoshop, make sure to save the jpgs without color
-information or the maker command will report the file as MPO format.
+♫ Notes:
 
-♫ Note: how do you pick a live photo frame to edit?  What is a HEIC
+-- Some types of editing in Photoshop will create layers. You can tell
+when this happens when saving by the .psd extention. In this case
+flatten the image (layer > flatten image), then save.
+
+-- If you save the jpgs with color information the maker command will
+report the file as MPO format instead of JPEG.
+
+-- How do you pick a live photo frame to edit?  What is a HEIC
 file, one image or multiple. What is the .mov file?
 
-♫ Note: If you drag and drop photos from Photos to the tmp folder, you
+-- If you drag and drop photos from Photos to the tmp folder, you
 get jpg files. How does Photos app make the jpg from the originals?
 How does this workflow compare to the one documented here?
 
 * once all the jpg are created, remove the HEIC files
 
-Rename the jpg files (preview images) to end with "-p.jpg". For example:
-
+Rename the jpg files (preview images) to end with "-p.jpg". Sometimes
+you will get .jpeg files instead of .jpg files, the rename code
+handles this case. For example:
 
 ~~~
 cd tmp/4
-for file in *.jpg; do
+
+for file in *.jpg *.jpeg; do
   mv "$file" "${file/.jpg/-p.jpg}"
+done
+
+for file in *.jpeg; do
+  echo $file
+  mv "$file" "${file/.jpeg/-p.jpg}"
 done
 ~~~
 
 Then copy all the images which will become the thumbnails:
-
-♫ Note: look for jpeg files and rename them to jpg.
 
 ~~~
 cd tmp/4
@@ -215,6 +229,8 @@ world.
 ~~~
 scripts/deploy -s
 ~~~
+
+<style>body { max-width: 40em}</style>
 
 [⬇](#Contents)
 
