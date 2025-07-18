@@ -570,6 +570,243 @@ export function removeUnusedImages(cNum: number, shouldDelete: boolean):
   return {"unusedPaths": unusedPaths, "images": images}
 }
 
+function readAndValidateCjson(cjsonFile: string): CJson.Collection {
+  // Read the cjson file and validate it. Return a cinfo dictionary
+  // with the information. On error throw an exception.
+
+  if (!fs.existsSync(cjsonFile))
+    throw new Error(`Error: Missing cjson: ${cjsonFile}`);
+
+  const cinfo = readJsonFile(cjsonFile)
+  const basename = path.basename(cjsonFile)
+  const folderCNum = parseInt(basename.match(/^c(\d+)\.json$/)?.[1] ?? "")
+  validateCinfo(folderCNum, cinfo, true)
+
+  return cinfo
+}
+
+function validateCinfo(folderCNum: number, cinfo: CJson.Collection, readFiles = true) {
+  // Validate the cinfo. When readFiles is true, open the image files
+  // to get their dimensions and file sizes so you can compare them to
+  // the cinfo. On error throw an exception.
+
+  validateCinfoNoReading(folderCNum, cinfo)
+
+  if (readFiles) {
+    validateCinfoFileInfo(folderCNum, cinfo)
+  }
+}
+
+function validateCinfoFileInfo(cNum: number, cinfo: CJson.Collection) {
+  // todo: implement this
+}
+
+export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
+
+  if (cinfo == null || typeof cinfo !== 'object') {
+    throw new Error("No cinfo.")
+  }
+
+  // Check that no extra fields exist.
+  const requiredFields = [
+    "title", "description", "indexDescription", "posted",
+    "indexThumbnail", "cNum", "ready", "images", "zoomPoints"
+  ]
+  const optionalFields = [
+    "order", "building", "modified",
+  ]
+  let extraFields: string[] = []
+  Object.keys(cinfo).forEach(field => {
+    if (!requiredFields.includes(field) && !optionalFields.includes(field)) {
+      extraFields.push(field)
+    }
+  })
+  if (extraFields.length > 0) {
+    throw new Error(`Cinfo has extra fields: ${extraFields.join(", ")}.`)
+  }
+
+  // Check that all required fields exist.
+  let missingFields: string[] = []
+  requiredFields.forEach(field => {
+    if (!(field in cinfo)) {
+      missingFields.push(field)
+    }
+  })
+  if (missingFields.length > 0) {
+    throw new Error(`Cinfo missing required fields: ${missingFields.join(", ")}.`)
+  }
+
+  // Check that the cNum number matches the folder cNum.
+  if (cinfo.cNum !== cNum)
+    throw new Error(`Cinfo cNum (${cinfo.cNum}) does not match folder number (${cNum}).`)
+
+  // Check that ready collections have non-empty fields.
+  const nonEmptyFields = ["title", "description",
+    "indexDescription", "posted"]
+  if (cinfo.ready) {
+    let emptyFields: string[] = []
+    nonEmptyFields.forEach(field => {
+      if (cinfo[field as keyof CJson.Collection] === "") {
+        emptyFields.push(field)
+      }
+    })
+    if (emptyFields.length > 0) {
+      throw new Error(`Cinfo ready collection has empty fields: ${emptyFields.join(", ")}.`)
+    }
+  }
+
+  // Validate the images field.
+  validateCinfoImages(cNum, cinfo, cinfo.ready)
+
+  // Validate the zoomPoints when they exist.
+  // They must exist when the collection is ready and not building.
+  const zpKeyCount = Object.keys(cinfo.zoomPoints).length
+  if (cinfo.ready && zpKeyCount == 0 && !("building" in cinfo)) {
+    throw new Error("Cinfo zoomPoints are required for non-building, ready collections.")
+  }
+  // Validate the zoomPoints when they exist.
+  if (zpKeyCount > 0) {
+    validateCinfoZoomPoints(cinfo.images.length, cinfo.zoomPoints);
+  }
+
+  // todo: implement these checks:
+  // If the order field exists, the list has 16 numbers and each
+  // number is in the images list.
+
+  // If building exists, it should be true.
+
+}
+
+function validateCinfoZoomPoints(numImages: number,
+  zoomPoints: CJson.ZoomPoints) {
+  // Validate the zoomPoints.
+
+  // Each zoomPoint key must be in the form wxh where w and h
+  // are integers.
+  Object.keys(zoomPoints).forEach(key => {
+    const widthHeight = key.split("x");
+    if (widthHeight.length != 2) {
+      throw new Error(`Cinfo zoomPoints key ${key} is not in wxh format.`);
+    }
+    const width = parseInt(widthHeight[0]);
+    const height = parseInt(widthHeight[1]);
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0) {
+      throw new Error(`Invalid zoomPoints key ${key}.`);
+    }
+  });
+
+  // Each array of zoom points must have the same number of
+  // elements as the number of images in the collection.
+  Object.entries(zoomPoints).forEach(([key, zpArray]) => {
+    if (zpArray.length !== numImages) {
+      throw new Error(`Cinfo zoomPoints ${key} has ${zpArray.length} elements, expected ${numImages}.`);
+    }
+  });
+}
+
+// When modified is true there might be unused images or the tin thumbnail might be wrong.
+
+// Read files on disk and:
+// Make sure the preview dimensions make the width and height specified.
+// Make sure the thumbnail is 480 by 480
+// Make sure the images are jpegs.
+// Make sure there are not extra files in the folder other than the collection. cjson, previews, thumbnails, images.html, thumbnails.html.
+// Make sure the file sizes match "size" and "tsize".
+// Make sure the tin thumbnail exists.
+
+function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
+  ready: boolean) {
+  // Validate the images field of the cinfo.
+
+  if (cinfo.images.length == 0) {
+    return
+  }
+
+  // Check that each image object has the required fields.
+  const imageRequiredFields = [
+    "iPreview", "iThumbnail", "title", "description",
+    "width", "height", "size", "sizet", "uniqueId"]
+
+  // Check that the image does not have extra fields.
+  cinfo.images.forEach((image, ix) => {
+    const imageFields = Object.keys(image)
+    let extraImageFields: string[] = []
+    imageFields.forEach(field => {
+      if (!imageRequiredFields.includes(field)) {
+        extraImageFields.push(field)
+      }
+    })
+    if (extraImageFields.length > 0) {
+      throw new Error(`Cinfo image ${ix} has extra fields: ${extraImageFields.join(", ")}.`)
+    }
+  });
+
+  // Check that the image has all required fields.
+  cinfo.images.forEach((image, ix) => {
+    let missingImageFields: string[] = []
+    imageRequiredFields.forEach(field => {
+      if (!(field in image)) {
+        missingImageFields.push(field)
+      }
+    })
+    if (missingImageFields.length > 0) {
+      throw new Error(`Cinfo image ${ix} missing required fields: ${missingImageFields.join(", ")}.`)
+    }
+  });
+
+  cinfo.images.forEach((image, ix) => {
+    validateCinfoImage(cNum, ix, cinfo.ready, image)
+  });
+}
+
+export function validateImageName(cNum: number, ix: number,
+  nameType: string, name: string) {
+  // Check that the image name has the form c2-1-p.jpg or c2-1-t.jpg.
+  const nameObj = parseImageName(name)
+  if (nameObj == null)
+    throw new Error(`Image ${ix}: invalid ${nameType} name: ${name}`);
+  if (nameObj.cNum !== cNum)
+    throw new Error(`Image ${ix}: Invalid cNum: \
+got: ${nameObj.cNum} expected: ${cNum}.`);
+  if (nameObj.pt !== nameType)
+    throw new Error(`Image ${ix}: Invalid ${nameType} type: (${nameObj.pt})`);
+}
+
+export function validateCinfoImage(cNum: number, ix: number,
+  ready: boolean, image: CJson.Image) {
+  // Validate a single image in the cinfo.
+
+  validateImageName(cNum, ix, "p", image.iPreview)
+  validateImageName(cNum, ix, "t", image.iThumbnail)
+
+  // Check that iPreview and iThumbnail have the same image number.
+  const previewObj = parseImageName(image.iPreview)
+  const thumbObj = parseImageName(image.iThumbnail)
+  if (previewObj?.iNum !== thumbObj?.iNum) {
+    throw new Error(`Image ${ix}: \
+different inum: iPreview ${image.iPreview}, iThumbnail ${image.iThumbnail}`)
+  }
+
+  // Check that width and height greater than or equal to previewMinDim = 933
+  const previewMinDim = 933
+  if (image.width < previewMinDim) {
+    throw new Error(`Image ${ix}: preview width must be >= ${previewMinDim}: \
+got: ${image.width}.`)
+  }
+  if (image.height < previewMinDim) {
+    throw new Error(`Image ${ix}: preview height must be >= ${previewMinDim}: \
+got: ${image.height}.`)
+  }
+
+  if (ready && (image.description == "")) {
+    throw new Error(`Image ${ix}: description is required for ready collections.`)
+  }
+}
+
+// Check that zoomPoints has at least two fields.
+// Check that zoomPoints fields have wxh format.
+// Check that zoomPoints list have the same number of elements as the collection.
+
 function generateCollectionsJson() {
   // Generate the pages/collections.json file from the cjson files.
 
@@ -593,12 +830,9 @@ function generateCollectionsJson() {
   const csjson: CJson.Csjson = { indexCollections: [] };
   for (const folder of collectionFolders) {
     const cjsonFile = path.join(imagesDir, folder, `${folder}.json`);
-    if (!fs.existsSync(cjsonFile))
-      throw new Error(`Error: Missing cjson: ${cjsonFile}`);
 
-    const cinfo = readJsonFile(cjsonFile)
-
-    // Validate the cinfo.
+    // Read and validate the cjson file.
+    const cinfo: CJson.Collection = readAndValidateCjson(cjsonFile)
 
     let totalSize = 0
     let iNumList: number[] = []
@@ -612,10 +846,10 @@ function generateCollectionsJson() {
 
     const indexCollection: CJson.IndexCollection = {
       cNum: cinfo.cNum,
-      building: "building" in cinfo ? cinfo.building : false,
+      building: cinfo.building ?? false,
       ready: cinfo.ready,
       title: cinfo.title,
-      modified: "modified" in cinfo ? cinfo.modified : false,
+      modified: cinfo.modified ?? false,
       indexDescription: cinfo.indexDescription,
       iThumbnail: cinfo.indexThumbnail,
       posted: cinfo.posted,

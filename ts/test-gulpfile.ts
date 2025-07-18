@@ -1,6 +1,6 @@
 // Test gulpfile.ts
 
-import * as fs from 'fs';
+
 import * as path from 'path';
 import { runSuite, testThrow, test, gotExpected } from "./sweet-tester";
 import {
@@ -10,6 +10,9 @@ import {
   getCollectionImages,
   getUnusedImageFiles,
   removeUnusedImages,
+  validateCinfoNoReading,
+  validateCinfoImage,
+  validateImageName,
 } from './gulpfile';
 
 if (!process.env.coder_env) {
@@ -183,6 +186,191 @@ function removeUnusedImagesSuite() {
     [], [1,5,3,7,11,8,16,9,10,14,13,17])
 }
 
+interface CinfoOptions {
+  cNum?: number;
+  numImages?: number;
+  zoomPointKeys?: string[];
+  order?: number[];
+  building?: boolean;
+  modified?: boolean;
+  ready?: boolean;
+}
+  // Create a valid test cinfo object for the given collection number.
+  // * cNum is the collection number.
+  // * numImages is the number of images in the collection.
+  // * zoomPointKeys is an array of wxh keys, e.g. ["800x600", "600x800"].
+
+function createTestCinfo(options?: CinfoOptions): CJson.Collection {
+  // Create a valid test cinfo object for testing.
+
+  const cNum = options?.cNum ?? 4
+
+  let cinfo: CJson.Collection = {
+    title: `Collection ${cNum} Title`,
+    description: "Full description.",
+    indexDescription: "Index description.",
+    indexThumbnail: `c${cNum}-1-t.jpg`,
+    posted: "2025-07-12",
+    cNum: cNum,
+    ready: true,
+    images: [],
+    zoomPoints: {}
+  }
+
+  // Create the images array.
+  const numImages = options?.numImages ?? 0
+  if (numImages > 0) {
+    cinfo.images = Array.from({length: numImages}, (_, i) =>
+      createTestImage(cNum, i))
+  }
+
+  // Create the zoomPoints object.
+  const zoomPointKeys = options?.zoomPointKeys ?? []
+  if (zoomPointKeys.length > 0) {
+    zoomPointKeys.forEach(wxh => {
+      cinfo.zoomPoints[wxh] = Array.from({length: numImages}, (_, i) => ({
+        scale: 1.0,
+        tx: 0,
+        ty: 0
+      }))
+    })
+  }
+
+  if (options?.ready !== undefined)
+    cinfo.ready = options.ready
+  if (options?.building !== undefined)
+    cinfo.building = options.building
+  if (options?.modified !== undefined)
+    cinfo.modified = options.modified
+
+  return cinfo
+}
+
+function validateImageNameSuite() {
+  const fn = validateImageName
+  test(fn, 4, 0, "p", 'c4-1-p.jpg')
+  test(fn, 4, 0, 't', 'c4-1-t.jpg')
+  testThrow("Image 0: invalid p name: bogus.jpg", fn, 4, 0, 'p', 'bogus.jpg')
+  testThrow("Image 0: invalid p name: c4-1-q.jpg", fn, 4, 0, 'p', 'c4-1-q.jpg')
+  testThrow("Image 0: invalid p name: c4-1-q.jpeg", fn, 4, 0, 'p', 'c4-1-q.jpeg')
+  testThrow("Image 0: Invalid cNum: got: 5 expected: 4.", fn, 4, 0, 'p', 'c5-1-p.jpg')
+}
+
+function createTestImage(cNum: number, ix: number): CJson.Image {
+  // Create a valid test image object for the given collection and
+  // image index.
+
+  const image: CJson.Image = {
+    iPreview: `c${cNum}-${ix}-p.jpg`,
+    iThumbnail: `c${cNum}-${ix}-t.jpg`,
+    title: `Title ${ix}`,
+    description: `Description ${ix}`,
+    width: 933,
+    height: 933,
+    size: 123456,
+    sizet: 20987,
+    uniqueId: `uniqueId ${ix}`
+  }
+  return image
+}
+
+function validateCinfoImageSuite() {
+  const fn = validateCinfoImage
+  test(fn, 4, 0, false, createTestImage(4, 0))
+  testThrow("Image 3: Invalid cNum: got: 4 expected: 5.", fn, 5, 3,
+    false, createTestImage(4, 3))
+
+  let image = createTestImage(4, 2)
+  image.iPreview = "bogus.jpg"
+  testThrow("Image 2: invalid p name: bogus.jpg", fn, 4, 2, false, image)
+
+  image = createTestImage(4, 2)
+  image.iThumbnail = "bogus.jpg"
+  testThrow("Image 2: invalid t name: bogus.jpg", fn, 4, 2, false, image)
+
+  image = createTestImage(4, 2)
+  image.iThumbnail = "c4-0-t.jpg"
+  let eMessage = "Image 2: different inum: iPreview c4-2-p.jpg, iThumbnail c4-0-t.jpg"
+  testThrow(eMessage, fn, 4, 2, false, image)
+
+  image = createTestImage(4, 2)
+  image.width = 932
+  eMessage = "Image 2: preview width must be >= 933: got: 932."
+  testThrow(eMessage, fn, 4, 2, false, image)
+
+  image = createTestImage(4, 2)
+  image.height = 932
+  eMessage = "Image 2: preview height must be >= 933: got: 932."
+  testThrow(eMessage, fn, 4, 2, false, image)
+
+  image = createTestImage(4, 2)
+  image.title = ""
+  image.description = ""
+  test(fn, 4, 2, false, image)
+  testThrow("Image 2: description is required for ready collections.", fn, 4, 2, true, image)
+
+  image = createTestImage(4, 2)
+  image.width = 0
+  testThrow("Image 2: preview width must be >= 933: got: 0.", fn, 4, 2, true, image)
+
+  image = createTestImage(4, 2)
+  image.height = 932
+  testThrow("Image 2: preview height must be >= 933: got: 932.", fn, 4, 2, true, image)
+}
+
+function validateCinfoNoReadingSuite() {
+  const fn = validateCinfoNoReading
+
+  test(fn, 4, createTestCinfo({building: true}))
+  test(fn, 4, createTestCinfo({building: true, numImages: 1}))
+  test(fn, 4, createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]}))
+
+  let message = "No cinfo."
+  testThrow(message, fn, 4, null)
+  testThrow(message, fn, 4, 8)
+
+  message = "Cinfo missing required fields: title, description, \
+indexDescription, posted, indexThumbnail, cNum, ready, images, zoomPoints."
+  testThrow(message, fn, 4, {})
+
+  message = "Cinfo missing required fields: description, \
+indexThumbnail, zoomPoints."
+  testThrow(message, fn, 4,
+    {cNum: 4, title: "Title", indexDescription: "Desc",
+    posted: true, ready: true, images: []})
+
+  message = "Cinfo has extra fields: bogus."
+  testThrow(message, fn, 4, {bogus: 1})
+
+  message = "Cinfo cNum (5) does not match folder number (4)."
+  testThrow(message, fn, 4, createTestCinfo(
+    {cNum: 5, numImages: 0}))
+
+  message = "Cinfo image 0 has extra fields: bogus."
+  let cinfo = createTestCinfo({numImages: 1});
+  (cinfo.images[0] as any).bogus = 1
+  testThrow(message, fn, 4, cinfo)
+
+  message = "Cinfo image 0 missing required fields: iPreview."
+  cinfo = createTestCinfo({numImages: 1});
+  delete (cinfo.images[0] as any).iPreview
+  testThrow(message, fn, 4, cinfo)
+
+  message = "Cinfo ready collection has empty fields: title."
+  cinfo = createTestCinfo({numImages: 1})
+  cinfo.title = ""
+  testThrow(message, fn, 4, cinfo)
+
+  message = "Cinfo ready collection has empty fields: title, description, indexDescription, posted."
+  cinfo = createTestCinfo({numImages: 1})
+  cinfo.title = ""
+  cinfo.description = ""
+  cinfo.indexDescription = ""
+  cinfo.posted = ""
+  testThrow(message, fn, 4, cinfo)
+}
+
 function testGulpfile() {
   // Run the test suite for the gulpfile.
 
@@ -192,6 +380,10 @@ function testGulpfile() {
   runSuite(getCollectionImagesSuite)
   runSuite(getUnusedImageFilesSuite)
   runSuite(removeUnusedImagesSuite)
+  runSuite(validateImageNameSuite)
+  runSuite(validateCinfoImageSuite)
+  runSuite(validateCinfoNoReadingSuite)
+
 }
 
 testGulpfile()

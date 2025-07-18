@@ -1,6 +1,7 @@
 // Suite Test Framework (sweet-tester.ts)
 
-export { gotExpected, fail, getFunctionName, testThrow, test, runSuite };
+export { gotExpected, fail, getFunctionName, testThrow,
+  test, runSuite };
 
 const log = console.log
 
@@ -72,7 +73,7 @@ function testThrow(eMessage: string, fn: (...args: any[]) => void, ...args: any[
 
 function testThrow2(eMessage: string, fn: (...args: any[]) => void, ...args: any[]): string {
   // Run the test function with the provided arguments and return an
-  // error message. If the error message is "", the test passedd..
+  // error message. If the error message is "", the test passed.
   // The function passes when it generates an exception with the
   // expected message.
 
@@ -83,7 +84,7 @@ function testThrow2(eMessage: string, fn: (...args: any[]) => void, ...args: any
   }
   catch (error) {
     if (! (error instanceof Error)) {
-      return "The exception object is not an instance of Error"
+      return "The exception object is not an instance of Error."
     }
     // Verify the error message is the same as the expected message.
     try {

@@ -2,15 +2,36 @@ namespace CJson {
   // The collection json's typescript definition (cjson).
 
   export interface Image {
-    // iPreview is the basename of the image, e.g. c2-1-p.jpg. iThumbnail too.
+    // iPreview is the basename of the preview image in the collection
+    // folder. The name starts with a "c" then the collection number,
+    // then the image number ending with "-p.jpg", e.g. c2-1-p.jpg.
     iPreview: string;
+
+    // iThumbnail is the basename of the thumbnail image in the
+    // collection folder. The name starts with a "c" then the
+    // collection number, then the image number ending with "-t.jpg",
+    // e.g. c2-1-t.jpg. Thumbnails are 480 x 480 pixels.
     iThumbnail: string;
+
+    // The image title which can be and empty string.
     title: string;
+
+    // The required image description. Once the collection is ready,
+    // the description cannot be blank.
     description: string;
+
+    // Width and height of the preview image in pixels. A preview's
+    // minimum dimension is at least 933 pixels.
     width: number;
     height: number;
+
+    // Size of the preview file in bytes.
     size: number;
+
+    // Size of the thumbnail file in bytes.
     sizet: number;
+
+    // Unused. todo: remove this until it is used.
     uniqueId: string;
   }
 
@@ -25,26 +46,35 @@ namespace CJson {
     // height combinations. The key is a string of the form
     // "widthxheight" where width and height are the image dimensions
     // in pixels. The value is an array of ZoomPoint objects the same
-    // length and order as the image array.
+    // length and order as the image array. For example:
+    // "zoomPoints": {
+    //   "430x933": [ZoomPoint, ZoomPoint, ZoomPoint...],
+    //   "932x430": [ZoomPoint, ZoomPoint, ZoomPoint...],
+    //   ...
+    // }
     [wxh: string]: ZoomPoint[];
   }
 
   export interface Collection {
+    // The collection title. Required for ready collections.
     title: string;
 
     // Short description of the collection for the index page.
+    // Required for ready collections.
     indexDescription: string;
 
     // Full desciption of the collection for the thumbnails page.
+    // Required for ready collections.
     description: string;
 
-    // Thumbnail url for the index page. The index thumbnails are
-    // copied to the tin folder so they are publicly visible. While
-    // developing the collection the maker page will set it empty or
-    // set it to a thumbnail in the collection.
+    // The base name of the collection's thumbnail image for the index
+    // page e.g. c4-12-t.jpg. The tin folder images are publicly
+    // visible, unlike the other image files.
+    // Required for ready collections.
     indexThumbnail: string;
 
     // The date the collection was posted on the internet.
+    // Required for ready collections.
     posted: string;
 
     // The collection number. Collections are in sequential order.
@@ -58,10 +88,12 @@ namespace CJson {
     // removed.
     order?: number[];
 
-    // The image array contains an element for each image in the collection.
+    // The image array contains an element for each image in the
+    // collection. Required for ready collections.
     images: Image[];
 
-    // A dictionary of zoom points.
+    // A dictionary of zoom points. Required for ready and
+    // not building collections.
     zoomPoints: ZoomPoints;
 
     // The building field determines who can see the collection. When
@@ -78,12 +110,13 @@ namespace CJson {
     // building flag.  The ready flag is set by the maker page.
     ready: boolean;
 
-    // The modified field tells the build process that the collection
-    // has been modified or is new.  When true, the build process:
+    // The modified field is set by the maker page. It tells the build
+    // process that the collection has been modified or is new.  When
+    // true, the build modified task:
     // * copies the tin thumbnail file to the shared location
     // * removes the old tin thumbnail if it exists
     // * removes any unused collection image files
-    // * removes this field when done
+    // * removes the modified field when done
     modified?: boolean;
   }
 
