@@ -330,39 +330,39 @@ function validateCinfoNoReadingSuite() {
   testThrow(message, fn, 4, null)
   testThrow(message, fn, 4, 8)
 
-  message = "Cinfo missing required fields: title, description, \
+  message = "The collection is missing required fields: title, description, \
 indexDescription, posted, indexThumbnail, cNum, ready, images, zoomPoints."
   testThrow(message, fn, 4, {})
 
-  message = "Cinfo missing required fields: description, \
+  message = "The collection is missing required fields: description, \
 indexThumbnail, zoomPoints."
   testThrow(message, fn, 4,
     {cNum: 4, title: "Title", indexDescription: "Desc",
     posted: true, ready: true, images: []})
 
-  message = "Cinfo has extra fields: bogus."
+  message = "The collection has extra fields: bogus."
   testThrow(message, fn, 4, {bogus: 1})
 
-  message = "Cinfo cNum (5) does not match folder number (4)."
+  message = "Collection 5 does not match folder number 4."
   testThrow(message, fn, 4, createTestCinfo(
     {cNum: 5, numImages: 0}))
 
-  message = "Cinfo image 0 has extra fields: bogus."
+  message = "Image 0 has extra fields: bogus2."
   let cinfo = createTestCinfo({numImages: 1});
-  (cinfo.images[0] as any).bogus = 1
+  (cinfo.images[0] as any).bogus2 = 1
   testThrow(message, fn, 4, cinfo)
 
-  message = "Cinfo image 0 missing required fields: iPreview."
+  message = "Image 0 is missing required fields: iPreview."
   cinfo = createTestCinfo({numImages: 1});
   delete (cinfo.images[0] as any).iPreview
   testThrow(message, fn, 4, cinfo)
 
-  message = "Cinfo ready collection has empty fields: title."
+  message = "The ready collection has empty fields: title."
   cinfo = createTestCinfo({numImages: 1})
   cinfo.title = ""
   testThrow(message, fn, 4, cinfo)
 
-  message = "Cinfo ready collection has empty fields: title, description, indexDescription, posted."
+  message = "The ready collection has empty fields: title, description, indexDescription, posted."
   cinfo = createTestCinfo({numImages: 1})
   cinfo.title = ""
   cinfo.description = ""

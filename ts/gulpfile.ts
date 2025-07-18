@@ -601,13 +601,45 @@ function validateCinfoFileInfo(cNum: number, cinfo: CJson.Collection) {
   // todo: implement this
 }
 
+function validateFields(obj: object, requiredFields: string[],
+  optionalFields: string[], iNum?: number) {
+
+  let extraFields: string[] = []
+  Object.keys(obj).forEach(field => {
+      if (!requiredFields.includes(field) && !optionalFields.includes(field)) {
+      extraFields.push(field)
+    }
+  })
+  if (extraFields.length > 0) {
+    if (iNum !== undefined)
+      throw new Error(`Image ${iNum} has extra fields: ${extraFields.join(", ")}.`)
+    else
+      throw new Error(`The collection has extra fields: ${extraFields.join(", ")}.`)
+  }
+
+  // Check that all required fields exist.
+  let missingFields: string[] = []
+  requiredFields.forEach(field => {
+    if (!(field in obj)) {
+      missingFields.push(field)
+    }
+  })
+  if (missingFields.length > 0) {
+    if (iNum !== undefined)
+      throw new Error(`Image ${iNum} is missing required fields: ${missingFields.join(", ")}.`)
+    else
+      throw new Error(`The collection is missing required fields: ${missingFields.join(", ")}.`)
+  }
+}
+
 export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
 
   if (cinfo == null || typeof cinfo !== 'object') {
     throw new Error("No cinfo.")
   }
 
-  // Check that no extra fields exist.
+  // Check that the required fields exist and no extra fields exist
+  // in the collection interface.
   const requiredFields = [
     "title", "description", "indexDescription", "posted",
     "indexThumbnail", "cNum", "ready", "images", "zoomPoints"
@@ -615,32 +647,13 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   const optionalFields = [
     "order", "building", "modified",
   ]
-  let extraFields: string[] = []
-  Object.keys(cinfo).forEach(field => {
-    if (!requiredFields.includes(field) && !optionalFields.includes(field)) {
-      extraFields.push(field)
-    }
-  })
-  if (extraFields.length > 0) {
-    throw new Error(`Cinfo has extra fields: ${extraFields.join(", ")}.`)
-  }
-
-  // Check that all required fields exist.
-  let missingFields: string[] = []
-  requiredFields.forEach(field => {
-    if (!(field in cinfo)) {
-      missingFields.push(field)
-    }
-  })
-  if (missingFields.length > 0) {
-    throw new Error(`Cinfo missing required fields: ${missingFields.join(", ")}.`)
-  }
+  validateFields(cinfo, requiredFields, optionalFields)
 
   // Check that the cNum number matches the folder cNum.
   if (cinfo.cNum !== cNum)
-    throw new Error(`Cinfo cNum (${cinfo.cNum}) does not match folder number (${cNum}).`)
+    throw new Error(`Collection ${cinfo.cNum} does not match folder number ${cNum}.`)
 
-  // Check that ready collections have non-empty fields.
+  // Check that ready collections have non-empty text fields.
   const nonEmptyFields = ["title", "description",
     "indexDescription", "posted"]
   if (cinfo.ready) {
@@ -651,7 +664,7 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
       }
     })
     if (emptyFields.length > 0) {
-      throw new Error(`Cinfo ready collection has empty fields: ${emptyFields.join(", ")}.`)
+      throw new Error(`The ready collection has empty fields: ${emptyFields.join(", ")}.`)
     }
   }
 
@@ -662,7 +675,7 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   // They must exist when the collection is ready and not building.
   const zpKeyCount = Object.keys(cinfo.zoomPoints).length
   if (cinfo.ready && zpKeyCount == 0 && !("building" in cinfo)) {
-    throw new Error("Cinfo zoomPoints are required for non-building, ready collections.")
+    throw new Error("The collection zoomPoints are required for non-building, ready collections.")
   }
   // Validate the zoomPoints when they exist.
   if (zpKeyCount > 0) {
@@ -686,7 +699,7 @@ function validateCinfoZoomPoints(numImages: number,
   Object.keys(zoomPoints).forEach(key => {
     const widthHeight = key.split("x");
     if (widthHeight.length != 2) {
-      throw new Error(`Cinfo zoomPoints key ${key} is not in wxh format.`);
+      throw new Error(`Collection zoomPoints key ${key} is not in wxh format.`);
     }
     const width = parseInt(widthHeight[0]);
     const height = parseInt(widthHeight[1]);
@@ -699,7 +712,7 @@ function validateCinfoZoomPoints(numImages: number,
   // elements as the number of images in the collection.
   Object.entries(zoomPoints).forEach(([key, zpArray]) => {
     if (zpArray.length !== numImages) {
-      throw new Error(`Cinfo zoomPoints ${key} has ${zpArray.length} elements, expected ${numImages}.`);
+      throw new Error(`The collection's zoomPoints ${key} has ${zpArray.length} elements, expected ${numImages}.`);
     }
   });
 }
@@ -727,31 +740,9 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
     "iPreview", "iThumbnail", "title", "description",
     "width", "height", "size", "sizet", "uniqueId"]
 
-  // Check that the image does not have extra fields.
+    // Check that the image does not have extra fields.
   cinfo.images.forEach((image, ix) => {
-    const imageFields = Object.keys(image)
-    let extraImageFields: string[] = []
-    imageFields.forEach(field => {
-      if (!imageRequiredFields.includes(field)) {
-        extraImageFields.push(field)
-      }
-    })
-    if (extraImageFields.length > 0) {
-      throw new Error(`Cinfo image ${ix} has extra fields: ${extraImageFields.join(", ")}.`)
-    }
-  });
-
-  // Check that the image has all required fields.
-  cinfo.images.forEach((image, ix) => {
-    let missingImageFields: string[] = []
-    imageRequiredFields.forEach(field => {
-      if (!(field in image)) {
-        missingImageFields.push(field)
-      }
-    })
-    if (missingImageFields.length > 0) {
-      throw new Error(`Cinfo image ${ix} missing required fields: ${missingImageFields.join(", ")}.`)
-    }
+    validateFields(image, imageRequiredFields, [], ix)
   });
 
   cinfo.images.forEach((image, ix) => {
