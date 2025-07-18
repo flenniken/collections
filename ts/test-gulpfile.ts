@@ -243,6 +243,10 @@ function createTestCinfo(options?: CinfoOptions): CJson.Collection {
   if (options?.modified !== undefined)
     cinfo.modified = options.modified
 
+  // Set the order field when it is specified.
+  if (options?.order !== undefined) {
+    cinfo.order = options.order
+  }
   return cinfo
 }
 
@@ -368,6 +372,22 @@ indexThumbnail, zoomPoints."
   cinfo.description = ""
   cinfo.indexDescription = ""
   cinfo.posted = ""
+  testThrow(message, fn, 4, cinfo)
+
+  // The building field must be true when it exists.
+  message = "The collection building field must be true when it exists."
+  cinfo = createTestCinfo({numImages: 1, building: false})
+  testThrow(message, fn, 4, cinfo)
+
+  // The modified field must be true when it exists.
+  message = "The collection modified field must be true when it exists."
+  cinfo = createTestCinfo({numImages: 1, building: true, modified: false})
+  testThrow(message, fn, 4, cinfo)
+
+  // Non-modified ready collections must not have an order field.
+  message = "The collection order field is not allowed for non-building ready collections."
+  cinfo = createTestCinfo({numImages: 1, order: [0],
+    zoomPointKeys: ["933x432", "432x933"]})
   testThrow(message, fn, 4, cinfo)
 }
 

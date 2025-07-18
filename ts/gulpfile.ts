@@ -633,7 +633,9 @@ function validateFields(obj: object, requiredFields: string[],
 }
 
 export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
-
+  // Validate the collection information without reading files on disk.
+  // The cNum parameter is the expected collection number. The cinfo
+  // parameter contains the collection information.
   if (cinfo == null || typeof cinfo !== 'object') {
     throw new Error("No cinfo.")
   }
@@ -671,8 +673,7 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   // Validate the images field.
   validateCinfoImages(cNum, cinfo, cinfo.ready)
 
-  // Validate the zoomPoints when they exist.
-  // They must exist when the collection is ready and not building.
+  // The zoom points must exist when the collection is ready and not building.
   const zpKeyCount = Object.keys(cinfo.zoomPoints).length
   if (cinfo.ready && zpKeyCount == 0 && !("building" in cinfo)) {
     throw new Error("The collection zoomPoints are required for non-building, ready collections.")
@@ -682,12 +683,28 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
     validateCinfoZoomPoints(cinfo.images.length, cinfo.zoomPoints);
   }
 
-  // todo: implement these checks:
-  // If the order field exists, the list has 16 numbers and each
-  // number is in the images list.
-
   // If building exists, it should be true.
+  if ("building" in cinfo && cinfo.building !== true) {
+    throw new Error("The collection building field must be true when it exists.")
+  }
+  // If modified exists, it should be true.
+  if ("modified" in cinfo && cinfo.modified !== true) {
+    throw new Error("The collection modified field must be true when it exists.")
+  }
 
+  // Ready not building collections must not have an order field.
+  if (cinfo.ready && !("building" in cinfo) && ("order" in cinfo)) {
+    throw new Error("The collection order field is not allowed for non-building ready collections.")
+  }
+
+  // If order exists, validate it.
+  if ("order" in cinfo)
+    validateOrder(cinfo.order!, cinfo.images)
+}
+
+function validateOrder(order: number[], images: CJson.Image[]) {
+  // Validate the order field.
+  // todo: implement validateOrder
 }
 
 function validateCinfoZoomPoints(numImages: number,
