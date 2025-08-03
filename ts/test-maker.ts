@@ -245,13 +245,13 @@ function createTestImage(unique: number): CJson.Image {
   let image: CJson.Image = {
     iPreview: `image url ${unique}`,
     iThumbnail: `thumbnail ${unique}`,
-    title: `title ${unique}`,
+    title: `${unique}`,
     description: `description ${unique}`,
     width: 2040+unique,
     height: 1024+unique,
     size: 10000+unique,
     sizet: 5000+unique,
-    uniqueId: `${unique}`,
+    // uniqueId: `${unique}`,
   }
   return image
 }
@@ -262,7 +262,7 @@ function testCreateTestImage(unique: number) {
   gotExpected(image.iThumbnail, `thumbnail ${unique}`, msg)
   gotExpected(image.iPreview, `image url ${unique}`, msg)
   gotExpected(image.width, 2040 + unique, msg)
-  gotExpected(image.uniqueId, `${unique}`, msg)
+  // gotExpected(image.uniqueId, `${unique}`, msg)
 }
 
 function createTestImageSuite() {
@@ -457,12 +457,14 @@ function testReorderImages(order: number[], images: CJson.Image[],
   // Test the reorderImages function.
   let imageIds: number[] = []
   for (const image of images) {
-    imageIds.push(parseInt(image.uniqueId))
+    // The test cjson uses the title for the uniqueId.
+    imageIds.push(parseInt(image.title))
   }
   const gotImages = reorderImages(order, images)
   let gotIds: number[] = []
   for (const image of gotImages) {
-    gotIds.push(parseInt(image.uniqueId))
+    // The test cjson uses the title for the uniqueId.
+    gotIds.push(parseInt(image.title))
   }
   const msg = `order: ${JSON.stringify(order)}, images: ${JSON.stringify(imageIds)}`
   gotExpected(gotIds, eIds, msg)

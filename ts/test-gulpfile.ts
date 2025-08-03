@@ -1,5 +1,7 @@
-// Test gulpfile.ts
+// test-gulpfile.ts used to test gulpfile.ts
 
+// Run it:
+// scripts/test-gulpfile
 
 import * as path from 'path';
 import { runSuite, testThrow, test, gotExpected } from "./sweet-tester";
@@ -13,6 +15,7 @@ import {
   validateCinfoNoReading,
   validateCinfoImage,
   validateImageName,
+  readCJsonFile
 } from './gulpfile';
 
 if (!process.env.coder_env) {
@@ -76,8 +79,8 @@ function fakeImagesFromNumbers(cNum: number, iNums: number[]): CJson.Image[] {
       width: 0,
       height: 0,
       size: 0,
-      sizet: 0,
-      uniqueId: ""
+      sizet: 0
+      // uniqueId: ""
     }
     images.push(image)
   })
@@ -254,10 +257,10 @@ function validateImageNameSuite() {
   const fn = validateImageName
   test(fn, 4, 0, "p", 'c4-1-p.jpg')
   test(fn, 4, 0, 't', 'c4-1-t.jpg')
-  testThrow("Image 0: invalid p name: bogus.jpg", fn, 4, 0, 'p', 'bogus.jpg')
-  testThrow("Image 0: invalid p name: c4-1-q.jpg", fn, 4, 0, 'p', 'c4-1-q.jpg')
-  testThrow("Image 0: invalid p name: c4-1-q.jpeg", fn, 4, 0, 'p', 'c4-1-q.jpeg')
-  testThrow("Image 0: Invalid cNum: got: 5 expected: 4.", fn, 4, 0, 'p', 'c5-1-p.jpg')
+  testThrow("Collection 4 image 0: invalid p name: bogus.jpg", fn, 4, 0, 'p', 'bogus.jpg')
+  testThrow("Collection 4 image 0: invalid p name: c4-1-q.jpg", fn, 4, 0, 'p', 'c4-1-q.jpg')
+  testThrow("Collection 4 image 0: invalid p name: c4-1-q.jpeg", fn, 4, 0, 'p', 'c4-1-q.jpeg')
+  testThrow("Collection 4 image 0: Invalid cNum: got: 5 expected: 4.", fn, 4, 0, 'p', 'c5-1-p.jpg')
 }
 
 function createTestImage(cNum: number, ix: number): CJson.Image {
@@ -273,7 +276,7 @@ function createTestImage(cNum: number, ix: number): CJson.Image {
     height: 933,
     size: 123456,
     sizet: 20987,
-    uniqueId: `uniqueId ${ix}`
+    // uniqueId: `uniqueId ${ix}`
   }
   return image
 }
@@ -281,45 +284,45 @@ function createTestImage(cNum: number, ix: number): CJson.Image {
 function validateCinfoImageSuite() {
   const fn = validateCinfoImage
   test(fn, 4, 0, false, createTestImage(4, 0))
-  testThrow("Image 3: Invalid cNum: got: 4 expected: 5.", fn, 5, 3,
+  testThrow("Collection 5 image 3: Invalid cNum: got: 4 expected: 5.", fn, 5, 3,
     false, createTestImage(4, 3))
 
   let image = createTestImage(4, 2)
   image.iPreview = "bogus.jpg"
-  testThrow("Image 2: invalid p name: bogus.jpg", fn, 4, 2, false, image)
+  testThrow("Collection 4 image 2: invalid p name: bogus.jpg", fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
   image.iThumbnail = "bogus.jpg"
-  testThrow("Image 2: invalid t name: bogus.jpg", fn, 4, 2, false, image)
+  testThrow("Collection 4 image 2: invalid t name: bogus.jpg", fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
   image.iThumbnail = "c4-0-t.jpg"
-  let eMessage = "Image 2: different inum: iPreview c4-2-p.jpg, iThumbnail c4-0-t.jpg"
+  let eMessage = "Collection 4 image 2: different inum: iPreview c4-2-p.jpg, iThumbnail c4-0-t.jpg"
   testThrow(eMessage, fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
   image.width = 932
-  eMessage = "Image 2: preview width must be >= 933: got: 932."
+  eMessage = "Collection 4 image 2: preview width must be >= 933: got: 932."
   testThrow(eMessage, fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
   image.height = 932
-  eMessage = "Image 2: preview height must be >= 933: got: 932."
+  eMessage = "Collection 4 image 2: preview height must be >= 933: got: 932."
   testThrow(eMessage, fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
   image.title = ""
   image.description = ""
   test(fn, 4, 2, false, image)
-  testThrow("Image 2: description is required for ready collections.", fn, 4, 2, true, image)
+  testThrow("Collection 4 image 2: description is required for ready collections.", fn, 4, 2, true, image)
 
   image = createTestImage(4, 2)
   image.width = 0
-  testThrow("Image 2: preview width must be >= 933: got: 0.", fn, 4, 2, true, image)
+  testThrow("Collection 4 image 2: preview width must be >= 933: got: 0.", fn, 4, 2, true, image)
 
   image = createTestImage(4, 2)
   image.height = 932
-  testThrow("Image 2: preview height must be >= 933: got: 932.", fn, 4, 2, true, image)
+  testThrow("Collection 4 image 2: preview height must be >= 933: got: 932.", fn, 4, 2, true, image)
 }
 
 function validateCinfoNoReadingSuite() {
@@ -334,39 +337,40 @@ function validateCinfoNoReadingSuite() {
   testThrow(message, fn, 4, null)
   testThrow(message, fn, 4, 8)
 
-  message = "The collection is missing required fields: title, description, \
+  message = "The collection 4 is missing required fields: title, description, \
 indexDescription, posted, indexThumbnail, cNum, ready, images, zoomPoints."
   testThrow(message, fn, 4, {})
 
-  message = "The collection is missing required fields: description, \
+  message = "The collection 4 is missing required fields: description, \
 indexThumbnail, zoomPoints."
   testThrow(message, fn, 4,
     {cNum: 4, title: "Title", indexDescription: "Desc",
     posted: true, ready: true, images: []})
 
-  message = "The collection has extra fields: bogus."
+  message = "Collection 4 has extra fields: bogus."
   testThrow(message, fn, 4, {bogus: 1})
 
   message = "Collection 5 does not match folder number 4."
   testThrow(message, fn, 4, createTestCinfo(
     {cNum: 5, numImages: 0}))
 
-  message = "Image 0 has extra fields: bogus2."
+  message = "Collection 4 image 0 has extra fields: bogus2."
   let cinfo = createTestCinfo({numImages: 1});
   (cinfo.images[0] as any).bogus2 = 1
   testThrow(message, fn, 4, cinfo)
 
-  message = "Image 0 is missing required fields: iPreview."
+  message = "Collection 4 image 0 is missing required fields: iPreview."
   cinfo = createTestCinfo({numImages: 1});
   delete (cinfo.images[0] as any).iPreview
   testThrow(message, fn, 4, cinfo)
 
-  message = "The ready collection has empty fields: title."
+  message = "The ready collection 4 has empty fields: title."
   cinfo = createTestCinfo({numImages: 1})
   cinfo.title = ""
   testThrow(message, fn, 4, cinfo)
 
-  message = "The ready collection has empty fields: title, description, indexDescription, posted."
+  message = "The ready collection 4 has empty fields: title, description, \
+indexDescription, posted."
   cinfo = createTestCinfo({numImages: 1})
   cinfo.title = ""
   cinfo.description = ""
@@ -375,20 +379,33 @@ indexThumbnail, zoomPoints."
   testThrow(message, fn, 4, cinfo)
 
   // The building field must be true when it exists.
-  message = "The collection building field must be true when it exists."
+  message = "The collection 4 building field must be true when it exists."
   cinfo = createTestCinfo({numImages: 1, building: false})
   testThrow(message, fn, 4, cinfo)
 
   // The modified field must be true when it exists.
-  message = "The collection modified field must be true when it exists."
+  message = "The collection 4 modified field must be true when it exists."
   cinfo = createTestCinfo({numImages: 1, building: true, modified: false})
   testThrow(message, fn, 4, cinfo)
 
   // Non-modified ready collections must not have an order field.
-  message = "The collection order field is not allowed for non-building ready collections."
+  message = "The collection 4 order field is not allowed for non-building ready collections."
   cinfo = createTestCinfo({numImages: 1, order: [0],
     zoomPointKeys: ["933x432", "432x933"]})
   testThrow(message, fn, 4, cinfo)
+}
+
+function validateCollections() {
+  // Validate the collections in the images folder.
+
+  // Read the cinfo for each collection and validate it.
+  const cNums = [1, 2, 3, 4, 5]
+  const fn = validateCinfoNoReading
+  cNums.forEach(cNum => {
+    const cjsonFile = `dist/images/c${cNum}/c${cNum}.json`
+    const cinfo = readCJsonFile(cjsonFile)
+    test(fn, cNum, cinfo)
+  })
 }
 
 function testGulpfile() {
@@ -403,7 +420,7 @@ function testGulpfile() {
   runSuite(validateImageNameSuite)
   runSuite(validateCinfoImageSuite)
   runSuite(validateCinfoNoReadingSuite)
-
+  runSuite(validateCollections)
 }
 
 testGulpfile()

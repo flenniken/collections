@@ -3,6 +3,9 @@
 # This script tests the tmp/gulpfile.js file.
 # It compiles ts/test-gulpfile.ts to tmp/test-gulpfile.js
 # then runs it.
+#
+# Run it:
+# scripts/test-gulpfile
 
 # Make sure we're running inside the docker container.
 if [[ -z "${coder_env}" ]]; then

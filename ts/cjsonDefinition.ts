@@ -32,7 +32,7 @@ namespace CJson {
     sizet: number;
 
     // Unused. todo: remove this until it is used.
-    uniqueId: string;
+    // uniqueId: string;
   }
 
   export interface ZoomPoint {

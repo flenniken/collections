@@ -577,11 +577,32 @@ function readAndValidateCjson(cjsonFile: string): CJson.Collection {
   if (!fs.existsSync(cjsonFile))
     throw new Error(`Error: Missing cjson: ${cjsonFile}`);
 
-  const cinfo = readJsonFile(cjsonFile)
+  let cinfo = readCJsonFile(cjsonFile)
   const basename = path.basename(cjsonFile)
   const folderCNum = parseInt(basename.match(/^c(\d+)\.json$/)?.[1] ?? "")
   validateCinfo(folderCNum, cinfo, true)
 
+  return cinfo
+}
+
+export function readCJsonFile(filename: string): CJson.Collection {
+  // Read the cjson file and return a cinfo object. Throw on error
+  // when the file is missing or the json is invalid.
+  if (!fs.existsSync(filename))
+    throw new Error(`Error: Missing cjson: ${filename}`);
+
+  let cinfo: CJson.Collection
+  try {
+    cinfo = readJsonFile(filename)
+  }
+  catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error: Invalid cjson: ${filename}, Error: ${error.message}`);
+    }
+    else {
+      throw error
+    }
+  }
   return cinfo
 }
 
@@ -601,7 +622,7 @@ function validateCinfoFileInfo(cNum: number, cinfo: CJson.Collection) {
   // todo: implement this
 }
 
-function validateFields(obj: object, requiredFields: string[],
+function validateFields(cNum: number, obj: object, requiredFields: string[],
   optionalFields: string[], iNum?: number) {
 
   let extraFields: string[] = []
@@ -612,9 +633,11 @@ function validateFields(obj: object, requiredFields: string[],
   })
   if (extraFields.length > 0) {
     if (iNum !== undefined)
-      throw new Error(`Image ${iNum} has extra fields: ${extraFields.join(", ")}.`)
+      throw new Error(`Collection ${cNum} image ${iNum} has extra fields: \
+${extraFields.join(", ")}.`)
     else
-      throw new Error(`The collection has extra fields: ${extraFields.join(", ")}.`)
+      throw new Error(`Collection ${cNum} has extra fields: \
+${extraFields.join(", ")}.`)
   }
 
   // Check that all required fields exist.
@@ -626,9 +649,11 @@ function validateFields(obj: object, requiredFields: string[],
   })
   if (missingFields.length > 0) {
     if (iNum !== undefined)
-      throw new Error(`Image ${iNum} is missing required fields: ${missingFields.join(", ")}.`)
+      throw new Error(`Collection ${cNum} image ${iNum} is missing required \
+fields: ${missingFields.join(", ")}.`)
     else
-      throw new Error(`The collection is missing required fields: ${missingFields.join(", ")}.`)
+      throw new Error(`The collection ${cNum} is missing required fields: \
+${missingFields.join(", ")}.`)
   }
 }
 
@@ -649,7 +674,7 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   const optionalFields = [
     "order", "building", "modified",
   ]
-  validateFields(cinfo, requiredFields, optionalFields)
+  validateFields(cNum, cinfo, requiredFields, optionalFields)
 
   // Check that the cNum number matches the folder cNum.
   if (cinfo.cNum !== cNum)
@@ -666,7 +691,8 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
       }
     })
     if (emptyFields.length > 0) {
-      throw new Error(`The ready collection has empty fields: ${emptyFields.join(", ")}.`)
+      throw new Error(`The ready collection ${cinfo.cNum} has \
+empty fields: ${emptyFields.join(", ")}.`)
     }
   }
 
@@ -676,7 +702,8 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   // The zoom points must exist when the collection is ready and not building.
   const zpKeyCount = Object.keys(cinfo.zoomPoints).length
   if (cinfo.ready && zpKeyCount == 0 && !("building" in cinfo)) {
-    throw new Error("The collection zoomPoints are required for non-building, ready collections.")
+    throw new Error(`The collection ${cinfo.cNum} zoomPoints are \
+required for non-building, ready collections.`)
   }
   // Validate the zoomPoints when they exist.
   if (zpKeyCount > 0) {
@@ -685,16 +712,19 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
 
   // If building exists, it should be true.
   if ("building" in cinfo && cinfo.building !== true) {
-    throw new Error("The collection building field must be true when it exists.")
+    throw new Error(`The collection ${cinfo.cNum} building field \
+must be true when it exists.`)
   }
   // If modified exists, it should be true.
   if ("modified" in cinfo && cinfo.modified !== true) {
-    throw new Error("The collection modified field must be true when it exists.")
+    throw new Error(`The collection ${cinfo.cNum} modified field \
+must be true when it exists.`)
   }
 
   // Ready not building collections must not have an order field.
   if (cinfo.ready && !("building" in cinfo) && ("order" in cinfo)) {
-    throw new Error("The collection order field is not allowed for non-building ready collections.")
+    throw new Error(`The collection ${cinfo.cNum} order field is not allowed \
+for non-building ready collections.`)
   }
 
   // If order exists, validate it.
@@ -755,11 +785,11 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
   // Check that each image object has the required fields.
   const imageRequiredFields = [
     "iPreview", "iThumbnail", "title", "description",
-    "width", "height", "size", "sizet", "uniqueId"]
+    "width", "height", "size", "sizet"]
 
-    // Check that the image does not have extra fields.
+  // Check that the image does not have extra fields.
   cinfo.images.forEach((image, ix) => {
-    validateFields(image, imageRequiredFields, [], ix)
+    validateFields(cNum, image, imageRequiredFields, [], ix)
   });
 
   cinfo.images.forEach((image, ix) => {
@@ -772,12 +802,12 @@ export function validateImageName(cNum: number, ix: number,
   // Check that the image name has the form c2-1-p.jpg or c2-1-t.jpg.
   const nameObj = parseImageName(name)
   if (nameObj == null)
-    throw new Error(`Image ${ix}: invalid ${nameType} name: ${name}`);
+    throw new Error(`Collection ${cNum} image ${ix}: invalid ${nameType} name: ${name}`);
   if (nameObj.cNum !== cNum)
-    throw new Error(`Image ${ix}: Invalid cNum: \
+    throw new Error(`Collection ${cNum} image ${ix}: Invalid cNum: \
 got: ${nameObj.cNum} expected: ${cNum}.`);
   if (nameObj.pt !== nameType)
-    throw new Error(`Image ${ix}: Invalid ${nameType} type: (${nameObj.pt})`);
+    throw new Error(`Collection ${cNum} image ${ix}: Invalid ${nameType} type: (${nameObj.pt})`);
 }
 
 export function validateCinfoImage(cNum: number, ix: number,
@@ -791,23 +821,24 @@ export function validateCinfoImage(cNum: number, ix: number,
   const previewObj = parseImageName(image.iPreview)
   const thumbObj = parseImageName(image.iThumbnail)
   if (previewObj?.iNum !== thumbObj?.iNum) {
-    throw new Error(`Image ${ix}: \
+    throw new Error(`Collection ${cNum} image ${ix}: \
 different inum: iPreview ${image.iPreview}, iThumbnail ${image.iThumbnail}`)
   }
 
   // Check that width and height greater than or equal to previewMinDim = 933
   const previewMinDim = 933
   if (image.width < previewMinDim) {
-    throw new Error(`Image ${ix}: preview width must be >= ${previewMinDim}: \
+    throw new Error(`Collection ${cNum} image ${ix}: preview width must be >= ${previewMinDim}: \
 got: ${image.width}.`)
   }
   if (image.height < previewMinDim) {
-    throw new Error(`Image ${ix}: preview height must be >= ${previewMinDim}: \
+    throw new Error(`Collection ${cNum} image ${ix}: preview height must be >= ${previewMinDim}: \
 got: ${image.height}.`)
   }
 
   if (ready && (image.description == "")) {
-    throw new Error(`Image ${ix}: description is required for ready collections.`)
+    throw new Error(`Collection ${cNum} image ${ix}: description is required \
+for ready collections.`)
   }
 }
 
