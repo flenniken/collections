@@ -797,9 +797,10 @@ def createUser(poolName, email, given_name, family_name, admin, cognitoClient=No
   if poolName not in pools:
     raise CognitoException("The user pool doesn't exist.")
 
+  userPoolId = pools[poolName]
   try:
     response = cognitoClient.admin_create_user(
-      UserPoolId=pools[poolName],
+      UserPoolId=userPoolId,
       Username=email,
       UserAttributes=[
         {
@@ -833,17 +834,7 @@ def createUser(poolName, email, given_name, family_name, admin, cognitoClient=No
   # printDict("response", response)
 
   userId = response["User"]["Username"]
-
-  # Set a temporary password.
-  digits = ''.join(random.choice(string.digits) for x in range(4))
-  password = f"Pass+{digits}"
-  response = cognitoClient.admin_set_user_password(
-    UserPoolId=pools[poolName],
-      Username=email,
-      Password=password,
-      Permanent=False
-  )
-  # printDict("response", response)
+  setTemporaryPassword(userPoolId, userId, cognitoClient)
 
   print(f"""\
 
@@ -855,7 +846,11 @@ Created User:
          userId: {userId}
   temp password: {password}""")
 
-  email = f"""\
+  printMailMessage(email, password)
+
+def printMailMessage(email, password):
+
+  message = f"""\
 
 
 Welcome to Collections.
@@ -873,7 +868,73 @@ Password: {password}
 
 Steve
 """
-  print(email)
+  print(message)
+
+def newPassword(poolName, userId, cognitoClient=None):
+  """
+  Give the user a new password.
+  """
+  userPoolId, email = getUserEmail(poolName, userId, cognitoClient)
+
+  tempPassword = setTemporaryPassword(userPoolId, userId, cognitoClient)
+
+  printMailMessage(email, tempPassword)
+
+def getUserEmail(poolName, userId, cognitoClient=None):
+    """
+    Get the user's email given their userId. Return both the pool id and
+    the email address.
+    """
+    if cognitoClient is None:
+      cognitoClient = getBotoClient('cognito-idp')
+
+    # Get the pool ID for the given pool name
+    pools = poolNamesToIds(cognitoClient)
+    if poolName not in pools:
+        raise CognitoException("The user pool doesn't exist.")
+    userPoolId = pools[poolName]
+
+    # Get the user details from Cognito
+    try:
+      response = cognitoClient.admin_get_user(
+        UserPoolId=userPoolId,
+        Username=userId
+      )
+    except botocore.exceptions.ClientError as error:
+      if error.response['Error']['Code'] == 'UserNotFoundException':
+        raise CognitoException(f"User with ID {userId} not found.")
+      else:
+        raise error
+
+    # Extract the email from the user's attributes
+    attributes = convertToKeyValue(response['UserAttributes'])
+    email = attributes.get('email')
+    if not email:
+        raise CognitoException(f"Email not found for user ID {userId}.")
+
+    return userPoolId, email
+
+def setTemporaryPassword(userPoolId, userId , cognitoClient=None):
+  """
+  Set the user to have a temporary password and return its value.  They
+  must login and change it before it expires.
+  """
+  if cognitoClient is None:
+    cognitoClient = getBotoClient('cognito-idp')
+
+  # Generate a temporary password.
+  digits = ''.join(random.choice(string.digits) for x in range(4))
+  password = f"Pass+{digits}"
+
+  # Set a temporary password.
+  response = cognitoClient.admin_set_user_password(
+      UserPoolId=userPoolId,
+      Username=userId,
+      Password=password,
+      Permanent=False
+  )
+  # printDict("response", response)
+  return password
 
 def inputBoolean(message):
   """
@@ -904,6 +965,10 @@ def process(args):
   elif args.createUser:
     email, give_name, family_name, admin = args.createUser
     createUser(collectionsPool, email, give_name, family_name, admin)
+  elif args.newPassword:
+    userId = args.newPassword
+    newPassword(collectionsPool, userId)
+
   else:
     raise CognitoException(f"""No implementation for args:
 {args}
@@ -948,12 +1013,15 @@ def parseCommandLine():
     help="""write the aws-settings.json file containing aws information
 needed by the website and scripts""")
 
+  parser.add_argument("-l", "--listUsers", action="store_true",
+    help="list the pool users")
+
   parser.add_argument("--createUser", metavar=(
     "email", "given_name", "family_name", "admin"), nargs=4, required=False,
     help="create a new user. Use the console to delete the user.")
 
-  parser.add_argument("-l", "--listUsers", action="store_true",
-    help="list the pool users")
+  parser.add_argument("--newPassword", metavar="user_id", required=False,
+    help="give the user a new password. Use listUsers to get the user's id.")
 
   args = parser.parse_args(sys.argv[1:])
   return args
@@ -1125,6 +1193,55 @@ name:
   # def test_getPoolSettings(self):
   #   settings = getPoolSettings("collections-pool", tc.cognitoClient)
   #   printDict("pool settings", settings)
+
+  def test_getUserEmail_missing(self):
+    userId = "xyz"
+    message = "User with ID xyz not found."
+    with self.assertRaises(CognitoException) as context:
+      getUserEmail(collectionsPool, userId, tc.cognitoClient)
+    self.assertEqual(str(context.exception), message)
+
+  def test_getUserEmail_good(self):
+    userId = "f86103f0-7021-705f-290b-aa443e8605c2"
+    userPoolId, email = getUserEmail(collectionsPool, userId, tc.cognitoClient)
+    # print(f"userPoolId: {userPoolId}")
+    # print(f"     email: {email}")
+    self.assertEqual(userPoolId, "us-west-2_4czmlJC5x")
+    self.assertEqual(email, "steve.flenniken+logan@gmail.com")
+
+  def test_setTemporaryPassword(self):
+    return
+    pools = poolNamesToIds(tc.cognitoClient)
+    poolName = collectionsPool
+    if poolName not in pools:
+      raise CognitoException("The user pool doesn't exist.")
+    userPoolId = pools[poolName]
+
+    userId = "f86103f0-7021-705f-290b-aa443e8605c2"
+    tempPassword = setTemporaryPassword(userPoolId, userId , tc.cognitoClient)
+    print("email: steve.flenniken+logan@gmail.com")
+    print(f"userId: {userId}")
+    print(f"tempPassword: {tempPassword}")
+    print("login with the temp password to fully test the process")
+
+  def test_printMailMessage(self):
+    return
+    printMailMessage("email", "password")
+
+  def test_newPassword(self):
+    return
+    poolName = collectionsPool
+    userId = "f86103f0-7021-705f-290b-aa443e8605c2"
+    newPassword(poolName, userId, tc.cognitoClient)
+
+  def test_createUser(self):
+    return
+    poolName = collectionsPool
+    email = ""
+    given_name = ""
+    family_name = ""
+    admin = ""
+    createUser(poolName, email, given_name, family_name, admin, tc.cognitoClient)
 
 if __name__ == '__main__':
   args = parseCommandLine()
