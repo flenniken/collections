@@ -2,15 +2,15 @@
   "indexCollections": [
     {
       "cNum": 5,
-      "building": true,
-      "ready": false,
+      "building": false,
+      "ready": true,
       "title": "Hawaii",
-      "modified": true,
+      "modified": false,
       "indexDescription": "In January Steve, Kathleen and Elisabeth vacationed in Hawaii.\n",
       "iThumbnail": "c5-1-t.jpg",
       "posted": "2025-07-07",
-      "iCount": 19,
-      "totalSize": 51950739,
+      "iCount": 16,
+      "totalSize": 41943234,
       "iNumList": [
         1,
         10,
@@ -21,16 +21,13 @@
         6,
         3,
         4,
-        18,
         14,
         15,
         19,
         20,
         16,
-        18,
-        19,
-        20,
-        2
+        2,
+        18
       ]
     },
     {
