@@ -1,9 +1,14 @@
 #!/bin/bash
 
-# Save the Collections image folder to the disk store.
+echo "waiting for solution to timestamp issue. so only changed files are copied"
+exit
 
-SOURCE="dist/images/"
-DEST="/Volumes/home/pictures/collections/images/"
+# todo: share code between this script and save-images.
+
+# Save the iphone images to the disk store.
+
+SOURCE="$HOME/Pictures/Photos Library.photoslibrary/originals/"
+DEST="/Volumes/home/pictures/iphone/"
 
 # Make sure we're running on the host.
 if [[ ! -z "${coder_env}" ]]; then
@@ -25,21 +30,10 @@ fi
 # Note: I turned on the rsync service on the network drive.
 cmdPrefix="/opt/homebrew/bin/rsync -av --progress"
 
-# Run the sync.
-$cmdPrefix "$SOURCE" "$DEST"
-
-# Show what we did. It is after the copy so it appears after the
-# file progress at the end.
-echo "Syncing the collection's image folder to DiskStore."
+echo "Syncing iphone photos to the DiskStore."
 echo "Running as user: $(whoami)"
 echo "$cmdPrefix \"$SOURCE\" \"$DEST\""
-echo "SOURCE: $SOURCE"
-echo "DEST: $DEST"
 
-ls -l $SOURCE/c5/c5.json
-ls -l $DEST/c5/c5.json
-
-md5sum $SOURCE/c5/c5.json
-md5sum $DEST/c5/c5.json
+$cmdPrefix "$SOURCE" "$DEST"
 
 echo "done"
