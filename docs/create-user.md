@@ -78,6 +78,7 @@ not covered by the cognito script.
 * [Create New User](#create-new-user) -- how to create a new website user so they can login.
 * [Plus Sign Emails](#plus-sign-emails) -- how to use the plus sign for multiple emails to the same location.
 * [List Users](#list-users) -- how to list all the users.
-* [AWS Cognito Console](#aws-congnito-console) -- how to use the cognito console for user management.
+* [AWS Cognito Console](#aws-cognito-console) -- how to use the cognito console for user management.
+
 
 <style>body { max-width: 40em}</style>

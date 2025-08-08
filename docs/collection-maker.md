@@ -157,10 +157,10 @@ the collection.
 
 __Saving Changes__
 
-Edits to the maker page update the `cjson` file. Save your changes
-using the **Save** button to avoid losing them. Refreshing the page or
-selecting a different collection without saving will discard your
-changes.
+Edits to the maker page update the `cjson` in memory version. Save
+your changes using the **Save** button to avoid losing
+them. Refreshing the page or selecting a different collection without
+saving will discard your changes.
 
 When you save, the `cjson` file it is downloaded to your `Downloads`
 folder. Move it to the `images` directory. For example:
@@ -194,8 +194,8 @@ __Interactions__
 
 Build and deploy the code then set the zoom points.
 
-After specifying the required elements and clicking the **Remove Extra
-Images** button, the collection is marked as ready. Gulp builds ready
+After specifying the required elements and clicking the **Optimize**
+button, the collection is marked as ready. Gulp builds ready
 collections.
 
 ~~~
@@ -213,6 +213,23 @@ mac.
 
 Run the `gulp` command to build in the final zoom points, then deploy
 and test the image pages again.
+
+__Zoom Point Guide__
+
+When setting zoom points for an image, the goal is to make each
+picture look like it was created for the screen it’s displayed
+on, whether in portrait or landscape orientation. A good zoom point
+creates a natural, visually pleasing crop without drawing attention to
+the fact that the image has been zoomed.
+
+A well-chosen zoom point can reduce excessive zooming.  The user
+doesn’t feel the need to see what’s missing.
+
+* Aim for a good full screen fit in both portrait and landscape modes.
+* Avoid forced crops – If it feels cramped or awkward, zoom out, it’s
+  often better to zoom all the way out and show the full frame.
+* Show background – Leave hints of background when it helps tell the
+  bounds.
 
 [⬇](#Contents)
 

@@ -67,6 +67,8 @@ function feedback(message: string) {
 }
 
 function testThrow(eMessage: string, fn: (...args: any[]) => void, ...args: any[]): void {
+  // Run the function and verify it throws an error exception with the
+  // given message and log the result.
   const message = testThrow2(eMessage, fn, ...args)
   feedback(message)
 }
