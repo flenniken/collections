@@ -45,6 +45,25 @@ Password: temppass1234
 Steve
 ~~~
 
+# New Password
+
+Sometimes a user forgets their password or the inital password expires
+before they login for the first time. In these cases, email the user a
+new temporary password. This is similar to what you do when you add a
+new user.
+
+Get the user id by listing the users.  Then run the cognito command
+with the --newPassword option specifying the user id:
+
+~~~
+scripts/cognito -l
+
+scripts/cognito --newPassword abc12345-7777-8888-9999-abc43e8605c4
+~~~
+
+The output is the text to email.
+
+
 # Plus Sign Emails
 
 You can use the plus sign in emails to make multiple unique email
@@ -76,6 +95,7 @@ not covered by the cognito script.
 # Contents
 
 * [Create New User](#create-new-user) -- how to create a new website user so they can login.
+* [New Password](#new-password) -- set a new password for a user.
 * [Plus Sign Emails](#plus-sign-emails) -- how to use the plus sign for multiple emails to the same location.
 * [List Users](#list-users) -- how to list all the users.
 * [AWS Cognito Console](#aws-cognito-console) -- how to use the cognito console for user management.

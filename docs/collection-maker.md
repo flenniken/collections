@@ -15,7 +15,7 @@ How to create a new collection for the Collections project.
 Create a tmp folder with images and their thumbnails. Make sure the
 folder contains:
 
-* at least 8 preview images and no more than 20
+* start with 8 to 20 of your best photos. Pick ones with a story you can write about.
 * each image has a thumbnail
 * all images are jpg
 * preview files end with -p.jpg
