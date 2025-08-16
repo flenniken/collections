@@ -9,13 +9,14 @@
 # https://docs.aws.amazon.com/lambda/latest/dg/nodejs-package.html
 
 # Specify the version of node js being used in the collection's
-# container. In lambda specify the same version number.
-#
+# container. In lambda specify the same version number. Get the
+# version with the -v option.
+
 # # in container
-# node --version
+# node -v
 #
-# v18.19.0
-version=18.19.0
+# v22.18.0
+version=22.18.0
 
 # Make sure we're running inside the docker container.
 if [[ -z "${coder_env}" ]]; then

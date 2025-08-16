@@ -14,7 +14,7 @@ ENV coder_env=debian
 RUN apt-get update && apt-get -qy install less man sudo tree curl \
   wget nano git jq libpcre3 libpcre3-dev rsync nginx \
   python3-requests python3-jwt unzip python3-boto3 \
-  dnsutils procps zip
+  dnsutils procps zip cron
 
 # Install glow for viewing markdown at the command line.
 # https://github.com/charmbracelet/glow
@@ -42,18 +42,19 @@ RUN chown coder:coder /home/coder
 # Install statictea.
 COPY statictea /usr/bin
 
-RUN apt-get install -qy nodejs npm cron
+# Install nodejs.  See available versions with "apt-cache policy
+# nodejs".
 
-# Install nodejs.  See available versions with "apt-cache policy nodejs".
-# ENV NODE_MAJOR=21
-# ENV NODEJS=18.19.0+dfsg-6~deb12u1
-# RUN apt-get install -qy ca-certificates gnupg
-# RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
-#   | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
-# RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] \
-#   https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
-#   | tee /etc/apt/sources.list.d/nodesource.list
-# RUN apt-get update && apt-get -qy install nodejs=$NODEJS npm
+# The node versions don't last very long so you need to update
+# frequently. The version that comes with Debian will be out-of-date
+# in 18 months, way before Debian needs to be updated.  Instead of the
+# Debian node package you use the PPA repository for the version you
+# want, for example 22.  There is a script for installing.
+
+# Install Node.js 22.x using NodeSource's script.
+RUN apt-get update && apt-get install -y curl \
+ && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+ && apt-get install -y nodejs
 
 # Install typescript, gulp and other global node command line apps.
 RUN npm install --global gulp-cli

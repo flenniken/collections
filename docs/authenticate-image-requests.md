@@ -186,9 +186,76 @@ auth: Passed
 Success
 ~~~
 
+# Make Zip File
+
+You run the make-js-lambda-zip script to make the lambda zip file.
+
+~~~
+env/lambda/make-js-lambda-zip
+~~~
+
+The output of the script looks like this:
+
+~~~
+Remove existing /home/coder/collections/env/lambda/js directory
+Copy validateImageRequest.js to the /home/coder/collections/env/lambda/js folder.
+Install the dependent node modules.
+
+added 26 packages, and audited 27 packages in 1s
+
+1 package is looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+Create lambda-js-22.18.0.zip.
+  adding: node_modules/ (stored 0%)
+  adding: node_modules/.bin/ (stored 0%)
+...
+  adding: node_modules/semver/ranges/valid.js (deflated 38%)
+  adding: package-lock.json (deflated 70%)
+  adding: package.json (deflated 14%)
+  adding: validateImageRequest.js (deflated 63%)
+Success: created zip file:
+-rw-r--r-- 1 coder coder 311104 Aug 16 04:05 lambda-js-22.18.0.zip
+~~~
+
+# Upload Zip File
+
+* login to aws
+* select the N. Virgina region
+* select the lambda service
+* select the existing function validateImageRequest
+* select the code tab and upload the new version
+* enter node runtime 22.x to match the version tested
+* deploy to lambda edge
+* use viewer request
+
+# Update Node
+
+You update the node version of the lambda function by following these
+steps.
+
+Update the version number in make-js-lambda-zip:
+
+~~~
+env/lambda/make-js-lambda-zip
+
+-# v18.19.0
+-version=18.19.0
++# v22.18.0
++version=22.18.0
+~~~
+
+Then go though the normal test and deploy steps explained before.
+
+<style>body { max-width: 40em}</style>
+
 # Contents
 
 * [Lambda Function](#lambda-function) -- what the lambda function does and how to configure it.
 * [Main Steps](#main-steps) -- steps to create a lambda function.
-* [Edge Differences](#edge-differences) -- differences between a lambda function and an lambda edge function
-* [Test](#test) -- how to test the lambda function
+* [Test](#test) -- how to test the lambda function.
+* [Make Zip File](#make_zip_file) -- how to make a lambda zip file of the code and modules.
+* [Upload Zip File](#upload_zip_file) -- how to upload a new lambda function code.
+* [Update Node](#update_node) -- how to update the version of node that lambda uses.
+* [Edge Differences](#edge-differences) -- differences between a lambda function and an lambda edge function.

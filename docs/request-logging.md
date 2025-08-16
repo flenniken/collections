@@ -376,6 +376,8 @@ find logs -mtime +30 | wc -l
 0
 ~~~
 
+<style>body { max-width: 40em}</style>
+
 # Contents
 
 * [Log Folders](#log-folders) -— where the logs are stored on S3 and locally.
