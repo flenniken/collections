@@ -6,103 +6,28 @@ The server does the validation to prevent non-logged in users from
 downloading images with direct urls and from scripts.
 
 When the user requests a collection the code adds the user’s access
-token to the image https requests. The images are only returned when
-the token is valid for the user.
+token to the image's https requests. The validImageRequest lambda
+function is called by Cloudfront for every https request and it checks
+that the token is valid. Since only logged in users have valid tokens,
+only logged in users can download images.
 
 [⬇](#Contents) (table of contents at the bottom)
-
-# Lambda Function
-
-When cloudfront receives an image request, the viewer event lambda
-function checks that the token is valid. Only logged in users have
-valid tokens
-
-You associate the lambda function with the cloudfront distribution
-using the“Behavior” tab.
-
-You define the lambda function in the N. Virginia (us-east-1) region
-since it is the only region that has access to the the edge locations
-and it has the button to deploy to the edges.
-
-The function responds to the Viewer Access event (not the Origin
-access event).  This is the first event in the request process.
-
-The function has two parameters, event and context.  The event
-parameter contains variables about the request. The context parameter
-tells about the running environment.
-
-The event contains the request url and the token needed for
-authentication.
-
-The event structure is documented here:
-
-https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-event-structure.html#request-event-fields
-
-[⬇](#Contents)
 
 # Main Steps
 
 Here are the main steps for deploying a lambda edge function:
 
-* create lambda js function locally
 * test locally
 * create zip file
-* upload zip file to lambda in us-east-1
+* install in AWS
 * test in lambda
 * deploy to lambda edge
-* wait for deploy
 * test in production
-* verify code works by looking at the logs
+* verify using the logs
 
 [⬇](#Contents)
 
-# Edge Differences
-
-Lambda@edge functions have a number of limitations and differences
-compared to normal lambda functions. I had running and tested code in
-lambda that failed when deploy to lambda edge.  I was attempting to
-write a python lambda function since the existing login-flow script is
-written in it. I ran into these issues:
-
-* layers are not supported in lambda edge.
-
-You can use external packages by using a zip file.
-
-* the uncompressed zip file is limited to 1MB.
-
-This rules out writing the lambda function in python since the
-cryptography packages are about 15 MB. Use node js instead, their
-package is small.
-
-* it is slow to go outside the edge location.
-
-This rules out using the Cognito get_user api for authentication.
-Perform authenticate at the edge with node js.
-
-* only the x86 platform is supported.
-
-This is another strike against python when you’re developing on a new
-mac since the cryptography packages are compiled rust binaries. Use
-node js.
-
-* finding the logs.
-
-Since logging happens at the edge and are copied to the nearest
-region. You need to learn how to find them for analysis.
-
-* http return code variable.
-
-The lambda sample shows the return code variable name as statusCode,
-but this doesn't work in lambda edge.  Use the status variable.
-
-* many headers are stripped by default.
-
-The auth header used for holding the token is stripped by default. You
-need to specify the ones you use so they don't get scripted.
-
-[⬇](#Contents)
-
-# Test
+# Test Locally
 
 You can run the testValidateImageRequest script to test the
 validateImageRequest lambda function:
@@ -186,15 +111,19 @@ auth: Passed
 Success
 ~~~
 
+[⬇](#Contents)
+
 # Make Zip File
 
-You run the make-js-lambda-zip script to make the lambda zip file.
+You run the make-js-lambda-zip script to make the lambda zip file. The
+zip file contains the dependent external modules.
 
 ~~~
 env/lambda/make-js-lambda-zip
 ~~~
 
-The output of the script looks like this:
+The output of the script is shown below. Notice the zip file is named
+after the node version number which is 22.18.0:
 
 ~~~
 Remove existing /home/coder/collections/env/lambda/js directory
@@ -219,7 +148,13 @@ Success: created zip file:
 -rw-r--r-- 1 coder coder 311104 Aug 16 04:05 lambda-js-22.18.0.zip
 ~~~
 
+[⬇](#Contents)
+
 # Upload Zip File
+
+You upload the zip file which contains the lambda function and all its
+dependent modules.  You specify the node runtime to use to match the
+locally version that you tested with.
 
 * login to aws
 * select the N. Virgina region
@@ -230,12 +165,42 @@ Success: created zip file:
 * deploy to lambda edge
 * use viewer request
 
+[⬇](#Contents)
+
 # Update Node
 
-You update the node version of the lambda function by following these
-steps.
+The node versions don't last very long so you need to update them
+frequently. The version that comes with Debian will be out-of-date in
+18 months, way before Debian needs to be updated.  Instead of using
+the Debian node package you use the PPA repository for the version you
+want, for example 22. The Dockerfile installs node this way.
 
-Update the version number in make-js-lambda-zip:
+When it is time to install a new version, determine the new version
+number and change a line in the dockerfile:
+
+~~~
+- && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
++ && curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
+~~~
+
+Build a new container. Exit the current container, delete it, then
+build a new one:
+
+~~~
+runenv d
+runenv r
+runenv r
+~~~
+
+Rebuild the gulp code and test it.
+
+~~~
+scripts/build-gulpfile
+scripts/test-gulpfile
+~~~
+
+Update the version number in make-js-lambda-zip. In the example we are
+updating from 18.19 to 22.18:
 
 ~~~
 env/lambda/make-js-lambda-zip
@@ -246,16 +211,91 @@ env/lambda/make-js-lambda-zip
 +version=22.18.0
 ~~~
 
-Then go though the normal test and deploy steps explained before.
+Then go though the normal test and deploy steps explained in this
+document.
+
+[⬇](#Contents)
+
+# Lambda Function
+
+An AWS lambda function is called by Cloudfront for every https request
+and it checks that the requests associated token is valid.
+
+You associate the lambda function with the cloudfront distribution
+using the "Behavior" tab.
+
+You define the lambda function in the N. Virginia (us-east-1) region
+since it is the only region that has access to the the edge locations
+and it has the button to deploy to the edges.
+
+The function responds to the Viewer Access event (not the Origin
+access event).  This is the first event in the request process.
+
+The function has two parameters, event and context.  The event
+parameter contains variables about the request. The context parameter
+tells about the running environment.
+
+The event contains the request url and the token needed for
+authentication.
+
+The event structure is documented here:
+
+https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/lambda-event-structure.html#request-event-fields
+
+[⬇](#Contents)
+
+# Edge Differences
+
+Lambda@edge functions have a number of limitations and differences
+compared to normal lambda functions. I had running and tested code in
+lambda that failed when deploy to lambda edge.  I was attempting to
+write a python lambda function since the existing login-flow script is
+written in it. I ran into these issues:
+
+* layers are not supported in lambda edge.
+
+You can use external packages by using a zip file.
+
+* the uncompressed zip file is limited to 1MB.
+
+This rules out writing the lambda function in python since the
+cryptography packages are about 15 MB. Use node js instead, their
+package is small.
+
+* it is slow to go outside the edge location.
+
+This rules out using the Cognito get_user api for authentication.
+Perform authenticate at the edge with node js.
+
+* only the x86 platform is supported.
+
+This is another strike against python when you’re developing on a new
+mac since the cryptography packages are compiled rust binaries. Use
+node js.
+
+* finding the logs.
+
+Since logging happens at the edge and are copied to the nearest
+region. You need to learn how to find them for analysis.
+
+* http return code variable.
+
+The lambda sample shows the return code variable name as statusCode,
+but this doesn't work in lambda edge.  Use the status variable.
+
+* many headers are stripped by default.
+
+The auth header used for holding the token is stripped by default. You
+need to specify the ones you use so they don't get scripted.
 
 <style>body { max-width: 40em}</style>
 
 # Contents
 
-* [Lambda Function](#lambda-function) -- what the lambda function does and how to configure it.
 * [Main Steps](#main-steps) -- steps to create a lambda function.
-* [Test](#test) -- how to test the lambda function.
+* [Test Locally](#test_locally) -- how to test the lambda function.
 * [Make Zip File](#make_zip_file) -- how to make a lambda zip file of the code and modules.
 * [Upload Zip File](#upload_zip_file) -- how to upload a new lambda function code.
 * [Update Node](#update_node) -- how to update the version of node that lambda uses.
+* [Lambda Function](#lambda-function) -- what the lambda function does and how to configure it.
 * [Edge Differences](#edge-differences) -- differences between a lambda function and an lambda edge function.
