@@ -137,6 +137,39 @@ function getZoomPoint(imageIx: number, cjson: CJson.Collection = cJson) {
   return zoomPoints[imageIx]
 }
 
+function newZoomPoint(zp: CJson.ZoomPoint): CJson.ZoomPoint {
+  // Return a new zoom point object with the same values as passed in.
+  return {scale: zp.scale, tx: zp.tx, ty: zp.ty}
+}
+
+function getFitZoomPoint(imageIx: number, cjson: CJson.Collection) {
+ // Fit an image into a screen area, preserving aspect ratio
+ // and centering it.
+
+  const width = cjson.images[imageIx].width
+  const height = cjson.images[imageIx].height
+  // log(`image width, height: ${width}, ${height}`)
+  // log(`available width, height: ${availWidth}, ${availHeight}`)
+
+  // Calculate the scale factors for image width and height.
+  const scaleW = availWidth / width;
+  const scaleH = availHeight / height;
+
+  // Choose the smaller scale factor so both vertical and horizontal
+  // fit inside.
+  const scale = Math.min(scaleW, scaleH);
+
+  const newWidth = width * scale;
+  const newHeight = height * scale;
+  // log(`new width, height: ${newWidth}, ${newHeight}`)
+
+  // Center the new image.
+  const tx = (availWidth - newWidth) / 2;
+  const ty = (availHeight - newHeight) / 2;
+
+  return {scale: scale, tx: tx, ty: ty}
+}
+
 function sizeImages(firstImageIx: number) {
   // Size the image containers and the images and create zoom points
   // when missing and horizontally scroll the given image into view.
@@ -152,7 +185,10 @@ function sizeImages(firstImageIx: number) {
     zoomPoints = createZoomPoints()
 
     cJson.zoomPoints[zoom_w_h] = zoomPoints
-    cJsonOriginal.zoomPoints[zoom_w_h] = zoomPoints
+
+    // Also create zoom points for the original but don't use a
+    // reference to the same array.
+    cJsonOriginal.zoomPoints[zoom_w_h] = createZoomPoints()
   }
   else {
     zoomPoints = cJson.zoomPoints[zoom_w_h]
@@ -410,6 +446,21 @@ function handleContainerTouchStart(event: Event) {
               `t: (${two(zpan.start.tx)}, ${two(zpan.start.ty)})`)
 }
 
+function closeZoomPoints(zoomPoint: CJson.ZoomPoint, origZP: CJson.ZoomPoint): boolean {
+  // Return true when the two zoom points are close to equal.
+
+  // Define a small "close" tolerance for comparing.
+  const tolerance = 0.01;
+
+  // Compare the scale, tx, and ty values of the two zoom points.
+  const scaleClose = Math.abs(zoomPoint.scale - origZP.scale) < tolerance;
+  const txClose = Math.abs(zoomPoint.tx - origZP.tx) < tolerance;
+  const tyClose = Math.abs(zoomPoint.ty - origZP.ty) < tolerance;
+
+  // Return true if all values are within the tolerance, otherwise false.
+  return scaleClose && txClose && tyClose;
+}
+
 function handleRestoreImage(event: Event) {
   // Restore an image position and scale to it's original zoom point.
 
@@ -418,15 +469,26 @@ function handleRestoreImage(event: Event) {
 
   // Get the original zoom point.
   let zoomPoint = getZoomPoint(imageIx, cJson)
-  const origZP = getZoomPoint(imageIx, cJsonOriginal)
-  log(`Zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
+  const origZP = newZoomPoint(getZoomPoint(imageIx, cJsonOriginal))
+  const fitZP = getFitZoomPoint(imageIx, cJson)
+  log(`         Zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   log(`Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
+  log(`     Fit zoom point: scale: ${two(fitZP.scale)}, (${two(fitZP.tx)}, ${two(fitZP.ty)})`)
+
+  let nextZP: CJson.ZoomPoint
+  if (closeZoomPoints(zoomPoint, origZP)) {
+    nextZP = newZoomPoint(fitZP)
+  }
+  else {
+    nextZP = newZoomPoint(origZP)
+  }
+  log(`    Next zoom point: scale: ${two(nextZP.scale)}, (${two(nextZP.tx)}, ${two(nextZP.ty)})`)
 
   // Animate the image to its original zoom point.
   const img = get(`i${imageIx+1}`)
   const animation = img.animate([
     { transform: `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`},
-    { transform: `translate(${origZP.tx}px, ${origZP.ty}px) scale(${origZP.scale})`},
+    { transform: `translate(${nextZP.tx}px, ${nextZP.ty}px) scale(${nextZP.scale})`},
   ],
   {
     duration: 300,
@@ -436,18 +498,24 @@ function handleRestoreImage(event: Event) {
     // Restore the current zoom point and set the finish size and
     // position.
     log("Restore image finished")
-    zoomPoint.scale = origZP.scale;
-    zoomPoint.tx = origZP.tx;
-    zoomPoint.ty = origZP.ty;
+    zoomPoint.scale = nextZP.scale;
+    zoomPoint.tx = nextZP.tx;
+    zoomPoint.ty = nextZP.ty;
     add_border(img, zoomPoint)
     img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+
+  // It's an error if the original zoom point changes. This has
+  // happened when the original object was a reference to the mutable
+  // zoomPoint object.
+  const origZP = newZoomPoint(getZoomPoint(imageIx, cJsonOriginal))
+  log(`Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
   }
 }
 
 function add_border(img: HTMLElement, zoomPoint: CJson.ZoomPoint) {
   // Add a border to the element when it's upper left corner is inside
   // the area.
-  if (zoomPoint.tx > 0 && zoomPoint.ty > 0) {
+  if (zoomPoint.tx >= 0.5 && zoomPoint.ty >= 0.5) {
     img.style.border = "solid black 80px"
   }
   else {
