@@ -226,6 +226,8 @@ A well-chosen zoom point can reduce excessive zooming.  The user
 doesn’t feel the need to see what’s missing.
 
 * Aim for a good full screen fit in both portrait and landscape modes.
+* You are free to zoom in a little aggressively since double tap
+  toggles between the zoom point and fit-to-screen.
 * Avoid forced crops – If it feels cramped or awkward, zoom out, it’s
   often better to zoom all the way out and show the full frame.
 * Show background – Leave hints of background when it helps tell the

@@ -73,8 +73,9 @@ orientation and size.
 
 [![Image Landscape](docs/image-landscape.png)](#)
 
-You can zoom and pan an image with two fingers and double tap to
-restore it.
+You can zoom and pan an image with two fingers.  A double tap goes to
+the zoom point, or if you’re ready there it fits the image to the
+screen.
 
 You scroll left and right to go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by
