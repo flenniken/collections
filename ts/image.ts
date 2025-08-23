@@ -47,8 +47,7 @@ function handleDOMContentLoaded() {
 
   area = get("area")
 
-  // imageIndex = getFirstImage()
-  imageIndex = 0
+  imageIndex = getFirstImage()
   log(`First image: ${imageIndex + 1}`)
 
   startTimer.log("setAvailableArea")
@@ -94,17 +93,17 @@ function getFirstImage() {
 
   // Get the image query string.
   log(`window.location.search: ${window.location.search}`)
-  const queryStr = getSearchParam("image")
-  log(`Image query string: "${queryStr}"`)
+  const inumStr = getSearchParam("inum")
+  log(`inumStr: "${inumStr}"`)
 
   // Set the first image index.
-  let imageIx = 0
-  if (queryStr) {
-    const imageNum = parseInt(queryStr, 10)
-    if (!isNaN(imageNum) && imageNum >= 1 && imageNum <= cJson.images.length)
-      imageIx = imageNum - 1
+  let inum = 0
+  if (inumStr) {
+    const index = parseInt(inumStr, 10)
+    if (!isNaN(index) && index >= 0 && index < cJson.images.length)
+      inum = index
   }
-  return imageIx
+  return inum
 }
 
 function setAvailableArea() {

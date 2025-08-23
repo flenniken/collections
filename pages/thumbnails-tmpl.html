@@ -29,7 +29,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
 <!--$ : num = s.cNum -->
-<!--$ : url = format("/images/c{num}/image-{num}.html") -->
+<!--$ : inum = t.row -->
+<!--$ : url = format("/images/c{num}/image-{num}.html?inum={inum}") -->
 <!--$ : thumbnailUrl = format("/images/c{num}/{image.iThumbnail}") -->
     <a href="{url}"><img class="thumbnail" src="{thumbnailUrl}" alt="{image.title}"></a>
   </div>
