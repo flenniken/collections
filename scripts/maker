@@ -264,12 +264,11 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     "indexThumbnail": "",
     "cNum": num,
     "posted": "",
-    "width": thumbnailDim,
-    "height": thumbnailDim,
     "order": order,
     "images": images,
     "building": True,
-    "ready": True,
+    "ready": False,
+    "zoomPoints": {},
   }
   return cinfo
 

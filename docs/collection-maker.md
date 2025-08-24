@@ -28,6 +28,7 @@ Create the folder in the tmp folder named with the collection
 number. For example, for the 5th collection:
 
 ~~~
+cd ~/code/collections
 mkdir tmp/5
 ~~~
 
@@ -211,7 +212,7 @@ machine.  Then you move it to the collection's folder.
 ♫ Note: air-drop doesn't work when your iphone is plugged into your
 mac.
 
-Run the `gulp` command to build in the final zoom points, then deploy
+Run the `g all` command to build in the final zoom points, then deploy
 and test the image pages again.
 
 __Zoom Point Guide__

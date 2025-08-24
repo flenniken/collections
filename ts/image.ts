@@ -178,15 +178,22 @@ function sizeImages(firstImageIx: number) {
 
   let zoomPoints: CJson.ZoomPoint[]
   if (!(zoom_w_h in cJson.zoomPoints)) {
-    log("No zoom points for this size, create new zoom points.")
-    log(`Existing zoom points: ${Object.keys(cJson.zoomPoints)}`)
+    log(`No zoom points for this size: ${zoom_w_h}`)
+    const keys = Object.keys(cJson.zoomPoints);
+    log(`There are ${keys.length} existing zoom point keys:`)
+    for (let ix = 0; ix < keys.length; ix++) {
+      const w_h = keys[ix];
+      log(`w_h: ${w_h}`);
+    }
 
+    log("Create default zoom points for mutable state.")
     zoomPoints = createZoomPoints()
 
     cJson.zoomPoints[zoom_w_h] = zoomPoints
 
     // Also create zoom points for the original but don't use a
     // reference to the same array.
+    log("Create default zoom points for originals.")
     cJsonOriginal.zoomPoints[zoom_w_h] = createZoomPoints()
   }
   else {
