@@ -593,6 +593,8 @@ scripts/deploy -s
 * view the thumbnails
 * view the images
 
+<style>body { max-width: 40em}</style>
+
 # Contents
 
 * [Overview](#overview)

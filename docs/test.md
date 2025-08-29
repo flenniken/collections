@@ -83,6 +83,7 @@ When making changes to the image page test them with these steps:
 
 [⬇](#Contents)
 
+<style>body { max-width: 40em}</style>
 
 # Contents
 

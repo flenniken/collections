@@ -40,6 +40,8 @@ nothing was copied.
 scripts/deploy -s
 ~~~
 
+<style>body { max-width: 40em}</style>
+
 # Contents
 
 * [Cache Behavior](#cache-behavior) -- how the cloudfront cache works.

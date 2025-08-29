@@ -106,13 +106,37 @@ Example external annotated link:
 
 [⬇](#Contents)
 
-#  TOC
+# TOC
 
 Each document ends with a table of contents (TOC) section called
 “Contents” for easy navigation.
 
 * The TOC is a list of annotated links pointing to each section.
 * Each annotation is a short sentence summarizing the section.
+
+[⬇](#Contents)
+
+# Firefox
+
+You can test the documents using the Firefox browser since it has
+built in Markdown support.  From Firefox on your desktop open a
+document to proof it.
+
+You can open the [developer.md](developer.md) file as an index to the
+other docs. Clicking the links take you to the associated document.
+
+The local links to content inside a document don't work from
+Firefox. You need to test these links after pushing to github.
+
+Set the max width to 40em so reading on the desktop looks more like
+reading on the iphone. Add the one line shown below right before the
+Contents section:
+
+~~~
+<style>body { max-width: 40em}</style>
+~~~
+
+<style>body { max-width: 40em}</style>
 
 # Contents
 

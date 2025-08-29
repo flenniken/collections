@@ -4,8 +4,9 @@
 
 This page links to documents of interest to developers.
 
+* [Tech Stack](tech-stack.md) -- Collections technology stack.
 * [Build](build.md) — how to get and build the website
-* [AWS Config](aws-config.md) — how to setup AWS login (Cognito) and image file delivery (Cloudfront) and related services that Collections use.
+* [AWS Config](aws-config.md) — how to setup AWS login (Cognito) and image file delivery (Cloudfront) and related services.
 * [Test](test.md) — how to develop, test and debug.
 * [Deploy](deploy.md) — how to deploy the website code.
 * [Collection Maker](collection-maker.md) — how to make a new collection.

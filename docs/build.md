@@ -217,6 +217,8 @@ dist
     `-- c2-1-t.jpg
 ~~~
 
+<style>body { max-width: 40em}</style>
+
 # Contents
 
 * [Build Setup](#build-setup) -- how to download the code and create the docker build container.
