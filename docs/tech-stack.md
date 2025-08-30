@@ -7,6 +7,7 @@ Collection’s cool tech stack:
 * AWS Cognito -- for login support
 * AWS S3 — for website files and images
 * AWS Lambda -- for authenticating image downloads
+* Statictea -- template system for html pages
 * Markdown documentation optimized for reading on a phone
 * CSS, HTML and JSON
 * static website — no server except AWS services — simple, cheap
