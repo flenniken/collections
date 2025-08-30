@@ -4,29 +4,6 @@ Planned near term features.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# Better Delete Message
-
-Use MB everywhere and tell how many MBs the collection you're deleting is.
-
-Currently when you click the trash icon to delete the collection from
-your iphone you see the message:
-
->Disk quota used: 1% (230.8 MB), quota 38.4 GB
->
->Are you sure you want to delete this colletion's images from the cache?
->
-> Cancel OK
-
-Change it to:
-
-> Are you sure you want to delete this colletion's images from the cache?
->
-> The collection is using x MBs (1%) and you have room for xxx MB on your phone.
->
-> Cancel OK
-
-[⬇](#Contents)
-
 # Download Image
 
 On the image page when you long press an image, pop up a menu to save
@@ -298,7 +275,6 @@ code. Also update the lambda function.
 
 # Contents
 
-* [Better Delete Message](#better-delete-message) -- Use MB everywhere and tell how many MBs the collection you're deleting is.
 * [Download Image](#download-image) -- enable download of full size image on the image page.
 * [Desktop Badge](#desktop-badge) -- show the red circle over the collection's icon when there is a new collection.
 * [Local Badge](#local-badge) -- show a red circle on the index page for collections not viewed.

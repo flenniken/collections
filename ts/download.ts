@@ -40,18 +40,18 @@ function getIndexCollection(cNum: number): CJson.IndexCollection {
   throw new Error(`Invalid collection number: ${cNum}`);
 }
 
-async function enoughSpace(collection: CJson.IndexCollection) {
+async function enoughSpace(cNum: number, totalSize: number) {
   // Return true when there is enough space to download the
   // collection.
 
-  const sizeString = humanFileSize(collection.totalSize)
-  log(`Collection ${collection.cNum} size: ${sizeString}`)
-  log(await getUsageQuotaString())
+  const sizeString = toNearestMB(totalSize)
+  log(`Collection ${cNum} size: ${sizeString} MB`)
+  log(await getUsageQuotaString(null))
 
   const estimate = await navigator.storage.estimate()
   if (!estimate.usage || !estimate.quota)
     return true
-  if (estimate.usage + collection.totalSize > estimate.quota)
+  if (estimate.usage + totalSize > estimate.quota)
     return false
   return true
 }
@@ -70,7 +70,7 @@ async function downloadCollection(cNum: number) {
 
   const indexCollection = getIndexCollection(cNum)
 
-  if (!await enoughSpace(indexCollection)) {
+  if (!await enoughSpace(indexCollection.cNum, indexCollection.totalSize)) {
     window.alert(["There is not enough space for the collection's images."])
     return
   }

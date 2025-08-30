@@ -50,14 +50,10 @@ function registerServerWorker() {
 
 registerServerWorker()
 
-function humanFileSize(size: number) {
-  // Convert the number to a human readable file size string using MB,
-  // GB, etc.
-  if (size == 0)
-    return 0
-  const i = Math.floor(Math.log(size) / Math.log(1024));
-  return +((size / Math.pow(1024, i)).toFixed(1)) * 1 + ' ' +
-    ['B', 'kB', 'MB', 'GB', 'TB'][i];
+function toNearestMB(bytes: number): number {
+  // Convert the number to the nearest MB.
+  const MB = 1024 * 1024;
+  return Math.round(bytes / MB);
 }
 
 async function setCollectionState(cNum: number, collectionState: string) {
@@ -328,7 +324,7 @@ function hideAboutBox(element: Element) {
 }
 
 async function removeCollection(cNum: number) {
-  const quota = await getUsageQuotaString()
+  const quota = await getUsageQuotaString(cNum)
   const message = `${quota}
 
 Are you sure you want to delete this collection's images from the cache?`
@@ -367,7 +363,7 @@ function viewCollection(cNum: number) {
 
 async function clearAppCache() {
   log("clearAppCache")
-  const quota = await getUsageQuotaString()
+  const quota = await getUsageQuotaString(null)
   const message = `${quota}
 
 Are you sure you want to delete all the photos and files from the cache?`
@@ -383,18 +379,30 @@ async function deleteCache() {
   refreshPage()
 }
 
-async function getUsageQuotaString() {
-  // Return a string telling how much disk storage the collection app uses.
+async function getUsageQuotaString(cNum: number | null) {
+  // Return a string telling how much disk storage the specify collection uses
+  // or when null how much all the collections use.
 
   const estimate = await navigator.storage.estimate()
 
   if (!estimate.usage || !estimate.quota)
     return "No disk quota estimate."
 
-  const percent = ((estimate.usage / estimate.quota) * 100).toFixed(0)
-  const usage = humanFileSize(estimate.usage)
-  const quota = humanFileSize(estimate.quota)
-  return `Disk quota used: ${percent}% (${usage}), quota: ${quota}`
+  const quota = toNearestMB(estimate.quota)
+  const quotaFormatted = quota.toLocaleString();
+
+  if (cNum == null) {
+    const percent = ((estimate.usage / estimate.quota) * 100).toFixed(0)
+    const totalUsageFormatted = toNearestMB(estimate.usage).toLocaleString();
+    return `All the collections are using ${totalUsageFormatted} MB (${percent}%) and you have room for ${quotaFormatted} MB on your phone.`
+  }
+  else {
+    const indexCollection = getIndexCollection(cNum)
+    const cNumUsage = indexCollection.totalSize
+    const percent = ((cNumUsage / estimate.quota) * 100).toFixed(0)
+    const cNumUsageFormatted = toNearestMB(cNumUsage).toLocaleString();
+    return `The collection is using ${cNumUsageFormatted} MB (${percent}%) and you have room for ${quotaFormatted} MB on your phone.`
+  }
 }
 
 async function logAppCache() {
@@ -418,7 +426,7 @@ async function logAppCache() {
     })
     log(`The cache contains ${urls.length} items.`)
 
-    getUsageQuotaString().then((message) => {
+    getUsageQuotaString(null).then((message) => {
       log(message)
     })
   })
