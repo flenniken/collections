@@ -29,7 +29,7 @@ const framesPerSec = 30
 // another handler on the containers.
 window.addEventListener("DOMContentLoaded", handleDOMContentLoaded)
 window.addEventListener("load", handleLoad)
-window.addEventListener("touchstart", handleTouchStart, {passive: false})
+window.addEventListener("touchstart", handleTouchStart, {passive: true})
 window.addEventListener("restoreimage", handleRestoreImage, false)
 window.addEventListener("touchmove", handleTouchMove, {passive: false})
 window.addEventListener("resize", handleResize);
@@ -70,7 +70,7 @@ async function handleLoad() {
   // Watch the touchstart event on the containers for double touch.
   const containers = area!.querySelectorAll(".container")
   containers.forEach(container => {
-    container.addEventListener("touchstart", handleContainerTouchStart, {passive: false})
+    container.addEventListener("touchstart", handleContainerTouchStart, {passive: true})
 
     // Watch the area scroll and scroll end events.
     area!.addEventListener("scroll", handleScroll, false)

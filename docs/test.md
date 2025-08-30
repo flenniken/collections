@@ -68,6 +68,7 @@ When making changes to the image page test them with these steps:
 * zoom to limits, small and big, then pan around
 * zoom when v scrolled
 * double tap to restore
+* double tap to fit to screen
 * h scroll
 * h scroll half way and snap back
 * flick h scroll
@@ -75,6 +76,7 @@ When making changes to the image page test them with these steps:
 * v scroll and overscroll on both ends
 * zoom image small, go to thumbnails, tap the same image and verify image is at its zoom point
 * long press to copy text then extend the selection
+* long press on an image to make sure the share menu appears
 * rotate the last image then rotate it back and verify it remains on the same image
 * scroll h & v in landscape mode
 * no flash on load and no flash on rotate
