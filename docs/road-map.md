@@ -303,11 +303,10 @@ things happening?  Overlay the image icon on top of the thumbnail?
 
 [⬇](#Contents)
 
-# Swap Icon Location
+# Thumbnail Icon
 
-Swap the thumbnail and image page icons so the image icon is
-first. Remove the thumbnail icon from the index page but leave it on
-the image page.
+Remove the thumbnail icon from the index page but leave it on
+the image page?
 
 [⬇](#Contents)
 
@@ -543,7 +542,7 @@ filename, date or other metadata.
 * [Image Page Icon](#image-page-icon) -- replace the image camera icon with a different icon.
 * [Encourage Preferred Usage](#encourage-preferred-usage) -- encourage visiting the image page from start to finish.
 * [Image Click does Nothing](#image-click-does-nothing) -- why the clicking an index image does nothing.
-* [Swap Icon Location](#swap-icon-location) -- swap the thumbnail and image page icons so the image icon is first.
+* [Thumbnail Icon](#thumbnail-icon) -- remove the thumbnail icon from the index page.
 * [Automatically Download Source](#automatically-download-source) -- automatically download the new versions of html, js and css code.
 * [Screen Size](#screen-size) -- determine the screen size on the iphone and is it stable.
 * [Description Formatting](#description-formatting) -- support basic description formatting.
