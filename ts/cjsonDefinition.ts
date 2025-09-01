@@ -82,10 +82,11 @@ namespace CJson {
 
     // The optional order variable is a list of 16 image indexes.  It
     // defines which images are in the collection and their order. An
-    // index of -1 indicates the collection box is empty. It’s used
-    // while building the collection. Once built, the image list is
-    // rewritten to match the order list and the order list is
-    // removed.
+    // index of -1 indicates the collection box is empty. It’s used by
+    // the maker page while building the collection. When you click
+    // the optimize button on the maker page, the image list is
+    // rewritten to match the order list. When you run the gulp task
+    // "modified", it removes the order list when it is in sequence.
     order?: number[];
 
     // The image array contains an element for each image in the
@@ -112,7 +113,7 @@ namespace CJson {
 
     // The modified field is set by the maker page. It tells the build
     // process that the collection has been modified or is new.  When
-    // true, the build modified task:
+    // true, the build process (the gulp modified task):
     // * copies the tin thumbnail file to the shared location
     // * removes the old tin thumbnail if it exists
     // * removes any unused collection image files

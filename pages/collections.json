@@ -1,6 +1,36 @@
 {
   "indexCollections": [
     {
+      "cNum": 7,
+      "building": true,
+      "ready": true,
+      "title": "Manzanita Dog House",
+      "modified": false,
+      "indexDescription": "Our annual trip to Manzanita with the Bovees. ",
+      "iThumbnail": "c7-14-t.jpg",
+      "posted": "2025-08-31",
+      "iCount": 16,
+      "totalSize": 36028831,
+      "iNumList": [
+        14,
+        9,
+        2,
+        1,
+        11,
+        10,
+        13,
+        12,
+        16,
+        15,
+        6,
+        4,
+        5,
+        7,
+        8,
+        3
+      ]
+    },
+    {
       "cNum": 6,
       "building": false,
       "ready": true,

@@ -34,7 +34,8 @@ let help = `
     index -- Create the main index page.
     maker -- Create the collection maker page.
     ready -- Create the images and thumbnails pages for ready collections.
- modified -- Update index thumbnails and remove unused images for modified colections.
+ modified -- Update index thumbnails, remove unused images for modified collections and
+             remove the in order order list.
       css -- Minimize the collection.css file.
     m-css -- Minimize the maker.css file.
     tsync -- Update the template's replace blocks in sync with the header.tea content.
@@ -419,8 +420,8 @@ gulp.task("modified", function (cb) {
       }
     });
 
-    // Remove the modified field from the cjson.
-    removeModifiedFlag(cNum)
+    // Remove the modified and order field from the cjson.
+    removeModifiedAndOrder(cNum)
   }
   return cb()
 });
@@ -951,11 +952,28 @@ function compareContentsLog(srcPath: string, destPath: string): boolean {
   return same;
 }
 
-function removeModifiedFlag(cNum: number) {
-  // Remove the modified flag from the cjson file.
+function removeModifiedAndOrder(cNum: number) {
+  // Remove the modified flag and order list from the cjson file.
 
-  const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`
-  const cjson: CJson.Collection = readJsonFile(cjsonFilename)
-  delete cjson.modified
-  fs.writeFileSync(cjsonFilename, JSON.stringify(cjson, null, 2), 'utf8');
+  const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`;
+  const cjson: CJson.Collection = readJsonFile(cjsonFilename);
+  delete cjson.modified;
+
+  // Remove the order list when it is in order (ignore the ending -1
+  // values if they exist).
+  if ("order" in cjson) {
+    const order = cjson.order!;
+
+    // Remove trailing -1 values from the order list.
+    const trimmedOrder = order.filter((value) => value !== -1);
+
+    // Check if the trimmed order matches the default order (0, 1, 2, ..., n-1).
+    const isInOrder = trimmedOrder.every((value, index) => value === index);
+
+    if (isInOrder) {
+      delete cjson.order;
+    }
+  }
+
+  fs.writeFileSync(cjsonFilename, JSON.stringify(cjson, null, 2), "utf8");
 }

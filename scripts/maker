@@ -157,7 +157,7 @@ file: {ii.kind} ({ii.width} x {ii.height}) {fullPath}
       if ii.width < previewMinDim or ii.height < previewMinDim:
         raise MakerException(
           f"""\
-Error: preview width and hight must greater than or equal to {previewMinDim}.
+Error: preview width and height must greater than or equal to {previewMinDim}.
 file: ({ii.width} x {ii.height}) {fileInfo.basename}
 """
         )

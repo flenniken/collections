@@ -329,7 +329,7 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
   let newOrder: number[]
   if (!newCinfo.order) {
     newOrder = createCollectionOrder(newCinfo.order!, 16, newCinfo.images.length)
-    log(`cinfo.order: ${newOrder}`)
+    log(`Create cinfo.order: ${newOrder}`)
   }
   else {
     newOrder = newCinfo.order
@@ -430,7 +430,7 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
       }
     }
   }
-  log(`updateStatusMessage: usedImageCount: ${usedImageCount}`)
+  // log(`updateStatusMessage: usedImageCount: ${usedImageCount}`)
 
   const requiredIcon = get("status-icon") as HTMLImageElement
   const requiredFields = document.querySelectorAll('.required')
@@ -465,7 +465,7 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
       cjsoninfo.modified = true
     }
   }
-  log(statusMessage.textContent)
+  // log(statusMessage.textContent)
 }
 
 function findThumbnailIx(order: number[], images: CJson.Image[],
@@ -613,12 +613,15 @@ function optimizeCollection(cjsoninfo: CJson.Collection) {
   }
 
   cjsoninfo.images = reorderImages(cjsoninfo.order, cjsoninfo.images)
+  log("reorder images to match the order list")
+  log(cjsoninfo.images)
   if (!cjsoninfo.zoomPoints) {
+    log("reorder zoom points to match the order list")
     cjsoninfo.zoomPoints = reorderZoomPoints(cjsoninfo.order, cjsoninfo.zoomPoints)
   }
 
+  log("delete order list")
   delete(cjsoninfo.order)
-  log(cjsoninfo.images)
 
   const result = populateCollection(cjsoninfo)
 
