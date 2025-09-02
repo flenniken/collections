@@ -2,7 +2,7 @@
   "indexCollections": [
     {
       "cNum": 7,
-      "building": true,
+      "building": false,
       "ready": true,
       "title": "Manzanita Dog House",
       "modified": false,
