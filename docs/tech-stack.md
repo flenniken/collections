@@ -21,3 +21,4 @@ PWA enables:
 * install icon on home screen
 * local storage cache control with code (service worker)
 * viewing images when offline
+* no annual Apple developer license needed or Apple review process approval

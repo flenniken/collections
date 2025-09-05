@@ -12,7 +12,7 @@ good photos is intended to make the collection more meaningful and
 long lasting.
 
 You navigate and view collections on three types of pages, the index
-page, the thumbnails page, and the image page.
+page, the image page and the thumbnails page.
 
 [⬇](#Contents) (table of contents at the bottom)
 
@@ -39,27 +39,10 @@ The icons do the following:
 
 * ![about](dist/icons/icon-32.png) about the app
 * ![login and logout](dist/icons/user.svg) login and logout
-* ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
 * ![view images](dist/icons/camera.svg) view the collection's images
+* ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
 * ![download images](dist/icons/download.svg) download the collection's images
 * ![delete cached images](dist/icons/trash-can.svg) delete the collection's cached images
-
-[⬇](#Contents)
-
-# Thumbnails Page
-
-[![Thumbnails Page](docs/thumbnails.png)](#)
-
-The thumbnails page shows the collection’s thumbnails.
-
-Past the bottom of the thumbnails you see the collection's title and a
-more in depth description of the collection than on the index page.
-
-You go back to the index page by scrolling to the bottom and tapping
-the index icon.
-
-Tapping a camera icon shows the first photo full size on the image
-page.
 
 [⬇](#Contents)
 
@@ -88,6 +71,23 @@ and tapping the thumbnail or index icon.
 
 [⬇](#Contents)
 
+# Thumbnails Page
+
+[![Thumbnails Page](docs/thumbnails.png)](#)
+
+The thumbnails page shows the collection’s thumbnails.
+
+Past the bottom of the thumbnails you see the collection's title and a
+more in depth description of the collection than on the index page.
+
+You go back to the index page by scrolling to the bottom and tapping
+the index icon.
+
+Tapping a camera icon shows the first photo full size on the image
+page.
+
+[⬇](#Contents)
+
 # Run Collections
 
 You can install the app's icon on your iphone's home screen then tap
@@ -106,11 +106,85 @@ https://collections.sflennik.com
 
 [![icon](docs/rounded-icon.png)](#)
 
+
+# Thumbnails Page
+
+[![Thumbnails Page](docs/thumbnails.png)](#)
+
+The thumbnails page shows the collection’s thumbnails.
+
+Past the bottom of the thumbnails you see the collection's title and a
+more in depth description of the collection than on the index page.
+
+You go back to the index page by scrolling to the bottom and tapping
+the index icon.
+
+Tapping a camera icon shows the first photo full size on the image
+page.
+
+[⬇](#Contents)
+
+# Run Collections
+
+You can install the app's icon on your iphone's home screen then tap
+it to run.  This is the recommended way to run Collections because it
+looks better and the photos can use the whole screen.
+
+You install the app’s icon on your home screen following these steps:
+
+* launch safari on iphone (it doesn't install on chrome or firefox)
+* go to:
+
+https://collections.sflennik.com
+
+* tap the share icon at the bottom center of the screen
+* scroll down and select “Add to Home screen” and tap add
+
+[![icon](docs/rounded-icon.png)](#)
+
+
+# Thumbnails Page
+
+[![Thumbnails Page](docs/thumbnails.png)](#)
+
+The thumbnails page shows the collection’s thumbnails.
+
+Past the bottom of the thumbnails you see the collection's title and a
+more in depth description of the collection than on the index page.
+
+You go back to the index page by scrolling to the bottom and tapping
+the index icon.
+
+Tapping a camera icon shows the first photo full size on the image
+page.
+
+[⬇](#Contents)
+
+# Run Collections
+
+You can install the app's icon on your iphone's home screen then tap
+it to run.  This is the recommended way to run Collections because it
+looks better and the photos can use the whole screen.
+
+You install the app’s icon on your home screen following these steps:
+
+* launch safari on iphone (it doesn't install on chrome or firefox)
+* go to:
+
+https://collections.sflennik.com
+
+* tap the share icon at the bottom center of the screen
+* scroll down and select “Add to Home screen” and tap add
+
+[![icon](docs/rounded-icon.png)](#)
+
+<style>body { max-width: 40em}</style>
+
 # Contents
 
 * [Index Page](#index-page)
-* [Thumbnails Page](#thumbnails-page)
 * [Image Page](#image-page)
+* [Thumbnails Page](#thumbnails-page)
 * [Run Collections](#run-collections)
 
 # Other

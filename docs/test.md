@@ -21,11 +21,39 @@ For Safari you plug your iphone into your mac and debug remotely, see
 Debug on iPhone.
 
 For xcode simulator, you get it by installing xcode.  Launch it and
-run an iphone 14 max.  Like chrome you use the local server that’s
-running in the docker container at http://localhost:8000. You can test
-the install process and two finger touching. It’s also good for making
-screenshots that include the bezel. You can see the console log in
-desktop safari like you do when debugging a plugged in iphone.
+run an iphone 14 max.
+
+Like chrome you use the local server that’s running in the docker
+container, however you need to enter the URL in the address bar at the
+bottom of the page and you use the url:
+
+~~~
+http://127.0.0.1:8000
+~~~
+
+instead of:
+
+~~~
+http://localhost/8000
+~~~
+
+You can test the install process and two finger touching.  You can see
+the console log in desktop safari like you do when debugging a plugged
+in iphone.
+
+It’s also good for making screenshots that include the bezel.
+
+* take a screenshot cmd-shift-4
+* open the sceenshot in photoshop
+* pull guides out from the rulers to define the crop area
+* crop using the guides
+* select pixels in a corner
+* make the corner pixels transparent: menu > file > clear
+* repeat for the other corners
+* save the png file to the tmp folder called index-orig.png for example
+* scale the long side to 256 in photoshop: menu > image > size
+* "save as" to a name in the docs folder, for example index.png
+* test in Firefox
 
 [⬇](#Contents)
 

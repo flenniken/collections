@@ -70,7 +70,14 @@ You stop the environment by typing ctrl-d.
 # Build All
 
 You build the app in the docker container with the gulp app by typing
-“g all”. The results go to the dist folder. Here is an example:
+“g all”.
+
+Changed files go the dist folder.  The process builds everything but
+only copies a file when the new bytes are different then the existing
+bytes.  The build process is fast enough for this to work well and no
+complex dependencies need to be maintained.
+
+Here is an example:
 
 ~~~
 (debian)~/collections $ g all
