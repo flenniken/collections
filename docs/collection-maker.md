@@ -34,13 +34,14 @@ mkdir tmp/5
 
 __Mac Photos__
 
-Here are the steps you can use to collect the files with the Mac Photos app.
+Here are the steps you can use to collect the files with the Mac
+Photos app.
 
-♫ Note: you can select the images ahead of time by creating a photo
-album on your phone.
-
-* launch Photos
-* select 8 to 20 images. Use the cmd-click to add to the selection.
+* launch Photos App
+* create an album with all the photos, good and bad, for the topic
+* mark 8 to 20 favorite images by clicking the heart icon
+* filter by favorites so just the favorites show
+* select all
 * select export menu: File > Export > Export Unmodified Originals for 20 Photos
 * uncheck "Export IPTC as XMP"
 * select filename: Sequential
@@ -56,7 +57,8 @@ for each image.
 
 * Remove the .mov files
 * Open the HEIC files in Photoshop
-* edit then save each file as jpg (use File > Save) -- uncheck "Embed
+* edit then flatten if necessary
+* save each file as jpg (use File > Save) -- uncheck "Embed
   Color Profile: Display P3"
 
 ♫ Notes:
@@ -111,6 +113,8 @@ Open the thumbnails (`-t`) images in Photoshop and crop them square
 * save
 * close
 
+Duplicate the tmp folder in the Finder. Right click the tmp/5 folder and select "duplicate".  You will get a "tmp/5 copy" folder.
+
 [⬇](#Contents)
 
 # Run Maker
@@ -142,8 +146,8 @@ Created a collection folder and moved it to: dist/images/c4
 
 # Edit Collection
 
-Use the maker page to select images for the collection, determine
-their order, and add descriptive text.
+Use the maker page to determine the photo order, to add descriptive
+text, etc.
 
 You build the maker page with gulp, for example:
 
@@ -153,15 +157,23 @@ g all
 
 You access the Maker Page as an admin from the index's about box by
 clicking the maker link.  Select the collection to edit from the
-dropdown menu. Perform all testing on `localhost` before publishing
-the collection.
+dropdown menu. Before you name the collection, the select list will
+show the collection number only, like: "(8)". Once the page is loaded
+in your browser you can continue to use it without having to go back
+to the index page.
+
+Perform all testing on `localhost` before publishing the collection.
+
+♫ Note: after building a new maker page, do a hard refresh on the page
+(shift-cmd-R) so the photos appear in their correct location on the
+page.
 
 __Saving Changes__
 
 Edits to the maker page update the `cjson` in memory version. Save
 your changes using the **Save** button to avoid losing
 them. Refreshing the page or selecting a different collection without
-saving will discard your changes.
+saving will __discard your changes__.
 
 When you save, the `cjson` file it is downloaded to your `Downloads`
 folder. Move it to the `images` directory. For example:
@@ -169,6 +181,9 @@ folder. Move it to the `images` directory. For example:
 ~~~
 mv ~/Downloads/c1.json dist/images/c1/
 ~~~
+
+Then repeat the rebuild and refresh steps in this section until the
+descriptions, etc. are complete.
 
 __Maker Page UI__
 
@@ -246,9 +261,15 @@ Once the collection looks good, you remove the "building" field from
 the cjson, build all, then deploy again.  This publishes it to the
 world.
 
+
+ ~~"building": true,~~
+
 ~~~
+g all
 scripts/deploy -s
 ~~~
+
+Test by logging out of admin and logging back in as a regular user.
 
 <style>body { max-width: 40em}</style>
 

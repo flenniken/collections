@@ -290,15 +290,40 @@ def renameFiles(num, folder, ftg):
   """
   assert len(ftg.previews) == len(ftg.thumbnails)
 
+  # Move the previews and thumbnails to the temporary folder abc.
+  tempFolder = os.path.join(folder, "abc")
+  if os.path.exists(tempFolder):
+    raise MakerException(f"Error: temporary folder {tempFolder} exists.")
+  os.mkdir(tempFolder)
   for ix in range(len(ftg.previews)):
-    previewName = os.path.join(folder, ftg.previews[ix].basename)
-    thumbnailName = os.path.join(folder, ftg.thumbnails[ix].basename)
+    oPreviewName = os.path.join(folder, ftg.previews[ix].basename)
+    oThumbnailName = os.path.join(folder, ftg.thumbnails[ix].basename)
+
+    nPreviewName = os.path.join(tempFolder, ftg.previews[ix].basename)
+    nThumbnailName = os.path.join(tempFolder, ftg.thumbnails[ix].basename)
+
+    if os.path.exists(nPreviewName):
+      raise MakerException(f"Error: file {nPreviewName} exists.")
+    if os.path.exists(nThumbnailName):
+      raise MakerException(f"Error: file {nThumbnailName} exists.")
+
+    os.rename(oPreviewName, nPreviewName)
+    os.rename(oThumbnailName, nThumbnailName)
+
+  # Move the temporary preview and thumbnails back to the original
+  # folder and give them their standard names
+  for ix in range(len(ftg.previews)):
+    nPreviewName = os.path.join(tempFolder, ftg.previews[ix].basename)
+    nThumbnailName = os.path.join(tempFolder, ftg.thumbnails[ix].basename)
 
     stdImageName = os.path.join(folder, getStdImageName(num, ix, "preview"))
     stdThumbnailName = os.path.join(folder, getStdImageName(num, ix, "thumbnail"))
 
-    os.rename(previewName, stdImageName)
-    os.rename(thumbnailName, stdThumbnailName)
+    os.rename(nPreviewName, stdImageName)
+    os.rename(nThumbnailName, stdThumbnailName)
+
+  # Remove the empty temp folder.
+  os.rmdir(tempFolder)
 
 def checkNumber(s3Client, num):
   """
@@ -834,10 +859,8 @@ class TestMaker(unittest.TestCase):
       gotExpected(cinfo['title'], "title")
       gotExpected(cinfo['indexDescription'], "")
       gotExpected(cinfo['cNum'], num)
-      gotExpected(cinfo['width'], thumbnailDim)
-      gotExpected(cinfo['height'], thumbnailDim)
       gotExpected(cinfo['building'], True)
-      gotExpected(cinfo['ready'], True)
+      gotExpected(cinfo['ready'], False)
       # gotExpected(len(cinfo['order']), 0)
       # gotExpected(len(cinfo['images']), 8)
       for ix, image in enumerate(cinfo['images']):

@@ -1,12 +1,42 @@
 {
   "indexCollections": [
     {
+      "cNum": 8,
+      "building": false,
+      "ready": true,
+      "title": "Eleanor Two Months",
+      "modified": false,
+      "indexDescription": "Eleanor photos, newborn to two months.",
+      "iThumbnail": "c8-12-t.jpg",
+      "posted": "2025-09-13",
+      "iCount": 16,
+      "totalSize": 26887761,
+      "iNumList": [
+        12,
+        1,
+        8,
+        16,
+        2,
+        3,
+        7,
+        9,
+        4,
+        13,
+        6,
+        11,
+        10,
+        5,
+        14,
+        15
+      ]
+    },
+    {
       "cNum": 7,
       "building": false,
       "ready": true,
       "title": "Manzanita Dog House",
       "modified": false,
-      "indexDescription": "Our annual trip to Manzanita with the Bovees. ",
+      "indexDescription": "Our annual 2025 trip to Manzanita with the Bovees. ",
       "iThumbnail": "c7-14-t.jpg",
       "posted": "2025-08-31",
       "iCount": 16,
