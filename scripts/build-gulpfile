@@ -31,6 +31,27 @@ declare module 'gulp-using' {
 EOF
 
 
+# Create exif-parser types file.
+cat > exif-parser.d.ts << EOF
+declare module 'exif-parser' {
+  export interface ExifTags {
+    Orientation?: number;
+    [key: string]: any;
+  }
+
+  export interface ExifData {
+    tags: ExifTags;
+  }
+
+  export interface ExifParser {
+    parse(): ExifData;
+  }
+
+  export function create(buffer: Buffer): ExifParser;
+}
+EOF
+
+
 # Create the typescript config file.
 cat > tsconfig.gulpfile.json << EOF
 {
@@ -54,7 +75,7 @@ cat > tsconfig.gulpfile.json << EOF
     ],
     "lib": ["es2017"],
   },
-  "include": ["ts/gulpfile.ts", "typings.d.ts", "ts/cjsonDefinitions.ts"],
+  "include": ["ts/gulpfile.ts", "typings.d.ts", "exif-parser.d.ts", "ts/cjsonDefinitions.ts"],
 }
 EOF
 
@@ -62,12 +83,12 @@ filename=tmp/gulpfile.js
 rm -f $filename
 
 tsc --project tsconfig.gulpfile.json
-
-rm -f tsconfig.gulpfile.json
-rm -f typings.d.ts
-
 if [[ -e $filename ]]; then
   echo "created $filename"
 else
   echo "build failed"
 fi
+
+rm -f tsconfig.gulpfile.json
+rm -f typings.d.ts
+rm -f exif-parser.d.ts

@@ -85,6 +85,9 @@ USER coder
 #
 #   cp ~/package.json env/debian/
 #
+# Note: gulpfile.ts is a heavy user of node modules. See
+# build_gulpfile and scripts/test-gulpfile if you need to make type files.
+#
 # Note: sharing the node_modules folder between the Mac and Debian
 # doesn't work very well because gulp scans the modules folder which
 # adds a 2 second delay to running it.

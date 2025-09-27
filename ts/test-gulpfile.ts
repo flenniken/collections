@@ -15,7 +15,10 @@ import {
   validateCinfoNoReading,
   validateCinfoImage,
   validateImageName,
-  readCJsonFile
+  getJpegDimensions,
+  getImagePath,
+  readCJsonFile,
+  validateImageDisk
 } from './gulpfile';
 
 if (!process.env.coder_env) {
@@ -263,20 +266,52 @@ function validateImageNameSuite() {
   testThrow("Collection 4 image 0: Invalid cNum: got: 5 expected: 4.", fn, 4, 0, 'p', 'c5-1-p.jpg')
 }
 
-function createTestImage(cNum: number, ix: number): CJson.Image {
+function createTestImage(cNum: number, ix: number,
+  width?: number, height?: number, size?: number, sizet?: number): CJson.Image {
   // Create a valid test image object for the given collection and
   // image index.
+
+  let imageWidth
+  if (width === undefined) {
+    imageWidth = 933
+  }
+  else {
+    imageWidth = width
+  }
+
+  let imageHeight
+  if (height === undefined) {
+    imageHeight = 933
+  }
+  else {
+    imageHeight = height
+  }
+
+  let imageSize
+  if (size === undefined) {
+    imageSize = 123456
+  }
+  else {
+    imageSize = size
+  }
+
+  let imageSizet
+  if (sizet === undefined) {
+    imageSizet = 20987
+  }
+  else {
+    imageSizet = sizet
+  }
 
   const image: CJson.Image = {
     iPreview: `c${cNum}-${ix}-p.jpg`,
     iThumbnail: `c${cNum}-${ix}-t.jpg`,
     title: `Title ${ix}`,
     description: `Description ${ix}`,
-    width: 933,
-    height: 933,
-    size: 123456,
-    sizet: 20987,
-    // uniqueId: `uniqueId ${ix}`
+    width: imageWidth,
+    height: imageHeight,
+    size: imageSize,
+    sizet: imageSizet,
   }
   return image
 }
@@ -408,6 +443,51 @@ function validateCollections() {
   })
 }
 
+function testGetImagePath(basename: string, ePath: string) {
+  const path = getImagePath(basename)
+  gotExpected(path, ePath)
+}
+
+function getImagePathSuite() {
+  const fn = testGetImagePath
+
+  test(fn, "c1-1-p.jpg", "dist/images/c1/c1-1-p.jpg")
+  test(fn, "c4-10-p.jpg", "dist/images/c4/c4-10-p.jpg")
+  testThrow("Invalid basename name: bogus.jpg", fn, "bogus.jpg")
+  test(fn, "c4-10-t.jpg", "dist/images/c4/c4-10-t.jpg")
+}
+
+function testGetJpegDimensions(filename: string, eDims: { width: number, height: number }) {
+  // Test the getJpegDimensions function.
+
+  const dims = getJpegDimensions(filename)
+  gotExpected(dims, eDims)
+}
+
+function getJpegDimensionsSuite() {
+  const fn = testGetJpegDimensions
+
+  test(fn, "dist/images/c1/c1-1-p.jpg", {"width":3024,"height":4032})
+  test(fn, "dist/images/c1/c1-1-t.jpg", {"width":480,"height":480})
+  testThrow("Invalid JPEG file: dist/icons/icon-128.png", fn, "dist/icons/icon-128.png")
+  testThrow("Unable to read: bogusfile", fn, "bogusfile")
+}
+
+function validateImageDiskSuite() {
+  const fn = validateImageDisk
+
+  test(fn, createTestImage(1, 2, 4032, 3024, 3871458, 70466))
+  testThrow("c1-2-p.jpg dimensions (4032x3024) do not match cjson: (4031x3024).",
+    fn, createTestImage(1, 2, 4031, 3024, 3871458, 70466))
+  testThrow("c1-2-p.jpg file size (3871458 bytes) does not match cjson: 12345 bytes.",
+    fn, createTestImage(1, 2, 4032, 3024, 12345, 70466))
+  testThrow("c1-2-t.jpg file size (70466 bytes) does not match cjson: 888 bytes.",
+    fn, createTestImage(1, 2, 4032, 3024, 3871458, 888))
+
+  // exif orientation swap
+  test(fn, createTestImage(8, 1, 3024, 4032, 1578565, 63852))
+}
+
 function testGulpfile() {
   // Run the test suite for the gulpfile.
 
@@ -421,6 +501,9 @@ function testGulpfile() {
   runSuite(validateCinfoImageSuite)
   runSuite(validateCinfoNoReadingSuite)
   runSuite(validateCollections)
+  runSuite(getImagePathSuite)
+  runSuite(getJpegDimensionsSuite)
+  runSuite(validateImageDiskSuite)
 }
 
 testGulpfile()

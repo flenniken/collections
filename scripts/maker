@@ -38,7 +38,7 @@ from boto_client import getBotoClient, getAwsSettings
 import random
 import string
 import shutil
-from PIL import Image
+from PIL import Image, ImageOps
 
 thumbnailDim = 480
 previewMinDim = 933
@@ -127,11 +127,20 @@ class ImageInfo(object):
     Create an ImageInfo object from a file.
     """
     try:
-      with Image.open(filename) as img:
-        width, height = img.size
-        return cls(width, height, img.format)
+        with Image.open(filename) as img:
+          kind = img.format
+
+          # Apply EXIF orientation so width/height match what you see
+          transposed_img = ImageOps.exif_transpose(img)
+          width, height = transposed_img.size
+
+          # Close the transposed image if it's a new object.
+          if transposed_img is not img:
+            transposed_img.close()
+
+          return cls(width, height, kind)
     except Exception as ex:
-      raise MakerException(f"Error: unable to open the image file: {filename}")
+        raise MakerException(f"Error: unable to open the image file: {filename}")
 
   def __str__(self):
     return f"{self.kind} ({self.width} x {self.height})"
@@ -708,6 +717,16 @@ class TestMaker(unittest.TestCase):
     gotExpected(tii.width, 480)
     gotExpected(tii.height, 480)
     gotExpected(str(tii), "JPEG (480 x 480)")
+
+  def test_ImageFile_transposed(self):
+    # test(fn, createTestImage(8, 1, 3024, 4032, 3871458, 70466))
+    previewName = "dist/images/c8/c8-1-p.jpg"
+    pii = ImageInfo.fromFile(previewName)
+    gotExpected(pii.kind, "JPEG")
+    gotExpected(pii.width, 3024)
+    gotExpected(pii.height, 4032)
+    gotExpected(str(pii), "JPEG (3024 x 4032)")
+
 
   def test_ImageFileMissing(self):
     try:

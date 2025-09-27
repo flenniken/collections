@@ -41,6 +41,26 @@ declare module 'gulp-using' {
 }
 EOF
 
+# Create exif-parser types file.
+cat > exif-parser.d.ts << EOF
+declare module 'exif-parser' {
+  export interface ExifTags {
+    Orientation?: number;
+    [key: string]: any;
+  }
+
+  export interface ExifData {
+    tags: ExifTags;
+  }
+
+  export interface ExifParser {
+    parse(): ExifData;
+  }
+
+  export function create(buffer: Buffer): ExifParser;
+}
+EOF
+
 # Create the typescript config file.
 cat > tsconfig.test-gulpfile.json << EOF
 {
@@ -65,7 +85,9 @@ cat > tsconfig.test-gulpfile.json << EOF
     ],
     "lib": ["es2017"],
   },
-  "include": ["ts/test-gulpfile.ts", "typings.d.ts", "ts/cjsonDefinitions.ts", "ts/sweet-tester.ts"]
+  "include": ["ts/test-gulpfile.ts", "typings.d.ts",
+    "exif-parser.d.ts", "ts/cjsonDefinitions.ts", "ts/sweet-tester.ts"
+]
 }
 EOF
 
@@ -76,6 +98,7 @@ tsc --project tsconfig.test-gulpfile.json
 
 rm -f tsconfig.test-gulpfile.json
 rm -f typings.d.ts
+rm -f exif-parser.d.ts
 
 if [[ -e $filename ]]; then
   # Run the test.
