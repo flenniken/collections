@@ -251,6 +251,38 @@ doesn’t feel the need to see what’s missing.
 
 [⬇](#Contents)
 
+# Remove DS Store Files
+
+The Mac finder creates a .DS_Store file in a folder when it contains
+an image. Remove these files from the distribution files and from S3.
+
+Delete the DS Store files from the distribution files:
+
+~~~
+find dist -name .DS_Store -delete
+~~~
+
+List DS Store files in the s3 bucket sflennikco:
+
+~~~
+aws s3 ls sflennikco --recursive | grep .DS_Store
+
+2025-08-06 03:21:04       6148 .DS_Store
+2025-09-27 22:11:59       6148 images/.DS_Store
+2025-06-22 21:44:23       6148 images/c4/.DS_Store
+2025-08-08 04:07:08       8196 images/c5/.DS_Store
+2025-09-01 17:50:38       6148 images/c7/.DS_Store
+2025-09-19 21:55:03       6148 images/c8/.DS_Store
+~~~
+
+Delete one DS_Store file:
+
+~~~
+aws s3 rm s3://sflennikco/images/c4/.DS_Store
+~~~
+
+[⬇](#Contents)
+
 # Deploy
 
 The deploy command copies the files to S3 and updates Cloudfront. The
@@ -281,4 +313,5 @@ Test by logging out of admin and logging back in as a regular user.
 * [Run Maker](#run-maker) -- Run the maker command.
 * [Edit Collection](#edit-collection) -- how to order and describe the new collection.
 * [Zoom Points](#zoom-points) -- how to set the collection zoom points.
+* [Remove DS Store Files](#remove-ds-store-files) -- remove the .DS_Store files.
 * [Deploy](#deploy) -- how to publish the collection to the world.
