@@ -834,7 +834,7 @@ def createUser(poolName, email, given_name, family_name, admin, cognitoClient=No
   # printDict("response", response)
 
   userId = response["User"]["Username"]
-  setTemporaryPassword(userPoolId, userId, cognitoClient)
+  tempPassword = setTemporaryPassword(userPoolId, userId, cognitoClient)
 
   print(f"""\
 
@@ -844,11 +844,11 @@ Created User:
     family_name: {family_name}
           email: {email}
          userId: {userId}
-  temp password: {password}""")
+  temp password: {tempPassword}""")
 
-  printMailMessage(email, password)
+  printMailMessage(email, tempPassword)
 
-def printMailMessage(email, password):
+def printMailMessage(email, tempPassword):
 
   message = f"""\
 
@@ -864,7 +864,7 @@ the link into the Safari browser:
 https://collections.sflennik.com/index.html
 
 user name: {email}
-Password: {password}
+Password: {tempPassword}
 
 Steve
 """
