@@ -27,7 +27,7 @@ js
     index.js
     thumbnails.js
 icons
-    camera.svg
+    photo.svg
     download.svg
     …
 ~~~

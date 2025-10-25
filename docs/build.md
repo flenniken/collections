@@ -168,7 +168,7 @@ dist
 |-- icons
 |   |-- 6-dots-rotate.svg
 |   |-- blank.svg
-|   |-- camera.svg
+|   |-- photo.svg
 |   |-- download.svg
 |   |-- icon-128.png
 ...

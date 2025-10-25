@@ -24,9 +24,9 @@ gotExpected () {
 } 
 
 
-printf "Download camera.svg: "
+printf "Download photo.svg: "
 statusCode=$(curl -s --write-out %{http_code} --output /dev/null \
-                  https://collections.sflennik.com/icons/camera.svg)
+                  https://collections.sflennik.com/icons/photo.svg)
 gotExpected $statusCode "200"
 
 # # Test that downloading an image without a token fails.

@@ -269,13 +269,6 @@ Support live photos on the image page.
 
 [⬇](#Contents)
 
-# Image Page Icon
-
-Replace the image camera icon with a different icon. Currently it is a
-camera but that can mean take a picture, not view a picture.
-
-[⬇](#Contents)
-
 # Encourage Preferred Usage
 
 The encouraged user interaction is to scroll to find a collection on
@@ -539,7 +532,6 @@ filename, date or other metadata.
 * [Readable Build Messages](#readable-build-messages) -- only print important build messages.
 * [Renew Tokens](#renew-tokens) -- handle expiring login tokens.
 * [Play Live Photos](#play-live-photos) -- support live photos on the image page.
-* [Image Page Icon](#image-page-icon) -- replace the image camera icon with a different icon.
 * [Encourage Preferred Usage](#encourage-preferred-usage) -- encourage visiting the image page from start to finish.
 * [Image Click does Nothing](#image-click-does-nothing) -- why the clicking an index image does nothing.
 * [Thumbnail Icon](#thumbnail-icon) -- remove the thumbnail icon from the index page.

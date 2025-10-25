@@ -39,7 +39,7 @@ The icons do the following:
 
 * ![about](dist/icons/icon-32.png) about the app
 * ![login and logout](dist/icons/user.svg) login and logout
-* ![view images](dist/icons/camera.svg) view the collection's images
+* ![view images](dist/icons/photo.svg) view the collection's images
 * ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
 * ![download images](dist/icons/download.svg) download the collection's images
 * ![delete cached images](dist/icons/trash-can.svg) delete the collection's cached images
@@ -83,7 +83,7 @@ more in depth description of the collection than on the index page.
 You go back to the index page by scrolling to the bottom and tapping
 the index icon.
 
-Tapping a camera icon shows the first photo full size on the image
+Tapping the photo icon shows the first photo full size on the image
 page.
 
 [⬇](#Contents)
