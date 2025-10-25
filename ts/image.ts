@@ -533,13 +533,28 @@ function handleRestoreImage(event: Event) {
 }
 
 function add_border(img: HTMLElement, zoomPoint: CJson.ZoomPoint) {
-  // Add a border to the element when it's upper left corner is inside
-  // the area.
-  if (zoomPoint.tx >= 0.5 && zoomPoint.ty >= 0.5) {
-    img.style.border = "solid black 80px"
-  }
-  else {
-    img.style.border = ""
+  // Add an outline to the element when the entire image is inside the area,
+  // including a 0.5 padding.
+
+  // Calculate the image dimensions after applying the zoom scale.
+  const scaledWidth = img.offsetWidth * zoomPoint.scale;
+  const scaledHeight = img.offsetHeight * zoomPoint.scale;
+
+  // Define the padding.
+  const padding = 0.5;
+
+  // Check if the entire image is within the area, including the padding.
+  const isInsideHorizontally =
+    zoomPoint.tx >= padding &&
+    zoomPoint.tx + scaledWidth <= availWidth - padding;
+  const isInsideVertically =
+    zoomPoint.ty >= padding &&
+    zoomPoint.ty + scaledHeight <= availHeight - padding;
+
+  if (isInsideHorizontally && isInsideVertically) {
+    img.style.outline = "solid black 80px"
+  } else {
+    img.style.outline = ""
   }
 }
 
