@@ -159,6 +159,7 @@
 #thumbnails #description {
   margin: 0 1em 1em 1em;
   font-size: 1.5em;
+  white-space: pre-line;
 }
 
 #thumbnails #posted {
@@ -187,6 +188,7 @@
 #images .description {
   margin: 0 1em 1em 1em;
   font-size: 1.5em;
+  white-space: pre-line;
 }
 
 #images #menu {
