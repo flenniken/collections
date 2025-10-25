@@ -49,7 +49,7 @@ let help = `
    vready -- Validate images and thumbnails pages for the ready collections.
    vsize  -- Validate json images width, height and size match on disk values.
 
-* all: Compile most everything in parallel: ts, pages, vpages (not tsync).
+* all: Compile most everything in parallel: ts, pages (not tsync, vpages).
 `
 // * Miscellaneous:
 // *  readme: Show the readme file with glow.
@@ -484,7 +484,7 @@ gulp.task("vsize", function (cb) {
 })
 
 gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
-  ["ts", "pages", "css", "m-css", "vpages"])]));
+  ["ts", "pages", "css", "m-css"])]));
 
 
 let builtOnce = false

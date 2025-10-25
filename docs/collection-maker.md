@@ -25,11 +25,20 @@ folder contains:
 * no extra files exist in the folder
 
 Create the folder in the tmp folder named with the collection
-number. For example, for the 5th collection:
+number. You can determine the next collection number by listing the
+images folder. In the example 9 is the next number:
 
 ~~~
 cd ~/code/collections
-mkdir tmp/5
+ls dist/images
+
+c1 c2 c3 c4 c5 c6 c7 c8
+~~~
+
+Create the folder, For example, for the 9th collection:
+
+~~~
+mkdir tmp/9
 ~~~
 
 __Mac Photos__
@@ -48,7 +57,7 @@ Photos app.
 * leave the prefix blank
 * leave the Subfolder Format as None
 * click Export
-* select the empty tmp/5 folder
+* select the empty tmp/9 folder
 
 If your photos were Live Photos, you end up with .HEIC and .mov files
 for each image.
@@ -60,7 +69,7 @@ for each image.
 * edit then flatten if necessary
 * save each file as jpg (use File > Save) -- uncheck "Embed
   Color Profile: Display P3"
-
+* Use Jpg options: Quality 8, Baseline, no preview
 ♫ Notes:
 
 -- Some types of editing in Photoshop will create layers. You can tell
@@ -84,25 +93,44 @@ you will get .jpeg files instead of .jpg files, the rename code
 handles this case. For example:
 
 ~~~
-cd tmp/4
+cd tmp/9
 
-for file in *.jpg *.jpeg; do
+for file in *.jpg; do
   mv "$file" "${file/.jpg/-p.jpg}"
 done
-
 for file in *.jpeg; do
-  echo $file
   mv "$file" "${file/.jpeg/-p.jpg}"
 done
+for file in *.JPG; do
+  mv "$file" "${file/.JPG/-p.jpg}"
+done
+~~~
+
+You should have a folder that looks something like:
+
+~~~
+ls
+
+1-p.jpg    2-p.jpg    4-p.jpg  6-p.jpg  8-p.jpg
+10-p.jpg   3-p.jpg    5-p.jpg  7-p.jpg  9-p.jpg
 ~~~
 
 Then copy all the images which will become the thumbnails:
 
 ~~~
-cd tmp/4
+cd tmp/9
 for file in *-p.jpg; do
   cp "$file" "${file/-p.jpg/-t.jpg}"
 done
+~~~
+
+You should have a folder that looks something like:
+
+~~~
+ls
+
+1-p.jpg  10-p.jpg 2-p.jpg  3-p.jpg  4-p.jpg  5-p.jpg  6-p.jpg  7-p.jpg  8-p.jpg  9-p.jpg
+1-t.jpg  10-t.jpg 2-t.jpg  3-t.jpg  4-t.jpg  5-t.jpg  6-t.jpg  7-t.jpg  8-t.jpg  9-t.jpg
 ~~~
 
 Open the thumbnails (`-t`) images in Photoshop and crop them square
@@ -113,7 +141,20 @@ Open the thumbnails (`-t`) images in Photoshop and crop them square
 * save
 * close
 
-Duplicate the tmp folder in the Finder. Right click the tmp/5 folder and select "duplicate".  You will get a "tmp/5 copy" folder.
+You should have a files that looks something like the following. Notice
+the sizes of the p verses the t files:
+
+~~~
+ls -s
+
+ 5448 1-p.jpg   7408 2-p.jpg   3680 4-p.jpg   3576 6-p.jpg  10832 8-p.jpg
+  200 1-t.jpg    224 2-t.jpg    256 4-t.jpg    200 6-t.jpg    264 8-t.jpg
+ 4240 10-p.jpg  3704 3-p.jpg   3368 5-p.jpg   4192 7-p.jpg   9136 9-p.jpg
+  216 10-t.jpg   224 3-t.jpg    256 5-t.jpg    248 7-t.jpg    256 9-t.jpg
+~~~
+
+Duplicate the tmp folder in the Finder. Right click the tmp/9 folder
+and select "duplicate".  You will get a "tmp/9 copy" folder.
 
 [⬇](#Contents)
 
@@ -137,9 +178,10 @@ process stops so you can correct it. The command:
 For example:
 
 ~~~
-scripts/maker -n 4
+# from container
+scripts/maker -n 9
 
-Created a collection folder and moved it to: dist/images/c4
+Created a collection folder and moved it to: dist/images/c9
 ~~~
 
 [⬇](#Contents)
@@ -158,9 +200,15 @@ g all
 You access the Maker Page as an admin from the index's about box by
 clicking the maker link.  Select the collection to edit from the
 dropdown menu. Before you name the collection, the select list will
-show the collection number only, like: "(8)". Once the page is loaded
+show the collection number only, like: "(9)". Once the page is loaded
 in your browser you can continue to use it without having to go back
 to the index page.
+
+You see the local host index page with the url:
+
+~~~
+http://localhost:8000/
+~~~
 
 Perform all testing on `localhost` before publishing the collection.
 
@@ -179,7 +227,7 @@ When you save, the `cjson` file it is downloaded to your `Downloads`
 folder. Move it to the `images` directory. For example:
 
 ~~~
-mv ~/Downloads/c1.json dist/images/c1/
+mv ~/Downloads/c9.json dist/images/c9/
 ~~~
 
 Then repeat the rebuild and refresh steps in this section until the
