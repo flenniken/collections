@@ -1,0 +1,337 @@
+{
+  "title": "Toyko",
+  "indexDescription": "Trip to Tokyo with Alex and Agatha in fall 2014.",
+  "description": "Kathleen and I flew to Tokyo and meet Alex and Agatha.  We stayed for two days then flew to Taipei for a week.  ",
+  "indexThumbnail": "c10-8-t.jpg",
+  "cNum": 10,
+  "posted": "2026-06-08",
+  "images": [
+    {
+      "title": "",
+      "description": "This is the famous Tokyo intersection. It always full of people and billboards everywhere.  When the light changes people cross in all directions. ",
+      "iPreview": "c10-4-p.jpg",
+      "iThumbnail": "c10-4-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2332883,
+      "sizet": 109834
+    },
+    {
+      "title": "",
+      "description": "Four up escalators and four down. Tokyo needs to move a lot of people around.",
+      "iPreview": "c10-15-p.jpg",
+      "iThumbnail": "c10-15-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2234576,
+      "sizet": 119281
+    },
+    {
+      "title": "",
+      "description": "Alex and Agatha at a fancy restaurant where they cook at your table.  You sit on the floor but there is a cutout for your feet.",
+      "iPreview": "c10-11-p.jpg",
+      "iThumbnail": "c10-11-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2254233,
+      "sizet": 99750
+    },
+    {
+      "title": "",
+      "description": "Cooking dinner at our table.  Not much smoke unlike a Korean restaurant.",
+      "iPreview": "c10-12-p.jpg",
+      "iThumbnail": "c10-12-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2324124,
+      "sizet": 96765
+    },
+    {
+      "title": "",
+      "description": "This is the view from our hotel room.  Notice the freeway goes under the river.  The light rail crosses over the freeway.",
+      "iPreview": "c10-1-p.jpg",
+      "iThumbnail": "c10-1-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2167100,
+      "sizet": 75628
+    },
+    {
+      "title": "",
+      "description": "Tasty restaurant dessert. ",
+      "iPreview": "c10-3-p.jpg",
+      "iThumbnail": "c10-3-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2058619,
+      "sizet": 90794
+    },
+    {
+      "title": "",
+      "description": "Alex, Agath and Kathleen watching the sign spell out the store name. The letters rotate.",
+      "iPreview": "c10-5-p.jpg",
+      "iThumbnail": "c10-5-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2063233,
+      "sizet": 91109
+    },
+    {
+      "title": "",
+      "description": "I thought the shape of the people on the sign were funny.",
+      "iPreview": "c10-9-p.jpg",
+      "iThumbnail": "c10-9-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2175125,
+      "sizet": 81299
+    },
+    {
+      "title": "",
+      "description": "We walked to Sky Tree. At 2,080 ft it is the worlds tallest tower.  For comparison the Seattle Space Needle is 605 ft tall.",
+      "iPreview": "c10-13-p.jpg",
+      "iThumbnail": "c10-13-t.jpg",
+      "width": 2448,
+      "height": 3264,
+      "size": 2146347,
+      "sizet": 66514
+    },
+    {
+      "title": "",
+      "description": "View from Sky Tree.  It was a little hazy for the tall buildings in the distance.",
+      "iPreview": "c10-14-p.jpg",
+      "iThumbnail": "c10-14-t.jpg",
+      "width": 2448,
+      "height": 3264,
+      "size": 3594921,
+      "sizet": 146951
+    },
+    {
+      "title": "",
+      "description": "We ate delicious sushi at the famous fish market.",
+      "iPreview": "c10-8-p.jpg",
+      "iThumbnail": "c10-8-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2893035,
+      "sizet": 109382
+    },
+    {
+      "title": "",
+      "description": "Artfully displayed dishes in the restaurant window.",
+      "iPreview": "c10-10-p.jpg",
+      "iThumbnail": "c10-10-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2488259,
+      "sizet": 128809
+    },
+    {
+      "title": "",
+      "description": "Agatha with beautifully decorated coffee.",
+      "iPreview": "c10-2-p.jpg",
+      "iThumbnail": "c10-2-t.jpg",
+      "width": 2448,
+      "height": 3264,
+      "size": 1682917,
+      "sizet": 87877
+    },
+    {
+      "title": "",
+      "description": "Personal hot pot.",
+      "iPreview": "c10-16-p.jpg",
+      "iThumbnail": "c10-16-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 1526282,
+      "sizet": 71696
+    },
+    {
+      "title": "",
+      "description": "Father and son outside the mall sitting on lit up steps.",
+      "iPreview": "c10-6-p.jpg",
+      "iThumbnail": "c10-6-t.jpg",
+      "width": 3264,
+      "height": 2448,
+      "size": 2126776,
+      "sizet": 69550
+    },
+    {
+      "title": "",
+      "description": "Giant Gamdom video game character outside a mall.",
+      "iPreview": "c10-7-p.jpg",
+      "iThumbnail": "c10-7-t.jpg",
+      "width": 2448,
+      "height": 3264,
+      "size": 2107260,
+      "sizet": 90787
+    }
+  ],
+  "ready": true,
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.4259794466412093,
+        "tx": -147.5256542185221,
+        "ty": -16.63477061056517
+      },
+      {
+        "scale": 0.4240605404304908,
+        "tx": -560.7711492320627,
+        "ty": -8.728303287622452
+      },
+      {
+        "scale": 0.1454881129695896,
+        "tx": -12.31524594352011,
+        "ty": 254.1262742822135
+      },
+      {
+        "scale": 0.4096516984551055,
+        "tx": -298.011199861824,
+        "ty": -28.49285580671892
+      },
+      {
+        "scale": 0.422988967617757,
+        "tx": -813.3200494031574,
+        "ty": -82.72417444141331
+      },
+      {
+        "scale": 0.1086305874318457,
+        "tx": 36.40839211222061,
+        "ty": 313.6124003939762
+      },
+      {
+        "scale": 0.2561250688345165,
+        "tx": -255.5888027375246,
+        "ty": 143.3409017495216
+      },
+      {
+        "scale": 0.1197855471217015,
+        "tx": 20.49244135072749,
+        "ty": 294.5196650367018
+      },
+      {
+        "scale": 0.2897431790693361,
+        "tx": -11.29381266904898,
+        "ty": -6.520639381344154
+      },
+      {
+        "scale": 0.2858455882352941,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2231108941141008,
+        "tx": -80.41882511330442,
+        "ty": 190.995941203819
+      },
+      {
+        "scale": 0.4241262750682614,
+        "tx": -507.5305716608883,
+        "ty": -80.39198246892022
+      },
+      {
+        "scale": 0.3301326706626447,
+        "tx": -207.4634411247118,
+        "ty": -11.74838760172258
+      },
+      {
+        "scale": 0.1211790623866843,
+        "tx": 16.68875479207264,
+        "ty": 307.3209789723849
+      },
+      {
+        "scale": 0.4098173362708611,
+        "tx": -275.3087977722973,
+        "ty": -15.21366036679984
+      },
+      {
+        "scale": 0.2944057956659508,
+        "tx": -207.4699995427058,
+        "ty": -7.047274789960625
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.2948917205609368,
+        "tx": -26.28679938607175,
+        "ty": -136.4600054524631
+      },
+      {
+        "scale": 0.3338808160689213,
+        "tx": -77.5784152744863,
+        "ty": -127.75745885955152
+      },
+      {
+        "scale": 0.30306262028243813,
+        "tx": -15.819661819010946,
+        "ty": -23.56621714995825
+      },
+      {
+        "scale": 0.2941432757325974,
+        "tx": -21.62399628764736,
+        "ty": -233.4388583626254
+      },
+      {
+        "scale": 0.3352019566432191,
+        "tx": -70.55601905098689,
+        "ty": -208.39138903464917
+      },
+      {
+        "scale": 0.2481942201602308,
+        "tx": 41.15155900553896,
+        "ty": -71.2118446227662
+      },
+      {
+        "scale": 0.4257664511991884,
+        "tx": -214.3898583482084,
+        "ty": -146.4309640364289
+      },
+      {
+        "scale": 0.2914929559195631,
+        "tx": -12.67989750017173,
+        "ty": -48.36186744487557
+      },
+      {
+        "scale": 0.46518570529890996,
+        "tx": -67.46347100465772,
+        "ty": -256.868793893713
+      },
+      {
+        "scale": 0.4798837934627432,
+        "tx": -30.05245516771538,
+        "ty": -636.0591577363406
+      },
+      {
+        "scale": 0.3015698938159956,
+        "tx": -2.951726935803435,
+        "ty": -94.56646802580244
+      },
+      {
+        "scale": 0.2855392156862745,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.1317401960784314,
+        "tx": 304.75,
+        "ty": 0
+      },
+      {
+        "scale": 0.3075974987223334,
+        "tx": -34.11000883890648,
+        "ty": -171.8531399253116
+      },
+      {
+        "scale": 0.2855392156862745,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.43024494744842706,
+        "tx": -92.35378591283242,
+        "ty": -139.19943736082493
+      }
+    ]
+  }
+}

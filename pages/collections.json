@@ -2,7 +2,7 @@
   "indexCollections": [
     {
       "cNum": 10,
-      "building": true,
+      "building": false,
       "ready": true,
       "title": "Toyko",
       "modified": false,

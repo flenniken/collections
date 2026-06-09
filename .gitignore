@@ -19,3 +19,4 @@ env/lambda/*.zip
 env/lambda/package/
 env/lambda/validateImageRequest.py
 env/lambda/js
+.aider*
