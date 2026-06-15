@@ -1,63 +1,182 @@
-# Web Push Notification System for Collections PWA
+# Badge Notifications
 
-## Introduction
+When a new collection is published, users see a notification and a red
+badge on the installed iPhone PWA icon.
 
-This document outlines the design of a Web Push notification system for the Collections Progressive Web Application (PWA). The goal is to notify users when a new collection has been published since their last visit. This will enhance user engagement and provide timely updates.
+The badge indicates that at least one new collection has been
+published since the user last opened the app. It is not an
+unread-tracking system and does not track collection views or
+downloads.
 
-## UI Design
+The collection list already shows unpublished content using the
+existing download icon, so the badge only serves as an attention
+indicator.
 
-### User Interface Elements
+[⬇](#Contents) Contents (table of contents at the bottom)
 
-1. **Notification Icon**: A small icon in the app's toolbar or sidebar that indicates whether there are any unread notifications.
-2. **Notification Badge**: A badge on the notification icon showing the number of unread notifications.
-3. **Notification List**: A modal or drawer that displays a list of unread notifications, each with a title and timestamp.
+# Notification Flow
 
-### User Interaction
+The notification system alerts users when new collections become available.
 
-1. **Mark as Read**: Users should be able to mark individual notifications as read by tapping them.
-2. **Clear All**: Users should have an option to clear all notifications at once.
+Flow:
 
-## APIs and Technologies
+* New collection is published.
+* AWS sends a Web Push notification.
+* Service worker receives the push event.
+* Service worker sets the application badge.
+* User sees the badge on the Home Screen icon.
+* User opens the application.
+* Application immediately clears the badge.
+* User sees the new collection with the existing download icon.
 
-### Client-Side
+Users choose whether to receive notifications when they first run the
+application. They can later change this setting through the operating
+system notification settings.
 
-1. **Service Worker**: To handle push notifications, a service worker will be registered in the PWA.
-2. **Web Push API**: The Web Push API will be used to send notifications from the server to the client.
-3. **Notification Permissions**: The user's permission to receive notifications must be requested and granted.
+[⬇](#Contents) Contents
 
-### Server-Side
+# Platform
 
-1. **AWS Lambda**: To handle push notification requests and interact with AWS services.
-2. **Amazon SNS (Simple Notification Service)**: To manage push notification subscriptions and send messages.
-3. **AWS Cognito**: For user authentication and authorization, ensuring that only authenticated users receive notifications.
-4. **AWS API Gateway**: To expose the Lambda function as an HTTP endpoint for sending notifications.
+The notification feature targets the primary Collections deployment
+platform.
 
-## Backend AWS Services
+* iPhone
+* Safari
+* Home Screen installed PWA
+* AWS backend
 
-1. **Amazon SNS (Simple Notification Service)**:
-   - Create a topic to represent the collection updates.
-   - Subscribe users to this topic based on their authentication status and preferences.
+Support for other platforms is not currently a priority.
 
-2. **AWS Lambda**:
-   - Write a Lambda function to handle incoming notification requests.
-   - The function should validate the request, fetch the latest collection data, and publish it to the SNS topic.
+[⬇](#Contents) Contents
 
-3. **Amazon Cognito**:
-   - Integrate with Cognito to authenticate users and ensure that only authorized users receive notifications.
+# Existing Behavior
 
-4. **AWS API Gateway**:
-   - Create an API endpoint to trigger the Lambda function.
-   - Configure CORS settings to allow cross-origin requests from the PWA.
+Collections are published periodically through a primarily static
+website.
 
-## Implementation Steps
+Users download collections before viewing them. Downloaded collections
+and application state are stored locally in browser storage.
 
-1. **Register Service Worker**: Register a service worker in the PWA to handle push notifications.
-2. **Request Notification Permissions**: Request and obtain permission from the user to receive notifications.
-3. **Subscribe to SNS Topic**: Subscribe the authenticated user to the SNS topic for collection updates.
-4. **Create Lambda Function**: Write a Lambda function to publish new collections to the SNS topic.
-5. **Expose API Endpoint**: Create an API endpoint using API Gateway to trigger the Lambda function.
-6. **Handle Notifications**: Implement logic in the service worker to handle incoming notifications and update the UI accordingly.
+The application does not maintain a server-side database that tracks
+whether a user has viewed a collection.
 
-## Conclusion
+Unseen collections are already identified in the collection list using
+a download icon.
 
-This design provides a robust Web Push notification system for the Collections PWA, ensuring that users are promptly informed about new collections. By leveraging AWS services such as SNS, Lambda, and Cognito, we can efficiently manage push notifications and maintain user engagement.
+[⬇](#Contents) Contents
+
+# Badge Behavior
+
+The badge is set when a push notification is received and cleared when
+the application starts.
+
+APIs used:
+
+* registration.setAppBadge()
+* navigator.setAppBadge()
+* navigator.clearAppBadge()
+
+The badge should persist while the application is closed and disappear
+as soon as the user opens the application.
+
+[⬇](#Contents) Contents
+
+# Service Worker
+
+The service worker handles notification-related background processing.
+
+Responsibilities:
+
+* Receive push events.
+* Display notifications.
+* Set the application badge.
+* Handle notification click events.
+
+[⬇](#Contents) Contents
+
+# Subscription Management
+
+The application manages user notification subscriptions.
+
+It has the responsibilities:
+
+* Request notification permission.
+* Create a PushSubscription.
+* Register the subscription with the AWS backend.
+
+[⬇](#Contents) Contents
+
+# Architecture
+
+AWS notification services do not currently provide direct support
+for browser Web Push subscriptions. Instead we use other AWS services
+to implement it ourself using:
+
+* API Gateway
+* Lambda
+* DynamoDB
+* Node.js web-push library
+
+This architecture is commonly used by PWA's for Safari, Chrome, and
+Edge.
+
+We store the notification subscriptons in DynamoDB. For a small
+application with fewer than 100 users and approximately two collection
+updates per week, DynamoDB costs are expected to be minimal.
+
+[⬇](#Contents) Contents
+
+# Acceptance Criteria
+
+The notification feature is complete when the following conditions are
+met:
+
+* Publishing a collection sends a push notification.
+* Publishing a collection sets the application badge.
+* The badge persists while the application is closed.
+* The badge clears when the application opens.
+* User subscriptions are stored in AWS.
+* Existing download icon behavior remains unchanged.
+* The solution works on an iPhone Home Screen PWA.
+
+[⬇](#Contents) Contents
+
+# Tasks
+
+The notification feature can be implemented and tested as independent
+tasks.
+
+Backend tasks:
+
+* Configure API Gateway, Lambda, and DynamoDB using AWS APIs.
+* Retrieve backend configuration for testing and debugging.
+* Store a user subscription.
+* Retrieve one or more subscriptions for testing and debugging.
+* Send a notification to one user or all users.
+
+Frontend tasks:
+
+* Add UI for notification permission and subscription registration.
+* Update the service worker to process Web Push notifications.
+* Clear the badge when the application starts.
+
+Code changes:
+
+* Service worker
+* Push subscription handling
+* AWS integration
+* Application startup logic
+
+<style>body { max-width: 40em}</style>
+
+# Contents
+
+* [Notification Flow](#notification-flow) -– end-to-end behavior when a collection is published.
+* [Platform](#platform) -– supported platform and deployment assumptions.
+* [Existing Behavior](#existing-behavior) -– current collection download and storage behavior.
+* [Badge Behavior](#badge-behavior) -– how badges are set and cleared.
+* [Service Worker](#service-worker) -- background notification processing responsibilities.
+* [Subscription Management](#subscription-management) -- user notification registration workflow.
+* [Architecture](#architecture) -- AWS components and notification delivery flow.
+* [Acceptance Criteria](#acceptance-criteria) -- requirements used to validate the feature.
+* [Tasks](#tasks) -- implementation work broken into smaller units.
