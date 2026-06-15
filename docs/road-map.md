@@ -10,10 +10,7 @@ Show the red circle over the collection's icon when there is a new
 collection. Launching collections is enough to make the red circle go
 away.
 
-AWS seems to provide a push notification service that supports Apple
-Push Notification Service (APNs).
-
-See the Badges note.
+See the notification doc.
 
 [⬇](#Contents)
 
