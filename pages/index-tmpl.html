@@ -81,12 +81,8 @@ the source there too.
           <a href="https://github.com/flenniken/collections" target="_blank">github collections</a>
         &mdash; user guide and source code
         </li>
-        <li>
-          <a href="#" onclick="toggleNotifications()">notifications — enable or disable notifications</a>
-        </li>
         <li class = "admin">
-          <a href="maker.html">maker</a>
-        &mdash; create and edit collections
+          <a href="#" onclick="enableNotifications()">enable notifications</a>
         </li>
       </ul>
     </div>
@@ -162,23 +158,20 @@ can install and experience full screen photos.
 </html>
 
 <script>
-function toggleNotifications() {
+async function enableNotifications() {
   const notificationPermission = Notification.permission;
   if (notificationPermission === 'granted') {
-    unsubscribe();
+    // Notifications are already enabled, do nothing
+    return;
   } else {
-    requestNotificationPermission();
-  }
-}
-
-async function requestNotificationPermission() {
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      subscribe();
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        subscribe();
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
     }
-  } catch (error) {
-    console.error('Error requesting notification permission:', error);
   }
 }
 
@@ -193,21 +186,6 @@ async function subscribe() {
     console.log('Subscription:', subscription);
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);
-  }
-}
-
-async function unsubscribe() {
-  try {
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if (subscription) {
-      await subscription.unsubscribe();
-      console.log('Unsubscribed from push notifications');
-    } else {
-      console.log('No subscription to unsubscribe');
-    }
-  } catch (error) {
-    console.error('Error unsubscribing from push notifications:', error);
   }
 }
 
