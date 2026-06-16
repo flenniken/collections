@@ -19,6 +19,7 @@
     "gulp-using": "^0.1.1",
     "jpeg-js": "^0.4.4",
     "jsonwebtoken": "^9.0.2",
-    "jwk-to-pem": "^2.0.7"
+    "jwk-to-pem": "^2.0.7",
+    "web-push": "^3.6.7"
   }
 }
