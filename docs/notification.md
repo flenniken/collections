@@ -146,6 +146,13 @@ met:
 The notification feature can be implemented and tested as independent
 tasks.
 
+Frontend tasks:
+
+* Create VAPID key
+* Add UI for notification permission and subscription registration.
+* Update the service worker to process Web Push notifications.
+* Clear the badge when the application starts.
+
 Backend tasks:
 
 * Configure API Gateway, Lambda, and DynamoDB using AWS APIs.
@@ -154,18 +161,20 @@ Backend tasks:
 * Retrieve one or more subscriptions for testing and debugging.
 * Send a notification to one user or all users.
 
-Frontend tasks:
+[⬇](#Contents) Contents
 
-* Add UI for notification permission and subscription registration.
-* Update the service worker to process Web Push notifications.
-* Clear the badge when the application starts.
+# Create VAPID Key
 
-Code changes:
+You create the VAPID key by running the notification.js file.  You
+only need to do this once. Save the public and private parts to a safe
+private location.
 
-* Service worker
-* Push subscription handling
-* AWS integration
-* Application startup logic
+The key is used to send a push notification.
+
+~~~
+cd ~/collections
+node scripts/notification.js
+~~~
 
 <style>body { max-width: 40em}</style>
 
@@ -180,3 +189,4 @@ Code changes:
 * [Architecture](#architecture) -- AWS components and notification delivery flow.
 * [Acceptance Criteria](#acceptance-criteria) -- requirements used to validate the feature.
 * [Tasks](#tasks) -- implementation work broken into smaller units.
+* [Create VAPID Key](#create-vapid-key) -- how to create a VAPID key used when pushing a notification.
