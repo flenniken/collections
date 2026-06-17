@@ -149,7 +149,7 @@ tasks.
 Frontend tasks:
 
 * Create VAPID key
-* Add UI for notification permission and subscription registration.
+* Enable notifications and register push subscription.
 * Update the service worker to process Web Push notifications.
 * Clear the badge when the application starts.
 
@@ -176,6 +176,15 @@ cd ~/collections
 node scripts/notification.js
 ~~~
 
+# Enable Notifications
+
+You can enable notifications and register push subscription by
+selecting the "enable notifications" menu item in the about box.
+
+When testing in Chrome, you can reset notifications in the developer
+tools.  Click the lock icon to the left of the URL at the top of the
+page, then click Reset Notifications.
+
 <style>body { max-width: 40em}</style>
 
 # Contents
@@ -190,3 +199,5 @@ node scripts/notification.js
 * [Acceptance Criteria](#acceptance-criteria) -- requirements used to validate the feature.
 * [Tasks](#tasks) -- implementation work broken into smaller units.
 * [Create VAPID Key](#create-vapid-key) -- how to create a VAPID key used when pushing a notification.
+* [Enable Notifications](#enable-notifications) -- how to enable notifications and register push.
+
