@@ -434,12 +434,12 @@ async function logAppCache() {
 
 async function enableNotifications() {
   if (Notification.permission === 'granted') {
-    console.log("Notifications already enabled.")
+    log("Notifications already enabled.")
     return
   }
   try {
       const permission = await Notification.requestPermission();
-      console.log(`permission: ${permission}`)
+      log(`permission: ${permission}`)
       if (permission === 'granted') {
         subscribe();
       }
@@ -451,15 +451,19 @@ async function enableNotifications() {
 async function subscribe() {
   try {
     const registration = await navigator.serviceWorker.ready;
+
+    // Subscribe to push notifications.
     const VAPID_PUBLIC_KEY =
 'BPXArEWQz2DQMcdcvK6xMC0q4tsv6igQCQv1FIodqJPQcNzzqY4BzeaF4qX5nHidzmgUXbWGI7eHdELGMjcrda8';
-
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      // Force TypeScript to accept it strictly as an ArrayBuffer
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
     });
-    console.log('Subscription:', subscription);
+
+    // Show the push subscription as JSON.
+    const subscriptionJson = JSON.stringify(subscription, null, 2);
+    log('Subscription:', subscriptionJson);
+
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);
   }
