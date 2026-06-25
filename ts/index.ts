@@ -453,8 +453,8 @@ async function subscribe() {
     const registration = await navigator.serviceWorker.ready;
 
     // Subscribe to push notifications.
-    const VAPID_PUBLIC_KEY =
-'BPXArEWQz2DQMcdcvK6xMC0q4tsv6igQCQv1FIodqJPQcNzzqY4BzeaF4qX5nHidzmgUXbWGI7eHdELGMjcrda8';
+    const VAPID_PUBLIC_KEY = 'BHk9EYgRQUfVCy4pvSj2S0Kr_9tCeOjRmbih4x0\
+Qqc0az0bNvr8O5ZnqwhP0DCdGESCx8CnbjrUlL2pLs68gksk'
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer

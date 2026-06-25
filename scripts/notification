@@ -7,24 +7,133 @@
 // Run from the collections container:
 //
 // cd ~/collections
-// node scripts/notification.js -h
+// scripts/notification -h
 //
 // Web Push Docs:
 // https://developer.mozilla.org/en-US/docs/Web/API/Push_API
 // https://web.dev/articles/push-notifications-overview
+//
+// Push JSON file (-p/--push <file>):
+//
+//   endpoint       (required) Push service URL from PushSubscription.toJSON()
+//   keys           (required) object with:
+//     p256dh       (required) client public key
+//     auth         (required) authentication secret
+//   expirationTime (optional) subscription expiration, or null
+//   subject        (required) contact email for the VAPID subject
+//   title          notification title (at least one of title or body required)
+//   body           notification body (at least one of title or body required)
+//
+// VAPID credentials (~/.vapid/credentials):
+//
+//   public = VAPID public key (must match the key used when creating the subscription)
+//   private = VAPID private key
 
 if (!process.env.coder_env) {
   console.log("Run from the Collection's docker environment.")
   return
 }
 
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const webPush = require('web-push');
 const { Command } = require('commander');
 
+const VAPID_CREDENTIALS = path.join(os.homedir(), '.vapid', 'credentials');
+
 // Define the command line options.
 const program = new Command();
-program.option('-v, --vapid',
-  'Generate VAPID public and private keys used to send push notifications.')
+program
+  .option('-v, --vapid',
+    'Generate VAPID public and private keys used to send push notifications.')
+  .option('-p, --push <file>',
+    'Send a push notification.');
+
+function loadVapidCredentials() {
+  let text;
+  try {
+    text = fs.readFileSync(VAPID_CREDENTIALS, 'utf8');
+  } catch (error) {
+    console.error(`Unable to read ${VAPID_CREDENTIALS}.`);
+    process.exit(1);
+  }
+
+  const credentials = {};
+  for (const line of text.split('\n')) {
+    const match = line.match(/^\s*(public|private)\s*=\s*(.+)\s*$/);
+    if (match) {
+      credentials[match[1]] = match[2].trim();
+    }
+  }
+  if (!credentials.public || !credentials.private) {
+    console.error(`${VAPID_CREDENTIALS} is missing public and/or private keys.`);
+    process.exit(1);
+  }
+  return credentials;
+}
+
+function loadPushFile(file) {
+  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!data.endpoint) {
+    console.error('Push file is missing endpoint.');
+    process.exit(1);
+  }
+  if (!data.keys?.p256dh || !data.keys?.auth) {
+    console.error('Push file is missing keys.p256dh and/or keys.auth.');
+    process.exit(1);
+  }
+
+  const { subject, title, body, ...subscription } = data;
+  return { subscription, subject, title, body };
+}
+
+function vapidSubject(email) {
+  return email.includes(':') ? email : `mailto:${email}`;
+}
+
+function formatPushError(error) {
+  let message = error.message;
+  if (error.statusCode) {
+    message += ` (${error.statusCode})`;
+  }
+  if (error.body) {
+    message += `\n${error.body}`;
+  }
+  return message;
+}
+
+async function sendPush(file) {
+  const { subscription, subject, title, body } = loadPushFile(file);
+  const vapid = loadVapidCredentials();
+  if (!subject) {
+    console.error('Push file is missing subject.');
+    process.exit(1);
+  }
+  if (!title && !body) {
+    console.error('Push file is missing title and/or body.');
+    process.exit(1);
+  }
+
+  const payload = JSON.stringify({
+    title: title || '',
+    body: body || '',
+  });
+
+  webPush.setVapidDetails(
+    vapidSubject(subject),
+    vapid.public,
+    vapid.private,
+  );
+
+  try {
+    await webPush.sendNotification(subscription, payload);
+    console.log('Push notification sent.');
+  } catch (error) {
+    console.error(`Failed to send push notification: ${formatPushError(error)}`);
+    process.exit(1);
+  }
+}
 
 // Get the options specified on the command line.
 program.parse(process.argv)
@@ -33,14 +142,15 @@ const options = program.opts();
 if (options.vapid) {
   // Generate VAPID keys and show them in the console.
   const vapidKeys = webPush.generateVAPIDKeys();
-  console.log(`VAPID Public:
+  console.log(`Save these keys to ${VAPID_CREDENTIALS} and to ts/index.ts:
 
-${vapidKeys.publicKey}
-
-VAPID Private:
-
-${vapidKeys.privateKey}
+public = ${vapidKeys.publicKey}
+private = ${vapidKeys.privateKey}
 `)
+}
+else if (options.push)
+{
+  sendPush(options.push);
 }
 else
 {
