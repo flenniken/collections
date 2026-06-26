@@ -14,6 +14,10 @@ let runningFromIcon = false
 
 window.addEventListener("load", handleLoad)
 window.addEventListener("resize", handleResize)
+document.addEventListener("visibilitychange", () => {
+  // Clear the badge when the visibility changes.
+  clearAppBadge()
+})
 window.addEventListener("scroll", () => {
   // Save the page scroll position so we can maintain it when coming
   // back from the thumbnails or images pages.
@@ -31,7 +35,7 @@ function registerServerWorker() {
 
   // Listen for messages sent from the worker and log them.
   navigator.serviceWorker.addEventListener("message", (event) => {
-    log(`Worker msg received: ${event.data}`)
+    log(`${event.data}`)
   })
 
   log("Register the service worker javascript file sw.js.");
@@ -130,6 +134,14 @@ function showHideAdminUI(pageId: string) {
       el.classList.remove('visible');
     }
   });
+}
+
+async function clearAppBadge() {
+  if (!("clearAppBadge" in navigator))
+    return
+
+  await (navigator as any).clearAppBadge()
+  log("App badge cleared.")
 }
 
 async function handleLoad() {
@@ -433,6 +445,7 @@ async function logAppCache() {
 }
 
 async function enableNotifications() {
+  // Enable notifications if not already enabled.
   if (Notification.permission === 'granted') {
     log("Notifications already enabled.")
     return
