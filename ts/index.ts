@@ -33,22 +33,12 @@ function registerServerWorker() {
     return
   }
 
-  // Listen for messages sent from the worker and log them.
-  navigator.serviceWorker.addEventListener("message", (event) => {
-    log(`${event.data}`)
-  })
-
   log("Register the service worker javascript file sw.js.");
   navigator.serviceWorker.register("sw.js");
 
   // Log when the service worker is ready.
   navigator.serviceWorker.ready.then((registration) => {
     log("Service worker ready.");
-    // Test send a message to the service worker. The worker should
-    // send the message back for logging.
-    registration.active?.postMessage(
-      "Message sent immediately after registration is ready.",
-    );
   });
 }
 

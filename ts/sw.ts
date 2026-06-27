@@ -18,7 +18,10 @@
 const cacheUrlPrefix = "/images/"
 
 function logsw(message: string) {
-  // Log the service worker message to the console.
+  // Log to the service worker console. Works in Chrome Web Inspector.
+  // On iPhone Safari, service worker logs (especially during push events)
+  // are not shown reliably in Web Inspector; test push and badge behavior
+  // on iPhone without relying on log output.
   log("👷 " + message)
 }
 
