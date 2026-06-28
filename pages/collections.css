@@ -146,6 +146,25 @@
   padding-left: 10px;
 }
 
+#index #message-box {
+  border: solid blue;
+  display: none;
+  margin-top: 1em;
+  padding: 10px;
+  padding-bottom: 0;
+}
+
+#index #message-box p {
+  margin-top: 0;
+}
+
+#message-box .icon {
+  width: 2em;
+  float: none;
+  margin-left: -18px;
+  margin-top: -18px;
+}
+
 #thumbnails {
   margin: 0;
   padding: 0;

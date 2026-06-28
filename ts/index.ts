@@ -434,24 +434,67 @@ async function logAppCache() {
   })
 }
 
+function showMessage(message: string) {
+  get("message-text").textContent = message
+  get("message-box").style.display = "block"
+}
+
+function hideMessageBox() {
+  get("message-box").style.display = "none"
+}
+
 async function enableNotifications() {
-  // Enable notifications if not already enabled.
-  if (Notification.permission === 'granted') {
-    log("Notifications already enabled.")
+  if (!hasLoggedIn()) {
+    showMessage("You need to login before you can enable notifications.")
     return
   }
+
+  if (Notification.permission === 'denied') {
+    showMessage(notificationSettingsMessage())
+    return
+  }
+
+  if (Notification.permission === 'granted') {
+    await subscribe()
+    showMessage(notificationsEnabledMessage())
+    return
+  }
+
   try {
-      const permission = await Notification.requestPermission();
-      log(`permission: ${permission}`)
-      if (permission === 'granted') {
-        subscribe();
-      }
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
+    const permission = await Notification.requestPermission();
+    log(`permission: ${permission}`)
+    if (permission === 'granted') {
+      await subscribe();
+      showMessage(notificationsEnabledMessage())
+    }
+    else if (permission === 'denied') {
+      showMessage(notificationSettingsMessage())
+    }
+  } catch (error) {
+    console.error('Error requesting notification permission:', error);
   }
 }
 
+function notificationsEnabledMessage() {
+  return "Notifications are enabled."
+}
+
+function notificationSettingsMessage() {
+  if (navigator.platform == "iPhone") {
+    return "To change notification settings, open Settings → " +
+      "Notifications → Collections."
+  }
+  return "To change notification settings, use your browser or " +
+    "device settings for this app."
+}
+
 async function subscribe() {
+  const userInfo = fetchUserInfo()
+  if (!userInfo) {
+    logError("You need to login before you can enable notifications.")
+    return
+  }
+
   try {
     const registration = await navigator.serviceWorker.ready;
 
@@ -463,9 +506,14 @@ Qqc0az0bNvr8O5ZnqwhP0DCdGESCx8CnbjrUlL2pLs68gksk'
       applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
     });
 
-    // Show the push subscription as JSON.
-    const subscriptionJson = JSON.stringify(subscription, null, 2);
-    log('Subscription:', subscriptionJson);
+    const sub = subscription.toJSON()
+    const record = {
+      userId: userInfo.userId,
+      endpoint: sub.endpoint,
+      expirationTime: sub.expirationTime,
+      keys: sub.keys,
+    }
+    log('Subscription:', JSON.stringify(record, null, 2))
 
   } catch (error) {
     console.error('Error subscribing to push notifications:', error);
