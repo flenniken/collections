@@ -145,6 +145,7 @@ async function processCognitoLogin(state: string) {
   if (userInfo) {
     storeUserInfo(userInfo)
     updateLoginUI()
+    void ensureSubscribed()
   }
   else {
     // Redirect to index.

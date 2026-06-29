@@ -17,6 +17,11 @@ window.addEventListener("resize", handleResize)
 document.addEventListener("visibilitychange", () => {
   // Clear the badge when the visibility changes.
   clearAppBadge()
+
+  // Subscribe to notifications when the user changed their
+  // notification settings using the system settings.
+  if (document.visibilityState === "visible")
+    void ensureSubscribed()
 })
 window.addEventListener("scroll", () => {
   // Save the page scroll position so we can maintain it when coming
@@ -199,6 +204,10 @@ async function handleLoad() {
     processCognitoLogin(state)
     return
   }
+
+  // todo: is this a duplicate? doesn't the visibility event fire on
+  // load?
+  void ensureSubscribed()
 }
 
 function isCollectionsRunning() {
@@ -455,16 +464,25 @@ async function enableNotifications() {
   }
 
   if (Notification.permission === 'granted') {
-    await subscribe()
+    await ensureSubscribed()
     showMessage(notificationsEnabledMessage())
     return
   }
 
   try {
+    // The user gets one chance to responded to the system
+    // notification dialog (requestPermission). If you call it a
+    // second time, the dialog does not show. The user can still
+    // change their notification setting but they need to use the
+    // system settings to do it.  There is no event to detect when the
+    // notification settings are changed. We check for notification
+    // enabling on other events so we can register the user's
+    // subscription.
+
     const permission = await Notification.requestPermission();
     log(`permission: ${permission}`)
     if (permission === 'granted') {
-      await subscribe();
+      await ensureSubscribed();
       showMessage(notificationsEnabledMessage())
     }
     else if (permission === 'denied') {
@@ -480,6 +498,9 @@ function notificationsEnabledMessage() {
 }
 
 function notificationSettingsMessage() {
+  // Tell the user to use the system settings to enable or disable
+  // notifications.
+
   if (navigator.platform == "iPhone") {
     return "To change notification settings, open Settings → " +
       "Notifications → Collections."
@@ -488,35 +509,60 @@ function notificationSettingsMessage() {
     "device settings for this app."
 }
 
-async function subscribe() {
-  const userInfo = fetchUserInfo()
-  if (!userInfo) {
-    logError("You need to login before you can enable notifications.")
+const VAPID_PUBLIC_KEY = 'BHk9EYgRQUfVCy4pvSj2S0Kr_9tCeOjRmbih4x0\
+Qqc0az0bNvr8O5ZnqwhP0DCdGESCx8CnbjrUlL2pLs68gksk'
+
+let ensureSubscribedRunning: Promise<void> | null = null
+
+async function ensureSubscribed() {
+  if (!hasLoggedIn())
     return
-  }
+  if (Notification.permission !== 'granted')
+    return
+  if (!("serviceWorker" in navigator) || !("PushManager" in window))
+    return
+
+  if (ensureSubscribedRunning)
+    return ensureSubscribedRunning
+
+  ensureSubscribedRunning = doEnsureSubscribed().finally(() => {
+    ensureSubscribedRunning = null
+  })
+  return ensureSubscribedRunning
+}
+
+async function doEnsureSubscribed() {
+  const userInfo = fetchUserInfo()
+  if (!userInfo)
+    return
 
   try {
-    const registration = await navigator.serviceWorker.ready;
-
-    // Subscribe to push notifications.
-    const VAPID_PUBLIC_KEY = 'BHk9EYgRQUfVCy4pvSj2S0Kr_9tCeOjRmbih4x0\
-Qqc0az0bNvr8O5ZnqwhP0DCdGESCx8CnbjrUlL2pLs68gksk'
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
-    });
-
-    const sub = subscription.toJSON()
-    const record = {
-      userId: userInfo.userId,
-      endpoint: sub.endpoint,
-      expirationTime: sub.expirationTime,
-      keys: sub.keys,
+    const registration = await navigator.serviceWorker.ready
+    let subscription = await registration.pushManager.getSubscription()
+    if (!subscription) {
+      log("No push subscription, subscribing.")
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
+      })
+    } else {
+      log("Using existing push subscription.")
     }
-    log('Subscription:', JSON.stringify(record, null, 2))
 
+    const record = pushSubscriptionRecord(subscription, userInfo.userId)
+    log('Subscription:', JSON.stringify(record, null, 2))
   } catch (error) {
-    console.error('Error subscribing to push notifications:', error);
+    console.error('Error ensuring push subscription:', error)
+  }
+}
+
+function pushSubscriptionRecord(subscription: PushSubscription, userId: string) {
+  const sub = subscription.toJSON()
+  return {
+    userId,
+    endpoint: sub.endpoint,
+    expirationTime: sub.expirationTime,
+    keys: sub.keys,
   }
 }
 
