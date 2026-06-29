@@ -3,37 +3,18 @@
 const VAPID_PUBLIC_KEY = 'BHk9EYgRQUfVCy4pvSj2S0Kr_9tCeOjRmbih4x0\
 Qqc0az0bNvr8O5ZnqwhP0DCdGESCx8CnbjrUlL2pLs68gksk'
 
-let ensureNotificationsRunning: Promise<void> | null = null
-
-document.addEventListener("visibilitychange", () => {
+document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible") {
     log("Notifications: page visible")
-
-    void ensureNotifications()
-
-    clearAppBadge()
-  }
-  else {
+    await ensureNotifications()
+    await clearAppBadge()
+  } else {
     log("Notifications: page not visible")
   }
 })
 
 async function ensureNotifications() {
-  log("Notifications: ensureNotifications called")
-
-  if (ensureNotificationsRunning)
-    return ensureNotificationsRunning
-
-  ensureNotificationsRunning = doEnsureNotifications().finally(() => {
-    ensureNotificationsRunning = null
-  })
-  return ensureNotificationsRunning
-}
-
-async function doEnsureNotifications() {
   try {
-    log("Notifications: checking notification state")
-
     if (!hasLoggedIn()) {
       log("Notifications: user not logged in, skipping")
       return
@@ -44,12 +25,28 @@ async function doEnsureNotifications() {
       return
     }
 
+    const userInfo = fetchUserInfo()
+    if (!userInfo) {
+      log("Notifications: no user info, skipping")
+      return
+    }
+
     const permission = Notification.permission
     log(`Notifications: permission is "${permission}"`)
 
     if (permission === "denied") {
       log("Notifications: disabled in system settings")
       return
+    }
+
+    if (permission === "granted") {
+      const registration = await navigator.serviceWorker.ready
+      const subscription = await registration.pushManager.getSubscription()
+      if (subscription) {
+        log("Notifications: already subscribed")
+        logPushSubscription(subscription, userInfo.userId)
+        return
+      }
     }
 
     if (permission === "default") {
@@ -62,33 +59,28 @@ async function doEnsureNotifications() {
       }
     }
 
-    await subscribeForPush()
+    const registration = await navigator.serviceWorker.ready
+    let subscription = await registration.pushManager.getSubscription()
+    if (!subscription) {
+      log("Notifications: no push subscription, subscribing")
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
+      })
+    } else {
+      log("Notifications: using existing push subscription")
+    }
+
+    logPushSubscription(subscription, userInfo.userId)
+
   } catch (error) {
     console.error("Notifications: unexpected error", error)
   }
 }
 
-async function subscribeForPush() {
-  const userInfo = fetchUserInfo()
-  if (!userInfo) {
-    log("Notifications: no user info, skipping subscription")
-    return
-  }
-
-  const registration = await navigator.serviceWorker.ready
-  let subscription = await registration.pushManager.getSubscription()
-  if (!subscription) {
-    log("Notifications: no push subscription, subscribing")
-    subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
-    })
-  } else {
-    log("Notifications: using existing push subscription")
-  }
-
-  const record = pushSubscriptionRecord(subscription, userInfo.userId)
-  log("Notifications: subscription", JSON.stringify(record, null, 2))
+function logPushSubscription(subscription: PushSubscription, userId: string) {
+  const record = pushSubscriptionRecord(subscription, userId)
+  log("Notifications: subscription:", JSON.stringify(record, null, 2))
 }
 
 function pushSubscriptionRecord(subscription: PushSubscription, userId: string) {
@@ -121,4 +113,3 @@ async function clearAppBadge() {
   await (navigator as any).clearAppBadge()
   log("Notifications: App badge cleared.")
 }
-
