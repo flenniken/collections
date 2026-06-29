@@ -142,7 +142,7 @@ const options = program.opts();
 if (options.vapid) {
   // Generate VAPID keys and show them in the console.
   const vapidKeys = webPush.generateVAPIDKeys();
-  console.log(`Save these keys to ${VAPID_CREDENTIALS} and to ts/index.ts:
+  console.log(`Save these keys to ${VAPID_CREDENTIALS} and to ts/notify.ts:
 
 public = ${vapidKeys.publicKey}
 private = ${vapidKeys.privateKey}

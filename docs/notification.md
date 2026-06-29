@@ -185,6 +185,25 @@ When testing in Chrome, you can reset notifications in the developer
 tools.  Click the lock icon to the left of the URL at the top of the
 page, then click Reset Notifications.
 
+[⬇](#Contents) Contents
+
+# Debugging
+
+In Chrome you can generate a visibilitychange event used by
+notifications by clicking a tab then clicking the Collection's tab.
+
+Logging on an iPhone is unreliable.
+
+Test the three notification states, enabled, disabled and default.
+The notification dialog appears when in the default state but not the
+others.  Turn on notifications using the system settings to make sure
+Collections subscribes to notifications that way.
+
+On Chrome you can set the notification state by clicking the lock icon
+on the address bar to the left of the url.
+
+On an iPhone you set notifications: settings > notifications > Collections
+
 <style>body { max-width: 40em}</style>
 
 # Contents

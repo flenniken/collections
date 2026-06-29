@@ -1,5 +1,5 @@
-// Main code file for the index page. The login.ts and download.ts
-// files are concatenated with this file.
+// Main code file for the index page. The login.ts, download.ts, and
+// notify.ts files are concatenated with this file.
 
 /// <reference path="./win.ts" />
 /// <reference path="./all.ts" />
@@ -14,15 +14,6 @@ let runningFromIcon = false
 
 window.addEventListener("load", handleLoad)
 window.addEventListener("resize", handleResize)
-document.addEventListener("visibilitychange", () => {
-  // Clear the badge when the visibility changes.
-  clearAppBadge()
-
-  // Subscribe to notifications when the user changed their
-  // notification settings using the system settings.
-  if (document.visibilityState === "visible")
-    void ensureSubscribed()
-})
 window.addEventListener("scroll", () => {
   // Save the page scroll position so we can maintain it when coming
   // back from the thumbnails or images pages.
@@ -131,14 +122,6 @@ function showHideAdminUI(pageId: string) {
   });
 }
 
-async function clearAppBadge() {
-  if (!("clearAppBadge" in navigator))
-    return
-
-  await (navigator as any).clearAppBadge()
-  log("App badge cleared.")
-}
-
 async function handleLoad() {
   log("Window load event")
 
@@ -205,9 +188,6 @@ async function handleLoad() {
     return
   }
 
-  // todo: is this a duplicate? doesn't the visibility event fire on
-  // load?
-  void ensureSubscribed()
 }
 
 function isCollectionsRunning() {
@@ -441,140 +421,4 @@ async function logAppCache() {
       log(message)
     })
   })
-}
-
-function showMessage(message: string) {
-  get("message-text").textContent = message
-  get("message-box").style.display = "block"
-}
-
-function hideMessageBox() {
-  get("message-box").style.display = "none"
-}
-
-async function enableNotifications() {
-  if (!hasLoggedIn()) {
-    showMessage("You need to login before you can enable notifications.")
-    return
-  }
-
-  if (Notification.permission === 'denied') {
-    showMessage(notificationSettingsMessage())
-    return
-  }
-
-  if (Notification.permission === 'granted') {
-    await ensureSubscribed()
-    showMessage(notificationsEnabledMessage())
-    return
-  }
-
-  try {
-    // The user gets one chance to responded to the system
-    // notification dialog (requestPermission). If you call it a
-    // second time, the dialog does not show. The user can still
-    // change their notification setting but they need to use the
-    // system settings to do it.  There is no event to detect when the
-    // notification settings are changed. We check for notification
-    // enabling on other events so we can register the user's
-    // subscription.
-
-    const permission = await Notification.requestPermission();
-    log(`permission: ${permission}`)
-    if (permission === 'granted') {
-      await ensureSubscribed();
-      showMessage(notificationsEnabledMessage())
-    }
-    else if (permission === 'denied') {
-      showMessage(notificationSettingsMessage())
-    }
-  } catch (error) {
-    console.error('Error requesting notification permission:', error);
-  }
-}
-
-function notificationsEnabledMessage() {
-  return "Notifications are enabled."
-}
-
-function notificationSettingsMessage() {
-  // Tell the user to use the system settings to enable or disable
-  // notifications.
-
-  if (navigator.platform == "iPhone") {
-    return "To change notification settings, open Settings → " +
-      "Notifications → Collections."
-  }
-  return "To change notification settings, use your browser or " +
-    "device settings for this app."
-}
-
-const VAPID_PUBLIC_KEY = 'BHk9EYgRQUfVCy4pvSj2S0Kr_9tCeOjRmbih4x0\
-Qqc0az0bNvr8O5ZnqwhP0DCdGESCx8CnbjrUlL2pLs68gksk'
-
-let ensureSubscribedRunning: Promise<void> | null = null
-
-async function ensureSubscribed() {
-  if (!hasLoggedIn())
-    return
-  if (Notification.permission !== 'granted')
-    return
-  if (!("serviceWorker" in navigator) || !("PushManager" in window))
-    return
-
-  if (ensureSubscribedRunning)
-    return ensureSubscribedRunning
-
-  ensureSubscribedRunning = doEnsureSubscribed().finally(() => {
-    ensureSubscribedRunning = null
-  })
-  return ensureSubscribedRunning
-}
-
-async function doEnsureSubscribed() {
-  const userInfo = fetchUserInfo()
-  if (!userInfo)
-    return
-
-  try {
-    const registration = await navigator.serviceWorker.ready
-    let subscription = await registration.pushManager.getSubscription()
-    if (!subscription) {
-      log("No push subscription, subscribing.")
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
-      })
-    } else {
-      log("Using existing push subscription.")
-    }
-
-    const record = pushSubscriptionRecord(subscription, userInfo.userId)
-    log('Subscription:', JSON.stringify(record, null, 2))
-  } catch (error) {
-    console.error('Error ensuring push subscription:', error)
-  }
-}
-
-function pushSubscriptionRecord(subscription: PushSubscription, userId: string) {
-  const sub = subscription.toJSON()
-  return {
-    userId,
-    endpoint: sub.endpoint,
-    expirationTime: sub.expirationTime,
-    keys: sub.keys,
-  }
-}
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-
-  return outputArray;
 }
