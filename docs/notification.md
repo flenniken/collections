@@ -1,12 +1,16 @@
-# Badge Notifications
+# Notifications
 
 When a new collection is published, users see a notification and a red
-badge on the installed iPhone PWA icon.
+badge on the installed iPhone PWA icon. The notification looks similar to:
+
+[![Notification](notification.png)](#)
 
 The badge indicates that at least one new collection has been
 published since the user last opened the app. It is not an
 unread-tracking system and does not track collection views or
-downloads.
+downloads. The iphone requires a number.
+
+[![Badge](badge.png)](#)
 
 The collection list already shows unpublished content using the
 existing download icon, so the badge only serves as an attention
@@ -29,9 +33,12 @@ Flow:
 * Application immediately clears the badge.
 * User sees the new collection with the existing download icon.
 
-Users choose whether to receive notifications when they first run the
-application. They can later change this setting through the operating
-system notification settings.
+On an iPhone the user chooses whether to receive notifications using
+the system notification settings:
+
+~~~
+settings > Notifications > Collections
+~~~
 
 [⬇](#Contents) Contents
 
@@ -45,52 +52,18 @@ platform.
 * Home Screen installed PWA
 * AWS backend
 
-Support for other platforms is not currently a priority.
-
-[⬇](#Contents) Contents
-
-# Existing Behavior
-
-Collections are published periodically through a primarily static
-website.
-
-Users download collections before viewing them. Downloaded collections
-and application state are stored locally in browser storage.
-
-The application does not maintain a server-side database that tracks
-whether a user has viewed a collection.
-
-Unseen collections are already identified in the collection list using
-a download icon.
+The code supports Chrome for testing but other platforms is not
+currently a priority.
 
 [⬇](#Contents) Contents
 
 # Badge Behavior
 
 The badge is set when a push notification is received and cleared when
-the application starts.
-
-APIs used:
-
-* registration.setAppBadge()
-* navigator.setAppBadge()
-* navigator.clearAppBadge()
+the application becomes visible.
 
 The badge should persist while the application is closed and disappear
 as soon as the user opens the application.
-
-[⬇](#Contents) Contents
-
-# Service Worker
-
-The service worker handles notification-related background processing.
-
-Responsibilities:
-
-* Receive push events.
-* Display notifications.
-* Set the application badge.
-* Handle notification click events.
 
 [⬇](#Contents) Contents
 
@@ -141,31 +114,9 @@ met:
 
 [⬇](#Contents) Contents
 
-# Tasks
-
-The notification feature can be implemented and tested as independent
-tasks.
-
-Frontend tasks:
-
-* Create VAPID key
-* Enable notifications and register push subscription.
-* Update the service worker to process Web Push notifications.
-* Clear the badge when the application starts.
-
-Backend tasks:
-
-* Configure API Gateway, Lambda, and DynamoDB using AWS APIs.
-* Retrieve backend configuration for testing and debugging.
-* Store a user subscription.
-* Retrieve one or more subscriptions for testing and debugging.
-* Send a notification to one user or all users.
-
-[⬇](#Contents) Contents
-
 # Create VAPID Key
 
-You create the VAPID key by running the notification.js file.  You
+You create the VAPID key by running the notification command.  You
 only need to do this once. Save the public and private parts to a safe
 private location.
 
@@ -173,36 +124,83 @@ The key is used to send a push notification.
 
 ~~~
 cd ~/collections
-node scripts/notification.js
+scripts/notification -v
 ~~~
 
-# Enable Notifications
+# Testing Guide
 
-You can enable notifications and register push subscription by
-selecting the "enable notifications" menu item in the about box.
+Testing Web Push Notifications requires handling quirks across iOS and
+desktop Chrome. Use this guide to test the subscription workflow.
 
-When testing in Chrome, you can reset notifications in the developer
-tools.  Click the lock icon to the left of the URL at the top of the
-page, then click Reset Notifications.
+There is no event to detect when the notification settings are
+changed. We handle notification enabling when the page becomes
+visible.
 
-[⬇](#Contents) Contents
+We log notification actions.  Look at logging for testing.
 
-# Debugging
+**iPhone**
 
-In Chrome you can generate a visibilitychange event used by
-notifications by clicking a tab then clicking the Collection's tab.
+On an iphone you use the system settings to enable notifications:
 
-Logging on an iPhone is unreliable.
+~~~
+settings > Notifications > Collections
+~~~
 
-Test the three notification states, enabled, disabled and default.
-The notification dialog appears when in the default state but not the
-others.  Turn on notifications using the system settings to make sure
+The system notification dialog doesn't appear when called from the
+visibilty event, it must be called from a click event. We don't call
+it on an iPhone.
+
+When a user disables notifications in iOS Settings, the state reverts
+to **default**. When they toggle it back on, it changes to
+**granted**.
+
+When the state is default, the code removes the stale subscription.
+Make sure new subscriptions are different that before.
+
+**Chrome**
+
+On Chrome you will see the request permission dialog. The user gets
+one chance to responded to the system notification dialog shown by
+requestPermission.
+
+On Chrome there are three notification states: **granted**, **denied**
+and **default**.
+
+The second time you call requestPermission the dialog does not
+show. The user can still change their notification setting but they
+need to use the system settings to do it. The notification dialog
+appears when in the default state but not the others.
+
+You can generate a visibilitychange event by clicking a tab then
+clicking the Collection's tab.
+
+Test enabling notifications using the system settings to make sure
 Collections subscribes to notifications that way.
 
 On Chrome you can set the notification state by clicking the lock icon
 on the address bar to the left of the url.
 
-On an iPhone you set notifications: settings > notifications > Collections
+**Logging**
+
+When you toggle between tabs and notifications are on, you will see
+logging similar to this on both platforms:
+
+~~~
+Notifications: page not visible
+Notifications: page visible
+Notifications: permission is "granted"
+Notifications: already subscribed
+Notifications: subscription: {
+  "userId": "0861d3e0-00a1-7058-ad19-4d7b1880d276",
+  "endpoint": "https://fcm.googleapis.com/fcm/send/xxxxxxxxxx-xxxxx-xxxxx-xxxx-xxxx",
+  "expirationTime": null,
+  "keys": {
+    "p256dh": "xxxxxxxxxxxx-xxxxxxxxxxxxxx-xxxxxxxxxxxxxxx",
+    "auth": "xxxxxxxxxxxxxxxxxxxxxx"
+  }
+}
+Notifications: App badge cleared.
+~~~
 
 <style>body { max-width: 40em}</style>
 
@@ -210,13 +208,10 @@ On an iPhone you set notifications: settings > notifications > Collections
 
 * [Notification Flow](#notification-flow) -– end-to-end behavior when a collection is published.
 * [Platform](#platform) -– supported platform and deployment assumptions.
-* [Existing Behavior](#existing-behavior) -– current collection download and storage behavior.
 * [Badge Behavior](#badge-behavior) -– how badges are set and cleared.
-* [Service Worker](#service-worker) -- background notification processing responsibilities.
 * [Subscription Management](#subscription-management) -- user notification registration workflow.
 * [Architecture](#architecture) -- AWS components and notification delivery flow.
 * [Acceptance Criteria](#acceptance-criteria) -- requirements used to validate the feature.
-* [Tasks](#tasks) -- implementation work broken into smaller units.
 * [Create VAPID Key](#create-vapid-key) -- how to create a VAPID key used when pushing a notification.
-* [Enable Notifications](#enable-notifications) -- how to enable notifications and register push.
+* [Testing](#testing) -- how to test the notification feature.
 

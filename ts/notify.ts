@@ -34,22 +34,22 @@ async function ensureNotifications() {
     const permission = Notification.permission
     log(`Notifications: permission is "${permission}"`)
 
+    const registration = await navigator.serviceWorker.ready
+
     if (permission === "denied") {
       log("Notifications: disabled in system settings")
+      await clearPushSubscription(registration)
       return
     }
 
-    if (permission === "granted") {
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.getSubscription()
-      if (subscription) {
-        log("Notifications: already subscribed")
-        logPushSubscription(subscription, userInfo.userId)
+    if (permission === "default") {
+      if (navigator.platform == "iPhone") {
+        log("Notifications: on iPhone, enable notifications in " +
+          "Settings → Notifications → Collections")
+        await clearPushSubscription(registration)
         return
       }
-    }
 
-    if (permission === "default") {
       log("Notifications: permission default (not set), requesting from system")
       const result = await Notification.requestPermission()
       log(`Notifications: permission result is "${result}"`)
@@ -59,7 +59,15 @@ async function ensureNotifications() {
       }
     }
 
-    const registration = await navigator.serviceWorker.ready
+    if (permission === "granted") {
+      const subscription = await registration.pushManager.getSubscription()
+      if (subscription) {
+        log("Notifications: already subscribed")
+        logPushSubscription(subscription, userInfo.userId)
+        return
+      }
+    }
+
     let subscription = await registration.pushManager.getSubscription()
     if (!subscription) {
       log("Notifications: no push subscription, subscribing")
@@ -91,6 +99,16 @@ function pushSubscriptionRecord(subscription: PushSubscription, userId: string) 
     expirationTime: sub.expirationTime,
     keys: sub.keys,
   }
+}
+
+async function clearPushSubscription(registration: ServiceWorkerRegistration) {
+  const subscription = await registration.pushManager.getSubscription()
+  if (!subscription)
+    return
+
+  log("Notifications: unsubscribing push subscription")
+  await subscription.unsubscribe()
+  log("Notifications: push subscription cleared")
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
