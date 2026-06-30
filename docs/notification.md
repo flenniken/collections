@@ -127,7 +127,7 @@ cd ~/collections
 scripts/notification -v
 ~~~
 
-# Testing Guide
+# Testing
 
 Testing Web Push Notifications requires handling quirks across iOS and
 desktop Chrome. Use this guide to test the subscription workflow.
