@@ -80,7 +80,8 @@ Make it easy to rebrand the code. Currently the desktop icon, the name "Flennike
 # Readable Build Messages
 
 Only print important build messages when running "g all". Currently
-most of the message are just noise. For example after changing image.ts and running "g all" you see
+most of the message are just noise. For example after changing
+image.ts and running "g all" you see
 
 ~~~
 (debian)~/collections $ g all

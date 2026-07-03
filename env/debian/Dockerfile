@@ -42,8 +42,10 @@ RUN chown coder:coder /home/coder
 # Install statictea.
 COPY statictea /usr/bin
 
-# Install nodejs.  See available versions with "apt-cache policy
-# nodejs".
+# Install nodejs.
+
+# To see the node versions available go to the web site:
+# https://nodesource.com/products/distributions
 
 # The node versions don't last very long so you need to update
 # frequently. The version that comes with Debian will be out-of-date
