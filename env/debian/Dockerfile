@@ -61,7 +61,7 @@ RUN apt-get update && apt-get install -y curl \
 # Install typescript, gulp and other global node command line apps.
 RUN npm install --global gulp-cli
 RUN npm install --global w3c-html-validator
-RUN npm install --global typescript
+RUN npm install --global typescript@5.8.3
 
 # Install bashrc for the prompt and some aliases.
 COPY --chown=coder:coder bashrc /home/coder/.bashrc
