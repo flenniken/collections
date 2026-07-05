@@ -25,7 +25,7 @@ function runMe() {
     echo "The $collectionsImage does not exist, creating it..."
 
     # docker build --no-cache --tag=$collectionsImage $dockerFolder
-    docker build --tag=$collectionsImage $dockerFolder
+    docker build              --tag=$collectionsImage $dockerFolder
 
     echo "If no errors, run again to run the container."
     exit

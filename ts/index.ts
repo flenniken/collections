@@ -1,5 +1,5 @@
-// Main code file for the index page. The login.ts and download.ts
-// files are concatenated with this file.
+// Main code file for the index page. The login.ts, download.ts, and
+// notify.ts files are concatenated with this file.
 
 /// <reference path="./win.ts" />
 /// <reference path="./all.ts" />
@@ -29,22 +29,12 @@ function registerServerWorker() {
     return
   }
 
-  // Listen for messages sent from the worker and log them.
-  navigator.serviceWorker.addEventListener("message", (event) => {
-    log(`Worker msg received: ${event.data}`)
-  })
-
   log("Register the service worker javascript file sw.js.");
   navigator.serviceWorker.register("sw.js");
 
   // Log when the service worker is ready.
   navigator.serviceWorker.ready.then((registration) => {
     log("Service worker ready.");
-    // Test send a message to the service worker. The worker should
-    // send the message back for logging.
-    registration.active?.postMessage(
-      "Message sent immediately after registration is ready.",
-    );
   });
 }
 
@@ -197,6 +187,7 @@ async function handleLoad() {
     processCognitoLogin(state)
     return
   }
+
 }
 
 function isCollectionsRunning() {
@@ -430,54 +421,4 @@ async function logAppCache() {
       log(message)
     })
   })
-}
-
-async function enableNotifications() {
-  if (Notification.permission === 'granted') {
-    log("Notifications already enabled.")
-    return
-  }
-  try {
-      const permission = await Notification.requestPermission();
-      log(`permission: ${permission}`)
-      if (permission === 'granted') {
-        subscribe();
-      }
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
-  }
-}
-
-async function subscribe() {
-  try {
-    const registration = await navigator.serviceWorker.ready;
-
-    // Subscribe to push notifications.
-    const VAPID_PUBLIC_KEY =
-'BPXArEWQz2DQMcdcvK6xMC0q4tsv6igQCQv1FIodqJPQcNzzqY4BzeaF4qX5nHidzmgUXbWGI7eHdELGMjcrda8';
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
-    });
-
-    // Show the push subscription as JSON.
-    const subscriptionJson = JSON.stringify(subscription, null, 2);
-    log('Subscription:', subscriptionJson);
-
-  } catch (error) {
-    console.error('Error subscribing to push notifications:', error);
-  }
-}
-
-function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-
-  return outputArray;
 }

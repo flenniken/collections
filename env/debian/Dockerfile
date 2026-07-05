@@ -42,8 +42,10 @@ RUN chown coder:coder /home/coder
 # Install statictea.
 COPY statictea /usr/bin
 
-# Install nodejs.  See available versions with "apt-cache policy
-# nodejs".
+# Install nodejs.
+
+# To see the node versions available go to the web site:
+# https://nodesource.com/products/distributions
 
 # The node versions don't last very long so you need to update
 # frequently. The version that comes with Debian will be out-of-date
@@ -59,7 +61,7 @@ RUN apt-get update && apt-get install -y curl \
 # Install typescript, gulp and other global node command line apps.
 RUN npm install --global gulp-cli
 RUN npm install --global w3c-html-validator
-RUN npm install --global typescript
+RUN npm install --global typescript@5.8.3
 
 # Install bashrc for the prompt and some aliases.
 COPY --chown=coder:coder bashrc /home/coder/.bashrc

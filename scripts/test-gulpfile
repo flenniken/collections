@@ -73,6 +73,7 @@ cat > tsconfig.test-gulpfile.json << EOF
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
+    "rootDir": "ts",
     "outDir": "tmp",
     "types": [
       "node",

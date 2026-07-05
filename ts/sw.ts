@@ -18,8 +18,21 @@
 const cacheUrlPrefix = "/images/"
 
 function logsw(message: string) {
-  // Log the service worker message to the console.
+  // Log to the service worker console. Works in Chrome Web Inspector.
+  // On iPhone Safari, service worker logs (especially during push events)
+  // are not shown reliably in Web Inspector; test push and badge behavior
+  // on iPhone without relying on log output.
   log("👷 " + message)
+}
+
+async function setPushAppBadge() {
+  if (!("setAppBadge" in navigator)) {
+    logsw("App badge not supported.")
+    return
+  }
+  // iOS doesn't support a plain red circle, you need to specify a number.
+  await (navigator as any).setAppBadge(1);
+  logsw("App badge set.")
 }
 
 self.addEventListener("install", (event: Event) => {
@@ -49,6 +62,30 @@ self.addEventListener("activate", event => {
   // re-opening the PWA.
 
    logsw("Activate service worker.");
+})
+
+self.addEventListener("push", (event: Event) => {
+  // Handle Web Push events.
+  const pushEvent = (<PushEvent>event)
+  pushEvent.waitUntil((async () => {
+    logsw("push event received.")
+    if (!pushEvent.data) {
+      logsw("Push event has no data.")
+      return
+    }
+
+    // Get the title and body from the push data.
+    const payload = pushEvent.data.json() as {title?: string, body?: string}
+    logsw(`Push payload: ${JSON.stringify(payload, null, 2)}`)
+    const title = payload.title ?? ""
+    const body = payload.body ?? ""
+
+    // Show the push notification and set the badge.
+    await Promise.all([
+      (self as any).registration.showNotification(title, {body}),
+      setPushAppBadge(),
+    ])
+  })())
 })
 
 function stripUrlParameters(url: string): string {
