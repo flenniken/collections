@@ -15,8 +15,8 @@
 # # in container
 # node -v
 #
-# v22.18.0
-version=22.18.0
+# v24.18.0
+version=24.18.0
 
 # Make sure we're running inside the docker container.
 if [[ -z "${coder_env}" ]]; then

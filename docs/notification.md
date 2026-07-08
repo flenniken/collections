@@ -1,4 +1,4 @@
-# Notifications
+# Notification
 
 When a new collection is published, users see a notification and a red
 badge on the installed iPhone PWA icon. The notification looks similar to:
@@ -78,6 +78,9 @@ implement it using:
 * Lambda
 * DynamoDB
 * Node.js web-push library
+
+If you need to update node for web-push, follow the Update Node
+document.
 
 We expect the cost to store subscription in DynamoDB to be minimal. It
 is dependent on the number of subscriptions stored and the number of

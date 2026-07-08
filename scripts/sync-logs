@@ -8,6 +8,8 @@ if [[ -z "${coder_env}" ]]; then
   exit
 fi
 
+date -u +"%Y-%m-%d %H:%M:%S"
+
 s3Bucket=sflennikco
 
 cd ~/collections

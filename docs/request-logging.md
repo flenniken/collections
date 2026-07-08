@@ -11,6 +11,9 @@ and by default each line contains 39 fields.
 Normally standard logs are delivered within minutes to your Amazon S3
 bucket and there is no extra charge for standard logs.
 
+Note: localhost testing does not hit cloudfront, so no logs for it,
+use https://collections.sflennik.com/
+
 [⬇](#Contents) (table of contents at the bottom)
 
 # Log Folders
@@ -49,13 +52,13 @@ console.  Use "logs/lambda" as the prefix.  If you mistakenly use a
 leading slash, it will go to the wrong location (to a S3 folder called
 "/"). Here are the steps:
 
-* open the CloudWatch Console the for the region closest to the edge.
+* open the CloudWatch (not Cloudfront) Console the for the region closest to the edge.
+* select the region closes to the request.  select us-west-2 for edge location SEA900-P1.
 * click Logs → "Logs groups" in the left panel
 * select the log group, e.g. /aws/lambda/us-east-1.validateImageRequest
-* select all the logs by clicking "Log stream" checkbox
 * click Actions → "Export Data to Amazon S3"
-* configure the time range
-* select the bucket name `sflennikco` and enter `logs/lambda` for "S3 bucket prefix"
+* configure the time range if necessary
+* select the bucket name `sflennikco` and enter `logs/lambda` for "S3 bucket prefix" -- notice no leading slash
 * click Export
 
 # Sync Logs
@@ -103,14 +106,30 @@ The output columns:
 * 9: time-taken
 * 10: url
 
+The log uses UTC for the data and time. The container uses UTC too.  The alias utc shows the time in the same format as the logs:
+
+~~~
+utc
+
+2026-07-07 23:01:31
+~~~
+
 [⬇](#Contents)
 
 # View Download
 
+The UTC time and download id are logged in the console to make it easer to
+find the AWS logs.
+
+~~~
+Download UTC and id: 2026-07-07 20:27:20.610  63ltJt9F
+~~~
+
 The view-download script shows you all the requests for a download. It
 shows important information from both the Cloudfront and the Lambda
 logs. You specify the day and download id of the download. You get
-this from the view-requests output above. You run it like this:
+this from the view-requests output above or from the information in
+the console log. You run it like this:
 
 ~~~
 # from container

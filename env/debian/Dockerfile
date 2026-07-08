@@ -51,14 +51,14 @@ COPY statictea /usr/bin
 # frequently. The version that comes with Debian will be out-of-date
 # in 18 months, way before Debian needs to be updated.  Instead of the
 # Debian node package you use the PPA repository for the version you
-# want, for example 22.  There is a script for installing.
+# want.  There is a script for installing.
 
-# Install Node.js 22.x using NodeSource's script.
+# Install Node.js using NodeSource's script.
 RUN apt-get update && apt-get install -y curl \
- && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
+ && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
  && apt-get install -y nodejs
 
-# Install typescript, gulp and other global node command line apps.
+# Install globally typescript, gulp and w3c validator.
 RUN npm install --global gulp-cli
 RUN npm install --global w3c-html-validator
 RUN npm install --global typescript@5.8.3

@@ -17,6 +17,9 @@ alias jqless='jq -C | less -RF'
 # changing the working directory.
 alias g='gulp --cwd . --gulpfile tmp/gulpfile.js'
 
+# Show the UTC time like the log files use.
+alias utc='date -u +"%Y-%m-%d %H:%M:%S"'
+
 # Allow less to open compressed files as well as normal text files.
 export LESSOPEN="| /usr/bin/lesspipe %s"
 export LESSCLOSE="/usr/bin/lesspipe %s %s"

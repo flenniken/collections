@@ -169,37 +169,8 @@ locally version that you tested with.
 
 # Update Node
 
-The node versions don't last very long so you need to update them
-frequently. The version that comes with Debian will be out-of-date in
-18 months, way before Debian needs to be updated.  Instead of using
-the Debian node package you use the PPA repository for the version you
-want, for example 22. The Dockerfile installs node this way.
-
-When it is time to install a new version, determine the new version
-number and change a line in the dockerfile:
-
-~~~
-- && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
-+ && curl -fsSL https://deb.nodesource.com/setup_23.x | bash - \
-~~~
-
-Build a new container. Exit the current container, delete it, then
-build a new one:
-
-~~~
-runenv d
-runenv r
-runenv r
-~~~
-
-Rebuild the gulp code and test it.
-
-~~~
-scripts/build-gulpfile
-scripts/test-gulpfile
-~~~
-
-Update the version number in make-js-lambda-zip. In the example we are
+If you need to update node, follow the Update Node document then
+update the version number in make-js-lambda-zip. In the example we are
 updating from 18.19 to 22.18:
 
 ~~~
@@ -288,6 +259,25 @@ but this doesn't work in lambda edge.  Use the status variable.
 The auth header used for holding the token is stripped by default. You
 need to specify the ones you use so they don't get scripted.
 
+[⬇](#Contents)
+
+# Check Logs
+
+After deploying to production, delete a collection's images and
+download them then check the logs to make sure the authentication
+passes.
+
+Follow the Request Logging document.  The lambda logs should show
+"Passed":
+
+~~~
+scripts/view-download 2026-07-08 n7R1E1uR | grep "auth:" | head
+
+2026-07-08 22:25:19.443 6bd09183 auth: Passed
+2026-07-08 22:25:19.460 7a4ec3f4 auth: Passed
+2026-07-08 22:25:19.477 8f83e4ab auth: Passed
+~~~
+
 <style>body { max-width: 40em}</style>
 
 # Contents
@@ -299,3 +289,4 @@ need to specify the ones you use so they don't get scripted.
 * [Update Node](#update_node) -- how to update the version of node that lambda uses.
 * [Lambda Function](#lambda-function) -- what the lambda function does and how to configure it.
 * [Edge Differences](#edge-differences) -- differences between a lambda function and an lambda edge function.
+* [Check Logs](#check-logs) -- how to check auth by looking at the lambda logs.
