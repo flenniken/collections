@@ -88,20 +88,33 @@ times they are used.
 
 [⬇](#Contents) Contents
 
-# Create VAPID Key
+# Create VAPID Keys
 
 The VAPID key is used to encrypt a push notification.
 
 You create the VAPID key by running the notification command.  You
-only need to do this once.
-
-Save the private key to a safe private location. The public key is
-stored publicly visible in the notify.ts file as the VAPID_PUBLIC_KEY
-variable.
+only need to do this once. The example below shows what the keys look
+like. Each time you run the command it generates different keys (these
+particular keys are not used anywhere).
 
 ~~~
 cd ~/collections
 scripts/notification -v
+
+public = BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
+private = hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+~~~
+
+Save the keys to a safe private location, so you can recreate them
+when the container is rebuilt. The public key is stored publicly
+visible in the notify.ts file as the VAPID_PUBLIC_KEY variable. The
+keys are also stored in the credentials file on the container:
+
+~~~
+cat ~/vapid/credentials
+
+public = ...
+private = ...
 ~~~
 
 # Testing
@@ -187,6 +200,6 @@ Notifications: App badge cleared.
 * [Notification Flow](#notification-flow) -– end-to-end behavior when a collection is published.
 * [Platform](#platform) -– supported platform and deployment assumptions.
 * [Badge Behavior](#badge-behavior) -– how badges are set and cleared.
-* [Create VAPID Key](#create-vapid-key) -- how to create a VAPID key used when pushing a notification.
+* [Create VAPID Keys](#create-vapid-keys) -- how to create the VAPID keys used when pushing a notification.
 * [Testing](#testing) -- how to test the notification feature.
 

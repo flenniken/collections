@@ -1,7 +1,9 @@
 // Handle push notifications. This file is concatenated with index.ts.
 
-const VAPID_PUBLIC_KEY = 'BHk9EYgRQUfVCy4pvSj2S0Kr_9tCeOjRmbih4x0\
-Qqc0az0bNvr8O5ZnqwhP0DCdGESCx8CnbjrUlL2pLs68gksk'
+// This key must match the value in the container's
+// ~/.vapid/credentials file.
+const VAPID_PUBLIC_KEY =
+  'BD_EGpX7B0RGZCpN7MX_0sj4Zo1OZcitXsipYKW6tSj5z7NYr0b9ZbP86FyKkjuDTMAs6Ln6aQ8-4xwLHJ5RtWs'
 
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible") {

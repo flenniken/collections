@@ -43,7 +43,7 @@
 
 if (!process.env.coder_env) {
   console.log("Run from the Collection's docker environment.")
-  process.exit(1)
+  exit1()
 }
 
 const fs = require('fs');
@@ -83,14 +83,30 @@ program
   .option('--get-subscriptions',
     'Display all push subscriptions stored in DynamoDB.');
 
-function loadVapidCredentials() {
-  let text;
+function exit1() {
+  // Exit the process with a return code of 1.
+  process.exit(1)
+}
+
+function readFile(filename, errorMessage) {
+  // Read the file. If there is an error, log the message to the
+  // console error and exit the process.
+
   try {
-    text = fs.readFileSync(VAPID_CREDENTIALS, 'utf8');
+    text = fs.readFileSync(filename, 'utf8');
   } catch (error) {
-    console.error(`Unable to read ${VAPID_CREDENTIALS}.`);
-    process.exit(1);
+    if (!errorMessage)
+      errorMessage = `Unable to read ${filename)`
+    console.error(errorMessage);
+    exit1()
   }
+}
+
+function loadVapidCredentials() {
+  // Read the vapid keys from the container's vapid credentials
+  // file. Return an object with the public and private key values.
+
+  let text = readFile(VAPID_CREDENTIALS)
 
   const credentials = {};
   for (const line of text.split('\n')) {
@@ -101,40 +117,42 @@ function loadVapidCredentials() {
   }
   if (!credentials.public || !credentials.private) {
     console.error(`${VAPID_CREDENTIALS} is missing public and/or private keys.`);
-    process.exit(1);
+    exit1()
   }
   return credentials;
 }
 
+function errorExit(condition, errorMessage) {
+  // If the condition is true, show the error message and exit.
+  if (condition) {
+    console.error(errorMessage)
+    exit1()
+  }
+}
+
+
 function loadPushFile(file) {
-  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!data.endpoint) {
-    console.error('Push file is missing endpoint.');
-    process.exit(1);
-  }
-  if (!data.keys?.p256dh || !data.keys?.auth) {
-    console.error('Push file is missing keys.p256dh and/or keys.auth.');
-    process.exit(1);
-  }
+  // Read the push JSON file and return an object containing its
+  // values. If an error happens, show an error message and exit.
+
+  const data = JSON.parse(readFile(file))
+
+  errorExit(!data.endpoint, 'Push file is missing endpoint.')
+  errorExit(!data.keys?.p256dh, 'Push file is missing keys.p256dh')
+  errorExit(!data.keys?.auth, 'Push file is missing keys.auth')
 
   const { subject, title, body, ...subscription } = data;
   return { subscription, subject, title, body };
 }
 
 function loadSubscriptionFile(file) {
-  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-  if (!data.userId) {
-    console.error('Subscription file is missing userId.');
-    process.exit(1);
-  }
-  if (!data.endpoint) {
-    console.error('Subscription file is missing endpoint.');
-    process.exit(1);
-  }
-  if (!data.keys?.p256dh || !data.keys?.auth) {
-    console.error('Subscription file is missing keys.p256dh and/or keys.auth.');
-    process.exit(1);
-  }
+  const data = JSON.parse(readFile(file))
+
+  errorExit(!data.userId, 'Subscription file is missing userId.')
+  errorExit(!data.endpoint, 'Subscription file is missing endpoint.')
+  errorExit(!data.keys?.p256dh, 'Push file is missing keys.p256dh')
+  errorExit(!data.keys?.auth, 'Push file is missing keys.auth')
+
   return data;
 }
 
@@ -144,19 +162,14 @@ function saveNotificationConfig(config) {
 }
 
 function loadNotificationConfig() {
-  let text;
-  try {
-    text = fs.readFileSync(NOTIFICATION_CONFIG, 'utf8');
-  } catch (error) {
-    console.error(`Unable to read ${NOTIFICATION_CONFIG}. Run --configure first.`);
-    process.exit(1);
-  }
+  let text = readFile(NOTIFICATION_CONFIG,
+    `Unable to read ${NOTIFICATION_CONFIG}. Run --configure first.`)
 
   const config = JSON.parse(text);
-  if (!config.tableName || !config.region) {
-    console.error(`${NOTIFICATION_CONFIG} is missing tableName and/or region.`);
-    process.exit(1);
-  }
+
+  errorExit(!config.tableName, `${NOTIFICATION_CONFIG} is missing tableName)`)
+  errorExit(!config.region, `${NOTIFICATION_CONFIG} is missing region)`)
+
   return config;
 }
 
@@ -232,14 +245,12 @@ async function configure() {
 }
 
 async function fetchConfig() {
-  let localConfig = null;
-  try {
-    localConfig = JSON.parse(fs.readFileSync(NOTIFICATION_CONFIG, 'utf8'));
-    console.log('Local configuration:');
-    console.log(JSON.stringify(localConfig, null, 2));
-  } catch (error) {
-    console.log(`No local configuration at ${NOTIFICATION_CONFIG}`);
-  }
+  // Print the AWS notification configuration.
+
+  let localConfig = JSON.parse(readFile(NOTIFICATION_CONFIG))
+
+  console.log('Local configuration:');
+  console.log(JSON.stringify(localConfig, null, 2));
 
   const tableName = localConfig?.tableName ?? DEFAULT_TABLE_NAME;
   const region = localConfig?.region ?? DEFAULT_REGION;
@@ -258,15 +269,15 @@ async function fetchConfig() {
       itemCount: table.ItemCount,
     }, null, 2));
   } catch (error) {
-    if (error.name === 'ResourceNotFoundException') {
-      console.error(`Table ${tableName} not found in ${region}. Run --configure first.`);
-      process.exit(1);
-    }
+    errorExit(error.name === 'ResourceNotFoundException') {
+      `Table ${tableName} not found in ${region}. Run --configure first.`);
     throw error;
   }
 }
 
 async function saveSubscription(file) {
+  // Save a subscription in AWS.
+
   const data = loadSubscriptionFile(file);
   const config = loadNotificationConfig();
   const client = docClient(config.region);
@@ -290,6 +301,8 @@ async function saveSubscription(file) {
 }
 
 async function getSubscriptions() {
+  // Print all the push subscriptions stored in AWS.
+
   const config = loadNotificationConfig();
   const client = docClient(config.region);
 
@@ -309,21 +322,16 @@ async function getSubscriptions() {
 }
 
 async function sendPush(file) {
+  // Send the push notification to the user.
+
   const { subscription, subject, title, body } = loadPushFile(file);
   const vapid = loadVapidCredentials();
-  if (!subject) {
-    console.error('Push file is missing subject.');
-    process.exit(1);
-  }
-  if (!title && !body) {
-    console.error('Push file is missing title and/or body.');
-    process.exit(1);
-  }
 
-  const payload = JSON.stringify({
-    title: title || '',
-    body: body || '',
-  });
+  errorExit(!subject, 'Push file is missing: subject.')
+  errorExit(!title, 'Push file is missing: title.')
+  errorExit(!body, 'Push file is missing: body.')
+
+  const payload = JSON.stringify({title: title, body: body});
 
   webPush.setVapidDetails(
     vapidSubject(subject),
@@ -336,7 +344,7 @@ async function sendPush(file) {
     console.log('Push notification sent.');
   } catch (error) {
     console.error(`Failed to send push notification: ${formatPushError(error)}`);
-    process.exit(1);
+    exit1()
   }
 }
 
@@ -346,7 +354,8 @@ async function main() {
 
   if (options.vapid) {
     const vapidKeys = webPush.generateVAPIDKeys();
-    console.log(`Save these keys to ${VAPID_CREDENTIALS} and to ts/notify.ts:
+    console.log(`Save these keys to the ${VAPID_CREDENTIALS} file and
+save the public key to ts/notify.ts:
 
 public = ${vapidKeys.publicKey}
 private = ${vapidKeys.privateKey}
@@ -367,6 +376,5 @@ private = ${vapidKeys.privateKey}
 }
 
 main().catch(error => {
-  console.error(error.message);
-  process.exit(1);
-});
+  exit1(error.message)
+})
