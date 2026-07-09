@@ -24,14 +24,26 @@
 //   title          notification title (at least one of title or body required)
 //   body           notification body (at least one of title or body required)
 //
+// Subscription JSON file (-s/--save <file>):
+//
+//   userId         (required) Cognito user id
+//   endpoint       (required) Push service URL
+//   keys           (required) object with p256dh and auth
+//   expirationTime (optional) subscription expiration, or null
+//
 // VAPID credentials (~/.vapid/credentials):
 //
 //   public = VAPID public key (must match the key used when creating the subscription)
 //   private = VAPID private key
+//
+// DynamoDB config (~/.vapid/notification-config.json):
+//
+//   tableName = DynamoDB table name
+//   region    = AWS region
 
 if (!process.env.coder_env) {
   console.log("Run from the Collection's docker environment.")
-  return
+  process.exit(1)
 }
 
 const fs = require('fs');
@@ -39,8 +51,21 @@ const os = require('os');
 const path = require('path');
 const webPush = require('web-push');
 const { Command } = require('commander');
+const {
+  CreateTableCommand,
+  DescribeTableCommand,
+  DynamoDBClient,
+} = require('@aws-sdk/client-dynamodb');
+const {
+  DynamoDBDocumentClient,
+  PutCommand,
+  ScanCommand,
+} = require('@aws-sdk/lib-dynamodb');
 
 const VAPID_CREDENTIALS = path.join(os.homedir(), '.vapid', 'credentials');
+const NOTIFICATION_CONFIG = path.join(os.homedir(), '.vapid', 'notification-config.json');
+const DEFAULT_TABLE_NAME = 'collections-push-subscriptions';
+const DEFAULT_REGION = 'us-west-2';
 
 // Define the command line options.
 const program = new Command();
@@ -48,7 +73,15 @@ program
   .option('-v, --vapid',
     'Generate VAPID public and private keys used to send push notifications.')
   .option('-p, --push <file>',
-    'Send a push notification.');
+    'Send a push notification.')
+  .option('-s, --save <file>',
+    'Save a push subscription and user id to DynamoDB.')
+  .option('--configure',
+    'Create the DynamoDB table and save the notification configuration.')
+  .option('--fetch-config',
+    'Show the saved notification configuration and DynamoDB table details.')
+  .option('--get-subscriptions',
+    'Display all push subscriptions stored in DynamoDB.');
 
 function loadVapidCredentials() {
   let text;
@@ -88,6 +121,53 @@ function loadPushFile(file) {
   return { subscription, subject, title, body };
 }
 
+function loadSubscriptionFile(file) {
+  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (!data.userId) {
+    console.error('Subscription file is missing userId.');
+    process.exit(1);
+  }
+  if (!data.endpoint) {
+    console.error('Subscription file is missing endpoint.');
+    process.exit(1);
+  }
+  if (!data.keys?.p256dh || !data.keys?.auth) {
+    console.error('Subscription file is missing keys.p256dh and/or keys.auth.');
+    process.exit(1);
+  }
+  return data;
+}
+
+function saveNotificationConfig(config) {
+  fs.mkdirSync(path.dirname(NOTIFICATION_CONFIG), { recursive: true });
+  fs.writeFileSync(NOTIFICATION_CONFIG, JSON.stringify(config, null, 2) + '\n');
+}
+
+function loadNotificationConfig() {
+  let text;
+  try {
+    text = fs.readFileSync(NOTIFICATION_CONFIG, 'utf8');
+  } catch (error) {
+    console.error(`Unable to read ${NOTIFICATION_CONFIG}. Run --configure first.`);
+    process.exit(1);
+  }
+
+  const config = JSON.parse(text);
+  if (!config.tableName || !config.region) {
+    console.error(`${NOTIFICATION_CONFIG} is missing tableName and/or region.`);
+    process.exit(1);
+  }
+  return config;
+}
+
+function dynamoClient(region) {
+  return new DynamoDBClient({ region });
+}
+
+function docClient(region) {
+  return DynamoDBDocumentClient.from(dynamoClient(region));
+}
+
 function vapidSubject(email) {
   return email.includes(':') ? email : `mailto:${email}`;
 }
@@ -101,6 +181,131 @@ function formatPushError(error) {
     message += `\n${error.body}`;
   }
   return message;
+}
+
+async function waitForTableActive(client, tableName) {
+  for (;;) {
+    const response = await client.send(new DescribeTableCommand({ TableName: tableName }));
+    const status = response.Table?.TableStatus;
+    if (status === 'ACTIVE') {
+      console.log('Table is active.');
+      return;
+    }
+    console.log(`Table status: ${status}. Waiting...`);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+}
+
+async function configure() {
+  const config = {
+    tableName: DEFAULT_TABLE_NAME,
+    region: DEFAULT_REGION,
+  };
+  const client = dynamoClient(config.region);
+
+  try {
+    await client.send(new DescribeTableCommand({ TableName: config.tableName }));
+    console.log(`Table ${config.tableName} already exists.`);
+  } catch (error) {
+    if (error.name !== 'ResourceNotFoundException') {
+      throw error;
+    }
+
+    console.log(`Creating table ${config.tableName} in ${config.region}.`);
+    await client.send(new CreateTableCommand({
+      TableName: config.tableName,
+      KeySchema: [
+        { AttributeName: 'userId', KeyType: 'HASH' },
+        { AttributeName: 'endpoint', KeyType: 'RANGE' },
+      ],
+      AttributeDefinitions: [
+        { AttributeName: 'userId', AttributeType: 'S' },
+        { AttributeName: 'endpoint', AttributeType: 'S' },
+      ],
+      BillingMode: 'PAY_PER_REQUEST',
+    }));
+    await waitForTableActive(client, config.tableName);
+  }
+
+  saveNotificationConfig(config);
+  console.log(`Saved configuration to ${NOTIFICATION_CONFIG}`);
+}
+
+async function fetchConfig() {
+  let localConfig = null;
+  try {
+    localConfig = JSON.parse(fs.readFileSync(NOTIFICATION_CONFIG, 'utf8'));
+    console.log('Local configuration:');
+    console.log(JSON.stringify(localConfig, null, 2));
+  } catch (error) {
+    console.log(`No local configuration at ${NOTIFICATION_CONFIG}`);
+  }
+
+  const tableName = localConfig?.tableName ?? DEFAULT_TABLE_NAME;
+  const region = localConfig?.region ?? DEFAULT_REGION;
+  const client = dynamoClient(region);
+
+  try {
+    const response = await client.send(new DescribeTableCommand({ TableName: tableName }));
+    const table = response.Table;
+    console.log('\nAWS table:');
+    console.log(JSON.stringify({
+      tableName: table.TableName,
+      status: table.TableStatus,
+      region,
+      keySchema: table.KeySchema,
+      billingMode: table.BillingModeSummary?.BillingMode ?? 'PROVISIONED',
+      itemCount: table.ItemCount,
+    }, null, 2));
+  } catch (error) {
+    if (error.name === 'ResourceNotFoundException') {
+      console.error(`Table ${tableName} not found in ${region}. Run --configure first.`);
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
+async function saveSubscription(file) {
+  const data = loadSubscriptionFile(file);
+  const config = loadNotificationConfig();
+  const client = docClient(config.region);
+
+  const item = {
+    userId: data.userId,
+    endpoint: data.endpoint,
+    expirationTime: data.expirationTime ?? null,
+    keys: {
+      p256dh: data.keys.p256dh,
+      auth: data.keys.auth,
+    },
+    updatedAt: new Date().toISOString(),
+  };
+
+  await client.send(new PutCommand({
+    TableName: config.tableName,
+    Item: item,
+  }));
+  console.log(`Saved subscription for user ${data.userId}.`);
+}
+
+async function getSubscriptions() {
+  const config = loadNotificationConfig();
+  const client = docClient(config.region);
+
+  const items = [];
+  let lastKey;
+  do {
+    const response = await client.send(new ScanCommand({
+      TableName: config.tableName,
+      ExclusiveStartKey: lastKey,
+    }));
+    items.push(...(response.Items ?? []));
+    lastKey = response.LastEvaluatedKey;
+  } while (lastKey);
+
+  console.log(JSON.stringify(items, null, 2));
+  console.log(`\n${items.length} subscription(s).`);
 }
 
 async function sendPush(file) {
@@ -135,24 +340,33 @@ async function sendPush(file) {
   }
 }
 
-// Get the options specified on the command line.
-program.parse(process.argv)
-const options = program.opts();
+async function main() {
+  program.parse(process.argv);
+  const options = program.opts();
 
-if (options.vapid) {
-  // Generate VAPID keys and show them in the console.
-  const vapidKeys = webPush.generateVAPIDKeys();
-  console.log(`Save these keys to ${VAPID_CREDENTIALS} and to ts/notify.ts:
+  if (options.vapid) {
+    const vapidKeys = webPush.generateVAPIDKeys();
+    console.log(`Save these keys to ${VAPID_CREDENTIALS} and to ts/notify.ts:
 
 public = ${vapidKeys.publicKey}
 private = ${vapidKeys.privateKey}
-`)
+`);
+  } else if (options.push) {
+    await sendPush(options.push);
+  } else if (options.save) {
+    await saveSubscription(options.save);
+  } else if (options.configure) {
+    await configure();
+  } else if (options.fetchConfig) {
+    await fetchConfig();
+  } else if (options.getSubscriptions) {
+    await getSubscriptions();
+  } else {
+    console.log("Run with -h to see the available options.");
+  }
 }
-else if (options.push)
-{
-  sendPush(options.push);
-}
-else
-{
-  console.log("Run with -h to see the available options.")
-}
+
+main().catch(error => {
+  console.error(error.message);
+  process.exit(1);
+});
