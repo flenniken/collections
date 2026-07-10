@@ -18,6 +18,7 @@ for hosting the site files.
   only open to friends and family
 * Route53 and Certificate Manager connect the website to your custom
   domain with secure access
+* DynamoDB stores push notification subscriptions
 * IAM allows you to run scripts to deploy, run setup and to inspect
   aws settings.
 
@@ -57,6 +58,7 @@ AmazonCognitoPowerUser
 AmazonSESReadOnlyAccess
 AmazonRoute53ReadOnlyAccess
 CloudFrontFullAccess
+AmazonDynamoDBFullAccess
 ~~~
 
 * Enter a tag for the user with key "collections" and value:
@@ -129,7 +131,7 @@ aws ses list-identities
 List the AWS Cognito user pools:
 
 ~~~
-aws cognito-idp list-user-pools --max-results 20
+aws cognito-idp list-user-pools --max-results 10
 ~~~
 
 List AWS CloudFront distributions and origin access controls (OACs):
@@ -139,11 +141,48 @@ aws cloudfront list-distributions
 aws cloudfront list-origin-access-controls
 ~~~
 
-List AWS Route53 zones:
+[⬇](#Contents)
+
+# Notifications
+
+Collections sends Web Push notifications when new collections are
+published. The notification script uses these AWS services:
+
+* **DynamoDB** stores push subscriptions (user id, endpoint, keys).
+  Create the table with `scripts/notification --configure`.
+* **IAM** DynamoDB access uses the **AmazonDynamoDBFullAccess**
+  managed policy (added in [Create IAM User](#create-iam-user)).
+
+VAPID keys encrypt push notifications. Generate them once:
 
 ~~~
-aws route53 list-hosted-zones
+cd ~/collections
+scripts/notification -v
 ~~~
+
+Add the output to `~/.aws/credentials` as a `[VAPID]` section. Also
+copy the public key into `ts/notify.ts` as `VAPID_PUBLIC_KEY`.
+
+~~~
+cat ~/.aws/credentials
+
+[default]
+aws_access_key_id = xxxxxxxxxxx
+aws_secret_access_key = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+
+[VAPID]
+public: BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
+private: hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+~~~
+
+Save a subscription from the browser console log to DynamoDB:
+
+~~~
+scripts/notification -s chrome-subscription.json
+scripts/notification --get-subscriptions
+~~~
+
+See the [Notification](notification.md) document for testing details.
 
 [⬇](#Contents)
 
@@ -599,6 +638,7 @@ scripts/deploy -s
 
 * [Overview](#overview)
 * [Create IAM User](#create-iam-user)
+* [Notifications](#notifications)
 * [Create S3 Bucket](#create-s3-bucket)
 * [Copy Website](#copy-website)
 * [Register a domain](#register-a-domain)

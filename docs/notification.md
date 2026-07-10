@@ -101,20 +101,18 @@ particular keys are not used anywhere).
 cd ~/collections
 scripts/notification -v
 
-public = BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
-private = hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+[VAPID]
+public: BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
+private: hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
 ~~~
 
-Save the keys to a safe private location, so you can recreate them
-when the container is rebuilt. The public key is stored publicly
-visible in the notify.ts file as the VAPID_PUBLIC_KEY variable. The
-keys are also stored in the credentials file on the container:
+Save the keys to `~/.aws/credentials` in a `[VAPID]` section so you
+can recreate them when the container is rebuilt. The public key is
+also stored publicly in the notify.ts file as the VAPID_PUBLIC_KEY
+variable:
 
 ~~~
-cat ~/vapid/credentials
-
-public = ...
-private = ...
+grep VAPID_PUBLIC_KEY ts/notify.ts
 ~~~
 
 # Testing
@@ -184,7 +182,6 @@ Notifications: already subscribed
 Notifications: subscription: {
   "userId": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
   "endpoint": "https://fcm.googleapis.com/fcm/send/xxxxxxxxxx-xxxxx...",
-  "expirationTime": null,
   "keys": {
     "p256dh": "xxxxxxxxxxxx...",
     "auth": "xxxxxx..."

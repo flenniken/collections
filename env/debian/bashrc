@@ -64,10 +64,10 @@ if [[ ! -s "/home/coder/collections/env/aws-settings.json" ]]; then
   echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
 fi
 
-if [[ ! -s "/home/coder/.vapid/credentials" ]]; then
+if ! grep -qi '^\[VAPID\]' /home/coder/.aws/credentials 2>/dev/null; then
   echo
-  echo -e "$blueWarning 3: The notification vapid credential file is missing. Create a new file."
-  echo 'See docs/notification.md for more info by running: glow docs/notification.md'
+  echo -e "$blueWarning 3: The notification VAPID keys are missing. Add a [VAPID] section to ~/.aws/credentials."
+  echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
 fi
 
 

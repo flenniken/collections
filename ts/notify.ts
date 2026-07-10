@@ -1,9 +1,9 @@
 // Handle push notifications. This file is concatenated with index.ts.
 
-// This key must match the value in the container's
-// ~/.vapid/credentials file.
+// This key must match the public value in the container's
+// ~/.aws/credentials file [VAPID] section.
 const VAPID_PUBLIC_KEY =
-  'BD_EGpX7B0RGZCpN7MX_0sj4Zo1OZcitXsipYKW6tSj5z7NYr0b9ZbP86FyKkjuDTMAs6Ln6aQ8-4xwLHJ5RtWs'
+  'BPXArEWQz2DQMcdcvK6xMC0q4tsv6igQCQv1FIodqJPQcNzzqY4BzeaF4qX5nHidzmgUXbWGI7eHdELGMjcrda8'
 
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible") {
@@ -98,7 +98,6 @@ function pushSubscriptionRecord(subscription: PushSubscription, userId: string) 
   return {
     userId,
     endpoint: sub.endpoint,
-    expirationTime: sub.expirationTime,
     keys: sub.keys,
   }
 }
@@ -114,16 +113,16 @@ async function clearPushSubscription(registration: ServiceWorkerRegistration) {
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
+  const padding = '='.repeat((4 - base64String.length % 4) % 4)
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/')
+  const rawData = window.atob(base64)
+  const outputArray = new Uint8Array(rawData.length)
 
   for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
+    outputArray[i] = rawData.charCodeAt(i)
   }
 
-  return outputArray;
+  return outputArray
 }
 
 async function clearAppBadge() {
