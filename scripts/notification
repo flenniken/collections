@@ -34,10 +34,10 @@
 //   public: VAPID public key (must match the key used when creating the subscription)
 //   private: VAPID private key
 //
-// DynamoDB config (~/.vapid/notification-config.json):
+// DynamoDB:
 //
-//   tableName = DynamoDB table name
-//   region    = AWS region
+//   table name = TABLE_NAME constant below
+//   region     = region from ~/.aws/config [default] section
 
 if (!process.env.coder_env) {
   console.log("Run from the Collection's docker environment.")
@@ -61,9 +61,8 @@ const {
 } = require('@aws-sdk/lib-dynamodb')
 
 const AWS_CREDENTIALS = path.join(os.homedir(), '.aws', 'credentials')
-const NOTIFICATION_CONFIG = path.join(os.homedir(), '.vapid', 'notification-config.json')
-const DEFAULT_TABLE_NAME = 'collections-push-subscriptions'
-const DEFAULT_REGION = 'us-west-2'
+const AWS_CONFIG = path.join(os.homedir(), '.aws', 'config')
+const TABLE_NAME = 'collections-push-subscriptions'
 
 const program = new Command()
 program
@@ -74,9 +73,9 @@ program
   .option('-s, --save <file>',
     'Save a push subscription and user id to DynamoDB.')
   .option('--configure',
-    'Create the DynamoDB table and save the notification configuration.')
+    'Create the DynamoDB table for push subscriptions.')
   .option('--fetch-config',
-    'Show the saved notification configuration and DynamoDB table details.')
+    'Show the DynamoDB table details.')
   .option('--get-subscriptions',
     'Display all push subscriptions stored in DynamoDB.')
 
@@ -102,6 +101,7 @@ function readFile(filename, errorMessage) {
 
 function parseIniSection(text, sectionName) {
   // Return the key value pairs from the named section of an ini file.
+  // Supports both "key: value" and "key = value" forms.
   const values = {}
   let inSection = false
   for (const line of text.split('\n')) {
@@ -111,7 +111,7 @@ function parseIniSection(text, sectionName) {
     }
     if (!inSection)
       continue
-    const match = line.match(/^\s*(public|private)\s*:\s*(.+)\s*$/)
+    const match = line.match(/^\s*([^=:\s]+)\s*[:=]\s*(.+)\s*$/)
     if (match)
       values[match[1]] = match[2].trim()
   }
@@ -129,6 +129,18 @@ function loadVapidCredentials() {
     exit1()
   }
   return credentials
+}
+
+function loadAwsRegion() {
+  // Read the region from the [default] section of ~/.aws/config.
+  const text = readFile(AWS_CONFIG,
+    `Unable to read ${AWS_CONFIG}. Run aws configure to set the region.`)
+  const config = parseIniSection(text, 'default')
+  if (!config.region) {
+    console.error(`${AWS_CONFIG} is missing region in the [default] section.`)
+    exit1()
+  }
+  return config.region
 }
 
 function errorExit(condition, errorMessage) {
@@ -163,25 +175,6 @@ function loadSubscriptionFile(file) {
   errorExit(!data.keys?.auth, 'Subscription file is missing keys.auth.')
 
   return data
-}
-
-function saveNotificationConfig(config) {
-  // Save the DynamoDB notification configuration to a local file.
-  fs.mkdirSync(path.dirname(NOTIFICATION_CONFIG), { recursive: true })
-  fs.writeFileSync(NOTIFICATION_CONFIG, JSON.stringify(config, null, 2) + '\n')
-}
-
-function loadNotificationConfig() {
-  // Read the DynamoDB notification configuration from the local file.
-  const text = readFile(NOTIFICATION_CONFIG,
-    `Unable to read ${NOTIFICATION_CONFIG}. Run --configure first.`)
-
-  const config = JSON.parse(text)
-
-  errorExit(!config.tableName, `${NOTIFICATION_CONFIG} is missing tableName.`)
-  errorExit(!config.region, `${NOTIFICATION_CONFIG} is missing region.`)
-
-  return config
 }
 
 function dynamoClient(region) {
@@ -224,23 +217,20 @@ async function waitForTableActive(client, tableName) {
 }
 
 async function configure() {
-  // Create the DynamoDB table and save the notification configuration.
-  const config = {
-    tableName: DEFAULT_TABLE_NAME,
-    region: DEFAULT_REGION,
-  }
-  const client = dynamoClient(config.region)
+  // Create the DynamoDB table for push subscriptions.
+  const region = loadAwsRegion()
+  const client = dynamoClient(region)
 
   try {
-    await client.send(new DescribeTableCommand({ TableName: config.tableName }))
-    console.log(`Table ${config.tableName} already exists.`)
+    await client.send(new DescribeTableCommand({ TableName: TABLE_NAME }))
+    console.log(`Table ${TABLE_NAME} already exists.`)
   } catch (error) {
     if (error.name !== 'ResourceNotFoundException')
       throw error
 
-    console.log(`Creating table ${config.tableName} in ${config.region}.`)
+    console.log(`Creating table ${TABLE_NAME} in ${region}.`)
     await client.send(new CreateTableCommand({
-      TableName: config.tableName,
+      TableName: TABLE_NAME,
       KeySchema: [
         { AttributeName: 'userId', KeyType: 'HASH' },
         { AttributeName: 'endpoint', KeyType: 'RANGE' },
@@ -251,28 +241,18 @@ async function configure() {
       ],
       BillingMode: 'PAY_PER_REQUEST',
     }))
-    await waitForTableActive(client, config.tableName)
+    await waitForTableActive(client, TABLE_NAME)
   }
-
-  saveNotificationConfig(config)
-  console.log(`Saved configuration to ${NOTIFICATION_CONFIG}`)
 }
 
 async function fetchConfig() {
-  // Print the AWS notification configuration.
-  const localConfig = JSON.parse(readFile(NOTIFICATION_CONFIG))
-
-  console.log('Local configuration:')
-  console.log(JSON.stringify(localConfig, null, 2))
-
-  const tableName = localConfig.tableName ?? DEFAULT_TABLE_NAME
-  const region = localConfig.region ?? DEFAULT_REGION
+  // Print the DynamoDB table details.
+  const region = loadAwsRegion()
   const client = dynamoClient(region)
 
   try {
-    const response = await client.send(new DescribeTableCommand({ TableName: tableName }))
+    const response = await client.send(new DescribeTableCommand({ TableName: TABLE_NAME }))
     const table = response.Table
-    console.log('\nAWS table:')
     console.log(JSON.stringify({
       tableName: table.TableName,
       status: table.TableStatus,
@@ -283,7 +263,7 @@ async function fetchConfig() {
     }, null, 2))
   } catch (error) {
     if (error.name === 'ResourceNotFoundException') {
-      console.error(`Table ${tableName} not found in ${region}. Run --configure first.`)
+      console.error(`Table ${TABLE_NAME} not found in ${region}. Run --configure first.`)
       exit1()
     }
     throw error
@@ -293,8 +273,7 @@ async function fetchConfig() {
 async function saveSubscription(file) {
   // Save a subscription in AWS.
   const data = loadSubscriptionFile(file)
-  const config = loadNotificationConfig()
-  const client = docClient(config.region)
+  const client = docClient(loadAwsRegion())
 
   const item = {
     userId: data.userId,
@@ -307,7 +286,7 @@ async function saveSubscription(file) {
   }
 
   await client.send(new PutCommand({
-    TableName: config.tableName,
+    TableName: TABLE_NAME,
     Item: item,
   }))
   console.log(`Saved subscription for user ${data.userId}.`)
@@ -315,14 +294,13 @@ async function saveSubscription(file) {
 
 async function getSubscriptions() {
   // Print all the push subscriptions stored in AWS.
-  const config = loadNotificationConfig()
-  const client = docClient(config.region)
+  const client = docClient(loadAwsRegion())
 
   const items = []
   let lastKey
   do {
     const response = await client.send(new ScanCommand({
-      TableName: config.tableName,
+      TableName: TABLE_NAME,
       ExclusiveStartKey: lastKey,
     }))
     items.push(...(response.Items ?? []))
