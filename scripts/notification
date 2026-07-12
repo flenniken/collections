@@ -74,10 +74,8 @@ program
     'Save a push subscription and user id to DynamoDB.')
   .option('--configure',
     'Create the DynamoDB table for push subscriptions.')
-  .option('--fetch-config',
-    'Show the DynamoDB table details.')
-  .option('--get-subscriptions',
-    'Display all push subscriptions stored in DynamoDB.')
+  .option('-g, --get-subscriptions [json]',
+    'List push subscriptions one per line. Use json for listing them in JSON format with more details.')
 
 function exit1(message) {
   // Exit the process with a return code of 1.
@@ -245,28 +243,65 @@ async function configure() {
   }
 }
 
-async function fetchConfig() {
-  // Print the DynamoDB table details.
-  const region = loadAwsRegion()
-  const client = dynamoClient(region)
+function formatUpdatedAt(iso) {
+  // Format an ISO timestamp as "YYYY-MM-DD HH:MM:SS".
+  if (!iso)
+    return '????-??-?? ??:??:??'
+  return iso.replace('T', ' ').replace(/\.\d+Z?$/, '').replace(/Z$/, '')
+}
 
+function shortEndpoint(endpoint) {
+  // Return a short recognizable prefix of a push endpoint URL.
   try {
-    const response = await client.send(new DescribeTableCommand({ TableName: TABLE_NAME }))
-    const table = response.Table
-    console.log(JSON.stringify({
-      tableName: table.TableName,
-      status: table.TableStatus,
-      region,
-      keySchema: table.KeySchema,
-      billingMode: table.BillingModeSummary?.BillingMode ?? 'PROVISIONED',
-      itemCount: table.ItemCount,
-    }, null, 2))
-  } catch (error) {
-    if (error.name === 'ResourceNotFoundException') {
-      console.error(`Table ${TABLE_NAME} not found in ${region}. Run --configure first.`)
-      exit1()
-    }
-    throw error
+    const url = new URL(endpoint)
+    const parts = url.pathname.split('/').filter(Boolean)
+    if (parts.length <= 1)
+      return `${url.origin}/...`
+    return `${url.origin}/${parts.slice(0, 2).join('/')}/...`
+  } catch {
+    return `${String(endpoint).slice(0, 40)}...`
+  }
+}
+
+async function scanSubscriptions() {
+  // Return all push subscription items from DynamoDB.
+  const client = docClient(loadAwsRegion())
+  const items = []
+  let lastKey
+  do {
+    const response = await client.send(new ScanCommand({
+      TableName: TABLE_NAME,
+      ExclusiveStartKey: lastKey,
+    }))
+    items.push(...(response.Items ?? []))
+    lastKey = response.LastEvaluatedKey
+  } while (lastKey)
+  return items
+}
+
+async function getSubscriptions(mode) {
+  // List subscriptions one per line, or as detailed JSON.
+  const items = await scanSubscriptions()
+
+  if (mode === 'json') {
+    console.log(JSON.stringify(items, null, 2))
+    return
+  }
+
+  if (mode !== true) {
+    console.error(`Unknown --get-subscriptions mode: ${mode}. Use json or omit.`)
+    exit1()
+  }
+
+  // Sort by the time the subscription was added.
+  items.sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')))
+
+  // Show one subscription per line.  Each line has date, user id, and
+  // a short endpoint.
+  for (const item of items) {
+    console.log(
+      `${formatUpdatedAt(item.updatedAt)} ${item.userId} ${shortEndpoint(item.endpoint)}`
+    )
   }
 }
 
@@ -290,25 +325,6 @@ async function saveSubscription(file) {
     Item: item,
   }))
   console.log(`Saved subscription for user ${data.userId}.`)
-}
-
-async function getSubscriptions() {
-  // Print all the push subscriptions stored in AWS.
-  const client = docClient(loadAwsRegion())
-
-  const items = []
-  let lastKey
-  do {
-    const response = await client.send(new ScanCommand({
-      TableName: TABLE_NAME,
-      ExclusiveStartKey: lastKey,
-    }))
-    items.push(...(response.Items ?? []))
-    lastKey = response.LastEvaluatedKey
-  } while (lastKey)
-
-  console.log(JSON.stringify(items, null, 2))
-  console.log(`\n${items.length} subscription(s).`)
 }
 
 async function sendPush(file) {
@@ -339,29 +355,31 @@ async function sendPush(file) {
   }
 }
 
-async function main() {
-  // Run the command specified on the command line.
-  program.parse(process.argv)
-  const options = program.opts()
-
-  if (options.vapid) {
-    const vapidKeys = webPush.generateVAPIDKeys()
-    console.log(`Add a [VAPID] section to ${AWS_CREDENTIALS} and save the public key to ts/notify.ts:
+function showVapidKeys() {
+  // Generate and print new VAPID keys.
+  const vapidKeys = webPush.generateVAPIDKeys()
+  console.log(`Add a [VAPID] section to ${AWS_CREDENTIALS} and save the public key to ts/notify.ts:
 
 [VAPID]
 public: ${vapidKeys.publicKey}
 private: ${vapidKeys.privateKey}
 `)
+}
+
+async function main() {
+  // Run the command specified on the command line.
+  program.parse(process.argv)
+  const options = program.opts()
+  if (options.vapid) {
+    showVapidKeys()
   } else if (options.push) {
     await sendPush(options.push)
   } else if (options.save) {
     await saveSubscription(options.save)
   } else if (options.configure) {
     await configure()
-  } else if (options.fetchConfig) {
-    await fetchConfig()
-  } else if (options.getSubscriptions) {
-    await getSubscriptions()
+  } else if (options.getSubscriptions !== undefined) {
+    await getSubscriptions(options.getSubscriptions)
   } else {
     console.log('Run with -h to see the available options.')
   }
