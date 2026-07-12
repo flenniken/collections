@@ -59,6 +59,7 @@ AmazonSESReadOnlyAccess
 AmazonRoute53ReadOnlyAccess
 CloudFrontFullAccess
 AmazonDynamoDBFullAccess
+AmazonAPIGatewayAdministrator
 ~~~
 
 * Enter a tag for the user with key "collections" and value:
@@ -149,9 +150,12 @@ Collections sends Web Push notifications when new collections are
 published. The notification script uses these AWS services:
 
 * **DynamoDB** stores push subscriptions (user id, endpoint, keys).
-  Create the table with `scripts/notification --configure`.
-* **IAM** DynamoDB access uses the **AmazonDynamoDBFullAccess**
-  managed policy (added in [Create IAM User](#create-iam-user)).
+  Create the table and API Gateway with `scripts/notification --configure`.
+* **API Gateway** accepts authenticated `POST /subscriptions` requests
+  (Cognito JWT). The Lambda backend is not wired yet.
+* **IAM** DynamoDB access uses **AmazonDynamoDBFullAccess**; API Gateway
+  uses **AmazonAPIGatewayAdministrator** (added in
+  [Create IAM User](#create-iam-user)).
 
 VAPID keys encrypt push notifications. Generate them once:
 

@@ -29,6 +29,11 @@
 //   endpoint       (required) Push service URL
 //   keys           (required) object with p256dh and auth
 //
+// Auth for --save:
+//
+//   Authorization Bearer token from tmp/tokens.json (access_token).
+//   Create tokens with: scripts/login-flow -g <code> or -r
+//
 // VAPID keys (~/.aws/credentials, [VAPID] section):
 //
 //   public: VAPID public key (must match the key used when creating the subscription)
@@ -38,6 +43,11 @@
 //
 //   table name = TABLE_NAME constant below
 //   region     = region from ~/.aws/config [default] section
+//
+// API Gateway (created by --configure):
+//
+//   REST API name = API_NAME
+//   POST /subscriptions with Cognito authorizer (MOCK until Lambda)
 
 if (!process.env.coder_env) {
   console.log("Run from the Collection's docker environment.")
@@ -56,13 +66,37 @@ const {
 } = require('@aws-sdk/client-dynamodb')
 const {
   DynamoDBDocumentClient,
-  PutCommand,
   ScanCommand,
 } = require('@aws-sdk/lib-dynamodb')
+const {
+  APIGatewayClient,
+  CreateAuthorizerCommand,
+  CreateDeploymentCommand,
+  CreateResourceCommand,
+  CreateRestApiCommand,
+  GetAuthorizersCommand,
+  GetMethodCommand,
+  GetResourcesCommand,
+  GetRestApisCommand,
+  PutIntegrationCommand,
+  PutIntegrationResponseCommand,
+  PutMethodCommand,
+  PutMethodResponseCommand,
+} = require('@aws-sdk/client-api-gateway')
+const {
+  STSClient,
+  GetCallerIdentityCommand,
+} = require('@aws-sdk/client-sts')
 
 const AWS_CREDENTIALS = path.join(os.homedir(), '.aws', 'credentials')
 const AWS_CONFIG = path.join(os.homedir(), '.aws', 'config')
+const AWS_SETTINGS = path.join(process.cwd(), 'env', 'aws-settings.json')
+const TOKENS_FILE = path.join(process.cwd(), 'tmp', 'tokens.json')
 const TABLE_NAME = 'collections-push-subscriptions'
+const API_NAME = 'collections-push-subscriptions'
+const API_STAGE = 'prod'
+const API_RESOURCE = 'subscriptions'
+const API_AUTH_SCOPE = 'aws.cognito.signin.user.admin'
 
 const program = new Command()
 program
@@ -71,9 +105,9 @@ program
   .option('-p, --push <file>',
     'Send a push notification.')
   .option('-s, --save <file>',
-    'Save a push subscription and user id to DynamoDB.')
+    'Save a push subscription via API Gateway using the JWT in tmp/tokens.json.')
   .option('--configure',
-    'Create the DynamoDB table for push subscriptions.')
+    'Create the DynamoDB table and API Gateway for push subscriptions.')
   .option('-g, --get-subscriptions [json]',
     'List push subscriptions one per line. Use json for listing them in JSON format with more details.')
 
@@ -92,8 +126,7 @@ function readFile(filename, errorMessage) {
   } catch (error) {
     if (!errorMessage)
       errorMessage = `Unable to read ${filename}.`
-    console.error(errorMessage)
-    exit1()
+    exit1(errorMessage)
   }
 }
 
@@ -122,10 +155,8 @@ function loadVapidCredentials() {
   const text = readFile(AWS_CREDENTIALS,
     `Unable to read ${AWS_CREDENTIALS}. Add a [VAPID] section.`)
   const credentials = parseIniSection(text, 'VAPID')
-  if (!credentials.public || !credentials.private) {
-    console.error(`${AWS_CREDENTIALS} is missing a [VAPID] section with public and private keys.`)
-    exit1()
-  }
+  if (!credentials.public || !credentials.private)
+    exit1(`${AWS_CREDENTIALS} is missing a [VAPID] section with public and private keys.`)
   return credentials
 }
 
@@ -134,19 +165,35 @@ function loadAwsRegion() {
   const text = readFile(AWS_CONFIG,
     `Unable to read ${AWS_CONFIG}. Run aws configure to set the region.`)
   const config = parseIniSection(text, 'default')
-  if (!config.region) {
-    console.error(`${AWS_CONFIG} is missing region in the [default] section.`)
-    exit1()
-  }
+  if (!config.region)
+    exit1(`${AWS_CONFIG} is missing region in the [default] section.`)
   return config.region
+}
+
+function loadAwsSettings() {
+  // Read Cognito settings from env/aws-settings.json.
+  const data = JSON.parse(readFile(AWS_SETTINGS,
+    `Unable to read ${AWS_SETTINGS}. Run: scripts/cognito -w`))
+  errorExit(!data.settings?.userPoolId,
+    `${AWS_SETTINGS} is missing settings.userPoolId.`)
+  errorExit(!data.settings?.client_id,
+    `${AWS_SETTINGS} is missing settings.client_id.`)
+  return data.settings
+}
+
+function loadAccessToken() {
+  // Read the Cognito access token from tmp/tokens.json.
+  const data = JSON.parse(readFile(TOKENS_FILE,
+    `Unable to read ${TOKENS_FILE}. Run: scripts/login-flow -g <code> or -r`))
+  errorExit(!data.access_token,
+    `${TOKENS_FILE} is missing access_token.`)
+  return data.access_token
 }
 
 function errorExit(condition, errorMessage) {
   // If the condition is true, show the error message and exit.
-  if (condition) {
-    console.error(errorMessage)
-    exit1()
-  }
+  if (condition)
+    exit1(errorMessage)
 }
 
 function loadPushFile(file) {
@@ -185,6 +232,18 @@ function docClient(region) {
   return DynamoDBDocumentClient.from(dynamoClient(region))
 }
 
+function apiGatewayClient(region) {
+  // Return an API Gateway client for the given region.
+  return new APIGatewayClient({ region })
+}
+
+async function getAccountId(region) {
+  // Return the AWS account id for the current credentials.
+  const sts = new STSClient({ region })
+  const response = await sts.send(new GetCallerIdentityCommand({}))
+  return response.Account
+}
+
 function vapidSubject(email) {
   // Return the VAPID subject, adding mailto: when needed.
   return email.includes(':') ? email : `mailto:${email}`
@@ -214,9 +273,8 @@ async function waitForTableActive(client, tableName) {
   }
 }
 
-async function configure() {
-  // Create the DynamoDB table for push subscriptions.
-  const region = loadAwsRegion()
+async function configureDynamoTable(region) {
+  // Create the DynamoDB table for push subscriptions if needed.
   const client = dynamoClient(region)
 
   try {
@@ -241,6 +299,195 @@ async function configure() {
     }))
     await waitForTableActive(client, TABLE_NAME)
   }
+}
+
+async function findRestApi(client, name) {
+  // Return the REST API with the given name, or null.
+  let position
+  do {
+    const response = await client.send(new GetRestApisCommand({
+      limit: 500,
+      position,
+    }))
+    const match = (response.items ?? []).find(api => api.name === name)
+    if (match)
+      return match
+    position = response.position
+  } while (position)
+  return null
+}
+
+async function findOrCreateRestApi(client) {
+  // Return the push subscriptions REST API, creating it if needed.
+  const existing = await findRestApi(client, API_NAME)
+  if (existing) {
+    console.log(`API Gateway ${API_NAME} already exists (${existing.id}).`)
+    return existing
+  }
+
+  console.log(`Creating API Gateway REST API ${API_NAME}.`)
+  return client.send(new CreateRestApiCommand({
+    name: API_NAME,
+    description: 'Save Web Push subscriptions for Collections.',
+    endpointConfiguration: { types: ['REGIONAL'] },
+  }))
+}
+
+async function findOrCreateAuthorizer(client, restApiId, userPoolArn) {
+  // Return the Cognito authorizer for the API, creating it if needed.
+  const response = await client.send(new GetAuthorizersCommand({
+    restApiId,
+    limit: 100,
+  }))
+  const existing = (response.items ?? []).find(item => item.name === 'cognito')
+  if (existing) {
+    console.log(`Cognito authorizer already exists (${existing.id}).`)
+    return existing
+  }
+
+  console.log('Creating Cognito authorizer.')
+  return client.send(new CreateAuthorizerCommand({
+    restApiId,
+    name: 'cognito',
+    type: 'COGNITO_USER_POOLS',
+    providerARNs: [userPoolArn],
+    identitySource: 'method.request.header.Authorization',
+  }))
+}
+
+async function findOrCreateSubscriptionsResource(client, restApiId) {
+  // Return the /subscriptions resource, creating it if needed.
+  const response = await client.send(new GetResourcesCommand({
+    restApiId,
+    limit: 500,
+  }))
+  const resources = response.items ?? []
+  const existing = resources.find(item => item.path === `/${API_RESOURCE}`)
+  if (existing) {
+    console.log(`Resource /${API_RESOURCE} already exists.`)
+    return existing
+  }
+
+  const root = resources.find(item => item.path === '/')
+  errorExit(!root, 'API Gateway root resource not found.')
+
+  console.log(`Creating resource /${API_RESOURCE}.`)
+  return client.send(new CreateResourceCommand({
+    restApiId,
+    parentId: root.id,
+    pathPart: API_RESOURCE,
+  }))
+}
+
+async function methodExists(client, restApiId, resourceId, httpMethod) {
+  // Return true if the method already exists on the resource.
+  try {
+    await client.send(new GetMethodCommand({
+      restApiId,
+      resourceId,
+      httpMethod,
+    }))
+    return true
+  } catch (error) {
+    if (error.name === 'NotFoundException')
+      return false
+    throw error
+  }
+}
+
+async function ensurePostSubscriptionsMethod(client, restApiId, resourceId, authorizerId) {
+  // Create POST /subscriptions with Cognito auth and a MOCK integration.
+  if (await methodExists(client, restApiId, resourceId, 'POST')) {
+    console.log('POST /subscriptions already exists.')
+    return
+  }
+
+  console.log('Creating POST /subscriptions with Cognito authorizer (MOCK integration).')
+  await client.send(new PutMethodCommand({
+    restApiId,
+    resourceId,
+    httpMethod: 'POST',
+    authorizationType: 'COGNITO_USER_POOLS',
+    authorizerId,
+    authorizationScopes: [API_AUTH_SCOPE],
+  }))
+
+  await client.send(new PutIntegrationCommand({
+    restApiId,
+    resourceId,
+    httpMethod: 'POST',
+    type: 'MOCK',
+    requestTemplates: {
+      'application/json': '{"statusCode": 200}',
+    },
+  }))
+
+  await client.send(new PutMethodResponseCommand({
+    restApiId,
+    resourceId,
+    httpMethod: 'POST',
+    statusCode: '200',
+    responseModels: {
+      'application/json': 'Empty',
+    },
+  }))
+
+  await client.send(new PutIntegrationResponseCommand({
+    restApiId,
+    resourceId,
+    httpMethod: 'POST',
+    statusCode: '200',
+    responseTemplates: {
+      'application/json':
+        '{"ok":true,"message":"Subscription accepted (Lambda not wired yet)."}',
+    },
+  }))
+}
+
+function invokeUrl(region, restApiId) {
+  // Return the stage invoke URL for POST /subscriptions.
+  return `https://${restApiId}.execute-api.${region}.amazonaws.com/${API_STAGE}/${API_RESOURCE}`
+}
+
+async function configureApiGateway(region) {
+  // Create the API Gateway REST API used to save subscriptions.
+  const settings = loadAwsSettings()
+  const accountId = await getAccountId(region)
+  const userPoolArn =
+    `arn:aws:cognito-idp:${region}:${accountId}:userpool/${settings.userPoolId}`
+  const client = apiGatewayClient(region)
+
+  const api = await findOrCreateRestApi(client)
+  const authorizer = await findOrCreateAuthorizer(client, api.id, userPoolArn)
+  const resource = await findOrCreateSubscriptionsResource(client, api.id)
+  await ensurePostSubscriptionsMethod(client, api.id, resource.id, authorizer.id)
+
+  console.log(`Deploying API to stage ${API_STAGE}.`)
+  await client.send(new CreateDeploymentCommand({
+    restApiId: api.id,
+    stageName: API_STAGE,
+    description: 'collections push subscriptions',
+  }))
+
+  const url = invokeUrl(region, api.id)
+  console.log(`API Gateway ready: POST ${url}`)
+  return url
+}
+
+async function configure() {
+  // Create the DynamoDB table and API Gateway for push subscriptions.
+  const region = loadAwsRegion()
+  await configureDynamoTable(region)
+  await configureApiGateway(region)
+}
+
+async function findSubscriptionsApiUrl(region) {
+  // Return the invoke URL for the push subscriptions API.
+  const client = apiGatewayClient(region)
+  const api = await findRestApi(client, API_NAME)
+  errorExit(!api,
+    `API Gateway ${API_NAME} not found. Run: scripts/notification --configure`)
+  return invokeUrl(region, api.id)
 }
 
 function formatUpdatedAt(iso) {
@@ -288,10 +535,8 @@ async function getSubscriptions(mode) {
     return
   }
 
-  if (mode !== true) {
-    console.error(`Unknown --get-subscriptions mode: ${mode}. Use json or omit.`)
-    exit1()
-  }
+  if (mode !== true)
+    exit1(`Unknown --get-subscriptions mode: ${mode}. Use json or omit.`)
 
   // Sort by the time the subscription was added.
   items.sort((a, b) => String(b.updatedAt ?? '').localeCompare(String(a.updatedAt ?? '')))
@@ -306,25 +551,40 @@ async function getSubscriptions(mode) {
 }
 
 async function saveSubscription(file) {
-  // Save a subscription in AWS.
+  // POST a subscription to API Gateway using the Cognito access token.
   const data = loadSubscriptionFile(file)
-  const client = docClient(loadAwsRegion())
+  const accessToken = loadAccessToken()
+  const url = await findSubscriptionsApiUrl(loadAwsRegion())
 
-  const item = {
+  const body = {
     userId: data.userId,
     endpoint: data.endpoint,
     keys: {
       p256dh: data.keys.p256dh,
       auth: data.keys.auth,
     },
-    updatedAt: new Date().toISOString(),
   }
 
-  await client.send(new PutCommand({
-    TableName: TABLE_NAME,
-    Item: item,
-  }))
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  const text = await response.text()
+  if (!response.ok) {
+    let message = `Failed to save subscription: ${response.status} ${response.statusText}`
+    if (text)
+      message += `\n${text}`
+    exit1(message)
+  }
+
   console.log(`Saved subscription for user ${data.userId}.`)
+  if (text)
+    console.log(text)
 }
 
 async function sendPush(file) {
@@ -350,8 +610,7 @@ async function sendPush(file) {
     await webPush.sendNotification(subscription, payload)
     console.log('Push notification sent.')
   } catch (error) {
-    console.error(`Failed to send push notification: ${formatPushError(error)}`)
-    exit1()
+    exit1(`Failed to send push notification: ${formatPushError(error)}`)
   }
 }
 
