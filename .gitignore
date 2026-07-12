@@ -15,8 +15,8 @@ tokens.json
 env/aws-settings.json
 .vscode/
 __pycache__/
-env/lambda/*.zip
-env/lambda/package/
-env/lambda/validateImageRequest.py
-env/lambda/js
+env/lambda/*/*.zip
+env/lambda/*/package/
+env/lambda/auth-image-download/validateImageRequest.py
+env/lambda/*/js
 .aider*

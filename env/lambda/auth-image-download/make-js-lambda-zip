@@ -24,7 +24,7 @@ if [[ -z "${coder_env}" ]]; then
   exit
 fi
 
-jsFolder=~/collections/env/lambda/js
+jsFolder=~/collections/env/lambda/auth-image-download/js
 
 # If the package directory exists, delete it.
 if [ -s "$jsFolder" ]; then

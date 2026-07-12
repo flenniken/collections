@@ -85,7 +85,7 @@ the same for push notifications.
 * [Notification](notification.md) -— how notifications and the red badge works.
 
 For the authentication code you update the version number in
-make-js-lambda-zip, then test, deploy and test again, following the
+env/lambda/auth-image-download/make-js-lambda-zip, then test, deploy and test again, following the
 steps in the authentication documentation.
 
 For notification you test the notification script and follow the steps in

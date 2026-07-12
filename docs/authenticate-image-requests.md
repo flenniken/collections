@@ -119,15 +119,15 @@ You run the make-js-lambda-zip script to make the lambda zip file. The
 zip file contains the dependent external modules.
 
 ~~~
-env/lambda/make-js-lambda-zip
+env/lambda/auth-image-download/make-js-lambda-zip
 ~~~
 
 The output of the script is shown below. Notice the zip file is named
 after the node version number which is 22.18.0:
 
 ~~~
-Remove existing /home/coder/collections/env/lambda/js directory
-Copy validateImageRequest.js to the /home/coder/collections/env/lambda/js folder.
+Remove existing /home/coder/collections/env/lambda/auth-image-download/js directory
+Copy validateImageRequest.js to the /home/coder/collections/env/lambda/auth-image-download/js folder.
 Install the dependent node modules.
 
 added 26 packages, and audited 27 packages in 1s
@@ -174,7 +174,7 @@ update the version number in make-js-lambda-zip. In the example we are
 updating from 18.19 to 22.18:
 
 ~~~
-env/lambda/make-js-lambda-zip
+env/lambda/auth-image-download/make-js-lambda-zip
 
 -# v18.19.0
 -version=18.19.0
