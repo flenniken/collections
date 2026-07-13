@@ -129,30 +129,31 @@ lambda function.
 **API Gateway**
 
 The notification script creates a regional POST REST API named
-collections-push-subscriptions with entry point name /subscriptions.
+collections-push-subscriptions.
 
 The API Gateway entry point is built from several variables:
 
-* nkk8ycohmk -- rest API key
-* us-west-2 -- the region where the api code runs
-* prod -- the production stage
-* subscriptions -- the name of the API
+* nkk8ycohmk -- a unique API key assigned when the collections-push-subscriptions API was created
+* us-west-2 -- the region where the api code runs, from the '~/.aws/config' file
+* prod -- the production stage. This is the only stage deployed.
+* subscriptions -- the resource path of collections-push-subscriptions
 
-The subscriptions entry point is:
+The collections-push-subscriptions entry point is:
 
 ~~~
 https://nkk8ycohmk.execute-api.us-west-2.amazonaws.com/prod/subscriptions
 ~~~
 
-The script prints the URL when you run --configure. The region comes
-from the '~/.aws/config' file.
+The script prints the URL when you run --configure.
 
 **Authentication**
 
 API Gateway validates the caller before the request reaches Lambda. A
 Cognito authorizer named 'cognito' checks the 'Authorization' header
-for a Bearer JWT from the Collections user pool. The token must include
-the 'aws.cognito.signin.user.admin' scope.
+for a Bearer JWT from the Collections user pool.
+
+All logged users are allowed because the standard Cognito access token
+scope issued to logged-in users is passed to the API.
 
 The browser does not call this API yet. For testing, save a subscription
 with `scripts/notification -s <file>`, which reads the access token
@@ -194,9 +195,12 @@ The save-subscription Lambda function stores push subscriptions in
 DynamoDB. Lambda source lives in 'env/lambda/save-subscription'.
 
 API Gateway invokes the function on each authenticated POST
-/subscriptions request. The function receives the JSON body described
-above, writes or updates the subscription record, and returns a success
-response.
+/subscriptions request. A (userId, endpoint) identifies exactly one
+record in the DB.
+
+The function receives the JSON body described above and it refreshes
+existing record or it creates a new subscription record when the
+(userId, endpoint) doesn't exist.
 
 The function is not deployed or wired to API Gateway yet. Until it is,
 use `scripts/notification -s <file>` to test the API Gateway endpoint
@@ -210,7 +214,7 @@ mode is pay-per-request.
 
 **Keys**
 
-The table uses a composite primary key:
+The table uses a composite primary key of (user id, endpoint):
 
 * userId (partition key) -- Cognito user id
 * endpoint (sort key) -- push service URL
