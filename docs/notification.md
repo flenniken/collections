@@ -156,8 +156,8 @@ All logged users are allowed because the standard Cognito access token
 scope issued to logged-in users is passed to the API.
 
 The browser does not call this API yet. For testing, save a subscription
-with `scripts/notification -s <file>`, which reads the access token
-from 'tmp/tokens.json'.
+with `scripts/notification -s <file>`. The script sends the access token
+from `tmp/tokens.json`; the file's userId must match the token user.
 
 **Request body**
 
@@ -182,12 +182,9 @@ The POST body is JSON with these fields:
 These are the same fields logged by 'ts/notify.ts' when the user
 subscribes to notifications.
 
-**Current state**
-
-The --configure option wires API Gateway with a MOCK integration that
-returns a success response without calling Lambda. The
-save-subscription Lambda is not connected yet. After the Lambda is
-deployed, API Gateway will invoke it instead of the mock.
+The --configure option creates POST /subscriptions with Cognito
+authorization. Run --deploy save-subscription to wire the Lambda
+integration.
 
 **Lambda**
 
@@ -202,9 +199,13 @@ The function receives the JSON body described above and it refreshes
 existing record or it creates a new subscription record when the
 (userId, endpoint) doesn't exist.
 
-The function is not deployed or wired to API Gateway yet. Until it is,
-use `scripts/notification -s <file>` to test the API Gateway endpoint
-(the mock accepts the request but does not save to DynamoDB).
+Deploy the function with:
+
+~~~
+node scripts/testSaveSubscription.js
+env/lambda/save-subscription/make-js-lambda-zip
+scripts/notification --deploy save-subscription
+~~~
 
 **DynamoDB**
 

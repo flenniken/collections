@@ -25,13 +25,15 @@
 //
 // Subscription JSON file (-s/--save <file>):
 //
-//   userId         (required) Cognito user id
+//   userId         (required) Cognito user id — must match tmp/tokens.json
 //   endpoint       (required) Push service URL
 //   keys           (required) object with p256dh and auth
 //
 // Auth for --save:
 //
-//   Authorization Bearer token from tmp/tokens.json (access_token).
+//   POST /subscriptions via API Gateway using the access token from
+//   tmp/tokens.json (Authorization Bearer). API Gateway validates the
+//   token, invokes the save-subscription Lambda, which writes to DynamoDB.
 //   Create tokens with: scripts/login-flow -g <code> or -r
 //
 // VAPID keys (~/.aws/credentials, [VAPID] section):
@@ -47,7 +49,20 @@
 // API Gateway (created by --configure):
 //
 //   REST API name = API_NAME
-//   POST /subscriptions with Cognito authorizer (MOCK until Lambda)
+//   POST /subscriptions with Cognito authorizer (Lambda wired by --deploy)
+//
+// Deploy Lambda (--deploy <name>):
+//
+//   save-subscription -- deploy the zip and wire POST /subscriptions
+//
+// Build and test before deploy:
+//   node scripts/testSaveSubscription.js
+//   env/lambda/save-subscription/make-js-lambda-zip
+//   scripts/notification --deploy save-subscription
+//
+// Deploy requires AWSLambda_FullAccess on the container IAM user.
+// Lambda also needs an execution role (collections-lambda) created in
+// the IAM console. See docs/aws-config.md.
 
 if (!process.env.coder_env) {
   console.log("Run from the Collection's docker environment.")
@@ -79,9 +94,7 @@ const {
   GetResourcesCommand,
   GetRestApisCommand,
   PutIntegrationCommand,
-  PutIntegrationResponseCommand,
   PutMethodCommand,
-  PutMethodResponseCommand,
 } = require('@aws-sdk/client-api-gateway')
 const {
   STSClient,
@@ -97,6 +110,20 @@ const API_NAME = 'collections-push-subscriptions'
 const API_STAGE = 'prod'
 const API_RESOURCE = 'subscriptions'
 const API_AUTH_SCOPE = 'aws.cognito.signin.user.admin'
+const LAMBDA_EXECUTION_ROLE = 'collections-lambda'
+
+// Lambda functions that can be deployed with --deploy.
+const LAMBDA_DEPLOYS = {
+  'save-subscription': {
+    functionName: 'save-subscription',
+    handler: 'saveSubscription.handler',
+    description: 'Save Web Push subscriptions for Collections.',
+    apiIntegration: {
+      httpMethod: 'POST',
+      resourcePath: `/${API_RESOURCE}`,
+    },
+  },
+}
 
 const program = new Command()
 program
@@ -105,11 +132,13 @@ program
   .option('-p, --push <file>',
     'Send a push notification.')
   .option('-s, --save <file>',
-    'Save a push subscription via API Gateway using the JWT in tmp/tokens.json.')
+    'Save a push subscription via API Gateway, Lambda, and DynamoDB.')
   .option('--configure',
     'Create the DynamoDB table and API Gateway for push subscriptions.')
   .option('-g, --get-subscriptions [json]',
     'List push subscriptions one per line. Use json for listing them in JSON format with more details.')
+  .option('--deploy <name>',
+    'Deploy a notification Lambda function (e.g. save-subscription).')
 
 function exit1(message) {
   // Exit the process with a return code of 1.
@@ -190,6 +219,15 @@ function loadAccessToken() {
   return data.access_token
 }
 
+function tokenUserIdFromAccessToken(accessToken) {
+  // Return the Cognito user id from an access token JWT payload.
+  const payload = JSON.parse(
+    Buffer.from(accessToken.split('.')[1], 'base64url').toString())
+  errorExit(!payload.username,
+    'access_token is missing username claim.')
+  return payload.username
+}
+
 function errorExit(condition, errorMessage) {
   // If the condition is true, show the error message and exit.
   if (condition)
@@ -235,6 +273,55 @@ function docClient(region) {
 function apiGatewayClient(region) {
   // Return an API Gateway client for the given region.
   return new APIGatewayClient({ region })
+}
+
+function requireHomeModule(moduleName) {
+  // Load a node module installed in ~/node_modules (see env/debian/Dockerfile).
+  const modulePath = path.join(os.homedir(), 'node_modules', moduleName)
+  if (!fs.existsSync(modulePath)) {
+    exit1(`Cannot find module '${moduleName}'. Update container packages:\n` +
+      '  cp ~/collections/env/debian/package.json ~/package.json\n' +
+      '  npm install')
+  }
+  return require(modulePath)
+}
+
+function deploySdk() {
+  // Load Lambda and IAM SDK modules when --deploy runs.
+  const {
+    LambdaClient,
+    CreateFunctionCommand,
+    GetFunctionCommand,
+    UpdateFunctionCodeCommand,
+    GetFunctionConfigurationCommand,
+    AddPermissionCommand,
+  } = requireHomeModule('@aws-sdk/client-lambda')
+  const {
+    IAMClient,
+    GetRoleCommand,
+  } = requireHomeModule('@aws-sdk/client-iam')
+  return {
+    LambdaClient,
+    CreateFunctionCommand,
+    GetFunctionCommand,
+    UpdateFunctionCodeCommand,
+    GetFunctionConfigurationCommand,
+    AddPermissionCommand,
+    IAMClient,
+    GetRoleCommand,
+  }
+}
+
+function lambdaClient(region) {
+  // Return a Lambda client for the given region.
+  const { LambdaClient } = deploySdk()
+  return new LambdaClient({ region })
+}
+
+function iamClient() {
+  // Return an IAM client (IAM is a global service).
+  const { IAMClient } = deploySdk()
+  return new IAMClient({})
 }
 
 async function getAccountId(region) {
@@ -396,13 +483,13 @@ async function methodExists(client, restApiId, resourceId, httpMethod) {
 }
 
 async function ensurePostSubscriptionsMethod(client, restApiId, resourceId, authorizerId) {
-  // Create POST /subscriptions with Cognito auth and a MOCK integration.
+  // Create POST /subscriptions with Cognito auth. Lambda is wired by --deploy.
   if (await methodExists(client, restApiId, resourceId, 'POST')) {
     console.log('POST /subscriptions already exists.')
     return
   }
 
-  console.log('Creating POST /subscriptions with Cognito authorizer (MOCK integration).')
+  console.log('Creating POST /subscriptions with Cognito authorizer.')
   await client.send(new PutMethodCommand({
     restApiId,
     resourceId,
@@ -410,37 +497,6 @@ async function ensurePostSubscriptionsMethod(client, restApiId, resourceId, auth
     authorizationType: 'COGNITO_USER_POOLS',
     authorizerId,
     authorizationScopes: [API_AUTH_SCOPE],
-  }))
-
-  await client.send(new PutIntegrationCommand({
-    restApiId,
-    resourceId,
-    httpMethod: 'POST',
-    type: 'MOCK',
-    requestTemplates: {
-      'application/json': '{"statusCode": 200}',
-    },
-  }))
-
-  await client.send(new PutMethodResponseCommand({
-    restApiId,
-    resourceId,
-    httpMethod: 'POST',
-    statusCode: '200',
-    responseModels: {
-      'application/json': 'Empty',
-    },
-  }))
-
-  await client.send(new PutIntegrationResponseCommand({
-    restApiId,
-    resourceId,
-    httpMethod: 'POST',
-    statusCode: '200',
-    responseTemplates: {
-      'application/json':
-        '{"ok":true,"message":"Subscription accepted (Lambda not wired yet)."}',
-    },
   }))
 }
 
@@ -471,6 +527,7 @@ async function configureApiGateway(region) {
 
   const url = invokeUrl(region, api.id)
   console.log(`API Gateway ready: POST ${url}`)
+  console.log('Run: scripts/notification --deploy save-subscription')
   return url
 }
 
@@ -551,9 +608,12 @@ async function getSubscriptions(mode) {
 }
 
 async function saveSubscription(file) {
-  // POST a subscription to API Gateway using the Cognito access token.
+  // POST a subscription through API Gateway to the save-subscription Lambda.
   const data = loadSubscriptionFile(file)
   const accessToken = loadAccessToken()
+  const tokenUserId = tokenUserIdFromAccessToken(accessToken)
+  errorExit(data.userId !== tokenUserId,
+    `Subscription userId (${data.userId}) does not match token user (${tokenUserId}).`)
   const url = await findSubscriptionsApiUrl(loadAwsRegion())
 
   const body = {
@@ -625,6 +685,203 @@ private: ${vapidKeys.privateKey}
 `)
 }
 
+function lambdaDeployConfig(name) {
+  // Return the deploy configuration for the named Lambda function.
+  const config = LAMBDA_DEPLOYS[name]
+  errorExit(!config,
+    `Unknown Lambda function: ${name}. Available: ${Object.keys(LAMBDA_DEPLOYS).join(', ')}.`)
+  return config
+}
+
+function lambdaNodeVersion(functionName) {
+  // Read the node version from the function's make-js-lambda-zip script.
+  const scriptPath =
+    path.join(process.cwd(), 'env/lambda', functionName, 'make-js-lambda-zip')
+  const text = readFile(scriptPath)
+  const match = text.match(/^version=(\S+)/m)
+  errorExit(!match, `Unable to read node version from ${scriptPath}.`)
+  return match[1]
+}
+
+function lambdaRuntime(functionName) {
+  // Return the Lambda runtime that matches the function's node version.
+  const major = lambdaNodeVersion(functionName).split('.')[0]
+  return `nodejs${major}.x`
+}
+
+function lambdaZipPath(functionName) {
+  // Return the path to the built Lambda zip file.
+  const version = lambdaNodeVersion(functionName)
+  return path.join(
+    process.cwd(), 'env/lambda', functionName, 'js', `lambda-js-${version}.zip`)
+}
+
+function loadLambdaZip(functionName) {
+  // Read the Lambda zip file built by make-js-lambda-zip.
+  const zipPath = lambdaZipPath(functionName)
+  errorExit(!fs.existsSync(zipPath),
+    `Zip file not found: ${zipPath}. Run tests, then: env/lambda/${functionName}/make-js-lambda-zip`)
+  console.log(`Using zip file: ${zipPath}`)
+  return fs.readFileSync(zipPath)
+}
+
+async function waitForLambdaActive(client, functionName) {
+  // Wait until the Lambda function update completes.
+  const { GetFunctionConfigurationCommand } = deploySdk()
+  for (;;) {
+    const response = await client.send(new GetFunctionConfigurationCommand({
+      FunctionName: functionName,
+    }))
+    const { State, LastUpdateStatus, LastUpdateStatusReason } = response
+    if (State === 'Active' && LastUpdateStatus === 'Successful')
+      return response
+    if (LastUpdateStatus === 'Failed')
+      exit1(`Lambda update failed: ${LastUpdateStatusReason}`)
+    console.log(`Lambda status: ${LastUpdateStatus ?? State}. Waiting...`)
+    await new Promise(resolve => setTimeout(resolve, 2000))
+  }
+}
+
+async function loadLambdaExecutionRole() {
+  // Return the Lambda execution role ARN configured in the IAM console.
+  const { GetRoleCommand } = deploySdk()
+  const client = iamClient()
+  try {
+    const response = await client.send(new GetRoleCommand({
+      RoleName: LAMBDA_EXECUTION_ROLE,
+    }))
+    return response.Role.Arn
+  } catch (error) {
+    if (error.name !== 'NoSuchEntityException')
+      throw error
+    exit1(`Lambda execution role ${LAMBDA_EXECUTION_ROLE} not found. ` +
+      'Create it in the IAM console. See docs/aws-config.md.')
+  }
+}
+
+async function createOrUpdateLambda(region, config, roleArn, zipFile) {
+  // Create or update the Lambda function code.
+  const {
+    GetFunctionCommand,
+    UpdateFunctionCodeCommand,
+    CreateFunctionCommand,
+  } = deploySdk()
+  const client = lambdaClient(region)
+  const { functionName } = config
+  let exists = false
+  try {
+    await client.send(new GetFunctionCommand({ FunctionName: functionName }))
+    exists = true
+  } catch (error) {
+    if (error.name !== 'ResourceNotFoundException')
+      throw error
+  }
+
+  if (exists) {
+    console.log(`Updating Lambda function ${functionName}.`)
+    await client.send(new UpdateFunctionCodeCommand({
+      FunctionName: functionName,
+      ZipFile: zipFile,
+    }))
+  } else {
+    console.log(`Creating Lambda function ${functionName}.`)
+    await client.send(new CreateFunctionCommand({
+      FunctionName: functionName,
+      Runtime: lambdaRuntime(functionName),
+      Role: roleArn,
+      Handler: config.handler,
+      Description: config.description,
+      Code: { ZipFile: zipFile },
+      Timeout: 10,
+    }))
+  }
+
+  const updated = await waitForLambdaActive(client, functionName)
+  console.log(`Lambda function ready: ${updated.FunctionArn}`)
+  return updated.FunctionArn
+}
+
+async function findApiResource(client, restApiId, resourcePath) {
+  // Return the API Gateway resource with the given path.
+  const response = await client.send(new GetResourcesCommand({
+    restApiId,
+    limit: 500,
+  }))
+  return (response.items ?? []).find(item => item.path === resourcePath)
+}
+
+async function ensureLambdaInvokePermission(region, functionName, restApiId, integration) {
+  // Allow API Gateway to invoke the Lambda function.
+  const { AddPermissionCommand } = deploySdk()
+  const client = lambdaClient(region)
+  const accountId = await getAccountId(region)
+  const sourceArn =
+    `arn:aws:execute-api:${region}:${accountId}:${restApiId}/*/` +
+    `${integration.httpMethod}${integration.resourcePath}`
+  const statementId = `apigateway-${restApiId}-${integration.httpMethod}-subscriptions`
+  try {
+    await client.send(new AddPermissionCommand({
+      FunctionName: functionName,
+      StatementId: statementId,
+      Action: 'lambda:InvokeFunction',
+      Principal: 'apigateway.amazonaws.com',
+      SourceArn: sourceArn,
+    }))
+    console.log('Added API Gateway invoke permission for Lambda.')
+  } catch (error) {
+    if (error.name !== 'ResourceConflictException')
+      throw error
+    console.log('API Gateway invoke permission already exists.')
+  }
+}
+
+async function wireLambdaIntegration(region, config, functionArn) {
+  // Connect API Gateway POST /subscriptions to the Lambda function.
+  const client = apiGatewayClient(region)
+  const api = await findRestApi(client, API_NAME)
+  errorExit(!api,
+    `API Gateway ${API_NAME} not found. Run: scripts/notification --configure`)
+  const integration = config.apiIntegration
+  const resource = await findApiResource(client, api.id, integration.resourcePath)
+  errorExit(!resource,
+    `API Gateway resource ${integration.resourcePath} not found.`)
+
+  const uri =
+    `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${functionArn}/invocations`
+  console.log(`Wiring ${integration.httpMethod} ${integration.resourcePath} to Lambda.`)
+  await client.send(new PutIntegrationCommand({
+    restApiId: api.id,
+    resourceId: resource.id,
+    httpMethod: integration.httpMethod,
+    type: 'AWS_PROXY',
+    integrationHttpMethod: 'POST',
+    uri,
+  }))
+
+  await ensureLambdaInvokePermission(region, config.functionName, api.id, integration)
+
+  console.log(`Deploying API to stage ${API_STAGE}.`)
+  await client.send(new CreateDeploymentCommand({
+    restApiId: api.id,
+    stageName: API_STAGE,
+    description: `wire ${config.functionName}`,
+  }))
+
+  const url = invokeUrl(region, api.id)
+  console.log(`API Gateway ready: ${integration.httpMethod} ${url}`)
+}
+
+async function deployLambda(name) {
+  // Deploy and wire a notification Lambda function from a built zip file.
+  const config = lambdaDeployConfig(name)
+  const region = loadAwsRegion()
+  const zipFile = loadLambdaZip(name)
+  const roleArn = await loadLambdaExecutionRole()
+  const functionArn = await createOrUpdateLambda(region, config, roleArn, zipFile)
+  if (config.apiIntegration)
+    await wireLambdaIntegration(region, config, functionArn)
+}
+
 async function main() {
   // Run the command specified on the command line.
   program.parse(process.argv)
@@ -639,6 +896,8 @@ async function main() {
     await configure()
   } else if (options.getSubscriptions !== undefined) {
     await getSubscriptions(options.getSubscriptions)
+  } else if (options.deploy) {
+    await deployLambda(options.deploy)
   } else {
     console.log('Run with -h to see the available options.')
   }

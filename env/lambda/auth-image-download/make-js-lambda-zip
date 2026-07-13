@@ -65,7 +65,7 @@ zipfile=lambda-js-$version.zip
 
 echo "Create $zipfile."
 
-zip -r $zipfile .
+zip -rq $zipfile .
 
 maxzipsize=1048576
 # maxzipsize=48576 # for testing

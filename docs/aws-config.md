@@ -60,6 +60,7 @@ AmazonRoute53ReadOnlyAccess
 CloudFrontFullAccess
 AmazonDynamoDBFullAccess
 AmazonAPIGatewayAdministrator
+AWSLambda_FullAccess
 ~~~
 
 * Enter a tag for the user with key "collections" and value:
@@ -152,10 +153,29 @@ published. The notification script uses these AWS services:
 * **DynamoDB** stores push subscriptions (user id, endpoint, keys).
   Create the table and API Gateway with `scripts/notification --configure`.
 * **API Gateway** accepts authenticated `POST /subscriptions` requests
-  (Cognito JWT). The Lambda backend is not wired yet.
-* **IAM** DynamoDB access uses **AmazonDynamoDBFullAccess**; API Gateway
-  uses **AmazonAPIGatewayAdministrator** (added in
+  (Cognito JWT). Deploy the Lambda backend with
+  `scripts/notification --deploy save-subscription`.
+* **Lambda** runs save-subscription. Deploy with the notification script.
+  The container IAM user needs **AWSLambda_FullAccess** (added in
   [Create IAM User](#create-iam-user)).
+* **IAM** DynamoDB access uses **AmazonDynamoDBFullAccess**; API Gateway
+  uses **AmazonAPIGatewayAdministrator**. Lambda also needs an execution
+  role named **collections-lambda** (see below).
+
+**Lambda execution role**
+
+AWS requires a separate IAM role for Lambda to run. This is not the
+container user. Create the role once in the IAM console:
+
+* open IAM, Roles, Create role
+* trusted entity: AWS service, Lambda
+* attach policies:
+  * AWSLambdaBasicExecutionRole (CloudWatch logs)
+  * AmazonDynamoDBFullAccess
+* role name: `collections-lambda`
+
+The deploy script uses this role when it creates a Lambda function.
+Updating an existing function does not change the role.
 
 VAPID keys encrypt push notifications. Generate them once:
 
@@ -179,7 +199,8 @@ public: BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2f
 private: hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
 ~~~
 
-Save a subscription from the browser console log to DynamoDB:
+Save a subscription through API Gateway (uses the access token in
+tmp/tokens.json; subscription userId must match the token user):
 
 ~~~
 scripts/notification -s chrome-subscription.json

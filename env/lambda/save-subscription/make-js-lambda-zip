@@ -63,7 +63,7 @@ zipfile=lambda-js-$version.zip
 
 echo "Create $zipfile."
 
-zip -r $zipfile .
+zip -rq $zipfile .
 
 echo "Success: created zip file:"
 ls -l $zipfile
