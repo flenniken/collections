@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Create a zip file for the AWS Lambda save-subscription code. This is
+# needed for importing @aws-sdk modules that don't come with the default
+# runtime.
+#
+# This script follows the procedure documented here:
+# https://docs.aws.amazon.com/lambda/latest/dg/nodejs-package.html
+
+# Specify the version of node js being used in the collection's
+# container. In lambda specify the same version number. Get the
+# version with the -v option.
+
+# # in container
+# node -v
+#
+# v24.18.0
+version=24.18.0
+
+# Make sure we're running inside the docker container.
+if [[ -z "${coder_env}" ]]; then
+  echo "Error: run in the docker container."
+  exit
+fi
+
+jsFolder=~/collections/env/lambda/save-subscription/js
+
+# If the package directory exists, delete it.
+if [ -s "$jsFolder" ]; then
+  echo "Remove existing $jsFolder directory"
+  rm -rf $jsFolder
+fi
+
+mkdir -p $jsFolder
+cd $jsFolder
+
+handler=saveSubscription.js
+
+echo "Copy $handler to the $jsFolder folder."
+cp ~/collections/scripts/$handler $jsFolder/
+
+echo "Install the dependent node modules."
+
+# Create a package.json file containing the dependent modules.
+# See env/debian/package.json for the version numbers.
+cat > package.json << EOF
+{
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.840.0",
+    "@aws-sdk/lib-dynamodb": "^3.840.0"
+  }
+}
+EOF
+
+# Install the dependent modules in the folder node_modules.
+npm install
+
+# For Lambda to run your code, the js file containing the handler
+# code and all the function's dependencies must be installed at
+# the root of the .zip file.
+
+zipfile=lambda-js-$version.zip
+
+echo "Create $zipfile."
+
+zip -r $zipfile .
+
+echo "Success: created zip file:"
+ls -l $zipfile

@@ -1,0 +1,332 @@
+"use strict";
+
+// Test the saveSubscription.js file's functions.
+//
+// Run from the collections container:
+// cd ~/collections
+// node scripts/testSaveSubscription.js
+
+(async () => {
+
+  if (!process.env.coder_env) {
+    console.log("Run from the Collection's docker environment.")
+    return
+  }
+
+  function logProgress(message) {
+    console.log("* " + message)
+  }
+
+  const {
+    TABLE_NAME,
+    region,
+    checkRegion,
+    parseSubscriptionBody,
+    validateSubscription,
+    tokenUserId,
+    userIdsMatch,
+    subscriptionItem,
+    saveSubscription,
+    apiResponse,
+    handler,
+  } = require('./saveSubscription');
+
+  const fs = require('fs');
+  const os = require('os');
+  const path = require('path');
+
+  const AWS_CONFIG = path.join(os.homedir(), '.aws', 'config')
+  const tokenFilename = '/home/coder/collections/tmp/tokens.json'
+
+  function makeTestSubscription(userId) {
+    // Return a valid push subscription for testing.
+    return {
+      userId,
+      endpoint: 'https://fcm.googleapis.com/fcm/send/test-endpoint-id',
+      keys: {
+        p256dh: 'BB8XHVi5SkEGZeYO1bC6pQLAhE3PSgB4p69V1RTOxRfXlRnHclKwpA-5BbqrVsbqbFoMRnLd9MAsufDcplSvULU',
+        auth: 'PPzbvVFD9Fr7g_fDOI6zDw',
+      },
+    }
+  }
+
+  function parseIniSection(text, sectionName) {
+    // Return the key value pairs from the named section of an ini file.
+    const values = {}
+    let inSection = false
+    for (const line of text.split('\n')) {
+      if (/^\[/.test(line)) {
+        inSection = line.trim().toLowerCase() === `[${sectionName.toLowerCase()}]`
+        continue
+      }
+      if (!inSection)
+        continue
+      const match = line.match(/^\s*([^=:\s]+)\s*[:=]\s*(.+)\s*$/)
+      if (match)
+        values[match[1]] = match[2].trim()
+    }
+    return values
+  }
+
+  function loadAwsRegion() {
+    // Read the region from the [default] section of ~/.aws/config.
+    const text = fs.readFileSync(AWS_CONFIG, 'utf8')
+    const config = parseIniSection(text, 'default')
+    if (!config.region)
+      error(`${AWS_CONFIG} is missing region in the [default] section.`)
+    return config.region
+  }
+
+  const configRegion = loadAwsRegion()
+
+  let errorCount = 0
+  function error(message) {
+    console.error(`\x1b[31mError\x1b[0m: ${message}`)
+    errorCount += 1
+  }
+
+  function readJsonKey(filename, key) {
+    const data = fs.readFileSync(filename);
+    const json = JSON.parse(data);
+    return json[key];
+  }
+
+  function gotExpected(got, expected, message) {
+    if (got !== expected) {
+      if (!message)
+        message = ""
+      error(`${message}
+     got: ${got}
+expected: ${expected}
+`)
+    }
+  }
+
+  function toString(obj) {
+    return JSON.stringify(obj, null, 2)
+  }
+
+  function makeEvent(body, claims) {
+    return {
+      body: typeof body === 'string' ? body : JSON.stringify(body),
+      requestContext: {
+        authorizer: {
+          claims: claims || {},
+        },
+      },
+    };
+  }
+
+  class MockDocClient {
+    constructor(error) {
+      this.item = null
+      this.error = error || null
+    }
+
+    async send(command) {
+      if (this.error)
+        throw this.error
+      this.item = command.input.Item
+    }
+  }
+
+  function testParseSubscriptionBody(body, eMessage) {
+    try {
+      parseSubscriptionBody(body)
+      if (eMessage)
+        error(`parseSubscriptionBody should have failed: ${eMessage}`)
+    } catch (err) {
+      gotExpected(err.message, eMessage)
+    }
+  }
+
+  function testValidateSubscription(subscription, eMessage) {
+    gotExpected(validateSubscription(subscription), eMessage)
+  }
+
+  function testTokenUserId(claims, expected) {
+    gotExpected(tokenUserId(claims), expected)
+  }
+
+  function testUserIdsMatch(bodyUserId, claims, expected) {
+    gotExpected(userIdsMatch(bodyUserId, claims), expected)
+  }
+
+  function testSubscriptionItem(subscription, expected) {
+    const item = subscriptionItem(subscription)
+    gotExpected(item.userId, expected.userId)
+    gotExpected(item.endpoint, expected.endpoint)
+    gotExpected(toString(item.keys), toString(expected.keys))
+    if (!item.updatedAt)
+      error('subscriptionItem is missing updatedAt.')
+  }
+
+  async function testSaveSubscription(subscription, claims, client, eStatus, eMessage) {
+    const response = await saveSubscription(subscription, claims, client)
+    gotExpected(response.statusCode, eStatus)
+    const body = JSON.parse(response.body)
+    gotExpected(body.message, eMessage)
+    return body
+  }
+
+  async function testHandler(event, eStatus, eMessage) {
+    const response = await handler(event, {})
+    gotExpected(response.statusCode, eStatus)
+    const body = JSON.parse(response.body)
+    gotExpected(body.message, eMessage)
+    return body
+  }
+
+  function testCheckRegion(lambdaRegion, eMessage) {
+    const saved = process.env.AWS_REGION
+    if (lambdaRegion === undefined)
+      delete process.env.AWS_REGION
+    else
+      process.env.AWS_REGION = lambdaRegion
+    try {
+      checkRegion()
+      if (eMessage)
+        error(`checkRegion should have failed: ${eMessage}`)
+    } catch (err) {
+      gotExpected(err.message, eMessage)
+    } finally {
+      if (saved === undefined)
+        delete process.env.AWS_REGION
+      else
+        process.env.AWS_REGION = saved
+    }
+  }
+
+  process.env.AWS_REGION = region
+
+  const testUser = readJsonKey(tokenFilename, 'access_token')
+  const decoded = JSON.parse(Buffer.from(testUser.split('.')[1], 'base64url').toString())
+  const testUserId = decoded.username
+  if (!testUserId)
+    error('access_token is missing username claim.')
+  const subscription = makeTestSubscription(testUserId)
+  const claims = {
+    sub: decoded.sub,
+    username: decoded.username,
+  }
+
+  logProgress('Test TABLE_NAME constant.');
+  gotExpected(TABLE_NAME, 'collections-push-subscriptions')
+
+  logProgress('Test region constant.');
+  gotExpected(region, configRegion)
+
+  logProgress('Test checkRegion with matching region.');
+  checkRegion()
+
+  logProgress('Test checkRegion with wrong region.');
+  testCheckRegion('us-east-1',
+    `Wrong AWS region: expected ${configRegion}, got us-east-1.`)
+
+  logProgress('Test checkRegion with unset region.');
+  testCheckRegion(undefined,
+    `Wrong AWS region: expected ${configRegion}, got unset.`)
+
+  logProgress('Test parseSubscriptionBody with valid JSON.');
+  const parsed = parseSubscriptionBody(JSON.stringify(subscription))
+  gotExpected(parsed.userId, subscription.userId)
+
+  logProgress('Test parseSubscriptionBody with missing body.');
+  testParseSubscriptionBody(undefined, 'Missing request body.')
+
+  logProgress('Test parseSubscriptionBody with invalid JSON.');
+  testParseSubscriptionBody('{bad', 'Invalid JSON body.')
+
+  logProgress('Test validateSubscription with valid subscription.');
+  testValidateSubscription(subscription, null)
+
+  logProgress('Test validateSubscription with missing userId.');
+  testValidateSubscription({ ...subscription, userId: '' },
+    'Subscription is missing userId.')
+
+  logProgress('Test validateSubscription with missing endpoint.');
+  testValidateSubscription({ ...subscription, endpoint: '' },
+    'Subscription is missing endpoint.')
+
+  logProgress('Test validateSubscription with missing keys.p256dh.');
+  testValidateSubscription({
+    ...subscription,
+    keys: { auth: subscription.keys.auth },
+  }, 'Subscription is missing keys.p256dh.')
+
+  logProgress('Test validateSubscription with missing keys.auth.');
+  testValidateSubscription({
+    ...subscription,
+    keys: { p256dh: subscription.keys.p256dh },
+  }, 'Subscription is missing keys.auth.')
+
+  logProgress('Test tokenUserId from claims.');
+  testTokenUserId(claims, testUserId)
+  testTokenUserId({ sub: 'only-sub' }, 'only-sub')
+  testTokenUserId(null, null)
+
+  logProgress('Test userIdsMatch.');
+  testUserIdsMatch(subscription.userId, claims, true)
+  testUserIdsMatch('other-user', claims, false)
+  testUserIdsMatch(subscription.userId, null, false)
+
+  logProgress('Test subscriptionItem.');
+  testSubscriptionItem(subscription, {
+    userId: subscription.userId,
+    endpoint: subscription.endpoint,
+    keys: subscription.keys,
+  })
+
+  logProgress('Test saveSubscription with mismatched userId.');
+  await testSaveSubscription(
+    { ...subscription, userId: 'other-user' },
+    claims,
+    new MockDocClient(),
+    403,
+    'userId does not match token.',
+  )
+
+  logProgress('Test saveSubscription with mock DynamoDB client.');
+  const mockClient = new MockDocClient()
+  const body = await testSaveSubscription(
+    subscription,
+    claims,
+    mockClient,
+    200,
+    'Subscription saved.',
+  )
+  gotExpected(body.ok, true)
+  gotExpected(mockClient.item.userId, subscription.userId)
+  gotExpected(mockClient.item.endpoint, subscription.endpoint)
+
+  logProgress('Test saveSubscription with DynamoDB error.');
+  await testSaveSubscription(
+    subscription,
+    claims,
+    new MockDocClient(new Error('test failure')),
+    500,
+    'Failed to save subscription.',
+  )
+
+  logProgress('Test handler with wrong region.');
+  const savedRegion = process.env.AWS_REGION
+  process.env.AWS_REGION = 'us-east-1'
+  await testHandler(makeEvent(subscription, claims), 500,
+    `Wrong AWS region: expected ${configRegion}, got us-east-1.`)
+  process.env.AWS_REGION = savedRegion
+
+  logProgress('Test handler with invalid JSON body.');
+  await testHandler(makeEvent('{bad', claims), 400, 'Invalid JSON body.')
+
+  logProgress('Test handler with mismatched userId.');
+  await testHandler(
+    makeEvent({ ...subscription, userId: 'other-user' }, claims),
+    403,
+    'userId does not match token.',
+  )
+
+  if (errorCount)
+    console.log(`${errorCount} errors`)
+  else
+    console.log("\x1b[32mSuccess\x1b[0m")
+})();
