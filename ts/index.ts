@@ -302,6 +302,7 @@ function refreshPage() {
 
 function about() {
   log("about")
+  updateAboutNotifications()
   get("about-box").style.display = 'block'
 }
 

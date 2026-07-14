@@ -132,3 +132,21 @@ async function clearAppBadge() {
   await (navigator as any).clearAppBadge()
   log("Notifications: App badge cleared.")
 }
+
+function updateAboutNotifications() {
+  // Show notification status in the about box.
+  const status = get("about-notifications")
+  const on = "Notification" in window && Notification.permission === "granted"
+  status.textContent = on ? "🔔 Notifications on" : "Notifications off"
+
+  const iphoneNote = get("about-iphone-notifications")
+  if (navigator.platform == "iPhone") {
+    iphoneNote.textContent =
+      "Use the system settings to turn on or off notifications: " +
+      "settings -> Notifications -> Collections"
+    iphoneNote.style.display = "block"
+  } else {
+    iphoneNote.textContent = ""
+    iphoneNote.style.display = "none"
+  }
+}
