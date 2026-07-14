@@ -52,6 +52,12 @@
 //   POST /subscriptions with Cognito authorizer (Lambda wired by --deploy)
 //   OPTIONS /subscriptions for CORS preflight from localhost and production
 //
+// Publish (--publish <user> <title>):
+//
+//   user           Cognito user id, or "all" for every subscriber
+//   title          Collection title shown in the push notification
+//   VAPID subject  contact email in ~/.aws/credentials [VAPID] section
+//
 // Deploy Lambda (--deploy <name>):
 //
 //   save-subscription -- deploy the zip and wire POST /subscriptions
@@ -82,6 +88,7 @@ const {
 } = require('@aws-sdk/client-dynamodb')
 const {
   DynamoDBDocumentClient,
+  DeleteCommand,
   ScanCommand,
 } = require('@aws-sdk/lib-dynamodb')
 const {
@@ -119,6 +126,10 @@ const API_RESOURCE = 'subscriptions'
 const API_AUTH_SCOPE = 'aws.cognito.signin.user.admin'
 const LAMBDA_EXECUTION_ROLE = 'collections-lambda'
 
+// Push services return 410 Gone when a subscription has expired or the
+// user unsubscribed. Some services return 404 for an invalid endpoint.
+const EXPIRED_SUBSCRIPTION_STATUS_CODES = new Set([410, 404])
+
 // Lambda functions that can be deployed with --deploy.
 const LAMBDA_DEPLOYS = {
   'save-subscription': {
@@ -138,6 +149,8 @@ program
     'Generate VAPID public and private keys used to send push notifications.')
   .option('-p, --push <file>',
     'Send a push notification.')
+  .option('--publish <user> <title>',
+    'Send a collection publish notification to one user or all.')
   .option('-s, --save <file>',
     'Save a push subscription via API Gateway, Lambda, and DynamoDB.')
   .option('--configure',
@@ -194,6 +207,14 @@ function loadVapidCredentials() {
   if (!credentials.public || !credentials.private)
     exit1(`${AWS_CREDENTIALS} is missing a [VAPID] section with public and private keys.`)
   return credentials
+}
+
+function loadVapidSubject() {
+  // Return the VAPID contact email from the [VAPID] section.
+  const credentials = loadVapidCredentials()
+  errorExit(!credentials.subject,
+    `${AWS_CREDENTIALS} [VAPID] section is missing subject (contact email).`)
+  return credentials.subject
 }
 
 function loadAwsRegion() {
@@ -362,6 +383,28 @@ function formatPushError(error) {
   if (error.body)
     message += `\n${error.body}`
   return message
+}
+
+function isExpiredSubscriptionError(error) {
+  // Return true when the push endpoint is permanently invalid.
+  return EXPIRED_SUBSCRIPTION_STATUS_CODES.has(error.statusCode)
+}
+
+async function deleteSubscription(userId, endpoint) {
+  // Remove a push subscription from DynamoDB.
+  const client = docClient(loadAwsRegion())
+  await client.send(new DeleteCommand({
+    TableName: TABLE_NAME,
+    Key: { userId, endpoint },
+  }))
+}
+
+async function removeExpiredSubscription(userId, endpoint) {
+  // Delete a stale subscription after a 410 or 404 push error.
+  await deleteSubscription(userId, endpoint)
+  console.log(
+    `Removed expired subscription for ${userId} ${shortEndpoint(endpoint)}`
+  )
 }
 
 async function waitForTableActive(client, tableName) {
@@ -817,13 +860,9 @@ async function saveSubscription(file) {
     console.log(text)
 }
 
-async function sendPush(file) {
-  // Send the push notification to the user.
-  const { subscription, subject, title, body } = loadPushFile(file)
+async function sendPushNotification(subscription, subject, title, body) {
+  // Send one push notification using web-push and VAPID keys.
   const vapid = loadVapidCredentials()
-
-  errorExit(!subject, 'Push file is missing subject.')
-  errorExit(!title && !body, 'Push file is missing title and/or body.')
 
   const payload = JSON.stringify({
     title: title || '',
@@ -836,12 +875,82 @@ async function sendPush(file) {
     vapid.private,
   )
 
+  await webPush.sendNotification(subscription, payload)
+}
+
+async function sendPush(file) {
+  // Send the push notification to the user.
+  const { subscription, subject, title, body } = loadPushFile(file)
+
+  errorExit(!subject, 'Push file is missing subject.')
+  errorExit(!title && !body, 'Push file is missing title and/or body.')
+
   try {
-    await webPush.sendNotification(subscription, payload)
+    await sendPushNotification(subscription, subject, title, body)
     console.log('Push notification sent.')
   } catch (error) {
+    if (subscription.userId && subscription.endpoint &&
+        isExpiredSubscriptionError(error)) {
+      await removeExpiredSubscription(subscription.userId, subscription.endpoint)
+    }
     exit1(`Failed to send push notification: ${formatPushError(error)}`)
   }
+}
+
+function subscriptionsForUser(items, user) {
+  // Return subscriptions for one user, or all when user is "all".
+  if (user === 'all')
+    return items
+  return items.filter(item => item.userId === user)
+}
+
+async function publishNotifications(user, title) {
+  // Send a collection publish notification to one user or all subscribers.
+  errorExit(!user, '--publish requires a user id or all.')
+  errorExit(!title, '--publish requires a collection title.')
+
+  const subject = loadVapidSubject()
+  const items = await scanSubscriptions()
+  const targets = subscriptionsForUser(items, user)
+
+  if (user === 'all') {
+    errorExit(targets.length === 0, 'No push subscriptions found.')
+  } else {
+    errorExit(targets.length === 0, `No push subscriptions for user ${user}.`)
+  }
+
+  console.log(`Sending "${title}" to ${targets.length} subscription(s).`)
+
+  let sent = 0
+  let failed = 0
+  let removed = 0
+  for (const item of targets) {
+    const subscription = {
+      endpoint: item.endpoint,
+      keys: item.keys,
+    }
+    try {
+      await sendPushNotification(subscription, subject, title, '')
+      sent += 1
+      console.log(`Sent to ${item.userId} ${shortEndpoint(item.endpoint)}`)
+    } catch (error) {
+      failed += 1
+      if (isExpiredSubscriptionError(error)) {
+        await removeExpiredSubscription(item.userId, item.endpoint)
+        removed += 1
+      }
+      console.error(
+        `Failed for ${item.userId} ${shortEndpoint(item.endpoint)}: ` +
+        `${formatPushError(error)}`
+      )
+    }
+  }
+
+  console.log(`Push notifications sent: ${sent}` +
+    (failed ? `, failed: ${failed}` : '') +
+    (removed ? `, removed: ${removed}` : '') + '.')
+  if (sent === 0)
+    exit1('All push notifications failed.')
 }
 
 function showVapidKeys() {
@@ -852,6 +961,7 @@ function showVapidKeys() {
 [VAPID]
 public: ${vapidKeys.publicKey}
 private: ${vapidKeys.privateKey}
+subject: your-email@example.com
 `)
 }
 
@@ -1063,6 +1173,11 @@ async function main() {
     showVapidKeys()
   } else if (options.push) {
     await sendPush(options.push)
+  } else if (options.publish) {
+    const args = options.publish
+    const user = Array.isArray(args) ? args[0] : args
+    const title = Array.isArray(args) ? args[1] : undefined
+    await publishNotifications(user, title)
   } else if (options.save) {
     await saveSubscription(options.save)
   } else if (options.configure) {

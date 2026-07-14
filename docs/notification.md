@@ -104,10 +104,13 @@ scripts/notification -v
 [VAPID]
 public: BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
 private: hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+subject: your-email@example.com
 ~~~
 
 Save the keys to '~/.aws/credentials' in a [VAPID] section so you
-can recreate them when the container is rebuilt. The public key is
+can recreate them when the container is rebuilt. The subject is a
+contact email required by web-push when sending notifications with
+--publish. The public key is
 also stored publicly in the notify.ts file as the VAPID_PUBLIC_KEY
 variable:
 
@@ -155,9 +158,9 @@ for a Bearer JWT from the Collections user pool.
 All logged users are allowed because the standard Cognito access token
 scope issued to logged-in users is passed to the API.
 
-The browser does not call this API yet. For testing, save a subscription
-with `scripts/notification -s <file>`. The script sends the access token
-from `tmp/tokens.json`; the file's userId must match the token user.
+When a user turns notifications on, the browser saves the subscription
+through this API. See [Save Subscription](#save-subscription) for
+the request format and manual testing with the notification script.
 
 **Request body**
 
@@ -236,11 +239,46 @@ Each item stores:
 
 **Access**
 
-The save-subscription Lambda writes items when a user subscribes. A
-future publish workflow will scan the table to send push notifications
-to all subscribers.
+The save-subscription Lambda writes items when a user subscribes.
 
-For now, list stored subscriptions with the notification script:
+## Save Subscription
+
+When notifications are turned on, `ts/notify.ts` posts the subscription
+to API Gateway using the logged-in user's access token. To save a
+subscription manually from the command line (for testing):
+
+~~~
+scripts/notification -s chrome-subscription.json
+~~~
+
+The subscription JSON file contains the same fields as the POST body
+above: `userId`, `endpoint`, and `keys` (`p256dh` and `auth`). Copy
+them from the browser console log when the user subscribes.
+
+The script sends the access token from `tmp/tokens.json` as a Bearer
+header. Create tokens with `scripts/login-flow -g <code>` or
+`scripts/login-flow -r`. The file's `userId` must match the token user.
+
+## Publish Notifications
+
+Send a collection notification to one user or all subscribers:
+
+~~~
+scripts/notification --publish all "New Tokyo collection"
+scripts/notification --publish <user-id> "New Tokyo collection"
+~~~
+
+The command scans DynamoDB and sends a push notification to each
+matching subscription. Use "all" to notify every subscriber, or pass
+a Cognito user id to test with one user. Add a subject line to the
+[VAPID] section of ~/.aws/credentials (contact email for web-push).
+
+When a push endpoint returns 410 Gone (or 404 Not Found), the
+subscription is removed from DynamoDB automatically.
+
+## List Subscriptions
+
+List stored subscriptions with:
 
 ~~~
 scripts/notification --get-subscriptions
@@ -343,6 +381,15 @@ Notifications: subscription: {
 Notifications: App badge cleared.
 ~~~
 
+We save the browser's notification subscription when notifications are
+turned on.  We save the fact that notifications are on locally so we
+don't save to AWS on every visibility event.  For testing you can
+remove the saved state.  Run the following in the js console:
+
+~~~
+localStorage.removeItem('notificationsOn')
+~~~
+
 <style>body { max-width: 40em}</style>
 
 # Contents
@@ -352,5 +399,8 @@ Notifications: App badge cleared.
 * [Badge Behavior](#badge-behavior) -– how badges are set and cleared.
 * [Create VAPID Keys](#create-vapid-keys) -- how to create the VAPID keys used when pushing a notification.
 * [AWS Services](#aws-services) -- how the aws services, API Gateway, Lambda and DynamoDB support notifications.
+* [Save Subscription](#save-subscription) -- save a push subscription manually for testing.
+* [Publish Notifications](#publish-notifications) -- notify users when a collection is published.
+* [List Subscriptions](#list-subscriptions) -- list push subscriptions stored in DynamoDB.
 * [Testing](#testing) -- how to test the notification feature.
 

@@ -197,17 +197,11 @@ aws_secret_access_key = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 [VAPID]
 public: BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
 private: hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+subject: your-email@example.com
 ~~~
 
-Save a subscription through API Gateway (uses the access token in
-tmp/tokens.json; subscription userId must match the token user):
-
-~~~
-scripts/notification -s chrome-subscription.json
-scripts/notification --get-subscriptions
-~~~
-
-See the [Notification](notification.md) document for testing details.
+See [notification.md](notification.md) for saving subscriptions, publishing
+notifications, and testing.
 
 [⬇](#Contents)
 
