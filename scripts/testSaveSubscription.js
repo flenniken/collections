@@ -27,7 +27,7 @@
     userIdsMatch,
     subscriptionItem,
     saveSubscription,
-    apiResponse,
+    corsHeaders,
     handler,
   } = require('./saveSubscription');
 
@@ -106,9 +106,10 @@ expected: ${expected}
     return JSON.stringify(obj, null, 2)
   }
 
-  function makeEvent(body, claims) {
+  function makeEvent(body, claims, headers) {
     return {
       body: typeof body === 'string' ? body : JSON.stringify(body),
+      headers: headers || {},
       requestContext: {
         authorizer: {
           claims: claims || {},
@@ -323,6 +324,20 @@ expected: ${expected}
     makeEvent({ ...subscription, userId: 'other-user' }, claims),
     403,
     'userId does not match token.',
+  )
+
+  logProgress('Test corsHeaders reflects request origin.');
+  const cors = corsHeaders({ headers: { origin: 'http://localhost:8000' } })
+  gotExpected(cors['Access-Control-Allow-Origin'], 'http://localhost:8000')
+
+  logProgress('Test handler includes CORS headers.');
+  const corsResponse = await handler(
+    makeEvent(subscription, claims, { origin: 'http://localhost:8000' }),
+    {},
+  )
+  gotExpected(
+    corsResponse.headers['Access-Control-Allow-Origin'],
+    'http://localhost:8000',
   )
 
   if (errorCount)

@@ -15,6 +15,7 @@ interface Settings {
   distribution_id: string
   bucket_name: string
   userPoolId: string
+  subscriptions_api_url: string
 }
 
 // The settings are defined in the index.html file from data in the
@@ -222,6 +223,7 @@ function clearUserInfo() {
   // Remove the user information from local storage.
   log("clear user info")
   localStorage.removeItem("userInfo")
+  localStorage.removeItem("notificationsOn")
 }
 
 function hasLoggedIn(): boolean {

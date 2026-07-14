@@ -165,7 +165,15 @@ self.addEventListener("fetch", (event: Event) => {
 
   // Get the url to fetch.
   const url = fetchEvent.request.url
+  const request = fetchEvent.request
   // logsw(`fetch url: ${url}`)
+
+  // Let the browser handle API calls and other non-GET requests.
+  if (request.method !== 'GET')
+    return
+
+  if (url.includes('execute-api.') && url.includes('amazonaws.com'))
+    return
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...
   if (!(url.startsWith("http:") || url.startsWith("https:"))) {

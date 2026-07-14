@@ -5,6 +5,8 @@
 const VAPID_PUBLIC_KEY =
   'BPXArEWQz2DQMcdcvK6xMC0q4tsv6igQCQv1FIodqJPQcNzzqY4BzeaF4qX5nHidzmgUXbWGI7eHdELGMjcrda8'
 
+const NOTIFICATIONS_ON_KEY = 'notificationsOn'
+
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible") {
     log("Notifications: page visible")
@@ -41,6 +43,7 @@ async function ensureNotifications() {
     if (permission === "denied") {
       log("Notifications: disabled in system settings")
       await clearPushSubscription(registration)
+      setNotificationsOnLocally(false)
       return
     }
 
@@ -49,6 +52,7 @@ async function ensureNotifications() {
         log("Notifications: on iPhone, enable notifications in " +
           "Settings → Notifications → Collections")
         await clearPushSubscription(registration)
+        setNotificationsOnLocally(false)
         return
       }
 
@@ -57,15 +61,7 @@ async function ensureNotifications() {
       log(`Notifications: permission result is "${result}"`)
       if (result !== "granted") {
         log("Notifications: permission not granted")
-        return
-      }
-    }
-
-    if (permission === "granted") {
-      const subscription = await registration.pushManager.getSubscription()
-      if (subscription) {
-        log("Notifications: already subscribed")
-        logPushSubscription(subscription, userInfo.userId)
+        setNotificationsOnLocally(false)
         return
       }
     }
@@ -78,13 +74,75 @@ async function ensureNotifications() {
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY).buffer as ArrayBuffer
       })
     } else {
-      log("Notifications: using existing push subscription")
+      log("Notifications: already subscribed")
     }
 
-    logPushSubscription(subscription, userInfo.userId)
+    await syncNotificationState(subscription, userInfo)
+    updateAboutNotifications()
 
   } catch (error) {
     console.error("Notifications: unexpected error", error)
+  }
+}
+
+function notificationsOnLocally(): boolean {
+  return localStorage.getItem(NOTIFICATIONS_ON_KEY) === 'true'
+}
+
+function setNotificationsOnLocally(on: boolean) {
+  localStorage.setItem(NOTIFICATIONS_ON_KEY, on ? 'true' : 'false')
+}
+
+async function syncNotificationState(subscription: PushSubscription, userInfo: UserInfo) {
+  if (Notification.permission !== "granted") {
+    setNotificationsOnLocally(false)
+    return
+  }
+
+  logPushSubscription(subscription, userInfo.userId)
+
+  if (!notificationsOnLocally()) {
+    log("Notifications: state switched to on, saving subscription")
+    const saved = await saveSubscriptionToBackend(subscription, userInfo)
+    if (saved)
+      setNotificationsOnLocally(true)
+  }
+}
+
+async function saveSubscriptionToBackend(
+  subscription: PushSubscription,
+  userInfo: UserInfo,
+): Promise<boolean> {
+  const url = settings.subscriptions_api_url
+  if (!url) {
+    log("Notifications: subscriptions_api_url not configured, skipping save")
+    return false
+  }
+
+  const body = pushSubscriptionRecord(subscription, userInfo.userId)
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${userInfo.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    })
+
+    const text = await response.text()
+    if (!response.ok) {
+      log(`Notifications: save failed: ${response.status} ${response.statusText}` +
+        (text ? ` ${text}` : ''))
+      return false
+    }
+
+    log("Notifications: subscription saved")
+    return true
+  } catch (error) {
+    console.error("Notifications: save error", error)
+    return false
   }
 }
 

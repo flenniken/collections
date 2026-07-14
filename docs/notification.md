@@ -183,7 +183,9 @@ These are the same fields logged by 'ts/notify.ts' when the user
 subscribes to notifications.
 
 The --configure option creates POST /subscriptions with Cognito
-authorization. Run --deploy save-subscription to wire the Lambda
+authorization, OPTIONS /subscriptions for CORS preflight, and gateway
+error responses with CORS headers (so auth failures are visible to
+browsers). Run --deploy save-subscription to wire the Lambda
 integration.
 
 **Lambda**

@@ -31,11 +31,28 @@ function getDocClient() {
   return docClient;
 }
 
-function apiResponse(statusCode, body) {
+function corsHeaders(event) {
+  // Return CORS headers for browser requests from localhost or production.
+  const headers = {
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Methods': 'POST,OPTIONS',
+  };
+  const origin = event?.headers?.origin || event?.headers?.Origin;
+  if (origin)
+    headers['Access-Control-Allow-Origin'] = origin;
+  else
+    headers['Access-Control-Allow-Origin'] = '*';
+  return headers;
+}
+
+function apiResponse(statusCode, body, event) {
   // Return an API Gateway proxy integration response.
   return {
     statusCode,
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...corsHeaders(event),
+    },
     body: JSON.stringify(body),
   };
 }
@@ -104,25 +121,25 @@ async function putSubscription(item, client) {
   }));
 }
 
-async function saveSubscription(subscription, claims, client) {
+async function saveSubscription(subscription, claims, client, event) {
   // Validate the subscription, check authorization, and save it.
   const error = validateSubscription(subscription);
   if (error)
-    return apiResponse(400, { ok: false, message: error });
+    return apiResponse(400, { ok: false, message: error }, event);
 
   if (!userIdsMatch(subscription.userId, claims))
-    return apiResponse(403, { ok: false, message: 'userId does not match token.' });
+    return apiResponse(403, { ok: false, message: 'userId does not match token.' }, event);
 
   const item = subscriptionItem(subscription);
   try {
     await putSubscription(item, client);
   } catch (err) {
     console.error(`DynamoDB PutItem: ${err.message}`);
-    return apiResponse(500, { ok: false, message: 'Failed to save subscription.' });
+    return apiResponse(500, { ok: false, message: 'Failed to save subscription.' }, event);
   }
 
   console.log(`Saved subscription for user ${subscription.userId}.`);
-  return apiResponse(200, { ok: true, message: 'Subscription saved.' });
+  return apiResponse(200, { ok: true, message: 'Subscription saved.' }, event);
 }
 
 async function handler(event, context) {
@@ -131,18 +148,18 @@ async function handler(event, context) {
     checkRegion();
   } catch (err) {
     console.error(err.message);
-    return apiResponse(500, { ok: false, message: err.message });
+    return apiResponse(500, { ok: false, message: err.message }, event);
   }
 
   let subscription;
   try {
     subscription = parseSubscriptionBody(event.body);
   } catch (err) {
-    return apiResponse(400, { ok: false, message: err.message });
+    return apiResponse(400, { ok: false, message: err.message }, event);
   }
 
   const claims = event.requestContext?.authorizer?.claims;
-  return saveSubscription(subscription, claims);
+  return saveSubscription(subscription, claims, undefined, event);
 }
 
 module.exports = {
@@ -157,6 +174,7 @@ module.exports = {
   putSubscription,
   saveSubscription,
   apiResponse,
+  corsHeaders,
   handler,
   getDocClient,
 };

@@ -50,6 +50,7 @@
 //
 //   REST API name = API_NAME
 //   POST /subscriptions with Cognito authorizer (Lambda wired by --deploy)
+//   OPTIONS /subscriptions for CORS preflight from localhost and production
 //
 // Deploy Lambda (--deploy <name>):
 //
@@ -93,8 +94,14 @@ const {
   GetMethodCommand,
   GetResourcesCommand,
   GetRestApisCommand,
+  PutGatewayResponseCommand,
   PutIntegrationCommand,
+  PutIntegrationResponseCommand,
   PutMethodCommand,
+  PutMethodResponseCommand,
+  UpdateGatewayResponseCommand,
+  UpdateIntegrationResponseCommand,
+  UpdateMethodResponseCommand,
 } = require('@aws-sdk/client-api-gateway')
 const {
   STSClient,
@@ -208,6 +215,17 @@ function loadAwsSettings() {
   errorExit(!data.settings?.client_id,
     `${AWS_SETTINGS} is missing settings.client_id.`)
   return data.settings
+}
+
+function updateAwsSettingsSubscriptionsUrl(url) {
+  // Add the push subscriptions API URL to env/aws-settings.json.
+  const data = JSON.parse(readFile(AWS_SETTINGS,
+    `Unable to read ${AWS_SETTINGS}. Run: scripts/cognito -w`))
+  errorExit(!data.settings,
+    `${AWS_SETTINGS} is missing settings.`)
+  data.settings.subscriptions_api_url = url
+  fs.writeFileSync(AWS_SETTINGS, JSON.stringify(data, null, 2) + '\n')
+  console.log(`Updated ${AWS_SETTINGS} with subscriptions_api_url.`)
 }
 
 function loadAccessToken() {
@@ -500,6 +518,155 @@ async function ensurePostSubscriptionsMethod(client, restApiId, resourceId, auth
   }))
 }
 
+function responseParameterPatches(responseParameters) {
+  // Return API Gateway patch operations for response parameter updates.
+  return Object.entries(responseParameters).map(([name, value]) => ({
+    op: 'replace',
+    path: `/responseParameters/${name}`,
+    value: String(value),
+  }))
+}
+
+function isAlreadyExistsError(error) {
+  // Return true when API Gateway reports an existing method response.
+  const message = error.message || ''
+  return error.name === 'ConflictException' || message.includes('already exists')
+}
+
+async function putOrUpdateMethodResponse(client, params) {
+  // Create or update a method response.
+  try {
+    await client.send(new PutMethodResponseCommand(params))
+  } catch (error) {
+    if (!isAlreadyExistsError(error))
+      throw error
+    const { restApiId, resourceId, httpMethod, statusCode, responseParameters } = params
+    await client.send(new UpdateMethodResponseCommand({
+      restApiId,
+      resourceId,
+      httpMethod,
+      statusCode,
+      patchOperations: responseParameterPatches(responseParameters),
+    }))
+  }
+}
+
+async function putOrUpdateIntegrationResponse(client, params) {
+  // Create or update an integration response.
+  try {
+    await client.send(new PutIntegrationResponseCommand(params))
+  } catch (error) {
+    if (!isAlreadyExistsError(error))
+      throw error
+    const { restApiId, resourceId, httpMethod, statusCode, responseParameters } = params
+    await client.send(new UpdateIntegrationResponseCommand({
+      restApiId,
+      resourceId,
+      httpMethod,
+      statusCode,
+      patchOperations: responseParameterPatches(responseParameters),
+    }))
+  }
+}
+
+async function ensureCorsOptionsMethod(client, restApiId, resourceId) {
+  // Add OPTIONS /subscriptions so browsers can preflight cross-origin POSTs.
+  const httpMethod = 'OPTIONS'
+  if (await methodExists(client, restApiId, resourceId, httpMethod)) {
+    console.log('OPTIONS /subscriptions already exists.')
+  } else {
+    console.log('Creating OPTIONS /subscriptions for CORS.')
+    await client.send(new PutMethodCommand({
+      restApiId,
+      resourceId,
+      httpMethod,
+      authorizationType: 'NONE',
+    }))
+  }
+
+  await client.send(new PutIntegrationCommand({
+    restApiId,
+    resourceId,
+    httpMethod,
+    type: 'MOCK',
+    requestTemplates: {
+      'application/json': '{"statusCode": 200}',
+    },
+  }))
+
+  const methodResponse = {
+    restApiId,
+    resourceId,
+    httpMethod,
+    statusCode: '200',
+    responseParameters: {
+      'method.response.header.Access-Control-Allow-Headers': true,
+      'method.response.header.Access-Control-Allow-Methods': true,
+      'method.response.header.Access-Control-Allow-Origin': true,
+    },
+  }
+  await putOrUpdateMethodResponse(client, methodResponse)
+
+  const integrationResponse = {
+    restApiId,
+    resourceId,
+    httpMethod,
+    statusCode: '200',
+    responseParameters: {
+      'method.response.header.Access-Control-Allow-Headers':
+        "'Content-Type,Authorization'",
+      'method.response.header.Access-Control-Allow-Methods':
+        "'POST,OPTIONS'",
+      'method.response.header.Access-Control-Allow-Origin': "'*'",
+    },
+  }
+  await putOrUpdateIntegrationResponse(client, integrationResponse)
+}
+
+const GATEWAY_CORS_RESPONSE_TYPES = [
+  'DEFAULT_4XX',
+  'DEFAULT_5XX',
+  'UNAUTHORIZED',
+  'ACCESS_DENIED',
+  'MISSING_AUTHENTICATION_TOKEN',
+  'EXPIRED_TOKEN',
+  'INVALID_SIGNATURE',
+]
+
+const GATEWAY_CORS_PARAMETERS = {
+  'gatewayresponse.header.Access-Control-Allow-Origin': "'*'",
+  'gatewayresponse.header.Access-Control-Allow-Headers': "'Content-Type,Authorization'",
+  'gatewayresponse.header.Access-Control-Allow-Methods': "'POST,OPTIONS'",
+}
+
+async function putOrUpdateGatewayResponse(client, params) {
+  // Create or update a gateway response with CORS headers.
+  try {
+    await client.send(new PutGatewayResponseCommand(params))
+  } catch (error) {
+    if (!isAlreadyExistsError(error))
+      throw error
+    const { restApiId, responseType, responseParameters } = params
+    await client.send(new UpdateGatewayResponseCommand({
+      restApiId,
+      responseType,
+      patchOperations: responseParameterPatches(responseParameters),
+    }))
+  }
+}
+
+async function ensureGatewayCorsResponses(client, restApiId) {
+  // Add CORS headers to API Gateway error responses (e.g. 401 from Cognito).
+  for (const responseType of GATEWAY_CORS_RESPONSE_TYPES) {
+    await putOrUpdateGatewayResponse(client, {
+      restApiId,
+      responseType,
+      responseParameters: GATEWAY_CORS_PARAMETERS,
+    })
+  }
+  console.log('Gateway error responses configured for CORS.')
+}
+
 function invokeUrl(region, restApiId) {
   // Return the stage invoke URL for POST /subscriptions.
   return `https://${restApiId}.execute-api.${region}.amazonaws.com/${API_STAGE}/${API_RESOURCE}`
@@ -517,6 +684,8 @@ async function configureApiGateway(region) {
   const authorizer = await findOrCreateAuthorizer(client, api.id, userPoolArn)
   const resource = await findOrCreateSubscriptionsResource(client, api.id)
   await ensurePostSubscriptionsMethod(client, api.id, resource.id, authorizer.id)
+  await ensureCorsOptionsMethod(client, api.id, resource.id)
+  await ensureGatewayCorsResponses(client, api.id)
 
   console.log(`Deploying API to stage ${API_STAGE}.`)
   await client.send(new CreateDeploymentCommand({
@@ -535,7 +704,8 @@ async function configure() {
   // Create the DynamoDB table and API Gateway for push subscriptions.
   const region = loadAwsRegion()
   await configureDynamoTable(region)
-  await configureApiGateway(region)
+  const url = await configureApiGateway(region)
+  updateAwsSettingsSubscriptionsUrl(url)
 }
 
 async function findSubscriptionsApiUrl(region) {
@@ -845,6 +1015,9 @@ async function wireLambdaIntegration(region, config, functionArn) {
   const resource = await findApiResource(client, api.id, integration.resourcePath)
   errorExit(!resource,
     `API Gateway resource ${integration.resourcePath} not found.`)
+
+  await ensureCorsOptionsMethod(client, api.id, resource.id)
+  await ensureGatewayCorsResponses(client, api.id)
 
   const uri =
     `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/${functionArn}/invocations`
