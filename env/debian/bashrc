@@ -64,9 +64,9 @@ if [[ ! -s "/home/coder/collections/env/aws-settings.json" ]]; then
   echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
 fi
 
-if ! grep -qi '^\[VAPID\]' /home/coder/.aws/credentials 2>/dev/null; then
+if [[ ! -s "/home/coder/.aws/vapid" ]] || ! grep -qi '^\[VAPID\]' /home/coder/.aws/vapid 2>/dev/null; then
   echo
-  echo -e "$blueWarning 3: The notification VAPID keys are missing. Add a [VAPID] section to ~/.aws/credentials."
+  echo -e "$blueWarning 3: The notification VAPID keys are missing. Save them to ~/.aws/vapid."
   echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
 fi
 

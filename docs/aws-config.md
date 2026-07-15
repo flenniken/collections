@@ -184,20 +184,18 @@ cd ~/collections
 scripts/notification -v
 ~~~
 
-Add the output to `~/.aws/credentials` as a `[VAPID]` section. Also
-copy the public key into `ts/notify.ts` as `VAPID_PUBLIC_KEY`.
+Add the output to `~/.aws/vapid` as a `[VAPID]` section. Do not store
+VAPID keys in `~/.aws/credentials`; boto3 cannot parse a `[VAPID]`
+section there and deploy will fail. Also copy the public key into
+`ts/notify.ts` as `VAPID_PUBLIC_KEY`.
 
 ~~~
-cat ~/.aws/credentials
-
-[default]
-aws_access_key_id = xxxxxxxxxxx
-aws_secret_access_key = xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+cat ~/.aws/vapid
 
 [VAPID]
-public: BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
-private: hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
-subject: your-email@example.com
+public = BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
+private = hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+subject = your-email@example.com
 ~~~
 
 See [notification.md](notification.md) for saving subscriptions, publishing

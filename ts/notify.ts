@@ -1,7 +1,7 @@
 // Handle push notifications. This file is concatenated with index.ts.
 
 // This key must match the public value in the container's
-// ~/.aws/credentials file [VAPID] section.
+// ~/.aws/vapid file [VAPID] section.
 const VAPID_PUBLIC_KEY =
   'BPXArEWQz2DQMcdcvK6xMC0q4tsv6igQCQv1FIodqJPQcNzzqY4BzeaF4qX5nHidzmgUXbWGI7eHdELGMjcrda8'
 

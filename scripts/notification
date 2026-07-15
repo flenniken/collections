@@ -36,11 +36,13 @@
 //   token, invokes the save-subscription Lambda, which writes to DynamoDB.
 //   Create tokens with: scripts/login-flow -g <code> or -r
 //
-// VAPID keys (~/.aws/credentials, [VAPID] section):
+// VAPID keys (~/.aws/vapid, [VAPID] section):
 //
 //   public: VAPID public key (must match the key used when creating the subscription)
 //   private: VAPID private key
+//   subject: contact email (required for --publish)
 //
+// Do not store VAPID keys in ~/.aws/credentials; boto3 cannot parse them there.
 // DynamoDB:
 //
 //   table name = TABLE_NAME constant below
@@ -56,7 +58,7 @@
 //
 //   user           Cognito user id, or "all" for every subscriber
 //   title          Collection title shown in the push notification
-//   VAPID subject  contact email in ~/.aws/credentials [VAPID] section
+//   VAPID subject  contact email in ~/.aws/vapid [VAPID] section
 //
 // Deploy Lambda (--deploy <name>):
 //
@@ -116,6 +118,7 @@ const {
 } = require('@aws-sdk/client-sts')
 
 const AWS_CREDENTIALS = path.join(os.homedir(), '.aws', 'credentials')
+const AWS_VAPID = path.join(os.homedir(), '.aws', 'vapid')
 const AWS_CONFIG = path.join(os.homedir(), '.aws', 'config')
 const AWS_SETTINGS = path.join(process.cwd(), 'env', 'aws-settings.json')
 const TOKENS_FILE = path.join(process.cwd(), 'tmp', 'tokens.json')
@@ -199,13 +202,13 @@ function parseIniSection(text, sectionName) {
 }
 
 function loadVapidCredentials() {
-  // Read the VAPID keys from the [VAPID] section of ~/.aws/credentials.
-  // Return an object with the public and private key values.
-  const text = readFile(AWS_CREDENTIALS,
-    `Unable to read ${AWS_CREDENTIALS}. Add a [VAPID] section.`)
+  // Read the VAPID keys from ~/.aws/vapid ([VAPID] section).
+  // Keep VAPID keys out of ~/.aws/credentials so boto3 can parse that file.
+  const text = readFile(AWS_VAPID,
+    `Unable to read ${AWS_VAPID}. Run: scripts/notification -v`)
   const credentials = parseIniSection(text, 'VAPID')
   if (!credentials.public || !credentials.private)
-    exit1(`${AWS_CREDENTIALS} is missing a [VAPID] section with public and private keys.`)
+    exit1(`${AWS_VAPID} is missing a [VAPID] section with public and private keys.`)
   return credentials
 }
 
@@ -213,7 +216,7 @@ function loadVapidSubject() {
   // Return the VAPID contact email from the [VAPID] section.
   const credentials = loadVapidCredentials()
   errorExit(!credentials.subject,
-    `${AWS_CREDENTIALS} [VAPID] section is missing subject (contact email).`)
+    `${AWS_VAPID} [VAPID] section is missing subject (contact email).`)
   return credentials.subject
 }
 
@@ -956,12 +959,13 @@ async function publishNotifications(user, title) {
 function showVapidKeys() {
   // Generate and print new VAPID keys.
   const vapidKeys = webPush.generateVAPIDKeys()
-  console.log(`Add a [VAPID] section to ${AWS_CREDENTIALS} and save the public key to ts/notify.ts:
+  console.log(`Save VAPID keys to ${AWS_VAPID} and copy the public key to ts/notify.ts.
+Do not add a [VAPID] section to ${AWS_CREDENTIALS}; boto3 cannot parse it.
 
 [VAPID]
-public: ${vapidKeys.publicKey}
-private: ${vapidKeys.privateKey}
-subject: your-email@example.com
+public = ${vapidKeys.publicKey}
+private = ${vapidKeys.privateKey}
+subject = your-email@example.com
 `)
 }
 

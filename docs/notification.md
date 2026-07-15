@@ -102,15 +102,16 @@ cd ~/collections
 scripts/notification -v
 
 [VAPID]
-public: BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
-private: hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
-subject: your-email@example.com
+public = BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
+private = hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+subject = your-email@example.com
 ~~~
 
-Save the keys to '~/.aws/credentials' in a [VAPID] section so you
-can recreate them when the container is rebuilt. The subject is a
-contact email required by web-push when sending notifications with
---publish. The public key is
+Save the keys to `~/.aws/vapid` in a [VAPID] section so you
+can recreate them when the container is rebuilt. Do not store them in
+`~/.aws/credentials`; boto3 cannot parse a [VAPID] section there.
+The subject is a contact email required by web-push when sending
+notifications with --publish. The public key is
 also stored publicly in the notify.ts file as the VAPID_PUBLIC_KEY
 variable:
 
@@ -271,7 +272,7 @@ scripts/notification --publish <user-id> "New Tokyo collection"
 The command scans DynamoDB and sends a push notification to each
 matching subscription. Use "all" to notify every subscriber, or pass
 a Cognito user id to test with one user. Add a subject line to the
-[VAPID] section of ~/.aws/credentials (contact email for web-push).
+[VAPID] section of ~/.aws/vapid (contact email for web-push).
 
 When a push endpoint returns 410 Gone (or 404 Not Found), the
 subscription is removed from DynamoDB automatically.
