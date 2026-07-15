@@ -193,8 +193,8 @@ section there and deploy will fail. Also copy the public key into
 cat ~/.aws/vapid
 
 [VAPID]
-public = BIp53n-hdpOUy74WWEnkRtMwNud6JCNt-jH2EmH5RaoLoFOSQWUBrp8oBK4h0zDAPPUMUu2fsQ4WbP_4GWEi8LY
-private = hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
+public = xxxx
+private = xxxx
 subject = your-email@example.com
 ~~~
 

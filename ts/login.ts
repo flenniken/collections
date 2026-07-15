@@ -224,6 +224,7 @@ function clearUserInfo() {
   log("clear user info")
   localStorage.removeItem("userInfo")
   localStorage.removeItem("notificationsOn")
+  localStorage.removeItem("notificationsVapidPublicKey")
 }
 
 function hasLoggedIn(): boolean {

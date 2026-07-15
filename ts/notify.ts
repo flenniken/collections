@@ -2,10 +2,10 @@
 
 // This key must match the public value in the container's
 // ~/.aws/vapid file [VAPID] section.
-const VAPID_PUBLIC_KEY =
-  'BPXArEWQz2DQMcdcvK6xMC0q4tsv6igQCQv1FIodqJPQcNzzqY4BzeaF4qX5nHidzmgUXbWGI7eHdELGMjcrda8'
+const VAPID_PUBLIC_KEY = 'BDHakmrjRIE_lXPCCfX3HmyN4fbAOE0af08LQ5Lpe4On3E-87f1XyaZ_1LRvdh-0KZRvdY3KJr1-ZiIGHv8iNA4'
 
 const NOTIFICATIONS_ON_KEY = 'notificationsOn'
+const VAPID_PUBLIC_KEY_LOCAL_KEY = 'notificationsVapidPublicKey'
 
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState === "visible") {
@@ -66,6 +66,13 @@ async function ensureNotifications() {
       }
     }
 
+    if (shouldResubscribeForVapid()) {
+      log("Notifications: VAPID public key changed, re-subscribing")
+      await clearPushSubscription(registration)
+      setNotificationsOnLocally(false)
+      clearStoredVapidPublicKey()
+    }
+
     let subscription = await registration.pushManager.getSubscription()
     if (!subscription) {
       log("Notifications: no push subscription, subscribing")
@@ -91,6 +98,31 @@ function notificationsOnLocally(): boolean {
 
 function setNotificationsOnLocally(on: boolean) {
   localStorage.setItem(NOTIFICATIONS_ON_KEY, on ? 'true' : 'false')
+  if (!on)
+    clearStoredVapidPublicKey()
+}
+
+function storedVapidPublicKey(): string | null {
+  return localStorage.getItem(VAPID_PUBLIC_KEY_LOCAL_KEY)
+}
+
+function setStoredVapidPublicKey() {
+  localStorage.setItem(VAPID_PUBLIC_KEY_LOCAL_KEY, VAPID_PUBLIC_KEY)
+}
+
+function clearStoredVapidPublicKey() {
+  localStorage.removeItem(VAPID_PUBLIC_KEY_LOCAL_KEY)
+}
+
+function shouldResubscribeForVapid(): boolean {
+  // Re-subscribe when the public key changed, or when notifications were
+  // on before we stored the key (legacy clients after a deploy).
+  const stored = storedVapidPublicKey()
+  if (stored === VAPID_PUBLIC_KEY)
+    return false
+  if (stored === null && !notificationsOnLocally())
+    return false
+  return true
 }
 
 async function syncNotificationState(subscription: PushSubscription, userInfo: UserInfo) {
@@ -104,8 +136,10 @@ async function syncNotificationState(subscription: PushSubscription, userInfo: U
   if (!notificationsOnLocally()) {
     log("Notifications: state switched to on, saving subscription")
     const saved = await saveSubscriptionToBackend(subscription, userInfo)
-    if (saved)
+    if (saved) {
       setNotificationsOnLocally(true)
+      setStoredVapidPublicKey()
+    }
   }
 }
 
@@ -200,7 +234,7 @@ function updateAboutNotifications() {
   const iphoneNote = get("about-iphone-notifications")
   if (navigator.platform == "iPhone") {
     iphoneNote.textContent =
-      "Use the system settings to turn on or off notifications: " +
+      "Use the system settings to turn on or off notifications:<br>" +
       "settings -> Notifications -> Collections"
     iphoneNote.style.display = "block"
   } else {

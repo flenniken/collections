@@ -119,6 +119,76 @@ variable:
 grep VAPID_PUBLIC_KEY ts/notify.ts
 ~~~
 
+# Rotate VAPID Keys
+
+Rotate VAPID keys when a private key has been exposed or you need a
+fresh key pair. A push subscription is created with the public key in
+`ts/notify.ts`. After you rotate keys, existing subscriptions no longer
+work. Sending to them returns a 403 error:
+
+>the VAPID credentials in the authorization header do not correspond to
+the credentials used to create the subscriptions.
+
+Updating `~/.aws/vapid` or a test JSON file is not enough. Each browser
+must subscribe again with the new public key.
+
+**Generate and install new keys**
+
+~~~
+cd ~/collections
+scripts/notification -v
+~~~
+
+Save the output to `~/.aws/vapid`. Copy the public key into
+`ts/notify.ts` as `VAPID_PUBLIC_KEY`. The public value in
+`~/.aws/vapid` and `ts/notify.ts` must match.
+
+**Rebuild the website**
+
+The browser reads the public key from the compiled JavaScript:
+
+~~~
+g all
+~~~
+
+**Re-subscribe in each browser**
+
+Lambda deploy is not required for a VAPID rotation. The
+save-subscription Lambda does not send push notifications.
+
+After you deploy the site with the new `VAPID_PUBLIC_KEY`, each user
+who opens the app re-subscribes automatically. The browser stores the
+public key in localStorage when a subscription is saved. When the key
+in `ts/notify.ts` changes, the app clears the old push subscription,
+creates a new one, and saves it to DynamoDB once.
+
+Users do not need to change notification settings or run anything in
+the developer console.
+
+For manual testing before deploy, reset notification permission for
+the site or unregister the service worker in DevTools, then reload and
+turn notifications on again.
+
+**Verify push**
+
+Test with a subscription file:
+
+~~~
+scripts/notification -p chrome-subscription.json
+~~~
+
+Or publish to one user after the subscription is saved in DynamoDB:
+
+~~~
+scripts/notification --publish <user-id> "Test collection"
+~~~
+
+Subscriptions stored in DynamoDB before the rotation are stale. Re-subscribe
+on each device and save again, or wait for users to turn notifications
+off and on.
+
+[⬇](#Contents) Contents
+
 # AWS Services
 
 Collections notifications uses AWS services API Gateway, Lambda and
@@ -383,12 +453,16 @@ Notifications: App badge cleared.
 ~~~
 
 We save the browser's notification subscription when notifications are
-turned on.  We save the fact that notifications are on locally so we
-don't save to AWS on every visibility event.  For testing you can
-remove the saved state.  Run the following in the js console:
+turned on. We remember that state locally so we do not save to AWS on
+every visibility event. We also store the VAPID public key that was in
+use when the subscription was saved; when it changes, the app
+re-subscribes and saves once.
+
+For testing you can reset the saved state in the JavaScript console:
 
 ~~~
 localStorage.removeItem('notificationsOn')
+localStorage.removeItem('notificationsVapidPublicKey')
 ~~~
 
 <style>body { max-width: 40em}</style>
@@ -399,6 +473,7 @@ localStorage.removeItem('notificationsOn')
 * [Platform](#platform) -– supported platform and deployment assumptions.
 * [Badge Behavior](#badge-behavior) -– how badges are set and cleared.
 * [Create VAPID Keys](#create-vapid-keys) -- how to create the VAPID keys used when pushing a notification.
+* [Rotate VAPID Keys](#rotate-vapid-keys) -- rotate keys and re-subscribe browsers after a key change.
 * [AWS Services](#aws-services) -- how the aws services, API Gateway, Lambda and DynamoDB support notifications.
 * [Save Subscription](#save-subscription) -- save a push subscription manually for testing.
 * [Publish Notifications](#publish-notifications) -- notify users when a collection is published.
