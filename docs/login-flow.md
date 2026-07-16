@@ -50,10 +50,10 @@ options:
                         id_token, access_token, or refresh_token
   -u, --getUserInfo     show the user information (oauth2/userInfo endpoint) given an access token
                         in tmp/tokens.json.
-  -r, --refreshTokens   get a new access and id token but not a refresh token (oauth2/token
-                        endpoint). It uses the refresh token in tmp/tokens.json and overwrites the
-                        file with the new tokens. Since the refresh token is not in the file,
-                        calling refresh again will fail.
+  -r, --refreshTokens   get new access and id tokens (oauth2/token endpoint). Uses the
+                        refresh token in tmp/tokens.json and overwrites the file. Cognito
+                        does not return a refresh token unless rotation is enabled; the
+                        existing refresh token is kept so you can refresh again.
   -k, --revokeTokens    revoke the refresh token (oauth2/revoke endpoint) in tmp/tokens.json and
                         its related tokens
   -f url filename, --fetchUrl url filename
@@ -147,6 +147,24 @@ scripts/login-flow -d id_token
 }
 ~~~
 
+Cognito refresh tokens are encrypted. `-d refresh_token` shows the
+token header and length, not a payload like access and id tokens:
+
+~~~
+scripts/login-flow -d refresh_token
+
+{
+  "token_type": "refresh_token",
+  "note": "Cognito refresh tokens are encrypted. Only the header can be read.",
+  "length": 1800,
+  "header": {
+    "kid": "...",
+    "alg": "RS256",
+    "enc": "A256GCM"
+  }
+}
+~~~
+
 # User
 
 This -u option calls the coginto oauth2/userInfo endpoint with the
@@ -228,6 +246,289 @@ scripts/view-download 2025-02-25 O4YGRbu1
 2025-02-25 05:09:29.670 b6ae6c2d 633.95 ms
 ~~~
 
+[⬇](#Contents)
+
+# Token Refresh Test Plan
+
+Use this plan to verify Cognito token refresh for the browser app and
+for scripts that read `tmp/tokens.json`. Access tokens expire in about
+one hour. The browser refreshes automatically before API calls using
+the refresh token stored in `userInfo`.
+
+**Prerequisites**
+
+Get a fresh set of tokens in the `tmp/tokens.json` file using -l then
+-g.
+
+~~~
+scripts/login-flow -l
+
+Enter the following url ...
+
+https:.../index.html
+~~~
+
+Log in, copy the code from the redirect url, then:
+
+~~~
+scripts/login-flow -g <code>
+
+/oauth2/token url: '...'
+Wrote the tokens to tmp/tokens.json.
+...
+~~~
+
+Confirm tokens.json contains `access_token`, `refresh_token`,
+and `expires_in` using the -s option:
+
+~~~
+scripts/login-flow -s
+
+{
+  "access_token": ...
+  "refresh_token": ...
+  "expires_in": 3600,
+  ...
+}
+~~~
+
+**1. Check access token**
+
+Decode and validate the access token.
+
+Make sure the access token decodes using the -d option:
+
+~~~
+scripts/login-flow -d access_token
+
+{
+  "sub": "...",
+  "iss": "...",
+  "version": 2,
+  "client_id": "...",
+  "token_use": "access",
+  "exp": ...,
+  ...
+}
+~~~
+
+Validate the access token using the -v option. Invalid tokens show an
+error message. Valid tokens show the decoded token.
+
+The `exp` claim in the decoded token should be about an hour in the
+future.
+
+~~~
+scripts/login-flow -v access_token
+
+{
+  "sub": "...",
+  "iss": "...",
+  "version": 2,
+  "client_id": "...",
+  "token_use": "access",
+  "exp": 1784223543,
+  ...
+}
+~~~
+
+The exp number is a unix timestamp.  You can convert it to human
+readable using: https://unixtime.org/.  For exp = 1784223543 the
+readable info:
+
+| Format | Seconds |
+| -------- | -------- |
+| GMT | Thu Jul 16 2026 17:39:03 GMT+0000 |
+| Your Time Zone | Thu Jul 16 2026 10:39:03 GMT-0700 (Pacific Daylight Time) |
+| Relative | in an hour |
+
+
+Show the user information using the -u option. This confirms Cognito
+accepts the access token. The userInfo response has profile fields, not
+JWT claims like `exp`.
+
+~~~
+scripts/login-flow -u
+
+url: 'https:...'
+{
+  "sub": "...",
+  "custom:admin": "false",
+  "given_name": "Steve",
+  "family_name": "Flenniken",
+  "email": "...",
+  "username": "..."
+}
+~~~
+
+**2. Refresh token**
+
+Refresh the tokens using the refresh token in `tmp/tokens.json`.
+
+~~~
+scripts/login-flow -r
+
+/oauth2/token url: '...'
+Wrote the tokens to tmp/tokens.json.
+...
+~~~
+
+Decode the new access token. Note the `exp` value from step 1. After
+refresh, `exp` should be different and about an hour in the future.
+That confirms Cognito issued a new access token.
+
+~~~
+scripts/login-flow -d access_token
+
+{
+  "sub": "...",
+  "iss": "...",
+  "exp": ...,
+  ...
+}
+~~~
+
+Confirm user info still works:
+
+~~~
+scripts/login-flow -u
+
+url: 'https:...'
+{
+  "sub": "...",
+  "given_name": "...",
+  ...
+}
+~~~
+
+**3. Expired access token**
+
+Simulate an expired access token without waiting.
+
+Edit `tmp/tokens.json` and replace only `access_token` with the string
+`expired`. Keep the `refresh_token` unchanged.
+
+~~~
+nano tmp/tokens.json
+
+{
+  "access_token": "expired",
+  "expires_in": 3600,
+  "id_token": ...
+  "token_type": "Bearer",
+  "refresh_token": ...
+}
+~~~
+
+Refresh should still succeed.
+
+~~~
+scripts/login-flow -r
+
+/oauth2/token url: '...'
+Wrote the tokens to tmp/tokens.json.
+...
+~~~
+
+The user info should still show:
+
+~~~
+scripts/login-flow -u
+
+url: 'https:...'
+{
+  "sub": "...",
+  ...
+}
+~~~
+
+**4. Revoke token**
+
+A refresh should fail after revoke.
+
+Revoke the refresh token in `tmp/tokens.json`.
+
+~~~
+scripts/login-flow -k
+
+url: '...'
+The access token was successfully revoked.
+~~~
+
+A refresh should now fail with a non-200 response.
+
+~~~
+scripts/login-flow -r
+
+/oauth2/token url: ...
+Coginto responded with status code: 400
+The file was not written. Response text:
+{"error":"invalid_grant"}
+~~~
+
+**5. Refresh on Saving**
+
+Test that refresh happens when needed before saving a notification
+subscription.
+
+Log in on `http://localhost:8000`, enable notifications, and confirm
+the subscription saves.
+
+Edit the userInfo using the javascript console.  Paste the following
+to expire the access token and clear the saved notification state so
+the app tries to save again:
+
+~~~
+const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+userInfo.access_token = 'expired'
+userInfo.access_token_expires_at = Date.now() - 60000
+localStorage.setItem('userInfo', JSON.stringify(userInfo))
+localStorage.removeItem('notificationsOn')
+~~~
+
+Switch tabs away and back. The console should show a refresh followed
+by a successful save:
+
+~~~
+Notifications: page visible
+Notifications: Access token expired, refreshing
+Access token refreshed
+Notifications: state switched to on, saving subscription
+Notifications: subscription saved
+~~~
+
+**6. Clear Session**
+
+Test that the browser session is cleared when refresh is impossible.
+
+Log in again if step 5 logged you out. In the Console, remove the
+refresh token and expire the access token:
+
+~~~
+const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+delete userInfo.refresh_token
+userInfo.access_token_expires_at = Date.now() - 60000
+localStorage.setItem('userInfo', JSON.stringify(userInfo))
+~~~
+
+Reload the page.
+
+The app should clear login state and show the login button:
+
+~~~
+No refresh token stored, user must log in again
+~~~
+
+**7. Notification script refresh**
+
+Test that the notification script refreshes the token.
+
+~~~
+scripts/notification -s chrome-subscription.json
+
+Saved subscription for user ....
+~~~
+
 <style>body { max-width: 40em}</style>
 
 # Contents
@@ -241,3 +542,4 @@ scripts/view-download 2025-02-25 O4YGRbu1
 * [User Information](#user-information) -- how to get the user information with the access_token.
 * [Download Image](#download-image) -- how to download an image using the access_token.
 * [View Logs](#view-logs) -- how to view the logs associated with the download.
+* [Token Refresh Test Plan](#token-refresh-test-plan) -- verify Cognito token refresh for the browser and scripts.

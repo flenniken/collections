@@ -208,7 +208,118 @@ async function getUserInfo(code: string): Promise<UserInfo | null> {
     userId: info["username"],
     admin: info["custom:admin"],
     access_token: access_token,
+    refresh_token: data["refresh_token"],
+    access_token_expires_at: tokenExpiresAt(access_token, data["expires_in"]),
   }
+}
+
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60 * 1000
+
+let refreshAccessTokenPromise: Promise<UserInfo | null> | null = null
+
+function tokenExpiresAt(access_token: string, expires_in?: number): number | undefined {
+  // Return when the access token expires (epoch ms).
+  if (typeof expires_in === "number")
+    return Date.now() + expires_in * 1000
+  return accessTokenExpFromJwt(access_token) ?? undefined
+}
+
+function accessTokenExpFromJwt(access_token: string): number | null {
+  // Read the exp claim from a JWT access token.
+  try {
+    const part = access_token.split('.')[1]
+    const padding = '='.repeat((4 - part.length % 4) % 4)
+    const base64 = (part + padding).replace(/\-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(base64))
+    if (typeof payload.exp === "number")
+      return payload.exp * 1000
+  } catch {
+  }
+  return null
+}
+
+function accessTokenExpiresAt(userInfo: UserInfo): number | null {
+  if (userInfo.access_token_expires_at)
+    return userInfo.access_token_expires_at
+  return accessTokenExpFromJwt(userInfo.access_token)
+}
+
+function isAccessTokenExpired(userInfo: UserInfo): boolean {
+  const expiresAt = accessTokenExpiresAt(userInfo)
+  if (!expiresAt)
+    return false
+  return Date.now() >= expiresAt - ACCESS_TOKEN_REFRESH_BUFFER_MS
+}
+
+async function refreshAccessToken(userInfo: UserInfo): Promise<UserInfo | null> {
+  // Get a new access token using the Cognito refresh token.
+  if (!userInfo.refresh_token) {
+    log("No refresh token stored, user must log in again")
+    handleExpiredSession()
+    return null
+  }
+
+  const tokenUrl = `${settings.domain}/oauth2/token`
+  const bodyText = `grant_type=refresh_token&client_id=${settings.client_id}` +
+    `&refresh_token=${encodeURIComponent(userInfo.refresh_token)}`
+
+  const headers = new Headers()
+  headers.append("Content-Type", "application/x-www-form-urlencoded")
+
+  let response
+  try {
+    response = await fetch(tokenUrl, {
+      method: "POST",
+      body: bodyText,
+      headers: headers,
+    })
+  } catch (error) {
+    log(`Refresh access token error: ${error}`)
+    handleExpiredSession()
+    return null
+  }
+
+  if (!response.ok) {
+    log(`Refresh access token failed: ${response.status}`)
+    handleExpiredSession()
+    return null
+  }
+
+  const data = await response.json()
+  const updated: UserInfo = {
+    ...userInfo,
+    access_token: data["access_token"],
+    access_token_expires_at: tokenExpiresAt(data["access_token"], data["expires_in"]),
+  }
+  if (data["refresh_token"])
+    updated.refresh_token = data["refresh_token"]
+
+  storeUserInfo(updated)
+  log("Access token refreshed")
+  return updated
+}
+
+function handleExpiredSession() {
+  // Clear stored login state when tokens can no longer be refreshed.
+  clearUserInfo()
+  updateLoginUI()
+}
+
+async function ensureValidAccessToken(): Promise<UserInfo | null> {
+  // Return user info with a valid access token, refreshing when needed.
+  const userInfo = fetchUserInfo()
+  if (!userInfo)
+    return null
+  if (!isAccessTokenExpired(userInfo))
+    return userInfo
+
+  log("Access token expired, refreshing")
+  if (!refreshAccessTokenPromise) {
+    refreshAccessTokenPromise = refreshAccessToken(userInfo).finally(() => {
+      refreshAccessTokenPromise = null
+    })
+  }
+  return refreshAccessTokenPromise
 }
 
 function storeUserInfo(userInfo: UserInfo) {

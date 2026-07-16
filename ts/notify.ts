@@ -29,7 +29,7 @@ async function ensureNotifications() {
       return
     }
 
-    const userInfo = fetchUserInfo()
+    const userInfo = await ensureValidAccessToken()
     if (!userInfo) {
       log("Notifications: no user info, skipping")
       return
@@ -153,13 +153,19 @@ async function saveSubscriptionToBackend(
     return false
   }
 
-  const body = pushSubscriptionRecord(subscription, userInfo.userId)
+  const validUserInfo = await ensureValidAccessToken()
+  if (!validUserInfo) {
+    log("Notifications: no valid access token, skipping save")
+    return false
+  }
+
+  const body = pushSubscriptionRecord(subscription, validUserInfo.userId)
 
   try {
     const response = await fetch(url, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${userInfo.access_token}`,
+        Authorization: `Bearer ${validUserInfo.access_token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

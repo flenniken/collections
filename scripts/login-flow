@@ -24,6 +24,7 @@ from datetime import datetime
 import urllib.parse
 from collections import namedtuple
 import json
+import base64
 import requests
 import jwt
 from jwt import PyJWKClient
@@ -138,6 +139,29 @@ def decodeToken(tokenString):
     raise LoginFlowException(f"Unable to decode the token. jwt returns:\n{str(ex)}")
   return(data)
 
+def decodeTokenHeader(tokenString):
+  # Return the JWT or JWE header. Cognito refresh tokens are encrypted
+  # JWE tokens, so read the first segment directly when PyJWT fails.
+  try:
+    return jwt.get_unverified_header(tokenString)
+  except Exception:
+    part = tokenString.split('.')[0]
+    padding = '=' * (-len(part) % 4)
+    return json.loads(base64.urlsafe_b64decode(part + padding))
+
+def showRefreshTokenInfo(tokenString):
+  """
+  Show what we can learn about a Cognito refresh token. Refresh tokens
+  are encrypted and cannot be decoded like access and id tokens.
+  """
+  info = {
+    "token_type": "refresh_token",
+    "note": "Cognito refresh tokens are encrypted. Only the header can be read.",
+    "length": len(tokenString),
+    "header": decodeTokenHeader(tokenString),
+  }
+  runJqLess(json.dumps(info, indent=2))
+
 def getUserInfo():
   """
   Get the user information from the access token.
@@ -203,10 +227,14 @@ The file was not written. Response text:""")
     print(response.text)
     return
 
-  # Write the tokens returned to a file.
-  result = response.text
+  # Write the tokens returned to a file. Cognito omits refresh_token from
+  # refresh responses unless refresh token rotation is enabled.
+  tokens = json.loads(response.text)
+  if refresh and "refresh_token" not in tokens:
+    tokens["refresh_token"] = refresh_token
   with open(tokenFilename, 'w') as fp:
-    fp.write(result)
+    json.dump(tokens, fp, indent=2)
+    fp.write('\n')
 
   # Tell how to read the tokens.
   print(f"""\
@@ -246,9 +274,13 @@ def revokeTokens():
     "client_id": params.client_id,
   }
   response = requests.post(url, data=data, headers=headers)
-  print(f"""Coginto responded with status code: {response.status_code}
-Response text:""")
-  runJqLess(response.text)
+  if response.status_code == 200:
+    print("The access token was successfully revoked.")
+  else:
+    print(f"Coginto responded with status code: {response.status_code}")
+    if response.text.strip():
+      print("Response text:")
+      runJqLess(response.text)
 
 def getDownloadId():
   """
@@ -293,6 +325,9 @@ def showDecodedToken(tokenName):
   tokenNames = ['access_token', 'id_token', 'refresh_token']
   if tokenName not in tokenNames:
     raise LoginFlowException(f"Invalid token name, specify one of: {tokenNames}.")
+  if tokenName == 'refresh_token':
+    showRefreshTokenInfo(readJsonKey(tokenFilename, tokenName))
+    return
   data = getDecodeToken(tokenFilename, tokenName)
   jData = json.dumps(data)
   runJqLess(jData)
@@ -301,8 +336,12 @@ def showDecodeAndValidate(tokenName):
   tokenNames = ['access_token', 'id_token', 'refresh_token']
   if tokenName not in tokenNames:
     raise LoginFlowException(f"Invalid token name, specify one of: {tokenNames}.")
+  if tokenName == 'refresh_token':
+    raise LoginFlowException(
+      "Cannot validate refresh_token. Cognito refresh tokens are encrypted. "
+      "Use -d refresh_token to see header info.")
   token = readJsonKey(tokenFilename, tokenName)
-  data = decodeAndValidate(token)
+  data = decodeAndValidate(token, tokenName)
   jData = json.dumps(data)
   runJqLess(jData)
 
@@ -320,27 +359,42 @@ def getCognitoJwksUrls(userPoolId):
   jwksUrl = f"{issuer}/.well-known/jwks.json"
   return issuer, jwksUrl
 
-def decodeAndValidate(token):
+def decodeAndValidate(token, tokenName):
   """
   Decode and validate the token using the jwt module. Return the
   decoded information in a dictionary. Raise an exception when the
   token cannot be decoded.
+
+  Cognito id tokens have an aud claim; access tokens have client_id
+  instead.
   """
   params = getAwsParameters()
   issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
   jwkClient = jwt.PyJWKClient(jwksUrl)
   signing_key = jwkClient.get_signing_key_from_jwt(token)
 
-  # The access token does not have the aud claim. It seems you use the
-  # id token instead of the access token?
-  # jwt.exceptions.MissingRequiredClaimError: Token is missing the "aud" claim
-
-  # You can ignore the expire date:
-  # options={"verify_exp": False})
-
   try:
-    decoded_token = jwt.decode(token, signing_key.key,
-      algorithms=["RS256"], audience=params.client_id, issuer=issuer)
+    if tokenName == 'access_token':
+      decoded_token = jwt.decode(token, signing_key.key,
+        algorithms=["RS256"], issuer=issuer,
+        options={"verify_aud": False})
+      if decoded_token.get("client_id") != params.client_id:
+        raise LoginFlowException(
+          f'Token client_id "{decoded_token.get("client_id")}" '
+          f'does not match app client id.')
+      if decoded_token.get("token_use") != "access":
+        raise LoginFlowException(
+          f'Token token_use "{decoded_token.get("token_use")}" '
+          f'is not "access".')
+    else:
+      decoded_token = jwt.decode(token, signing_key.key,
+        algorithms=["RS256"], audience=params.client_id, issuer=issuer)
+      if decoded_token.get("token_use") != "id":
+        raise LoginFlowException(
+          f'Token token_use "{decoded_token.get("token_use")}" '
+          f'is not "id".')
+  except LoginFlowException:
+    raise
   except Exception as ex:
     raise LoginFlowException(str(ex))
 
@@ -412,14 +466,14 @@ def parseCommandLine():
     help=f"show the {tokenFilename} file")
   parser.add_argument("-d", "--decodeToken", metavar='token',
     help=f"""decode a token from the {tokenFilename} file, specify id_token,
-    access_token, or refresh_token""")
+    access_token, or refresh_token. Refresh tokens are encrypted; only the header is shown.""")
   parser.add_argument("-v", "--decodeAndValidate", metavar='token',
     help=f"""decode and validate a token from the {tokenFilename} file, specify id_token,
-    access_token, or refresh_token""")
+    or access_token. Refresh tokens cannot be validated.""")
   parser.add_argument("-u", "--getUserInfo", action="store_true",
     help=f"show the user information (oauth2/userInfo endpoint) given an access token in {tokenFilename}.")
   parser.add_argument("-r", "--refreshTokens", action="store_true",
-    help=f"get a new access and id token but not a refresh token (oauth2/token endpoint). It uses the refresh token in {tokenFilename} and overwrites the file with the new tokens. Since the refresh token is not in the file, calling refresh again will fail.")
+    help=f"get new access and id tokens (oauth2/token endpoint). Uses the refresh token in {tokenFilename} and overwrites the file. Cognito does not return a refresh token unless rotation is enabled; the existing refresh token is kept so you can refresh again.")
   parser.add_argument("-k", "--revokeTokens", action="store_true",
     help=f"revoke the refresh token (oauth2/revoke endpoint) in {tokenFilename} and its related tokens")
   parser.add_argument("-f", "--fetchUrl", metavar=("url", "filename"), nargs=2, required=False,
@@ -670,6 +724,31 @@ NGItumhDXKXoHvjwD-5s2qiJQ2xHDptw"
 Unable to decode the token. jwt returns:
 Not enough segments""")
 
+  def test_keepRefreshTokenInRefreshResponse(self):
+    tokens = json.loads('{"access_token": "a", "id_token": "i", "expires_in": 3600}')
+    saved_refresh_token = "saved_refresh"
+    if "refresh_token" not in tokens:
+      tokens["refresh_token"] = saved_refresh_token
+    self.assertEqual(tokens["refresh_token"], saved_refresh_token)
+
+    tokens = json.loads('{"access_token": "a", "refresh_token": "new_refresh"}')
+    if "refresh_token" not in tokens:
+      tokens["refresh_token"] = saved_refresh_token
+    self.assertEqual(tokens["refresh_token"], "new_refresh")
+
+  def test_refresh_token_header(self):
+    token = readJsonKey(tokenFilename, "refresh_token")
+    header = decodeTokenHeader(token)
+    self.assertTrue("alg" in header)
+    with self.assertRaises(LoginFlowException) as context:
+      decodeToken(token)
+    self.assertTrue("Invalid payload padding" in str(context.exception))
+
+  def test_showDecodeAndValidate_refresh_token(self):
+    with self.assertRaises(LoginFlowException) as context:
+      showDecodeAndValidate('refresh_token')
+    self.assertTrue("Cannot validate refresh_token" in str(context.exception))
+
   def test_getCognitoJwksUrls(self):
     params = getAwsParameters()
     issuer, jwksUrl = getCognitoJwksUrls(params.userPoolId)
@@ -680,8 +759,17 @@ Not enough segments""")
   def test_decodeAndValidate(self):
     token = readJsonKey(tokenFilename, "id_token")
     try:
-      info = decodeAndValidate(token)
+      info = decodeAndValidate(token, 'id_token')
       # print(info)
+    except LoginFlowException as ex:
+      self.assertEqual(str(ex), 'Signature has expired')
+
+  def test_decodeAndValidate_access_token(self):
+    token = readJsonKey(tokenFilename, "access_token")
+    try:
+      info = decodeAndValidate(token, 'access_token')
+      self.assertEqual(info.get("token_use"), "access")
+      self.assertTrue("client_id" in info)
     except LoginFlowException as ex:
       self.assertEqual(str(ex), 'Signature has expired')
 

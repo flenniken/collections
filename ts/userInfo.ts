@@ -8,6 +8,8 @@ interface UserInfo {
   // todo: make admin a boolean?
   admin: string // either "true" or "false"
   access_token: string
+  refresh_token?: string
+  access_token_expires_at?: number
 }
 
 function fetchUserInfo() {

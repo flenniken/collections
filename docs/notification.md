@@ -315,7 +315,8 @@ The save-subscription Lambda writes items when a user subscribes.
 ## Save Subscription
 
 When notifications are turned on, `ts/notify.ts` posts the subscription
-to API Gateway using the logged-in user's access token. To save a
+to API Gateway using the logged-in user's access token. The app
+refreshes the access token automatically when it expires. To save a
 subscription manually from the command line (for testing):
 
 ~~~

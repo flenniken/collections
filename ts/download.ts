@@ -124,7 +124,7 @@ async function downloadUrls(urls: string[]) {
   // Add the access token to the headers for user authentication on an
   // AWS lambda function.
 
-  const userInfo = fetchUserInfo()
+  const userInfo = await ensureValidAccessToken()
   if (!userInfo) {
     throw new Error("No user information found.")
   }

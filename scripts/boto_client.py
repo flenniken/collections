@@ -71,7 +71,7 @@ The aws settings file is missing. You can create it by running: scripts/cognito 
     if parameter not in settings:
       raise Exception(f"Missing aws settings parameter: {parameter}.")
 
-  AwsParameters = namedtuple('AwsParameters', settings)
+  AwsParameters = namedtuple('AwsParameters', requiredParameters)
 
   # edit me when [aws_settings.json] changes
   return AwsParameters(
