@@ -57,8 +57,11 @@
 // Publish (--publish <user> <title>):
 //
 //   user           Cognito user id, or "all" for every subscriber
-//   title          Collection title shown in the push notification
+//   title          Collection title shown in the push notification (remaining words)
 //   VAPID subject  contact email in ~/.aws/vapid [VAPID] section
+//
+// Example:
+//   scripts/notification --publish all "New Tokyo collection"
 //
 // Deploy Lambda (--deploy <name>):
 //
@@ -148,11 +151,12 @@ const LAMBDA_DEPLOYS = {
 
 const program = new Command()
 program
+  .argument('[title...]', 'collection title when using --publish')
   .option('-v, --vapid',
     'Generate VAPID public and private keys used to send push notifications.')
   .option('-p, --push <file>',
     'Send a push notification.')
-  .option('--publish <user> <title>',
+  .option('--publish <user>',
     'Send a collection publish notification to one user or all.')
   .option('-s, --save <file>',
     'Save a push subscription via API Gateway, Lambda, and DynamoDB.')
@@ -1177,10 +1181,9 @@ async function main() {
     showVapidKeys()
   } else if (options.push) {
     await sendPush(options.push)
-  } else if (options.publish) {
-    const args = options.publish
-    const user = Array.isArray(args) ? args[0] : args
-    const title = Array.isArray(args) ? args[1] : undefined
+  } else if (options.publish !== undefined) {
+    const user = options.publish
+    const title = program.args.join(' ').trim()
     await publishNotifications(user, title)
   } else if (options.save) {
     await saveSubscription(options.save)

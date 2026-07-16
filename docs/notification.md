@@ -116,7 +116,9 @@ also stored publicly in the notify.ts file as the VAPID_PUBLIC_KEY
 variable:
 
 ~~~
-grep VAPID_PUBLIC_KEY ts/notify.ts
+grep "VAPID_PUBLIC_KEY = " ts/notify.ts
+
+const VAPID_PUBLIC_KEY = 'BDHakmrjRIE...'
 ~~~
 
 # Rotate VAPID Keys
@@ -265,7 +267,9 @@ integration.
 **Lambda**
 
 The save-subscription Lambda function stores push subscriptions in
-DynamoDB. Lambda source lives in 'env/lambda/save-subscription'.
+DynamoDB. Lambda source lives in `scripts/saveSubscription.js` and is
+copied to `env/lambda/save-subscription` when building the lambda zip
+file.
 
 API Gateway invokes the function on each authenticated POST
 /subscriptions request. A (userId, endpoint) identifies exactly one
@@ -275,13 +279,65 @@ The function receives the JSON body described above and it refreshes
 existing record or it creates a new subscription record when the
 (userId, endpoint) doesn't exist.
 
-Deploy the function with:
+Test the function with:
 
 ~~~
 node scripts/testSaveSubscription.js
+
+* Test TABLE_NAME constant.
+* Test region constant.
+* Test checkRegion with matching region.
+* Test checkRegion with wrong region.
+* Test checkRegion with unset region.
+* Test parseSubscriptionBody with valid JSON.
+* Test parseSubscriptionBody with missing body.
+* Test parseSubscriptionBody with invalid JSON.
+* Test validateSubscription with valid subscription.
+* Test validateSubscription with missing userId.
+* Test validateSubscription with missing endpoint.
+* Test validateSubscription with missing keys.p256dh.
+* Test validateSubscription with missing keys.auth.
+* Test tokenUserId from claims.
+* Test userIdsMatch.
+* Test subscriptionItem.
+* Test saveSubscription with mismatched userId.
+* Test saveSubscription with mock DynamoDB client.
+Saved subscription for user 0861d3e0-00a1-7058-ad19-4d7b1880d276.
+* Test saveSubscription with DynamoDB error.
+DynamoDB PutItem: test failure
+* Test handler with wrong region.
+Wrong AWS region: expected us-west-2, got us-east-1.
+* Test handler with invalid JSON body.
+* Test handler with mismatched userId.
+* Test corsHeaders reflects request origin.
+* Test handler includes CORS headers.
+Saved subscription for user 0861d3e0-00a1-7058-ad19-4d7b1880d276.
+Success
+~~~
+
+Create a zip file containing the function and all its dependencies:
+
+~~~
 env/lambda/save-subscription/make-js-lambda-zip
+
+Remove existing /home/coder/collections/env/lambda/save-subscription/js directory
+Copy saveSubscription.js to the /home/coder/collections/env/lambda/save-subscription/js folder.
+Install the dependent node modules.
+
+added 31 packages, and audited 32 packages in 7s
+
+found 0 vulnerabilities
+Create lambda-js-24.18.0.zip.
+Success: created zip file:
+-rw-r--r-- 1 coder coder 2953367 Jul 16 21:29 lambda-js-24.18.0.zip
+~~~
+
+Deploy the function with:
+
+~~~
 scripts/notification --deploy save-subscription
 ~~~
+
 
 **DynamoDB**
 
@@ -336,8 +392,8 @@ header. Create tokens with `scripts/login-flow -g <code>` or
 Send a collection notification to one user or all subscribers:
 
 ~~~
-scripts/notification --publish all "New Tokyo collection"
 scripts/notification --publish <user-id> "New Tokyo collection"
+scripts/notification --publish all "New Tokyo collection"
 ~~~
 
 The command scans DynamoDB and sends a push notification to each

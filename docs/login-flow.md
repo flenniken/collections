@@ -74,13 +74,15 @@ login.
 
 ~~~
 scripts/login-flow -l
+~~~
 
-Enter the following url into your browser to login.  After logging in
-it will redirect to the redirect_uri which will contain a code and a
-state of "loggedInTest". You have a few minutes to use the code to get
-tokens with the -g option.
+> Enter the following url into your browser to login.  After logging in
+> it will redirect to the redirect_uri which will contain a code and a
+> state of "loggedInTest". You have a few minutes to use the code to get
+> tokens with the -g option.
 
-https://pool18672788.auth.us-west-2.amazoncognito.com/oauth2/authorize?client_id=47ahgb3e4jqhk86o7gugvbglf8&state=loggedInTest&response_type=code&scope=openid%20profile%20aws.cognito.signin.user.admin&redirect_uri=https://collections.sflennik.com/index.html
+~~~
+https://...
 ~~~
 
 After you login the redirect url contains a code that you copy and
