@@ -15,6 +15,10 @@ retrieving user information from Cognito's endpoints. All tokens are
 persisted in a JSON file, allowing for subsequent operations like
 token refresh and revocation.
 
+The user stays logged in 30 days.  This is a setting in Cognito.  The
+access token expires in an hour but it is refreshed whenever it is
+needed and is not noticeable by the user.
+
 [⬇](#Contents) (table of contents at the bottom)
 
 # Run login-flow
