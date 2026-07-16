@@ -9,8 +9,8 @@ uses.
 
 # Overview
 
-The collections website uses AWS services for user authentication and
-for hosting the site files.
+The collections website uses AWS services for user authentication,
+for hosting the site files and notifications.
 
 * S3 holds the website files
 * CloudFront quickly handles the https requests and serves the files
@@ -18,7 +18,7 @@ for hosting the site files.
   only open to friends and family
 * Route53 and Certificate Manager connect the website to your custom
   domain with secure access
-* DynamoDB stores push notification subscriptions
+* API Gateway, Lambda and DynamoDB for storing push notification subscriptions
 * IAM allows you to run scripts to deploy, run setup and to inspect
   aws settings.
 
@@ -184,10 +184,12 @@ cd ~/collections
 scripts/notification -v
 ~~~
 
-Add the output to `~/.aws/vapid` as a `[VAPID]` section. Do not store
-VAPID keys in `~/.aws/credentials`; boto3 cannot parse a `[VAPID]`
-section there and deploy will fail. Also copy the public key into
-`ts/notify.ts` as `VAPID_PUBLIC_KEY`.
+Save the keys in your password manager. You will need them when
+recreating the docker container.  Add the output to `~/.aws/vapid` as
+a `[VAPID]` section. Do not store VAPID keys in `~/.aws/credentials`;
+boto3 cannot parse a `[VAPID]` section there and deploy will
+fail. Also copy the public key into `ts/notify.ts` as
+`VAPID_PUBLIC_KEY`.
 
 ~~~
 cat ~/.aws/vapid
