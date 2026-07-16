@@ -44,7 +44,9 @@ node -v
 
 # Update Container
 
-Node is part of the Collection's build container.  Update the container's Dockerfile as shown below.  For the update from version 22 to 24 only one line needed to change:
+You install node when the docker container is built.  Update the
+container's Dockerfile as shown below.  For the update from version 22
+to 24 only one line needed to change:
 
 ~~~
 env/debian/Dockerfile
@@ -53,7 +55,8 @@ env/debian/Dockerfile
 + && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
 ~~~
 
-Build a new container using the runenv command. Exit the current container, delete it, then build a new one:
+Build a new container using the runenv command. Exit the current
+container, delete it, then build a new one:
 
 ~~~
 # from container
@@ -85,8 +88,9 @@ the same for push notifications.
 * [Notification](notification.md) -— how notifications and the red badge works.
 
 For the authentication code you update the version number in
-env/lambda/auth-image-download/make-js-lambda-zip, then test, deploy and test again, following the
-steps in the authentication documentation.
+`env/lambda/auth-image-download/make-js-lambda-zip`, then test, deploy
+and test again, following the steps in the authentication
+documentation.
 
 For notification you test the notification script and follow the steps in
 the notification document.
