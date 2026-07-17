@@ -239,9 +239,9 @@ function updateAboutNotifications() {
 
   const iphoneNote = get("about-iphone-notifications")
   if (navigator.platform == "iPhone") {
-    iphoneNote.textContent =
+    iphoneNote.innerHTML =
       "Use the system settings to turn on or off notifications:<br>" +
-      "settings -> Notifications -> Collections"
+      "settings -&gt; Notifications -&gt; Collections"
     iphoneNote.style.display = "block"
   } else {
     iphoneNote.textContent = ""
