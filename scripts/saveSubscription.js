@@ -1,5 +1,7 @@
 "use strict";
 
+// Lambda function to save notification subscriptions.
+
 // Set this value from the region in ~/.aws/config.
 const region = 'us-west-2';
 
