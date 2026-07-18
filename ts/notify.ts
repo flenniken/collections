@@ -44,26 +44,16 @@ async function ensureNotifications() {
       log("Notifications: disabled in system settings")
       await clearPushSubscription(registration)
       setNotificationsOnLocally(false)
+      updateAboutNotifications()
       return
     }
 
     if (permission === "default") {
-      if (navigator.platform == "iPhone") {
-        log("Notifications: on iPhone, enable notifications in " +
-          "Settings → Notifications → Collections")
-        await clearPushSubscription(registration)
-        setNotificationsOnLocally(false)
-        return
-      }
-
-      log("Notifications: permission default (not set), requesting from system")
-      const result = await Notification.requestPermission()
-      log(`Notifications: permission result is "${result}"`)
-      if (result !== "granted") {
-        log("Notifications: permission not granted")
-        setNotificationsOnLocally(false)
-        return
-      }
+      log("Notifications: permission default, enable from the about box")
+      await clearPushSubscription(registration)
+      setNotificationsOnLocally(false)
+      updateAboutNotifications()
+      return
     }
 
     if (shouldResubscribeForVapid()) {
@@ -231,20 +221,75 @@ async function clearAppBadge() {
   log("Notifications: App badge cleared.")
 }
 
+async function enableNotificationsFromAboutBox() {
+  // Request notification permission from a user gesture, then subscribe.
+  log("Notifications: enable from about box")
+
+  if (!hasLoggedIn()) {
+    window.alert(["You need to login before you can enable notifications."])
+    return
+  }
+
+  if (!("Notification" in window) || !("serviceWorker" in navigator) ||
+      !("PushManager" in window)) {
+    log("Notifications: push not supported in this browser")
+    return
+  }
+
+  if (Notification.permission !== "default") {
+    updateAboutNotifications()
+    return
+  }
+
+  const result = await Notification.requestPermission()
+  log(`Notifications: permission result is "${result}"`)
+  if (result !== "granted") {
+    setNotificationsOnLocally(false)
+    updateAboutNotifications()
+    return
+  }
+
+  await ensureNotifications()
+  updateAboutNotifications()
+}
+
+function canEnableNotificationsFromAboutBox(): boolean {
+  if (!("Notification" in window))
+    return false
+  return Notification.permission === "default"
+}
+
 function updateAboutNotifications() {
   // Show notification status in the about box.
   const status = get("about-notifications")
+  const enableMsg = get("about-notifications-enable-msg")
+  const enableBtn = get("about-notifications-enable")
+  const iphoneNote = get("about-iphone-notifications")
+
   const on = "Notification" in window && Notification.permission === "granted"
   status.textContent = on ? "🔔 Notifications on" : "Notifications off"
 
-  const iphoneNote = get("about-iphone-notifications")
-  if (navigator.platform == "iPhone") {
-    iphoneNote.innerHTML =
-      "Use the system settings to turn on or off notifications:<br>" +
-      "settings -&gt; Notifications -&gt; Collections"
-    iphoneNote.style.display = "block"
-  } else {
+  if (canEnableNotificationsFromAboutBox()) {
+    enableMsg.textContent =
+      "When you turn on notifications you will be notified when there is a new collection."
+    enableMsg.style.display = "block"
+    enableBtn.style.display = "inline-block"
     iphoneNote.textContent = ""
     iphoneNote.style.display = "none"
+  } else {
+    enableMsg.textContent = ""
+    enableMsg.style.display = "none"
+    enableBtn.style.display = "none"
+
+    if (navigator.platform == "iPhone" &&
+        Notification.permission !== "default") {
+      iphoneNote.innerHTML =
+        "Use the system settings to turn on or off notifications:<br>" +
+        "settings → Notifications → Collections"
+      iphoneNote.style.display = "block"
+    } else {
+      iphoneNote.textContent = ""
+      iphoneNote.style.display = "none"
+    }
   }
 }

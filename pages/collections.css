@@ -146,6 +146,16 @@
   padding-left: 10px;
 }
 
+#index #about-notifications-enable-msg {
+  display: none;
+}
+
+#index #about-notifications-enable {
+  display: none;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+
 #thumbnails {
   margin: 0;
   padding: 0;

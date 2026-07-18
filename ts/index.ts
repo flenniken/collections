@@ -190,11 +190,21 @@ async function handleLoad() {
 
 }
 
+function isRunningFromInstalledIcon(): boolean {
+  // Return true when the app is running as an installed PWA from its
+  // home screen or desktop icon.
+  if (window.matchMedia("(display-mode: standalone)").matches)
+    return true
+  // @ts-ignore
+  if (window.navigator.standalone === true)
+    return true
+  return false
+}
+
 function isCollectionsRunning() {
   // Detect whether Collections is already running. This only works on
   // Safari.
-  // @ts-ignore
-  return window.navigator.standalone === true;
+  return isRunningFromInstalledIcon()
 }
 
 function isIosSafari() {
@@ -221,7 +231,7 @@ function installBanner() {
   log(`userAgent: ${navigator.userAgent}`)
 
   // Detect running from the desktop icon.
-  if (window.matchMedia("(display-mode: standalone)").matches) {
+  if (isRunningFromInstalledIcon()) {
     runningFromIcon = true
     log("Running from the desktop icon.")
     return
@@ -300,9 +310,22 @@ function refreshPage() {
   location.reload()
 }
 
+function updateAboutInstalledIcon() {
+  // Show whether the app was started from the installed icon.
+  const el = get("about-installed-icon")
+  if (isRunningFromInstalledIcon()) {
+    el.textContent = "😎  running from installed icon"
+  } else {
+    el.textContent = "Not running from installed icon. Install and run " +
+      "Collections from its desktop icon then images fill the screen and " +
+      "notifications work."
+  }
+}
+
 function about() {
   log("about")
   updateAboutNotifications()
+  updateAboutInstalledIcon()
   get("about-box").style.display = 'block'
 }
 
