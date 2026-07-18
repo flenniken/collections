@@ -4,16 +4,6 @@ Planned near term features.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# Desktop Badge
-
-Show the red circle over the collection's icon when there is a new
-collection. Launching collections is enough to make the red circle go
-away.
-
-See the notification doc.
-
-[⬇](#Contents)
-
 # Local Badge
 
 Show a red circle next to the collections title on the index page
@@ -250,14 +240,6 @@ The only lines I want to see are the warnings and the copy line:
 (Use `node --trace-deprecation ...` to show where the warning was created)
 [20:26:35] ---> Copy to dist/js/image.js
 ~~~
-
-[⬇](#Contents)
-
-# Renew Tokens
-
-Fetch new tokens when the old ones expire. Update the login-flow
-script to learn how to do it then implement it in the web app login
-code. Also update the lambda function.
 
 [⬇](#Contents)
 

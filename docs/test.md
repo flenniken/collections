@@ -93,7 +93,9 @@ To debug:
 When making changes to the image page test them with these steps:
 
 * zoom at a point
-* zoom to limits, small and big, then pan around
+* zoom to limits, small and big, then pan around in vertical orientation
+* do the same in landscape orientation
+* repeat the last two steps with tall images and with wide images
 * zoom when v scrolled
 * double tap to restore
 * double tap to fit to screen

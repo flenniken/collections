@@ -589,17 +589,18 @@ function handleTouchMove(event: TouchEvent) {
     ty: 0,
   }
 
-  // Limit the scale to a maximum of 1 and a minimum that results in a
-  // image not less than half the area width.
+  // Limit the scale to a maximum of 1 and a minimum that keeps at
+  // least half the area visible in both dimensions.
   if (zpan.current.scale > 1.0)
     zpan.current.scale = 1.0
+  const minScale = Math.min(
+    (availWidth / 2) / image.width,
+    (availHeight / 2) / image.height
+  )
+  if (zpan.current.scale < minScale)
+    zpan.current.scale = minScale
   let newIw = image.width * zpan.current.scale
   let newIh = image.height * zpan.current.scale
-  if (newIw < availWidth / 2) {
-    zpan.current.scale = (availWidth / 2) / image.width
-    newIw = image.width * zpan.current.scale
-    newIh = image.height * zpan.current.scale
-  }
 
   // Calculate the new image upper left hand corner based on the
   // center point between the two fingers and how far apart they are
