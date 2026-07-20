@@ -56,9 +56,8 @@ orientation and size.
 
 [![Image Landscape](docs/image-landscape.png)](#)
 
-You can zoom and pan an image with two fingers.  A double tap goes to
-the zoom point, or if you’re ready there it fits the image to the
-screen.
+You can zoom and pan an image with two fingers.  A double tap cycles
+through the zoom point, fit-to-screen, and fill-screen views.
 
 You scroll left and right to go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by

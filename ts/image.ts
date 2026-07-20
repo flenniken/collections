@@ -178,6 +178,28 @@ function getFitZoomPoint(imageIx: number, cjson: CJson.Collection) {
   return {scale: scale, tx: tx, ty: ty}
 }
 
+function getFillZoomPoint(imageIx: number, cjson: CJson.Collection) {
+  // Scale an image to cover the screen area, preserving aspect ratio
+  // and centering it. Some pixels may extend outside the area.
+
+  const width = cjson.images[imageIx].width
+  const height = cjson.images[imageIx].height
+
+  const scaleW = availWidth / width
+  const scaleH = availHeight / height
+
+  // Choose the larger scale factor so the screen is filled.
+  const scale = Math.max(scaleW, scaleH)
+
+  const newWidth = width * scale
+  const newHeight = height * scale
+
+  const tx = (availWidth - newWidth) / 2
+  const ty = (availHeight - newHeight) / 2
+
+  return {scale: scale, tx: tx, ty: ty}
+}
+
 function sizeImages(firstImageIx: number) {
   // Size the image containers and the images and create zoom points
   // when missing and horizontally scroll the given image into view.
@@ -477,22 +499,29 @@ function closeZoomPoints(zoomPoint: CJson.ZoomPoint, origZP: CJson.ZoomPoint): b
 }
 
 function handleRestoreImage(event: Event) {
-  // Restore an image position and scale to it's original zoom point.
+  // Cycle the image through zoom point, fit, and fill on double tap.
 
-  log("Restore image to its zoom point.")
+  log("Double tap image zoom cycle.")
   const imageIx = imageIndex
 
-  // Get the original zoom point.
   let zoomPoint = getZoomPoint(imageIx, cJson)
   const origZP = newZoomPoint(getZoomPoint(imageIx, cJsonOriginal))
   const fitZP = getFitZoomPoint(imageIx, cJson)
+  const fillZP = getFillZoomPoint(imageIx, cJson)
   log(`         Zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
   log(`Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
   log(`     Fit zoom point: scale: ${two(fitZP.scale)}, (${two(fitZP.tx)}, ${two(fitZP.ty)})`)
+  log(`    Fill zoom point: scale: ${two(fillZP.scale)}, (${two(fillZP.tx)}, ${two(fillZP.ty)})`)
 
   let nextZP: CJson.ZoomPoint
   if (closeZoomPoints(zoomPoint, origZP)) {
     nextZP = newZoomPoint(fitZP)
+  }
+  else if (closeZoomPoints(zoomPoint, fitZP)) {
+    nextZP = newZoomPoint(fillZP)
+  }
+  else if (closeZoomPoints(zoomPoint, fillZP)) {
+    nextZP = newZoomPoint(origZP)
   }
   else {
     nextZP = newZoomPoint(origZP)
