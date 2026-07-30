@@ -1,0 +1,177 @@
+{
+  "title": "Seaplane Tours",
+  "indexDescription": "When walking around Lake Union you happen upon a little float plane airport at the south end of the lake.",
+  "description": "Lake Union seaplane tours and vicinity.",
+  "indexThumbnail": "c11-2-t.jpg",
+  "cNum": 11,
+  "posted": "2026-07-20",
+  "images": [
+    {
+      "title": "",
+      "description": "Kathleen thought this would make a good 1,000 piece puzzle. ",
+      "iPreview": "c11-2-p.jpg",
+      "iThumbnail": "c11-2-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3180976,
+      "sizet": 108177
+    },
+    {
+      "title": "",
+      "description": "An airplane taxiing to the terminal.",
+      "iPreview": "c11-1-p.jpg",
+      "iThumbnail": "c11-1-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2854565,
+      "sizet": 100134
+    },
+    {
+      "title": "",
+      "description": "There is a nice walkway below the road at lake level.",
+      "iPreview": "c11-3-p.jpg",
+      "iThumbnail": "c11-3-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3267008,
+      "sizet": 95947
+    },
+    {
+      "title": "",
+      "description": "This is the old steam plant.  It is a historical landmark.  ZymoGenetics a biotech company bought and occupied the building before being acquired by Bristol Myers Squibb.  You can see the smoke stacks from the freeway.  They were replaces with smaller light weight stacks.  For a while the company name was written down the stacks as shown in the right most one.\n\nThe road over the water was rebuilt recently.  We visited for the opening celebration.",
+      "iPreview": "c11-4-p.jpg",
+      "iThumbnail": "c11-4-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3059463,
+      "sizet": 108871
+    },
+    {
+      "title": "",
+      "description": "View from the front of the building.",
+      "iPreview": "c11-7-p.jpg",
+      "iThumbnail": "c11-7-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 1570866,
+      "sizet": 87858
+    },
+    {
+      "title": "",
+      "description": "The industrial Lake Union with the Aurora Bridge in the background.",
+      "iPreview": "c11-8-p.jpg",
+      "iThumbnail": "c11-8-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2418934,
+      "sizet": 137318
+    },
+    {
+      "title": "",
+      "description": "Many boat houses in the area and a few house boats.",
+      "iPreview": "c11-5-p.jpg",
+      "iThumbnail": "c11-5-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3706703,
+      "sizet": 127669
+    },
+    {
+      "title": "",
+      "description": "A big boat propeller. ",
+      "iPreview": "c11-6-p.jpg",
+      "iThumbnail": "c11-6-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 2333344,
+      "sizet": 118430
+    }
+  ],
+  "ready": true,
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.3940893852636663,
+        "tx": -756.7134414060959,
+        "ty": -16.294012474488
+      },
+      {
+        "scale": 0.30853174603174605,
+        "tx": -407,
+        "ty": 0
+      },
+      {
+        "scale": 0.09804465017966195,
+        "tx": 16.201890509885402,
+        "ty": 317.7835331572033
+      },
+      {
+        "scale": 0.30853174603174605,
+        "tx": -407,
+        "ty": 0
+      },
+      {
+        "scale": 0.30853174603174605,
+        "tx": -407,
+        "ty": 0
+      },
+      {
+        "scale": 0.32831510915709883,
+        "tx": -552.9985340794182,
+        "ty": -33.15896107865319
+      },
+      {
+        "scale": 0.36306297877016747,
+        "tx": -772.9066470581475,
+        "ty": -69.56840298710051
+      },
+      {
+        "scale": 0.2691928311312554,
+        "tx": -211.11889625096285,
+        "ty": -7.8917019905172765
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.23115079365079363,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.23115079365079363,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.23115079365079366,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.23803586226486415,
+        "tx": -6.4426212990514955,
+        "ty": -52.70986823535799
+      },
+      {
+        "scale": 0.19365071379509594,
+        "tx": 66.46325810963168,
+        "ty": -59.50650197853807
+      },
+      {
+        "scale": 0.24084756150328035,
+        "tx": -19.275483790915303,
+        "ty": -156.27914314453517
+      },
+      {
+        "scale": 0.24827646708140771,
+        "tx": -45.190175099313535,
+        "ty": -176.06009050692512
+      },
+      {
+        "scale": 0.3307839172127412,
+        "tx": -52.56625274242785,
+        "ty": -545.042508335412
+      }
+    ]
+  }
+}

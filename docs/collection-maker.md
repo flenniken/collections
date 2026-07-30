@@ -70,6 +70,7 @@ for each image.
 * save each file as jpg (use File > Save) -- uncheck "Embed
   Color Profile: Display P3"
 * Use Jpg options: Quality 8, Baseline, no preview
+
 ♫ Notes:
 
 -- Some types of editing in Photoshop will create layers. You can tell
@@ -351,6 +352,21 @@ scripts/deploy -s
 
 Test by logging out of admin and logging back in as a regular user.
 
+# Notifiy
+
+Get your cognito user id then send a notification to yourself to test.
+
+~~~
+scripts/congnito -l
+scripts/notification --publish xxxx "Manzantia 2026"
+~~~
+
+Send a notification to all users.
+
+~~~
+scripts/notification --publish all "Manzantia 2026"
+~~~
+
 <style>body { max-width: 40em}</style>
 
 [⬇](#Contents)
@@ -363,3 +379,4 @@ Test by logging out of admin and logging back in as a regular user.
 * [Zoom Points](#zoom-points) -- how to set the collection zoom points.
 * [Remove DS Store Files](#remove-ds-store-files) -- remove the .DS_Store files.
 * [Deploy](#deploy) -- how to publish the collection to the world.
+* [Notify](#notify) -- how to notify users of the new collection.

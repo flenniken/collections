@@ -156,8 +156,8 @@ program
     'Generate VAPID public and private keys used to send push notifications.')
   .option('-p, --push <file>',
     'Send a push notification.')
-  .option('--publish <user>',
-    'Send a collection publish notification to one user or all.')
+  .option('--publish <user id> title',
+    'Notify one user or all. For all use "all" instead of the user id.')
   .option('-s, --save <file>',
     'Save a push subscription via API Gateway, Lambda, and DynamoDB.')
   .option('--configure',
