@@ -39,16 +39,11 @@ other low level functions.
 
 [⬇](#Contents)
 
-# Order List
-
-The order list shouldn’t exists for published collections. Add checks
-to the build process to check for this.
-
-[⬇](#Contents)
-
 # Remove Branding
 
 Make it easy to rebrand the code. Currently the desktop icon, the name "Flenniken Collections" and the domain sflennik.com would be replaced when someone builds their own collection web site. Maybe use a config file and make these things variables?
+
+The image json shouldn't be checked in.
 
 [⬇](#Contents)
 
@@ -232,7 +227,7 @@ The only lines I want to see are the warnings and the copy line:
 
 Support live photos on the image page.
 
-Play show movies.
+Play shortw movies.
 
 [⬇](#Contents)
 
@@ -260,13 +255,6 @@ iphone app.
 It goes against the user expectation to do nothing. Is there a way to
 support clicking on the index picture and without the mentioned bad
 things happening?  Overlay the image icon on top of the thumbnail?
-
-[⬇](#Contents)
-
-# Thumbnail Icon
-
-Remove the thumbnail icon from the index page but leave it on
-the image page?
 
 [⬇](#Contents)
 
@@ -462,20 +450,16 @@ filename, date or other metadata.
 
 # Contents
 
-* [Desktop Badge](#desktop-badge) -- show the red circle over the collection's icon when there is a new collection.
 * [Use flenniken.net](#use-flenniken.net) -- switch the domain from sflennik.com to flenniken.net.
 * [Scroll Description](#scroll-description) -- scroll long descriptions on the image page.
 * [One Line Index](#one-line-index) -- use a one line index entry for older collections.
 * [More Button](#more-button) -- add a button at the bottom of the index when there are a lot of collections.
 * [Test Image Page](#test-image-page) -- write unit tests for the image page.
-* [Order List](#order-list) -- the order list shouldn’t exists after optimizing.
 * [Remove Branding](#remove-branding) -- make it easy to rebrand, name, icons, domain, etc.
 * [Readable Build Messages](#readable-build-messages) -- only print important build messages.
-* [Renew Tokens](#renew-tokens) -- handle expiring login tokens.
 * [Play Live Photos](#play-live-photos) -- support live photos on the image page.
 * [Encourage Preferred Usage](#encourage-preferred-usage) -- encourage visiting the image page from start to finish.
 * [Image Click does Nothing](#image-click-does-nothing) -- why the clicking an index image does nothing.
-* [Thumbnail Icon](#thumbnail-icon) -- remove the thumbnail icon from the index page.
 * [Screen Size](#screen-size) -- determine the screen size on the iphone and is it stable.
 * [Description Formatting](#description-formatting) -- support basic description formatting.
 * [Zoom Point Generation](#zoom-point-generation) -- test calculating a new zoom point set for the resolution.
