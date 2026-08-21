@@ -4,21 +4,6 @@ Planned near term features.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# Local Badge
-
-Show a red circle next to the collections title on the index page
-for collections not viewed. Visiting the thumbnails or image page is
-enough to make the red circle go away.
-
-Remove the red circle when the user touches it or the title. Make the
-red circle appear when the user touches the title.
-
-When a collection is deleted the red circle should not reappear.
-
-Keep track of seen collections in local storage.
-
-[⬇](#Contents)
-
 # Use flenniken.net
 
 Switch the domain from sflennik.com to flenniken.net.
@@ -247,12 +232,14 @@ The only lines I want to see are the warnings and the copy line:
 
 Support live photos on the image page.
 
+Play show movies.
+
 [⬇](#Contents)
 
 # Encourage Preferred Usage
 
 The encouraged user interaction is to scroll to find a collection on
-the image page then go to the image page to view the photos.  The
+the index page then go to the image page to view the photos.  The
 collection order and story is intended to be viewed starting from the
 start.  Later after viewing the collection, the thumbnail view is a
 quick way to revisit an image. We don't encourage starting with the
@@ -283,14 +270,6 @@ the image page?
 
 [⬇](#Contents)
 
-# Automatically Download Source
-
-Automatically download the new versions of html, js and css code. Fix
-so refresh is not needed. The service working should always download
-new html, css and js files.
-
-[⬇](#Contents)
-
 # Screen Size
 
 Adjust the test portrait and landscape dimensions in Chrome developer
@@ -307,20 +286,6 @@ existing ones.
 # Description Formatting
 
 Support basic formatting of the descriptions, paragraphs?  Maybe newlines, bold, bullets?
-
-[⬇](#Contents)
-
-# Validate Dimensions
-
-Read image files when building and validate the thumbnail and image
-dimensions for a collection in build mode.  Test the failure case.
-
-[⬇](#Contents)
-
-# Zoom Limited
-
-You are limited how much you can zoom vertical images in landscape
-mode. See the first Hawaii image and the the Santa Fe collection bowl.
 
 [⬇](#Contents)
 
@@ -418,9 +383,6 @@ Put the photo's coordinates in the UI with a link to google maps:
 Use metar to extract the metadata for the maker app and fill in the
 initial collection json.
 
-Update metar nim version and simplify to just docker build environment
--- no mac build env.
-
 [⬇](#Contents)
 
 # Statictea Lambda
@@ -501,7 +463,6 @@ filename, date or other metadata.
 # Contents
 
 * [Desktop Badge](#desktop-badge) -- show the red circle over the collection's icon when there is a new collection.
-* [Local Badge](#local-badge) -- show a red circle on the index page for collections not viewed.
 * [Use flenniken.net](#use-flenniken.net) -- switch the domain from sflennik.com to flenniken.net.
 * [Scroll Description](#scroll-description) -- scroll long descriptions on the image page.
 * [One Line Index](#one-line-index) -- use a one line index entry for older collections.
@@ -515,11 +476,8 @@ filename, date or other metadata.
 * [Encourage Preferred Usage](#encourage-preferred-usage) -- encourage visiting the image page from start to finish.
 * [Image Click does Nothing](#image-click-does-nothing) -- why the clicking an index image does nothing.
 * [Thumbnail Icon](#thumbnail-icon) -- remove the thumbnail icon from the index page.
-* [Automatically Download Source](#automatically-download-source) -- automatically download the new versions of html, js and css code.
 * [Screen Size](#screen-size) -- determine the screen size on the iphone and is it stable.
 * [Description Formatting](#description-formatting) -- support basic description formatting.
-* [Validate Dimensions](#validate-dimensions) -- validate the thumbnail and image dimensions when building.
-* [Zoom Limited](#zoom-limited) -- fix zoom vertical images in landscape mode.
 * [Zoom Point Generation](#zoom-point-generation) -- test calculating a new zoom point set for the resolution.
 * [testValidateImageRequest.js](#testValidateImageRequest-js) -- redo the test using the same style as the other test code.
 * [Different Bundler](#different-bundler) -- use a different bundler for easier sharing of code.
