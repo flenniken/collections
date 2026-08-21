@@ -35,7 +35,8 @@ ls dist/images
 c1 c2 c3 c4 c5 c6 c7 c8
 ~~~
 
-Create the folder, For example, for the 9th collection:
+Create the folder, For example, for the 9th collection. Name it 9, not
+c9, it will be renamed later.
 
 ~~~
 mkdir tmp/9
@@ -77,20 +78,14 @@ for each image.
 when this happens when saving by the .psd extention. In this case
 flatten the image (layer > flatten image), then save.
 
--- If you save the jpgs with color information the maker command will
-report the file as MPO format instead of JPEG.
+-- If you save the jpgs with "Embed Color Profile..." checked, the
+maker command will report the file as MPO format instead of JPEG. MPO
+files are not supported.
 
--- How do you pick a live photo frame to edit?  What is a HEIC
-file, one image or multiple. What is the .mov file?
-
--- If you drag and drop photos from Photos to the tmp folder, you
-get jpg files. How does Photos app make the jpg from the originals?
-How does this workflow compare to the one documented here?
-
-* once all the jpg are created, remove the HEIC files
+* Once all the jpg are created, remove the HEIC files
 
 Rename the jpg files (preview images) to end with "-p.jpg". Sometimes
-you will get .jpeg files instead of .jpg files, the rename code
+you will get .jpeg files instead of .jpg files, the rename code below
 handles this case. For example:
 
 ~~~
@@ -119,7 +114,7 @@ ls
 Then copy all the images which will become the thumbnails:
 
 ~~~
-cd tmp/9
+# in tmp/9 folder
 for file in *-p.jpg; do
   cp "$file" "${file/-p.jpg/-t.jpg}"
 done
@@ -201,9 +196,10 @@ g all
 You access the Maker Page as an admin from the index's about box by
 clicking the maker link.  Select the collection to edit from the
 dropdown menu. Before you name the collection, the select list will
-show the collection number only, like: "(9)". Once the page is loaded
-in your browser you can continue to use it without having to go back
-to the index page.
+show the collection number only, like: "title (9)".
+
+Once the page is loaded in your browser you can continue to use it
+without having to go back to the index page about box.
 
 You see the local host index page with the url:
 
@@ -357,7 +353,7 @@ Test by logging out of admin and logging back in as a regular user.
 Get your cognito user id then send a notification to yourself to test.
 
 ~~~
-scripts/congnito -l
+scripts/cognito -l
 scripts/notification --publish xxxx "Manzantia 2026"
 ~~~
 
