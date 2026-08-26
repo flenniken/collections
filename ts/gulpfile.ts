@@ -525,6 +525,26 @@ export function parseImageName(filename: string): ImageName | null {
   return imageName
 }
 
+export interface LiveVideoName {
+  cNum: number,
+  iNum: number,
+}
+
+export function parseLiveVideoName(filename: string): LiveVideoName | null {
+  // Return the collection and image numbers for a live video basename.
+  if (!filename)
+    return null
+
+  const match = filename.match(/^c(\d+)-(\d+)-v\.mp4$/)
+  if (!match)
+    return null
+
+  return {
+    cNum: parseInt(match[1]),
+    iNum: parseInt(match[2]),
+  }
+}
+
 function getCollectionFiles(cNum: number): string[] {
   // Return a list of all the files in the collection folder.
 
@@ -553,14 +573,17 @@ export function getUnusedImageFiles(images: CJson.Image[], allFiles: string[]): 
   images.forEach(image => {
     imageBasenames.add(image.iPreview);
     imageBasenames.add(image.iThumbnail);
+    if (image.iLiveVideo)
+      imageBasenames.add(image.iLiveVideo);
   });
 
   let unusedImages: string[] = []
   allFiles.filter(basename => {
     const imageName = parseImageName(basename)
+    const liveVideoName = parseLiveVideoName(basename)
 
     // Skip non-image files.
-    if (imageName == null)
+    if (imageName == null && liveVideoName == null)
       return
 
     // Skip files in the collection.
@@ -812,10 +835,11 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
   const imageRequiredFields = [
     "iPreview", "iThumbnail", "title", "description",
     "width", "height", "size", "sizet"]
+  const imageOptionalFields = ["iLiveVideo", "liveSize"]
 
   // Check that the image does not have extra fields.
   cinfo.images.forEach((image, ix) => {
-    validateFields(cNum, image, imageRequiredFields, [], ix)
+    validateFields(cNum, image, imageRequiredFields, imageOptionalFields, ix)
   });
 
   cinfo.images.forEach((image, ix) => {
@@ -875,6 +899,19 @@ export function validateImageDisk(image: CJson.Image) {
       `${image.iThumbnail} file size (${thumbnailStats.size} bytes) does not match cjson: ${image.sizet} bytes.`
     );
   }
+
+  if (image.iLiveVideo) {
+    const liveVideoPath = getImagePath(image.iLiveVideo)
+    if (!fs.existsSync(liveVideoPath)) {
+      throw new Error(`Live video file not found: ${liveVideoPath}`);
+    }
+    const liveVideoStats = fs.statSync(liveVideoPath);
+    if (liveVideoStats.size !== image.liveSize) {
+      throw new Error(
+        `${image.iLiveVideo} file size (${liveVideoStats.size} bytes) does not match cjson: ${image.liveSize} bytes.`
+      );
+    }
+  }
 }
 
 
@@ -927,6 +964,19 @@ got: ${nameObj.cNum} expected: ${cNum}.`);
     throw new Error(`Collection ${cNum} image ${ix}: Invalid ${nameType} type: (${nameObj.pt})`);
 }
 
+export function validateLiveVideoName(cNum: number, ix: number,
+    name: string, previewName: string) {
+  const nameObj = parseLiveVideoName(name)
+  if (nameObj == null)
+    throw new Error(`Collection ${cNum} image ${ix}: invalid live video name: ${name}`);
+  if (nameObj.cNum !== cNum)
+    throw new Error(`Collection ${cNum} image ${ix}: Invalid live video cNum: \
+got: ${nameObj.cNum} expected: ${cNum}.`);
+  const previewObj = parseImageName(previewName)
+  if (previewObj == null || nameObj.iNum !== previewObj.iNum)
+    throw new Error(`Collection ${cNum} image ${ix}: live video iNum does not match preview.`);
+}
+
 export function validateCinfoImage(cNum: number, ix: number,
   ready: boolean, image: CJson.Image) {
   // Validate a single image in the cinfo.
@@ -940,6 +990,18 @@ export function validateCinfoImage(cNum: number, ix: number,
   if (previewObj?.iNum !== thumbObj?.iNum) {
     throw new Error(`Collection ${cNum} image ${ix}: \
 different inum: iPreview ${image.iPreview}, iThumbnail ${image.iThumbnail}`)
+  }
+
+  if (image.iLiveVideo) {
+    if (typeof image.liveSize !== "number")
+      throw new Error(`Collection ${cNum} image ${ix}: liveSize is required when iLiveVideo is set.`)
+    validateLiveVideoName(cNum, ix, image.iLiveVideo, image.iPreview)
+    const liveObj = parseLiveVideoName(image.iLiveVideo)
+    if (liveObj?.iNum !== previewObj?.iNum) {
+      throw new Error(`Collection ${cNum} image ${ix}: live video iNum does not match preview.`)
+    }
+  } else if ("liveSize" in image) {
+    throw new Error(`Collection ${cNum} image ${ix}: liveSize is not allowed without iLiveVideo.`)
   }
 
   // Check that width and height greater than or equal to previewMinDim = 933
@@ -992,12 +1054,17 @@ function generateCollectionsJson() {
 
     let totalSize = 0
     let iNumList: number[] = []
+    let liveINums: number[] = []
     for (const image of cinfo.images) {
       totalSize += image.size + image.sizet
+      if (image.liveSize)
+        totalSize += image.liveSize
       const imageName = parseImageName(image.iPreview)
       if (imageName == null)
         throw new Error(`Error: not a valid image iPreview: ${image.iPreview}`);
       iNumList.push(imageName.iNum)
+      if (image.iLiveVideo)
+        liveINums.push(imageName.iNum)
     }
 
     const indexCollection: CJson.IndexCollection = {
@@ -1012,6 +1079,7 @@ function generateCollectionsJson() {
       iCount: cinfo.images.length,
       totalSize: totalSize,
       iNumList: iNumList,
+      ...(liveINums.length > 0 ? { liveINums: liveINums } : {}),
     };
     csjson.indexCollections.push(indexCollection);
   }

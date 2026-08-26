@@ -146,14 +146,56 @@ function sUrl(url: string) {
   return url
 }
 
+async function responseForRangeRequest(
+    response: Response, request: Request): Promise<Response> {
+  // iOS requests video in byte ranges. Return 206 Partial Content when
+  // serving a cached full-file response.
+  const rangeHeader = request.headers.get("Range")
+  if (!rangeHeader)
+    return response
+
+  const blob = await response.blob()
+  const size = blob.size
+  const match = /^bytes=(\d+)-(\d*)$/i.exec(rangeHeader)
+  if (!match)
+    return response
+
+  const start = parseInt(match[1], 10)
+  let end = match[2] ? parseInt(match[2], 10) : size - 1
+  if (end >= size)
+    end = size - 1
+  if (start >= size || start > end)
+    return new Response(null, { status: 416 })
+
+  const slice = blob.slice(start, end + 1)
+  const headers = new Headers()
+  headers.set("Content-Range", `bytes ${start}-${end}/${size}`)
+  headers.set("Accept-Ranges", "bytes")
+  headers.set("Content-Length", String(slice.size))
+  const contentType = response.headers.get("Content-Type")
+  if (contentType)
+    headers.set("Content-Type", contentType)
+
+  return new Response(slice, {
+    status: 206,
+    statusText: "Partial Content",
+    headers: headers,
+  })
+}
+
 async function cacheMatch(cache: Cache, request: Request) {
   return await cache.match(request, {ignoreSearch: true})
 }
 
 function isImageFileType(url: string) {
-  // Return true when the file is in the images folder and its a jpg
-  // file. We cache images different than html and json files.
-  if (url.includes(cacheUrlPrefix) && url.includes(".jpg"))
+  // Return true when the file is in the images folder and it is a
+  // jpg or Live Photo mp4. We cache these different than html and
+  // json files.
+  if (!url.includes(cacheUrlPrefix))
+    return false
+  if (url.includes(".jpg"))
+    return true
+  if (url.includes("-v.mp4"))
     return true
   return false
 }
@@ -207,14 +249,22 @@ self.addEventListener("fetch", (event: Event) => {
       const cacheReponse = await cacheMatch(cache, fetchEvent.request);
       if (cacheReponse) {
         logsw(`Image file found in cache: ${sUrl(url)}`);
+        if (url.includes("-v.mp4") && request.headers.get("Range"))
+          return responseForRangeRequest(cacheReponse, request)
         return cacheReponse;
       }
 
       // Look for the file on the internet and store it in the
       // application cache when found.
       try {
-        const result = await fetchRemote(cache, fetchEvent.request, false)
+        let netRequest = request
+        if (url.includes("-v.mp4") && request.headers.get("Range")) {
+          netRequest = new Request(stripUrlParameters(url))
+        }
+        const result = await fetchRemote(cache, netRequest, false)
         logsw(`Image file found on net: ${sUrl(url)}`);
+        if (url.includes("-v.mp4") && request.headers.get("Range"))
+          return responseForRangeRequest(result, request)
         return result
       }
       catch (error) {

@@ -22,6 +22,9 @@ body {
 //$ # The page is hidden until it finishes loading so it does not flash.
   visibility: hidden;
   opacity: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 #area {
   display: flex;
@@ -39,9 +42,27 @@ body {
 .container {
   position: relative;
   overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
-.container img {
+.container img,
+.container video.live-video {
   position: absolute;
+  left: 0;
+  top: 0;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.container video.live-video {
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+  object-fit: fill;
+}
+.container video.live-video.playing {
+  opacity: 1;
 }
   </style>
   <script>
@@ -65,6 +86,7 @@ body {
     <div class="colbox" id="cb{id}">
       <div class="container" id="c{id}">
         <img id="i{id}" src="{previewUrl}" alt="{titleAttr}">
+        <video id="v{id}" class="live-video" playsinline webkit-playsinline muted preload="auto"></video>
       </div>
       <h3 class="title">{title}</h3>
       <p class="description">{description}</p>

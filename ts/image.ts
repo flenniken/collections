@@ -25,6 +25,24 @@ let leftEdges: number[] = []
 // Frames per second when animating.
 const framesPerSec = 30
 
+// Press and hold this long to play a Live Photo video.
+const LIVE_PRESS_MS = 400
+// Shorter hold delay on touch devices before starting playback.
+const LIVE_PRESS_MS_IOS = 250
+
+// Live Photo press state.
+let livePressTimer: ReturnType<typeof setTimeout> | null = null
+let livePressImageIx: number | null = null
+let livePressStartX = 0
+let livePressStartY = 0
+let livePressTouchId: number | null = null
+let liveVideoPlayingIx: number | null = null
+// Ignore pause events triggered by stopLiveVideo().
+let liveVideoStopping = false
+
+// Horizontal movement before playback means the user is scrolling.
+const LIVE_SCROLL_CANCEL_PX = 12
+
 // The event handlers for the page. handleContainerTouchStart is
 // another handler on the containers.
 window.addEventListener("DOMContentLoaded", handleDOMContentLoaded)
@@ -35,6 +53,7 @@ window.addEventListener("touchmove", handleTouchMove, {passive: false})
 window.addEventListener("resize", handleResize);
 document.addEventListener("touchend", handleTouchEnd, false)
 document.addEventListener("touchcancel", handleTouchCancel, false)
+document.addEventListener("contextmenu", handleContextMenu, false)
 
 // The start time used to time loading.
 const startTimer = new Timer()
@@ -53,8 +72,14 @@ function handleDOMContentLoaded() {
   startTimer.log("setAvailableArea")
   setAvailableArea()
 
+  startTimer.log("setupLiveVideos")
+  setupLiveVideos()
+
   startTimer.log("sizeImages")
   sizeImages(imageIndex)
+  preloadLiveVideo(imageIndex)
+  preloadLiveVideo(imageIndex - 1)
+  preloadLiveVideo(imageIndex + 1)
 }
 
 async function handleLoad() {
@@ -200,6 +225,214 @@ function getFillZoomPoint(imageIx: number, cjson: CJson.Collection) {
   return {scale: scale, tx: tx, ty: ty}
 }
 
+function imageHasLiveVideo(imageIx: number): boolean {
+  return !!cJson.images[imageIx].iLiveVideo
+}
+
+function getLiveVideoElement(imageIx: number): HTMLVideoElement | null {
+  const video = document.getElementById(`v${imageIx + 1}`)
+  if (!video)
+    return null
+  return video as HTMLVideoElement
+}
+
+// Blob URLs for live videos, loaded in full to avoid iOS range issues.
+const liveVideoBlobUrls = new Map<number, string>()
+const liveVideoBlobLoading = new Set<number>()
+const liveVideoBlobWaiters = new Map<number, (() => void)[]>()
+
+function setupLiveVideos() {
+  // Configure Live Photo video elements from the collection json.
+  cJson.images.forEach((image, imageIx) => {
+    if (!image.iLiveVideo)
+      return
+    const video = getLiveVideoElement(imageIx)
+    if (!video)
+      return
+    video.playsInline = true
+    ;(video as HTMLVideoElement & { webkitPlaysInline?: boolean }).webkitPlaysInline = true
+    video.muted = true
+    video.preload = "auto"
+    sizeLiveVideo(imageIx, image)
+    video.addEventListener("pause", () => {
+      if (liveVideoStopping)
+        return
+      if (liveVideoPlayingIx === imageIx && livePressImageIx === imageIx)
+        void video.play().catch(() => {})
+    })
+    loadLiveVideoBlob(imageIx)
+  })
+}
+
+function loadLiveVideoBlob(imageIx: number, onReady?: () => void) {
+  if (!imageHasLiveVideo(imageIx))
+    return
+  if (liveVideoBlobUrls.has(imageIx)) {
+    onReady?.()
+    return
+  }
+  if (onReady) {
+    let waiters = liveVideoBlobWaiters.get(imageIx)
+    if (!waiters) {
+      waiters = []
+      liveVideoBlobWaiters.set(imageIx, waiters)
+    }
+    waiters.push(onReady)
+  }
+  if (liveVideoBlobLoading.has(imageIx))
+    return
+  liveVideoBlobLoading.add(imageIx)
+
+  const image = cJson.images[imageIx]
+  const url = `/images/c${cJson.cNum}/${image.iLiveVideo}`
+
+  void fetch(url).then(async (response) => {
+    if (!response.ok)
+      throw new Error(`fetch failed: ${response.status}`)
+    const blob = await response.blob()
+    const objectUrl = URL.createObjectURL(blob)
+    liveVideoBlobUrls.set(imageIx, objectUrl)
+    const video = getLiveVideoElement(imageIx)
+    if (video) {
+      video.src = objectUrl
+      video.load()
+    }
+  }).catch((err) => {
+    log(`live video blob load failed: ${err}`)
+  }).finally(() => {
+    liveVideoBlobLoading.delete(imageIx)
+    const waiters = liveVideoBlobWaiters.get(imageIx) || []
+    liveVideoBlobWaiters.delete(imageIx)
+    waiters.forEach((ready) => ready())
+  })
+}
+
+function whenLiveVideoBlobReady(imageIx: number, onReady: () => void) {
+  loadLiveVideoBlob(imageIx, onReady)
+}
+
+function preloadLiveVideo(imageIx: number) {
+  if (imageIx < 0 || imageIx >= cJson.images.length)
+    return
+  loadLiveVideoBlob(imageIx)
+}
+
+function sizeLiveVideo(imageIx: number, image: CJson.Image) {
+  // Match the video layout box to the preview image so zoom transforms
+  // cover the same area.
+  const video = getLiveVideoElement(imageIx)
+  if (!video)
+    return
+  video.style.width = `${image.width}px`
+  video.style.height = `${image.height}px`
+  video.style.objectFit = "fill"
+}
+
+function setImageTransform(imageIx: number, zoomPoint: CJson.ZoomPoint) {
+  const transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`
+  const img = get(`i${imageIx + 1}`)
+  img.style.transformOrigin = "0px 0px"
+  img.style.transform = transform
+  const video = getLiveVideoElement(imageIx)
+  if (video) {
+    video.style.transformOrigin = "0px 0px"
+    video.style.transform = transform
+  }
+}
+
+function clearLivePressTimer() {
+  if (livePressTimer !== null) {
+    clearTimeout(livePressTimer)
+    livePressTimer = null
+  }
+}
+
+function cancelLivePress() {
+  clearLivePressTimer()
+  livePressImageIx = null
+  livePressTouchId = null
+}
+
+function isHorizontalScrollIntent(dx: number, dy: number): boolean {
+  return Math.abs(dx) > LIVE_SCROLL_CANCEL_PX &&
+    Math.abs(dx) > Math.abs(dy)
+}
+
+function stopLiveVideo(imageIx: number) {
+  const video = getLiveVideoElement(imageIx)
+  if (!video)
+    return
+  liveVideoStopping = true
+  video.pause()
+  liveVideoStopping = false
+  video.currentTime = 0
+  video.loop = false
+  video.classList.remove("playing")
+  if (liveVideoPlayingIx === imageIx)
+    liveVideoPlayingIx = null
+}
+
+function stopAllLiveVideos() {
+  cJson.images.forEach((_image, imageIx) => {
+    stopLiveVideo(imageIx)
+  })
+}
+
+function playLiveVideo(imageIx: number) {
+  if (!imageHasLiveVideo(imageIx))
+    return
+
+  clearLivePressTimer()
+  stopAllLiveVideos()
+
+  const video = getLiveVideoElement(imageIx)
+  if (!video)
+    return
+
+  const zoomPoint = getZoomPoint(imageIx)
+  setImageTransform(imageIx, zoomPoint)
+
+  const start = () => {
+    if (livePressImageIx !== imageIx)
+      return
+    video.classList.add("playing")
+    video.loop = true
+    video.currentTime = 0
+    liveVideoPlayingIx = imageIx
+    void video.play().catch((err) => {
+      log(`live video play failed: ${err}`)
+      stopLiveVideo(imageIx)
+    })
+  }
+
+  whenLiveVideoBlobReady(imageIx, start)
+}
+
+function isTouchDevice(): boolean {
+  return needsIosLivePrime()
+}
+
+function startLivePress(imageIx: number, event: Event) {
+  cancelLivePress()
+  const touchEvent = event as TouchEvent
+  livePressImageIx = imageIx
+  livePressStartX = touchEvent.touches[0].clientX
+  livePressStartY = touchEvent.touches[0].clientY
+  livePressTouchId = touchEvent.touches[0].identifier
+
+  const delay = isTouchDevice() ? LIVE_PRESS_MS_IOS : LIVE_PRESS_MS
+  livePressTimer = setTimeout(() => {
+    livePressTimer = null
+    if (livePressImageIx === imageIx)
+      playLiveVideo(imageIx)
+  }, delay)
+}
+
+function needsIosLivePrime(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+}
+
 function sizeImages(firstImageIx: number) {
   // Size the image containers and the images and create zoom points
   // when missing and horizontally scroll the given image into view.
@@ -255,9 +488,9 @@ function sizeImages(firstImageIx: number) {
     const img = get(`i${imageIx+1}`)
 
     add_border(img, zoomPoint)
-    img.style.transformOrigin = "0px 0px"
-    // Note: translate runs from right to left.
-    img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+    setImageTransform(imageIx, zoomPoint)
+    if (image.iLiveVideo)
+      sizeLiveVideo(imageIx, image)
 
     // Log the zoom point.
     log(`i${imageIx+1}: ${image.width} x ${image.height}, ` +
@@ -449,9 +682,13 @@ function handleContainerTouchStart(event: Event) {
     doubleTouch = null
   }
 
-  // When not two fingers touching, return.
-  if (touches.length != 2)
+  // When not two fingers touching, start a Live Photo press.
+  if (touches.length != 2) {
+    if (touches.length == 1 && !zpan.zooming && imageHasLiveVideo(imageIndex))
+      startLivePress(imageIndex, event)
     return
+  }
+  cancelLivePress()
   const imageIx = imageIndex
 
   zpan.zooming = true
@@ -503,6 +740,8 @@ function handleRestoreImage(event: Event) {
 
   log("Double tap image zoom cycle.")
   const imageIx = imageIndex
+  cancelLivePress()
+  stopAllLiveVideos()
 
   let zoomPoint = getZoomPoint(imageIx, cJson)
   const origZP = newZoomPoint(getZoomPoint(imageIx, cJsonOriginal))
@@ -531,15 +770,30 @@ function handleRestoreImage(event: Event) {
   // Animate the image from the original zoom point to its next zoom
   // point.
   const img = get(`i${imageIx+1}`)
+  const video = getLiveVideoElement(imageIx)
   img.style.transformOrigin = "0px 0px"
+  if (video)
+    video.style.transformOrigin = "0px 0px"
+  const fromTransform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`
+  const toTransform = `translate(${nextZP.tx}px, ${nextZP.ty}px) scale(${nextZP.scale})`
   const animation = img.animate([
-    { transform: `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`},
-    { transform: `translate(${nextZP.tx}px, ${nextZP.ty}px) scale(${nextZP.scale})`},
+    { transform: fromTransform },
+    { transform: toTransform },
   ],
   {
     duration: 300,
     iterations: 1,
   })
+  if (video) {
+    video.animate([
+      { transform: fromTransform },
+      { transform: toTransform },
+    ],
+    {
+      duration: 300,
+      iterations: 1,
+    })
+  }
   animation.onfinish = (event) => {
     // Restore the current zoom point and set the finish size and
     // position.
@@ -548,9 +802,7 @@ function handleRestoreImage(event: Event) {
     zoomPoint.tx = nextZP.tx;
     zoomPoint.ty = nextZP.ty;
     add_border(img, zoomPoint)
-    img.style.transformOrigin = "0px 0px"
-    // Note: translate runs from right to left.
-    img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+    setImageTransform(imageIx, zoomPoint)
     log(`Final zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
 
     // It's an error if the original zoom point changes. This has
@@ -589,6 +841,24 @@ function add_border(img: HTMLElement, zoomPoint: CJson.ZoomPoint) {
 
 function handleTouchMove(event: TouchEvent) {
   // Zoom and pan the image.
+
+  const touches = event.touches
+  if (touches.length == 1 &&
+      (livePressImageIx !== null || liveVideoPlayingIx !== null)) {
+    const dx = touches[0].clientX - livePressStartX
+    const dy = touches[0].clientY - livePressStartY
+
+    if (liveVideoPlayingIx !== null) {
+      event.preventDefault()
+      return
+    }
+
+    // Before playback, treat horizontal movement as scrolling.
+    if (isHorizontalScrollIntent(dx, dy)) {
+      cancelLivePress()
+      return
+    }
+  }
 
   if (!zpan.zooming)
     return
@@ -664,18 +934,43 @@ function handleTouchMove(event: TouchEvent) {
   const img = get(`i${imageIx+1}`)
 
   add_border(img, zoomPoint)
-
-  // Note: translate runs from right to left.
-  img.style.transform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`;
+  setImageTransform(imageIx, zoomPoint)
 }
 
 function handleTouchCancel(event: TouchEvent) {
+  // iOS sometimes sends touchcancel when it tries to show the text
+  // loupe. Ignore that while a live video is playing.
   log("touchcancel")
+  if (liveVideoPlayingIx !== null)
+    return
   handleTouchEnd(event)
+}
+
+function livePressTouchEnded(event: TouchEvent): boolean {
+  if (livePressTouchId === null)
+    return false
+  for (let ix = 0; ix < event.changedTouches.length; ix++) {
+    if (event.changedTouches[ix].identifier === livePressTouchId)
+      return true
+  }
+  return false
+}
+
+function handleContextMenu(event: Event) {
+  const target = event.target
+  if (target instanceof Element && target.closest(".container"))
+    event.preventDefault()
 }
 
 function handleTouchEnd(event: TouchEvent) {
   // Log the current zoom point.
+
+  if (livePressImageIx !== null && !livePressTouchEnded(event))
+    return
+
+  cancelLivePress()
+  if (liveVideoPlayingIx !== null)
+    stopLiveVideo(liveVideoPlayingIx)
 
   if (zpan.zooming) {
     zpan.zooming = false
@@ -817,6 +1112,9 @@ function handleScroll() {
       // Set the image index and stop the interval checking.
       imageIndex = imageIx
       log(`scolling stopped on image: ${imageIndex + 1}`)
+      preloadLiveVideo(imageIx)
+      preloadLiveVideo(imageIx - 1)
+      preloadLiveVideo(imageIx + 1)
       clearInterval(scrollStopId);
       scrollStopId = 0
     }

@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# Move the mp4 metadata to the start of each -v.mp4 file (faststart).
+#
+# Live Photo mp4 files must be faststart for streaming playback on
+# iOS. Without it, only the first second plays until the whole file
+# downloads.
+#
+# Usage:
+#   scripts/faststart-live-videos [folder]
+#
+# Pass a collection folder, for example dist/images/c16 or tmp/16.
+# Re-muxes files in place. Requires ffmpeg.
+
+set -euo pipefail
+
+folder="${1:-.}"
+
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  echo "Error: ffmpeg not found. Rebuild the docker container (see docs/build.md)."
+  exit 1
+fi
+
+if [[ ! -d "$folder" ]]; then
+  echo "Error: not a directory: $folder"
+  exit 1
+fi
+
+shopt -s nullglob nocaseglob
+
+mp4_files=("$folder"/*-v.mp4)
+if [[ ${#mp4_files[@]} -eq 0 ]]; then
+  echo "No -v.mp4 files in $folder"
+  exit 0
+fi
+
+for mp4 in "${mp4_files[@]}"; do
+  tmp="${mp4%.mp4}.faststart.mp4"
+  echo "faststart: $(basename "$mp4")"
+  ffmpeg -nostdin -hide_banner -loglevel error -i "$mp4" \
+    -c copy -an -movflags +faststart "$tmp"
+  mv "$tmp" "$mp4"
+done
+
+echo "done"

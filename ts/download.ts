@@ -81,7 +81,8 @@ async function downloadCollection(cNum: number) {
   downloadCollectionImages(cache, indexCollection)
 }
 
-function getCollectionUrls(cNum: number, iNumList: number[]): string[] {
+function getCollectionUrls(cNum: number, iNumList: number[],
+    liveINums: number[] = []): string[] {
   // Return a list of the collection's urls. This includes the images
   // and the html pages -- everything needed to view the collection
   // thumbnails and image pages.
@@ -94,6 +95,9 @@ function getCollectionUrls(cNum: number, iNumList: number[]): string[] {
   for (const iNum of iNumList) {
     urls.push(`images/c${cNum}/c${cNum}-${iNum}-p.jpg`)
     urls.push(`images/c${cNum}/c${cNum}-${iNum}-t.jpg`)
+  }
+  for (const iNum of liveINums) {
+    urls.push(`images/c${cNum}/c${cNum}-${iNum}-v.mp4`)
   }
   urls.push(`images/c${cNum}/image-${cNum}.html`)
   urls.push(`images/c${cNum}/thumbnails-${cNum}.html`)
@@ -168,7 +172,8 @@ async function downloadCollectionImages(cache: Cache,
   // Time the download.
   const downloadTimer = new Timer()
 
-  const urls = getCollectionUrls(cNum, collection.iNumList)
+  const urls = getCollectionUrls(cNum, collection.iNumList,
+      collection.liveINums ?? [])
   downloadTimer.log(`Download collection ${cNum} which has ${urls.length} files.`)
 
   try {

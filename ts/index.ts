@@ -350,7 +350,8 @@ Are you sure you want to delete this collection's images from the cache?`
       return
     }
     log(`remove collection ${cNum} from the app cache`)
-    const urls = getCollectionUrls(cNum, indexCollection.iNumList)
+    const urls = getCollectionUrls(cNum, indexCollection.iNumList,
+        indexCollection.liveINums ?? [])
     const cache = await openCreateCache()
 
     setCollectionState(cNum, "withoutImages")

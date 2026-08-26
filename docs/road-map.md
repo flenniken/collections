@@ -225,9 +225,9 @@ The only lines I want to see are the warnings and the copy line:
 
 # Play Live Photos
 
-Support live photos on the image page.
-
-Play shortw movies.
+Done. Live Photo videos play on the image page when you press and
+hold a photo that has a `-v.mp4` file. Offline download and cache
+include live videos when present.
 
 [⬇](#Contents)
 
@@ -457,7 +457,7 @@ filename, date or other metadata.
 * [Test Image Page](#test-image-page) -- write unit tests for the image page.
 * [Remove Branding](#remove-branding) -- make it easy to rebrand, name, icons, domain, etc.
 * [Readable Build Messages](#readable-build-messages) -- only print important build messages.
-* [Play Live Photos](#play-live-photos) -- support live photos on the image page.
+* [Play Live Photos](#play-live-photos) -- done.
 * [Encourage Preferred Usage](#encourage-preferred-usage) -- encourage visiting the image page from start to finish.
 * [Image Click does Nothing](#image-click-does-nothing) -- why the clicking an index image does nothing.
 * [Screen Size](#screen-size) -- determine the screen size on the iphone and is it stable.

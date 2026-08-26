@@ -1,0 +1,193 @@
+{
+  "title": "Seahawks Parade",
+  "indexDescription": "Seahawk's Superbowl parade.",
+  "description": "This is the second Seahawks parade for us.  This one was easy compared to the first -- free parking, easy access.  This time the parade started at the stadium instead of the Seattle Center.  It was more on time.",
+  "indexThumbnail": "c16-1-t.jpg",
+  "cNum": 16,
+  "posted": "2026-08-26",
+  "images": [
+    {
+      "title": "",
+      "description": "We walked down Madison to watch the parade.  We got free parking in the Optum parking lot.",
+      "iPreview": "c16-1-p.jpg",
+      "iThumbnail": "c16-1-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2299642,
+      "sizet": 238941,
+      "iLiveVideo": "c16-1-v.mp4",
+      "liveSize": 3819990
+    },
+    {
+      "title": "",
+      "description": "4th Ave was full of people.",
+      "iPreview": "c16-2-p.jpg",
+      "iThumbnail": "c16-2-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2307969,
+      "sizet": 256799,
+      "iLiveVideo": "c16-2-v.mp4",
+      "liveSize": 4985693
+    },
+    {
+      "title": "",
+      "description": "The parade started at the stadium.",
+      "iPreview": "c16-3-p.jpg",
+      "iThumbnail": "c16-3-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2437514,
+      "sizet": 249216,
+      "iLiveVideo": "c16-3-v.mp4",
+      "liveSize": 4397979
+    },
+    {
+      "title": "",
+      "description": "Confetti!",
+      "iPreview": "c16-4-p.jpg",
+      "iThumbnail": "c16-4-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2447574,
+      "sizet": 148715,
+      "iLiveVideo": "c16-4-v.mp4",
+      "liveSize": 5473992
+    },
+    {
+      "title": "",
+      "description": "You can see the trophy at the front of the bus.",
+      "iPreview": "c16-5-p.jpg",
+      "iThumbnail": "c16-5-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2021990,
+      "sizet": 143600,
+      "iLiveVideo": "c16-5-v.mp4",
+      "liveSize": 5855968
+    },
+    {
+      "title": "",
+      "description": "People lined the roofs as well as the street.",
+      "iPreview": "c16-6-p.jpg",
+      "iThumbnail": "c16-6-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2375729,
+      "sizet": 137213,
+      "iLiveVideo": "c16-6-v.mp4",
+      "liveSize": 5676272
+    },
+    {
+      "title": "",
+      "description": "Kathleen",
+      "iPreview": "c16-11-p.jpg",
+      "iThumbnail": "c16-11-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 1270920,
+      "sizet": 96126,
+      "iLiveVideo": "c16-11-v.mp4",
+      "liveSize": 2303606
+    },
+    {
+      "title": "",
+      "description": "Walking home afterwards.",
+      "iPreview": "c16-8-p.jpg",
+      "iThumbnail": "c16-8-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2500682,
+      "sizet": 145999,
+      "iLiveVideo": "c16-8-v.mp4",
+      "liveSize": 5355338
+    }
+  ],
+  "ready": true,
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.3297517257193884,
+        "tx": -399.8039045201451,
+        "ty": 2.45477498874115
+      },
+      {
+        "scale": 0.4387127025127298,
+        "tx": -615.7836658818268,
+        "ty": -377.8203984519048
+      },
+      {
+        "scale": 0.3738573316252578,
+        "tx": -495.0090403453438,
+        "ty": -171.7199533426612
+      },
+      {
+        "scale": 0.41039778973616303,
+        "tx": -425.10399457548453,
+        "ty": -258.50402663825395
+      },
+      {
+        "scale": 0.5099992466315154,
+        "tx": -681.820155988106,
+        "ty": -462.6992135975443
+      },
+      {
+        "scale": 0.36152828072872506,
+        "tx": -591.0202542691745,
+        "ty": -83.67166918287307
+      },
+      {
+        "scale": 0.24063956348771195,
+        "tx": -171.9178436540145,
+        "ty": -3.6116698434988166
+      },
+      {
+        "scale": 0.5359003120917832,
+        "tx": -608.2083552726542,
+        "ty": -576.1375278878172
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.23642377125160519,
+        "tx": -14.131621468703571,
+        "ty": -252.32211813546564
+      },
+      {
+        "scale": 0.23728726996476418,
+        "tx": -6.512912295987206,
+        "ty": -233.85125558825388
+      },
+      {
+        "scale": 0.2439242535607854,
+        "tx": -38.3460117553972,
+        "ty": -184.0549836688503
+      },
+      {
+        "scale": 0.239961187372119,
+        "tx": -13.669041135288978,
+        "ty": -262.1168272060487
+      },
+      {
+        "scale": 0.2563838673672031,
+        "tx": -168.688444461808,
+        "ty": -147.9361844165586
+      },
+      {
+        "scale": 0.2571505601899226,
+        "tx": -104.74405922901536,
+        "ty": -198.89488939027424
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 304.75,
+        "ty": 0
+      },
+      {
+        "scale": 0.24118018339769415,
+        "tx": -39.93074381283424,
+        "ty": -176.31455083173262
+      }
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Convert Live Photo .mov files to -v.mp4 for the collection maker.
+#
+# Apple Photos exports Live Photos as paired .HEIC and .mov files, for
+# example 1.mov and 1.HEIC. This script creates 1-v.mp4, 2-v.mp4, and
+# so on to pair with 1-p.jpg, 2-p.jpg after you create the previews.
+#
+# Usage:
+#   scripts/convert-live-videos [folder]
+#
+# Run from a tmp collection folder, or pass the folder as an argument.
+# Removes each .mov after its -v.mp4 is created (or already exists).
+# Requires ffmpeg (and ffprobe) on your PATH.
+
+set -euo pipefail
+
+folder="${1:-.}"
+
+if ! command -v ffmpeg >/dev/null 2>&1; then
+  echo "Error: ffmpeg not found. Rebuild the docker container (see docs/build.md)."
+  exit 1
+fi
+
+if ! command -v ffprobe >/dev/null 2>&1; then
+  echo "Error: ffprobe not found. Rebuild the docker container (see docs/build.md)."
+  exit 1
+fi
+
+if [[ ! -d "$folder" ]]; then
+  echo "Error: not a directory: $folder"
+  exit 1
+fi
+
+shopt -s nullglob nocaseglob
+
+mov_files=("$folder"/*.mov)
+if [[ ${#mov_files[@]} -eq 0 ]]; then
+  echo "No .mov files in $folder"
+  exit 0
+fi
+
+convert_mov() {
+  local mov="$1"
+  local base="${mov%.*}"
+  local out="${base}-v.mp4"
+
+  if [[ -e "$out" ]]; then
+    echo "skip (exists): $(basename "$out")"
+    rm "$mov"
+    echo "remove: $(basename "$mov")"
+    return 0
+  fi
+
+  local codec
+  codec=$(ffprobe -v error -select_streams v:0 \
+    -show_entries stream=codec_name -of csv=p=0 "$mov")
+
+  echo "convert: $(basename "$mov") -> $(basename "$out")"
+  if [[ "$codec" == "h264" ]]; then
+    ffmpeg -nostdin -hide_banner -loglevel error -i "$mov" \
+      -c copy -an -movflags +faststart "$out"
+  else
+    ffmpeg -nostdin -hide_banner -loglevel error -i "$mov" \
+      -c:v libx264 -pix_fmt yuv420p -an -movflags +faststart "$out"
+  fi
+  rm "$mov"
+  echo "remove: $(basename "$mov")"
+}
+
+for mov in "${mov_files[@]}"; do
+  convert_mov "$mov"
+done
+
+echo "done"

@@ -31,8 +31,11 @@ namespace CJson {
     // Size of the thumbnail file in bytes.
     sizet: number;
 
-    // Unused. todo: remove this until it is used.
-    // uniqueId: string;
+    // Optional Live Photo video basename, e.g. c2-1-v.mp4.
+    iLiveVideo?: string;
+
+    // Size of the live video file in bytes.
+    liveSize?: number;
   }
 
   export interface ZoomPoint {
@@ -141,6 +144,8 @@ namespace CJson {
     totalSize: number,
     // The iNums of the images in the collection.
     iNumList: number[],
+    // iNums of images that have a Live Photo video (-v.mp4).
+    liveINums?: number[],
   };
 
   export interface Csjson {

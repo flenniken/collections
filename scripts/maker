@@ -92,6 +92,7 @@ class FileTypeGroups(object):
   def __init__(self, fileInfoList):
     self.previews = []
     self.thumbnails = []
+    self.liveVideos = []
     self.jsonFiles = []
     self.htmlFilesI = []
     self.htmlFilesT = []
@@ -102,6 +103,8 @@ class FileTypeGroups(object):
         self.previews.append(fileInfo)
       elif filename.endswith("-t.jpg"):
         self.thumbnails.append(fileInfo)
+      elif filename.endswith("-v.mp4"):
+        self.liveVideos.append(fileInfo)
       elif filename.endswith(".json"):
         self.jsonFiles.append(fileInfo)
       elif filename.startswith("image-") and filename.endswith(".html"):
@@ -188,6 +191,7 @@ def validateCollectionFolder(num, ftg):
   """
   numPreviews = len(ftg.previews)
   numThumbnails = len(ftg.thumbnails)
+  numLiveVideos = len(ftg.liveVideos)
   numJson = len(ftg.jsonFiles)
   numHtmlI = len(ftg.htmlFilesI)
   numHtmlT = len(ftg.htmlFilesT)
@@ -205,6 +209,9 @@ def validateCollectionFolder(num, ftg):
     raise MakerException(f"Error: {numThumbnails} images, you need at least 8.")
   if numThumbnails > 20:
     raise MakerException(f"Error: {numThumbnails} images, you are limited to 20.")
+  if numLiveVideos > numPreviews:
+    raise MakerException(
+      f"Error: {numLiveVideos} live videos, expected at most {numPreviews}.")
   if numJson > 1:
     raise MakerException(f"Error: {numJson} json files, expected 1.")
   if numJson == 1:
@@ -265,6 +272,10 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     collectionImage['size'] = fileInfo.size
 
     collectionImage['sizet'] = thumbnailFileInfo.size
+    if ix < len(ftg.liveVideos):
+      liveVideoFileInfo = ftg.liveVideos[ix]
+      collectionImage['iLiveVideo'] = getStdLiveVideoName(num, ix)
+      collectionImage['liveSize'] = liveVideoFileInfo.size
     images.append(collectionImage)
 
   # Create the collection info (cinfo).
@@ -294,6 +305,9 @@ def getStdImageName(num, ix, kind):
   name = f"c{num}-{ix+1}-{prefix}.jpg"
   return name
 
+def getStdLiveVideoName(num, ix):
+  return f"c{num}-{ix+1}-v.mp4"
+
 def renameFiles(num, folder, ftg):
   """
   Rename the image files in the given folder to use the standard
@@ -301,7 +315,7 @@ def renameFiles(num, folder, ftg):
   """
   assert len(ftg.previews) == len(ftg.thumbnails)
 
-  # Move the previews and thumbnails to the temporary folder abc.
+  # Move the previews, thumbnails, and live videos to the temporary folder abc.
   tempFolder = os.path.join(folder, "abc")
   if os.path.exists(tempFolder):
     raise MakerException(f"Error: temporary folder {tempFolder} exists.")
@@ -321,6 +335,13 @@ def renameFiles(num, folder, ftg):
     os.rename(oPreviewName, nPreviewName)
     os.rename(oThumbnailName, nThumbnailName)
 
+  for fileInfo in ftg.liveVideos:
+    oLiveVideoName = os.path.join(folder, fileInfo.basename)
+    nLiveVideoName = os.path.join(tempFolder, fileInfo.basename)
+    if os.path.exists(nLiveVideoName):
+      raise MakerException(f"Error: file {nLiveVideoName} exists.")
+    os.rename(oLiveVideoName, nLiveVideoName)
+
   # Move the temporary preview and thumbnails back to the original
   # folder and give them their standard names
   for ix in range(len(ftg.previews)):
@@ -332,6 +353,11 @@ def renameFiles(num, folder, ftg):
 
     os.rename(nPreviewName, stdImageName)
     os.rename(nThumbnailName, stdThumbnailName)
+
+  for ix, fileInfo in enumerate(ftg.liveVideos):
+    nLiveVideoName = os.path.join(tempFolder, fileInfo.basename)
+    stdLiveVideoName = os.path.join(folder, getStdLiveVideoName(num, ix))
+    os.rename(nLiveVideoName, stdLiveVideoName)
 
   # Remove the empty temp folder.
   os.rmdir(tempFolder)

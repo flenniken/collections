@@ -65,12 +65,64 @@ for each image.
 
 [![Tmp Folder](tmp-listing.png)](#)
 
-* Remove the .mov files
+Transcode each .mov to .mp4 (H.264).  .mp4 files are support better by
+the browsers.  .mov are mostly for Apple devices.
+
+~~~
+# from container
+scripts/convert-live-videos tmp/16
+
+skip (exists): 1-v.mp4
+convert: 10.mov -> 10-v.mp4
+convert: 11.mov -> 11-v.mp4
+convert: 12.mov -> 12-v.mp4
+convert: 13.mov -> 13-v.mp4
+convert: 14.mov -> 14-v.mp4
+convert: 15.mov -> 15-v.mp4
+convert: 16.mov -> 16-v.mp4
+convert: 2.mov -> 2-v.mp4
+convert: 3.mov -> 3-v.mp4
+convert: 4.mov -> 4-v.mp4
+convert: 8.mov -> 8-v.mp4
+convert: 9.mov -> 9-v.mp4
+done
+~~~
+
+The conversion uses ffmpeg faststart so iOS can stream the full clip
+immediately. If you already converted files without faststart, fix them:
+
+~~~
+scripts/faststart-live-videos dist/images/c16
+~~~
+
+
+Live videos are optional — you can include them for some images and
+not others. The maker pairs live videos to previews by sorted
+filename order.
+
+
+Convert the HEIC files to -p.jpg files:
+
+~~~
+# from container
+scripts/convert-heic-previews tmp/16
+~~~
+
+Manual steps:
+
 * Open the HEIC files in Photoshop
 * edit then flatten if necessary
 * save each file as jpg (use File > Save) -- uncheck "Embed
   Color Profile: Display P3"
 * Use Jpg options: Quality 8, Baseline, no preview
+
+
+| File     | Role     |
+| -------- | -------- |
+| -p.jpg | The still photo shown on the image page, used for dimensions in cjson, zoom/pan, and offline download |
+| -v.mp4 | Optional motion clip, played only on press-and-hold over the still |
+| -t.jpg | Square thumbnail for the index and thumbnail pages |
+
 
 ♫ Notes:
 

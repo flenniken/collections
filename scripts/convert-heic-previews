@@ -1,0 +1,105 @@
+#!/bin/bash
+
+# Convert Apple Photos HEIC exports to -p.jpg preview files for the maker.
+#
+# Apple Photos exports Live Photos as paired .HEIC and .mov files, for
+# example 1.HEIC and 1.mov. This script creates 1-p.jpg, 2-p.jpg, and
+# so on. Use this for unmodified exports; edit images manually when
+# needed before running the maker.
+#
+# Usage:
+#   scripts/convert-heic-previews [folder]
+#
+# Run from the docker container (or macOS with sips). Pass a tmp
+# collection folder, or run from that folder. Removes each .heic after
+# its -p.jpg is created (or already exists).
+
+set -euo pipefail
+
+previewMinDim=933
+jpegQuality=80
+
+folder="${1:-.}"
+
+if [[ ! -d "$folder" ]]; then
+  echo "Error: not a directory: $folder"
+  exit 1
+fi
+
+if command -v heif-convert >/dev/null 2>&1; then
+  convertTool=heif-convert
+elif command -v sips >/dev/null 2>&1; then
+  convertTool=sips
+else
+  echo "Error: heif-convert not found. Rebuild the docker container (see docs/build.md)."
+  exit 1
+fi
+
+shopt -s nullglob nocaseglob
+
+heic_files=("$folder"/*.heic)
+if [[ ${#heic_files[@]} -eq 0 ]]; then
+  echo "No .heic files in $folder"
+  exit 0
+fi
+
+finalize_jpeg() {
+  local jpeg="$1"
+  python3 - "$jpeg" "$jpegQuality" <<'EOF'
+from PIL import Image
+import sys
+
+path = sys.argv[1]
+quality = int(sys.argv[2])
+with Image.open(path) as img:
+    img.convert("RGB").save(path, "JPEG", quality=quality, optimize=True)
+EOF
+}
+
+jpeg_dimensions() {
+  local jpeg="$1"
+  python3 - "$jpeg" <<'EOF'
+from PIL import Image
+import sys
+
+with Image.open(sys.argv[1]) as img:
+    print(img.size[0], img.size[1])
+EOF
+}
+
+convert_heic() {
+  local heic="$1"
+  local base="${heic%.*}"
+  local out="${base}-p.jpg"
+
+  if [[ -e "$out" ]]; then
+    echo "skip (exists): $(basename "$out")"
+    rm "$heic"
+    echo "remove: $(basename "$heic")"
+    return 0
+  fi
+
+  echo "convert: $(basename "$heic") -> $(basename "$out")"
+  if [[ "$convertTool" == "heif-convert" ]]; then
+    heif-convert -q "$jpegQuality" "$heic" "$out"
+    finalize_jpeg "$out"
+  else
+    sips -s format jpeg -s formatOptions "$jpegQuality" \
+      --deleteColorManagementProperties \
+      "$heic" --out "$out" >/dev/null
+  fi
+
+  read -r width height <<< "$(jpeg_dimensions "$out")"
+  if [[ "$width" -lt "$previewMinDim" || "$height" -lt "$previewMinDim" ]]; then
+    echo "warning: $(basename "$out") is ${width}x${height}; maker requires >= ${previewMinDim} in both dimensions"
+  fi
+
+  rm "$heic"
+  echo "remove: $(basename "$heic")"
+}
+
+for heic in "${heic_files[@]}"; do
+  convert_heic "$heic"
+done
+
+echo "done"
