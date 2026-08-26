@@ -1,6 +1,36 @@
 {
   "indexCollections": [
     {
+      "cNum": 15,
+      "building": false,
+      "ready": true,
+      "title": "C. C. Stern Foundry",
+      "modified": false,
+      "indexDescription": "C. C. Stern Type Foundry",
+      "iThumbnail": "c15-12-t.jpg",
+      "posted": "2026-08-26",
+      "iCount": 16,
+      "totalSize": 79467509,
+      "iNumList": [
+        12,
+        1,
+        4,
+        5,
+        6,
+        3,
+        11,
+        7,
+        8,
+        13,
+        2,
+        15,
+        14,
+        16,
+        9,
+        10
+      ]
+    },
+    {
       "cNum": 14,
       "building": false,
       "ready": true,
