@@ -1,0 +1,257 @@
+{
+  "title": "Manhole Covers",
+  "indexDescription": "Seattle Manhole Collection",
+  "description": "Seattle has the best manhole covers. My collection began in pioneer square.  Since then I have collected pictures of covers from all over the world. \n\nI’ve seen pictures of amazing colorful covers from Japan.",
+  "indexThumbnail": "c14-1-t.jpg",
+  "cNum": 14,
+  "posted": "2026-08-24",
+  "images": [
+    {
+      "title": "",
+      "description": "Happy cartoon people.",
+      "iPreview": "c14-5-p.jpg",
+      "iThumbnail": "c14-5-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 5223882,
+      "sizet": 166210
+    },
+    {
+      "title": "",
+      "description": "The native American motif is a good fit with the pioneer square neighborhood. ",
+      "iPreview": "c14-1-p.jpg",
+      "iThumbnail": "c14-1-t.jpg",
+      "width": 2448,
+      "height": 3264,
+      "size": 3290410,
+      "sizet": 115611
+    },
+    {
+      "title": "",
+      "description": "The map cover has the non existent king dome on the edge. ",
+      "iPreview": "c14-6-p.jpg",
+      "iThumbnail": "c14-6-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 5268631,
+      "sizet": 179149
+    },
+    {
+      "title": "",
+      "description": "There are some duplicates covers. I've seen several City Light City Bright covers. It stands out when wet. ",
+      "iPreview": "c14-8-p.jpg",
+      "iThumbnail": "c14-8-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 3245939,
+      "sizet": 150123
+    },
+    {
+      "title": "",
+      "description": "The spider cover is in the middle of nowhere. ",
+      "iPreview": "c14-10-p.jpg",
+      "iThumbnail": "c14-10-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 3455355,
+      "sizet": 126364
+    },
+    {
+      "title": "",
+      "description": "The lake union cover is in a pocket park next to Ivors salmon house. It's good for the Cheshiahud Lake Union Loop a walk around the lake. \n\nFish and chips at the end is a rewarding finish. The barge in front is a great place to eat and take in the view. ",
+      "iPreview": "c14-7-p.jpg",
+      "iThumbnail": "c14-7-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 5106594,
+      "sizet": 161998
+    },
+    {
+      "title": "",
+      "description": "It’s fun to run across a new cover in a random corner of the city. ",
+      "iPreview": "c14-2-p.jpg",
+      "iThumbnail": "c14-2-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 4235548,
+      "sizet": 153274
+    },
+    {
+      "title": "",
+      "description": "I like the Savannah fish. ",
+      "iPreview": "c14-3-p.jpg",
+      "iThumbnail": "c14-3-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 3449910,
+      "sizet": 118610
+    },
+    {
+      "title": "",
+      "description": "Chicago cover.",
+      "iPreview": "c14-13-p.jpg",
+      "iThumbnail": "c14-13-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 4775634,
+      "sizet": 176588
+    },
+    {
+      "title": "",
+      "description": "An interesting beatup looking cover.",
+      "iPreview": "c14-12-p.jpg",
+      "iThumbnail": "c14-12-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 4775634,
+      "sizet": 176588
+    },
+    {
+      "title": "",
+      "description": "This one is found the in the MountBaker neighborhood.",
+      "iPreview": "c14-11-p.jpg",
+      "iThumbnail": "c14-11-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 4400851,
+      "sizet": 146472
+    },
+    {
+      "title": "",
+      "description": "The Sanata Fe cover got painted over which adds a little something. ",
+      "iPreview": "c14-4-p.jpg",
+      "iThumbnail": "c14-4-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 4407416,
+      "sizet": 164626
+    }
+  ],
+  "ready": true,
+  "zoomPoints": {
+    "375x821": [
+      {
+        "scale": 0.15129177672671662,
+        "tx": -129.93249919146388,
+        "ty": 169.583912523194
+      },
+      {
+        "scale": 0.16585480763735555,
+        "tx": -30.046806089030497,
+        "ty": 116.93044748685273
+      },
+      {
+        "scale": 0.15583372760389144,
+        "tx": -128.27440256111186,
+        "ty": 155.63963639632954
+      },
+      {
+        "scale": 0.13407650505120444,
+        "tx": -21.992360043763426,
+        "ty": 143.9904591112928
+      },
+      {
+        "scale": 0.1360074361254056,
+        "tx": -17.05784756762918,
+        "ty": 103.29325137926071
+      },
+      {
+        "scale": 0.1325001104552197,
+        "tx": -24.42300039442219,
+        "ty": 127.6130300071431
+      },
+      {
+        "scale": 0.2130959295091086,
+        "tx": -166.58310218612723,
+        "ty": -9.703918822916137
+      },
+      {
+        "scale": 0.20865178487221608,
+        "tx": -114.09161896445647,
+        "ty": 0.4320097134568641
+      },
+      {
+        "scale": 0.868155391591176,
+        "tx": -164.09542318135848,
+        "ty": -4.950159901949576
+      },
+      {
+        "scale": 0.14694308423432717,
+        "tx": -30.85087803997655,
+        "ty": 126.02049473599516
+      },
+      {
+        "scale": 0.17704493133190277,
+        "tx": -78.64943712828506,
+        "ty": 99.99436892161418
+      },
+      {
+        "scale": 0.2111157289584856,
+        "tx": -136.24196475372094,
+        "ty": -14.195522972763172
+      }
+    ],
+    "812x375": [
+      {
+        "scale": 0.14145196335906854,
+        "tx": 123.2616481347479,
+        "ty": -27.10740069480518
+      },
+      {
+        "scale": 0.13912365066811086,
+        "tx": 232.66096417317254,
+        "ty": -56.62513791655314
+      },
+      {
+        "scale": 0.14821074212713153,
+        "tx": 100.96822426310348,
+        "ty": -54.28159683518001
+      },
+      {
+        "scale": 0.14196080057175156,
+        "tx": 178.28837356579265,
+        "ty": -60.19149390731454
+      },
+      {
+        "scale": 0.14603464752972736,
+        "tx": 181.7900185804176,
+        "ty": -93.04638573919004
+      },
+      {
+        "scale": 0.12956920309882652,
+        "tx": 202.39405740893875,
+        "ty": -74.45835261051752
+      },
+      {
+        "scale": 0.22211249247324882,
+        "tx": 34.90471455795017,
+        "ty": -206.2218693810476
+      },
+      {
+        "scale": 0.18668733644695987,
+        "tx": 156.83151333484682,
+        "ty": -154.1090670862515
+      },
+      {
+        "scale": 0.4884732457618049,
+        "tx": 218.7973989107995,
+        "ty": -26.293731558984064
+      },
+      {
+        "scale": 0.1506781620169625,
+        "tx": 186.70919365823698,
+        "ty": -113.91709829452441
+      },
+      {
+        "scale": 0.17174222745582732,
+        "tx": 159.90446740047523,
+        "ty": -141.2912705858189
+      },
+      {
+        "scale": 0.19261379452759236,
+        "tx": 113.8766791125986,
+        "ty": -152.45927688696432
+      }
+    ]
+  }
+}
