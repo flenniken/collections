@@ -279,6 +279,21 @@ function setupLiveVideos() {
   updateLiveVideos(imageIndex)
 }
 
+async function liveVideoAuthInit(): Promise<RequestInit & { urlSuffix: string }> {
+  // Image urls require the Cognito access token. Downloads add it;
+  // live video fetches must too when the file is not already cached.
+  const userInfo = await ensureValidAccessToken()
+  if (!userInfo)
+    return { urlSuffix: "" }
+  const headers = new Headers()
+  headers.set("auth", userInfo.access_token)
+  const id = Math.random().toString(36).slice(2, 10)
+  return {
+    headers: headers,
+    urlSuffix: `?id=${id}&user=${encodeURIComponent(userInfo.userId)}`,
+  }
+}
+
 function loadLiveVideoBlob(imageIx: number, onReady?: () => void) {
   if (!imageHasLiveVideo(imageIx))
     return
@@ -299,9 +314,13 @@ function loadLiveVideoBlob(imageIx: number, onReady?: () => void) {
   liveVideoBlobLoading.add(imageIx)
 
   const image = cJson.images[imageIx]
-  const url = `/images/c${cJson.cNum}/${image.iLiveVideo}`
+  const baseUrl = `/images/c${cJson.cNum}/${image.iLiveVideo}`
 
-  void fetch(url).then(async (response) => {
+  void liveVideoAuthInit().then((auth) => {
+    const url = `${baseUrl}${auth.urlSuffix}`
+    const init: RequestInit = auth.headers ? { headers: auth.headers } : {}
+    return fetch(url, init)
+  }).then(async (response) => {
     if (!response.ok)
       throw new Error(`fetch failed: ${response.status}`)
     const blob = await response.blob()
@@ -314,6 +333,8 @@ function loadLiveVideoBlob(imageIx: number, onReady?: () => void) {
     }
   }).catch((err) => {
     log(`live video blob load failed: ${err}`)
+    if (!fetchUserInfo())
+      log("live video: log in on the index page, then re-download the collection")
   }).finally(() => {
     liveVideoBlobLoading.delete(imageIx)
     const waiters = liveVideoBlobWaiters.get(imageIx) || []
