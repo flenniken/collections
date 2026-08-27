@@ -119,8 +119,11 @@ can install and experience full screen photos.
   </div>
 
   <div class="collections">
+<!--$ # The newest 10 collections use the full card. Older ones use a -->
+<!--$ # one line entry so the index stays short as collections grow. -->
 <!--$ block -->
 <!--$ : t.repeat = len(o.csjson.indexCollections) -->
+<!--$ : if((t.row >= 10), return("skip")) -->
 <!--$ : c = o.csjson.indexCollections[t.row] -->
 <!--$ : # echo(string(c, "dn")) -->
 <!--$ : num = c.cNum -->
@@ -149,6 +152,30 @@ can install and experience full screen photos.
         <img class="icon waitForImages" src="icons/6-dots-rotate.svg"
           alt="wait for collection images">
         <img class="icon right withImages" src="icons/trash-can.svg"
+          onclick="removeCollection({num})" alt="remove collection from cache">
+      </div>
+    </div>
+<!--$ endblock -->
+<!--$ block -->
+<!--$ : t.repeat = len(o.csjson.indexCollections) -->
+<!--$ : if((t.row < 10), return("skip")) -->
+<!--$ : c = o.csjson.indexCollections[t.row] -->
+<!--$ : num = c.cNum -->
+<!--$ : cid = format("c{num}") -->
+<!--$ : tinUrl = format("/tin/{c.iThumbnail}") -->
+<!--$ : title = html(c.title, "body") -->
+<!--$ : titleAttr = html(c.title, "attribute") -->
+<!--$ : building = if( (c.building), " admin", "") -->
+    <div class="collection compact{building}" id="{cid}">
+      <img class="line-thumb" src="{tinUrl}" alt="{titleAttr}"
+        width="32" height="32" onclick="viewCollection({num})">
+      <p class="title">{title}</p>
+      <div class="line-icons">
+        <img class="icon withoutImages" src="icons/download.svg"
+          onclick="downloadCollection({num})" alt="download collection images">
+        <img class="icon waitForImages" src="icons/6-dots-rotate.svg"
+          alt="wait for collection images">
+        <img class="icon withImages" src="icons/trash-can.svg"
           onclick="removeCollection({num})" alt="remove collection from cache">
       </div>
     </div>

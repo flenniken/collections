@@ -23,7 +23,9 @@ page, the image page and the thumbnails page.
 The index page shows the sorted list of available collections with the
 most recent collection on top. You can scroll through the list.
 
-Each collection has a title, thumbnail, description, and post date.
+The newest 10 collections show a title, big thumbnail, description,
+and post date. Older collections show a one line entry with a small
+thumbnail that opens the images, and the title.
 
 You login with your email and password by clicking the circle icon in
 the upper righthand side of the index page. You see your first initial

@@ -18,9 +18,10 @@ Show a vertical scrollbar for long descriptions on the image page. Currently the
 
 # One Line Index
 
-Continue to use big thumbnails for the newest collections.  Use one
-line index entries for older collections. The line contains a small
-thumbnail, title, thumbnails icon, image icon.
+Done. The newest 10 collections keep the full card with big
+thumbnail, date, and description. Older collections use a one line
+entry with a 32 x 32 thumbnail that opens the image page, the title,
+and download or trash when needed.
 
 [⬇](#Contents)
 
@@ -452,7 +453,7 @@ filename, date or other metadata.
 
 * [Use flenniken.net](#use-flenniken.net) -- switch the domain from sflennik.com to flenniken.net.
 * [Scroll Description](#scroll-description) -- scroll long descriptions on the image page.
-* [One Line Index](#one-line-index) -- use a one line index entry for older collections.
+* [One Line Index](#one-line-index) -- done.
 * [More Button](#more-button) -- add a button at the bottom of the index when there are a lot of collections.
 * [Test Image Page](#test-image-page) -- write unit tests for the image page.
 * [Remove Branding](#remove-branding) -- make it easy to rebrand, name, icons, domain, etc.
