@@ -54,6 +54,7 @@ window.addEventListener("resize", handleResize);
 document.addEventListener("touchend", handleTouchEnd, false)
 document.addEventListener("touchcancel", handleTouchCancel, false)
 document.addEventListener("contextmenu", handleContextMenu, false)
+document.addEventListener("dragstart", handleDragStart, false)
 
 // The start time used to time loading.
 const startTimer = new Timer()
@@ -77,9 +78,6 @@ function handleDOMContentLoaded() {
 
   startTimer.log("sizeImages")
   sizeImages(imageIndex)
-  preloadLiveVideo(imageIndex)
-  preloadLiveVideo(imageIndex - 1)
-  preloadLiveVideo(imageIndex + 1)
 }
 
 async function handleLoad() {
@@ -241,6 +239,16 @@ const liveVideoBlobUrls = new Map<number, string>()
 const liveVideoBlobLoading = new Set<number>()
 const liveVideoBlobWaiters = new Map<number, (() => void)[]>()
 
+// How many images on each side of the current one keep their video
+// loaded. A three second Live Photo is 3 to 6 MB and iOS loads and
+// decodes only a few media elements at a time, so holding the whole
+// collection open leaves the video you press half loaded.
+const LIVE_VIDEO_WINDOW = 1
+
+// Play anyway when a video does not report that it can play through in
+// this long.
+const LIVE_READY_WAIT_MS = 2000
+
 function setupLiveVideos() {
   // Configure Live Photo video elements from the collection json.
   cJson.images.forEach((image, imageIx) => {
@@ -252,16 +260,23 @@ function setupLiveVideos() {
     video.playsInline = true
     ;(video as HTMLVideoElement & { webkitPlaysInline?: boolean }).webkitPlaysInline = true
     video.muted = true
+    video.loop = true
     video.preload = "auto"
     sizeLiveVideo(imageIx, image)
+    // Show the video only once frames are rolling so a slow start never
+    // leaves a frozen frame sitting on top of the photo.
+    video.addEventListener("playing", () => {
+      if (liveVideoPlayingIx === imageIx)
+        video.classList.add("playing")
+    })
     video.addEventListener("pause", () => {
       if (liveVideoStopping)
         return
       if (liveVideoPlayingIx === imageIx && livePressImageIx === imageIx)
         void video.play().catch(() => {})
     })
-    loadLiveVideoBlob(imageIx)
   })
+  updateLiveVideos(imageIndex)
 }
 
 function loadLiveVideoBlob(imageIx: number, onReady?: () => void) {
@@ -311,10 +326,58 @@ function whenLiveVideoBlobReady(imageIx: number, onReady: () => void) {
   loadLiveVideoBlob(imageIx, onReady)
 }
 
-function preloadLiveVideo(imageIx: number) {
-  if (imageIx < 0 || imageIx >= cJson.images.length)
+function updateLiveVideos(centerIx: number) {
+  // Load the videos near the current image and release the others so
+  // the one you press is fully loaded and decoded before you press it.
+  cJson.images.forEach((_image, imageIx) => {
+    if (!imageHasLiveVideo(imageIx))
+      return
+    if (Math.abs(imageIx - centerIx) <= LIVE_VIDEO_WINDOW)
+      loadLiveVideoBlob(imageIx)
+    else
+      releaseLiveVideo(imageIx)
+  })
+}
+
+function releaseLiveVideo(imageIx: number) {
+  // Detach the video from its element and free its blob so iOS can give
+  // the decoder to a nearer video.
+  if (liveVideoPlayingIx === imageIx || livePressImageIx === imageIx)
     return
-  loadLiveVideoBlob(imageIx)
+  const objectUrl = liveVideoBlobUrls.get(imageIx)
+  if (objectUrl === undefined)
+    return
+  const video = getLiveVideoElement(imageIx)
+  if (video) {
+    video.removeAttribute("src")
+    video.load()
+  }
+  liveVideoBlobUrls.delete(imageIx)
+  URL.revokeObjectURL(objectUrl)
+}
+
+function whenLiveVideoPlayable(imageIx: number, onPlayable: () => void) {
+  // Call onPlayable once the video can play all the way through without
+  // stopping to load more data.
+  const video = getLiveVideoElement(imageIx)
+  if (!video)
+    return
+  if (video.readyState >= video.HAVE_ENOUGH_DATA) {
+    onPlayable()
+    return
+  }
+
+  let waitId = 0
+  const playable = () => {
+    clearTimeout(waitId)
+    video.removeEventListener("canplaythrough", playable)
+    onPlayable()
+  }
+  video.addEventListener("canplaythrough", playable, {once: true})
+  waitId = window.setTimeout(() => {
+    log(`live video ${imageIx + 1} readyState: ${video.readyState}`)
+    playable()
+  }, LIVE_READY_WAIT_MS)
 }
 
 function sizeLiveVideo(imageIx: number, image: CJson.Image) {
@@ -366,7 +429,6 @@ function stopLiveVideo(imageIx: number) {
   video.pause()
   liveVideoStopping = false
   video.currentTime = 0
-  video.loop = false
   video.classList.remove("playing")
   if (liveVideoPlayingIx === imageIx)
     liveVideoPlayingIx = null
@@ -374,6 +436,8 @@ function stopLiveVideo(imageIx: number) {
 
 function stopAllLiveVideos() {
   cJson.images.forEach((_image, imageIx) => {
+    if (!liveVideoBlobUrls.has(imageIx))
+      return
     stopLiveVideo(imageIx)
   })
 }
@@ -395,9 +459,8 @@ function playLiveVideo(imageIx: number) {
   const start = () => {
     if (livePressImageIx !== imageIx)
       return
-    video.classList.add("playing")
-    video.loop = true
-    video.currentTime = 0
+    if (video.currentTime > 0)
+      video.currentTime = 0
     liveVideoPlayingIx = imageIx
     void video.play().catch((err) => {
       log(`live video play failed: ${err}`)
@@ -405,11 +468,19 @@ function playLiveVideo(imageIx: number) {
     })
   }
 
-  whenLiveVideoBlobReady(imageIx, start)
+  // Wait for the video itself to be ready, not just its download.
+  // Playing a partly loaded video runs about a second and then stops
+  // until the rest of it loads.
+  whenLiveVideoBlobReady(imageIx, () => {
+    if (livePressImageIx !== imageIx)
+      return
+    whenLiveVideoPlayable(imageIx, start)
+  })
 }
 
 function isTouchDevice(): boolean {
-  return needsIosLivePrime()
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
 }
 
 function startLivePress(imageIx: number, event: Event) {
@@ -426,11 +497,6 @@ function startLivePress(imageIx: number, event: Event) {
     if (livePressImageIx === imageIx)
       playLiveVideo(imageIx)
   }, delay)
-}
-
-function needsIosLivePrime(): boolean {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
 }
 
 function sizeImages(firstImageIx: number) {
@@ -962,6 +1028,17 @@ function handleContextMenu(event: Event) {
     event.preventDefault()
 }
 
+function handleDragStart(event: Event) {
+  // Holding a photo for about a second starts the iOS drag gesture,
+  // which ends the page's touch and stops a playing Live Photo. The css
+  // user-drag setting normally prevents it, this is a backstop. Dragging
+  // outside the photo, selected description text for example, is left
+  // alone.
+  const target = event.target
+  if (target instanceof Element && target.closest(".container"))
+    event.preventDefault()
+}
+
 function handleTouchEnd(event: TouchEvent) {
   // Log the current zoom point.
 
@@ -1112,9 +1189,7 @@ function handleScroll() {
       // Set the image index and stop the interval checking.
       imageIndex = imageIx
       log(`scolling stopped on image: ${imageIndex + 1}`)
-      preloadLiveVideo(imageIx)
-      preloadLiveVideo(imageIx - 1)
-      preloadLiveVideo(imageIx + 1)
+      updateLiveVideos(imageIx)
       clearInterval(scrollStopId);
       scrollStopId = 0
     }

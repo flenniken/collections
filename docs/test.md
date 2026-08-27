@@ -105,8 +105,13 @@ When making changes to the image page test them with these steps:
 * h scroll and overscroll on both ends
 * v scroll and overscroll on both ends
 * zoom image small, go to thumbnails, tap the same image and verify image is at its zoom point
-* long press to copy text then extend the selection
-* long press on an image to make sure the share menu appears
+* long press the description text to copy it then extend the selection
+* press and hold a Live Photo and verify the video plays and keeps
+  looping for more than five seconds, it used to stop after one second
+  when the iOS drag gesture took over the touch
+* press and hold an image that has no Live Photo and verify nothing happens
+* press and hold a Live Photo then slide sideways and verify it scrolls
+  to the next image instead of playing
 * rotate the last image then rotate it back and verify it remains on the same image
 * scroll h & v in landscape mode
 * no flash on load and no flash on rotate

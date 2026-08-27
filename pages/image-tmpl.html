@@ -22,6 +22,11 @@ body {
 //$ # The page is hidden until it finishes loading so it does not flash.
   visibility: hidden;
   opacity: 0;
+}
+//$ # Selecting is turned off over the photo and the menu so pressing
+//$ # them does not bring up the callout or the text loupe. The title and
+//$ # description text stays selectable so you can copy it.
+.bottom-menu {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -54,6 +59,9 @@ body {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
+//$ # Holding an image for a second starts the iOS drag gesture, which
+//$ # ends the page's touch and stops a playing Live Photo.
+  -webkit-user-drag: none;
 }
 .container video.live-video {
   display: block;
@@ -85,7 +93,7 @@ body {
 <!--$ : previewUrl = format("/images/c{s.cNum}/{image.iPreview}") -->
     <div class="colbox" id="cb{id}">
       <div class="container" id="c{id}">
-        <img id="i{id}" src="{previewUrl}" alt="{titleAttr}">
+        <img id="i{id}" src="{previewUrl}" alt="{titleAttr}" draggable="false">
         <video id="v{id}" class="live-video" playsinline webkit-playsinline muted preload="auto"></video>
       </div>
       <h3 class="title">{title}</h3>
