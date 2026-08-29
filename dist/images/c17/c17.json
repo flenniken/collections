@@ -1,0 +1,177 @@
+{
+  "title": "B Reactor Concert",
+  "indexDescription": "First concert at the B Reactor.",
+  "description": "The B Reactor is the first nuclear reactor. It is 1940's high tech. We took a bus here from Richland.  The B Reactor is now part of a public park.",
+  "indexThumbnail": "c17-9-t.jpg",
+  "cNum": 17,
+  "posted": "2026-08-27",
+  "images": [
+    {
+      "title": "",
+      "description": "The B Reactor.  We took a bus here from Richland.  The B Reactor is a public park.",
+      "iPreview": "c17-9-p.jpg",
+      "iThumbnail": "c17-9-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2277160,
+      "sizet": 80320
+    },
+    {
+      "title": "",
+      "description": "The reactor room is a big open space with good acoustics.  The Richland musical choir put Kathleen's poems to music.  Kathleen read between songs. This was the first concert here.\n\nThe wall above contains rods that slide into the reactor core. ",
+      "iPreview": "c17-5-p.jpg",
+      "iThumbnail": "c17-5-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3574797,
+      "sizet": 154527
+    },
+    {
+      "title": "",
+      "description": "Kathleen reading and the choir preparing to sing.",
+      "iPreview": "c17-2-p.jpg",
+      "iThumbnail": "c17-2-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2282300,
+      "sizet": 107278
+    },
+    {
+      "title": "",
+      "description": "Kathleen and Elisabeth",
+      "iPreview": "c17-4-p.jpg",
+      "iThumbnail": "c17-4-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2258871,
+      "sizet": 101410
+    },
+    {
+      "title": "",
+      "description": "Elisabeth, Eric and Carolyn",
+      "iPreview": "c17-7-p.jpg",
+      "iThumbnail": "c17-7-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 1901814,
+      "sizet": 80107
+    },
+    {
+      "title": "",
+      "description": "Elisabeth and Carolyn",
+      "iPreview": "c17-8-p.jpg",
+      "iThumbnail": "c17-8-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 1934764,
+      "sizet": 82155
+    },
+    {
+      "title": "",
+      "description": "A quick dinner before the concert.",
+      "iPreview": "c17-10-p.jpg",
+      "iThumbnail": "c17-10-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2249082,
+      "sizet": 100464
+    },
+    {
+      "title": "",
+      "description": "The important people.",
+      "iPreview": "c17-6-p.jpg",
+      "iThumbnail": "c17-6-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2055788,
+      "sizet": 94816
+    }
+  ],
+  "ready": true,
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.31733145866767515,
+        "tx": -534.8980517779175,
+        "ty": -14.32288352614529
+      },
+      {
+        "scale": 0.36524326948426955,
+        "tx": -556.4938952795675,
+        "ty": -58.351250810191914
+      },
+      {
+        "scale": 0.3589372433315306,
+        "tx": -403.0606153732293,
+        "ty": -33.64026604577805
+      },
+      {
+        "scale": 0.2714642420438656,
+        "tx": -307.9429870578506,
+        "ty": 125.71202135740714
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.3283807852758712,
+        "tx": -459.8050857589096,
+        "ty": -6.534366408094286
+      },
+      {
+        "scale": 0.33818054814995113,
+        "tx": -335.83520614587565,
+        "ty": -55.40096360157605
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 305.25
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.23115079365079366,
+        "tx": 0,
+        "ty": -134.5
+      },
+      {
+        "scale": 0.1421957671957672,
+        "tx": 179.33333333333331,
+        "ty": -2.842170943040401e-14
+      },
+      {
+        "scale": 0.23115079365079366,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.23115079365079366,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.262947126337788,
+        "tx": -8.786307242377234,
+        "ty": -30.373180017043467
+      },
+      {
+        "scale": 0.23115079365079366,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.33394268111322595,
+        "tx": -223.11013998800678,
+        "ty": -178.12479773069916
+      },
+      {
+        "scale": 0.23845252172211884,
+        "tx": -23.47657754836365,
+        "ty": -117.47296590219958
+      }
+    ]
+  }
+}

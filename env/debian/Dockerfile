@@ -42,6 +42,9 @@ RUN chown coder:coder /home/coder
 # Install statictea.
 COPY statictea /usr/bin
 
+# Install metar
+COPY metar /usr/bin
+
 # Install nodejs.
 
 # To see the node versions available go to the web site:
