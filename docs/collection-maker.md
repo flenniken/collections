@@ -415,6 +415,17 @@ Send a notification to all users.
 scripts/notification --publish all "Manzantia 2026"
 ~~~
 
+#Replace Image
+
+Steps to replacement an image with a new one:
+
+* create new preview and thumbnail images
+* copy the two images into the images folder replacing the originals
+* test collections in Chrome on your desktop, refresh the page
+* deploy the files to s3
+* on the iphone delete the collection
+* on the iphone download the collection
+
 <style>body { max-width: 40em}</style>
 
 [⬇](#Contents)
@@ -428,3 +439,4 @@ scripts/notification --publish all "Manzantia 2026"
 * [Remove DS Store Files](#remove-ds-store-files) -- remove the .DS_Store files.
 * [Deploy](#deploy) -- how to publish the collection to the world.
 * [Notify](#notify) -- how to notify users of the new collection.
+* [Replace Image](#replace-image) -- how to replace an image.
