@@ -249,11 +249,32 @@ const LIVE_VIDEO_WINDOW = 1
 // this long.
 const LIVE_READY_WAIT_MS = 2000
 
+function addLiveBadge(imageIx: number) {
+  // Show the LIVE badge so you can tell the photo is playable.
+  const container = document.getElementById(`c${imageIx + 1}`)
+  if (!container)
+    return
+  container.classList.add("has-live")
+  if (container.querySelector(".live-badge"))
+    return
+  const badge = document.createElement("div")
+  badge.className = "live-badge"
+  badge.setAttribute("aria-label", "Live Photo")
+  badge.innerHTML =
+    '<svg class="live-badge-icon" viewBox="0 0 24 24" aria-hidden="true">' +
+    '<circle cx="12" cy="12" r="2.6" fill="currentColor"/>' +
+    '<circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+    '<circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.8"/>' +
+    '</svg><span>LIVE</span>'
+  container.appendChild(badge)
+}
+
 function setupLiveVideos() {
   // Configure Live Photo video elements from the collection json.
   cJson.images.forEach((image, imageIx) => {
     if (!image.iLiveVideo)
       return
+    addLiveBadge(imageIx)
     const video = getLiveVideoElement(imageIx)
     if (!video)
       return

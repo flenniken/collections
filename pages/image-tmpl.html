@@ -72,6 +72,40 @@ body {
 .container video.live-video.playing {
   opacity: 1;
 }
+.live-badge {
+  display: none;
+  position: absolute;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  left: max(10px, env(safe-area-inset-left, 0px));
+  z-index: 2;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px 4px 6px;
+  border-radius: 6px;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.28);
+  opacity: 1;
+  transition: opacity 0.18s ease;
+}
+.container.has-live .live-badge {
+  display: flex;
+}
+.live-badge-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+}
+.container video.live-video.playing ~ .live-badge {
+  opacity: 0;
+}
   </style>
   <script>
 //$ block
@@ -91,10 +125,19 @@ body {
 <!--$ : titleAttr = html(image.title, "attribute") -->
 <!--$ : description = html(image.description, "body") -->
 <!--$ : previewUrl = format("/images/c{s.cNum}/{image.iPreview}") -->
+<!--$ : liveClass = if(exists(image, "iLiveVideo"), " has-live", "") -->
     <div class="colbox" id="cb{id}">
-      <div class="container" id="c{id}">
+      <div class="container{liveClass}" id="c{id}">
         <img id="i{id}" src="{previewUrl}" alt="{titleAttr}" draggable="false">
         <video id="v{id}" class="live-video" playsinline webkit-playsinline muted preload="auto"></video>
+        <div class="live-badge" aria-label="Live Photo">
+          <svg class="live-badge-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="2.6" fill="currentColor"/>
+            <circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="1.8"/>
+            <circle cx="12" cy="12" r="9.2" fill="none" stroke="currentColor" stroke-width="1.8"/>
+          </svg>
+          <span>LIVE</span>
+        </div>
       </div>
       <h3 class="title">{title}</h3>
       <p class="description">{description}</p>
