@@ -835,7 +835,7 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
   const imageRequiredFields = [
     "iPreview", "iThumbnail", "title", "description",
     "width", "height", "size", "sizet"]
-  const imageOptionalFields = ["iLiveVideo", "liveSize", "location"]
+  const imageOptionalFields = ["iLiveVideo", "liveSize", "location", "taken"]
 
   // Check that the image does not have extra fields.
   cinfo.images.forEach((image, ix) => {

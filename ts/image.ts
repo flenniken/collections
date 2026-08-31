@@ -79,8 +79,8 @@ function handleDOMContentLoaded() {
   startTimer.log("sizeImages")
   sizeImages(imageIndex)
 
-  startTimer.log("setupLocationMaps")
-  setupLocationMaps()
+  startTimer.log("setupImageDetails")
+  setupImageDetails()
 }
 
 async function handleLoad() {
@@ -177,17 +177,62 @@ function createLocationMap(lat: number, lng: number): HTMLAnchorElement {
   return link
 }
 
-function setupLocationMaps() {
-  // Add a map under each image description that has GPS.
+function formatTaken(taken?: string): string {
+  // Return a readable capture time, e.g. "Jun 4, 2023, 7:04 PM".
+  // Uses the stored camera clock time, not the viewer's timezone.
+  if (!taken)
+    return ""
+  const match = taken.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/)
+  if (!match)
+    return ""
+  const year = parseInt(match[1], 10)
+  const month = parseInt(match[2], 10)
+  const day = parseInt(match[3], 10)
+  const hour = parseInt(match[4], 10)
+  const minute = parseInt(match[5], 10)
+  if (month < 1 || month > 12)
+    return ""
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+  const ampm = hour >= 12 ? "PM" : "AM"
+  let hour12 = hour % 12
+  if (hour12 == 0)
+    hour12 = 12
+  const minuteStr = minute < 10 ? `0${minute}` : `${minute}`
+  return `${months[month - 1]} ${day}, ${year}, ${hour12}:${minuteStr} ${ampm}`
+}
+
+function createTakenTime(taken: string): HTMLTimeElement | null {
+  // Return a time element for the capture timestamp, or null.
+  const label = formatTaken(taken)
+  if (!label)
+    return null
+  const time = document.createElement("time")
+  time.className = "taken"
+  time.dateTime = taken
+  time.textContent = label
+  return time
+}
+
+function setupImageDetails() {
+  // Add capture time and a map under each image description.
   cJson.images.forEach((image, ix) => {
-    const parsed = parseLocation(image.location)
-    if (!parsed)
-      return
     const colbox = get(`cb${ix + 1}`)
     const description = colbox.querySelector(".description")
     if (!description)
       return
-    description.after(createLocationMap(parsed.lat, parsed.lng))
+    let insertAfter: Element = description
+    if (image.taken) {
+      const takenEl = createTakenTime(image.taken)
+      if (takenEl) {
+        insertAfter.after(takenEl)
+        insertAfter = takenEl
+      }
+    }
+    const parsed = parseLocation(image.location)
+    if (!parsed)
+      return
+    insertAfter.after(createLocationMap(parsed.lat, parsed.lng))
   })
 }
 
@@ -551,10 +596,33 @@ function stopLiveVideo(imageIx: number) {
   liveVideoStopping = true
   video.pause()
   liveVideoStopping = false
+  video.muted = true
   video.currentTime = 0
   video.classList.remove("playing")
   if (liveVideoPlayingIx === imageIx)
     liveVideoPlayingIx = null
+}
+
+function primeLiveVideoForSound(imageIx: number) {
+  // iOS only allows unmuted play() inside a user gesture. Play during
+  // press-start, then pause until the hold delay so later play() has
+  // sound.
+  const video = getLiveVideoElement(imageIx)
+  if (!video || !video.src || !video.paused)
+    return
+  video.muted = false
+  void video.play().then(() => {
+    if (liveVideoPlayingIx === imageIx)
+      return
+    video.muted = true
+    liveVideoStopping = true
+    video.pause()
+    liveVideoStopping = false
+    if (video.currentTime > 0)
+      video.currentTime = 0
+  }).catch(() => {
+    video.muted = true
+  })
 }
 
 function stopAllLiveVideos() {
@@ -570,7 +638,10 @@ function playLiveVideo(imageIx: number) {
     return
 
   clearLivePressTimer()
-  stopAllLiveVideos()
+  cJson.images.forEach((_image, ix) => {
+    if (ix !== imageIx)
+      stopLiveVideo(ix)
+  })
 
   const video = getLiveVideoElement(imageIx)
   if (!video)
@@ -585,9 +656,14 @@ function playLiveVideo(imageIx: number) {
     if (video.currentTime > 0)
       video.currentTime = 0
     liveVideoPlayingIx = imageIx
+    video.muted = false
     void video.play().catch((err) => {
       log(`live video play failed: ${err}`)
-      stopLiveVideo(imageIx)
+      video.muted = true
+      void video.play().catch((err2) => {
+        log(`live video muted play failed: ${err2}`)
+        stopLiveVideo(imageIx)
+      })
     })
   }
 
@@ -613,6 +689,7 @@ function startLivePress(imageIx: number, event: Event) {
   livePressStartX = touchEvent.touches[0].clientX
   livePressStartY = touchEvent.touches[0].clientY
   livePressTouchId = touchEvent.touches[0].identifier
+  primeLiveVideoForSound(imageIx)
 
   const delay = isTouchDevice() ? LIVE_PRESS_MS_IOS : LIVE_PRESS_MS
   livePressTimer = setTimeout(() => {

@@ -378,6 +378,16 @@ function validateCinfoNoReadingSuite() {
   cinfo.images[0].location = ""
   test(fn, 4, cinfo)
 
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].taken = "2023-06-04T19:04:44"
+  test(fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].taken = ""
+  test(fn, 4, cinfo)
+
   let message = "No cinfo."
   testThrow(message, fn, 4, null)
   testThrow(message, fn, 4, 8)

@@ -5,6 +5,7 @@
 # Apple Photos exports Live Photos as paired .HEIC and .mov files, for
 # example 1.mov and 1.HEIC. This script creates 1-v.mp4, 2-v.mp4, and
 # so on to pair with 1-p.jpg, 2-p.jpg after you create the previews.
+# Keeps the Live Photo soundtrack when the .mov has audio.
 #
 # Usage:
 #   scripts/convert-live-videos [folder]
@@ -40,6 +41,14 @@ if [[ ${#mov_files[@]} -eq 0 ]]; then
   exit 0
 fi
 
+stream_codec() {
+  local name
+  name=$(ffprobe -v error -select_streams "$2" \
+    -show_entries stream=codec_name -of csv=p=0 "$1" || true)
+  name=${name%%$'\n'*}
+  printf '%s' "${name//$'\r'/}"
+}
+
 convert_mov() {
   local mov="$1"
   local base="${mov%.*}"
@@ -52,18 +61,28 @@ convert_mov() {
     return 0
   fi
 
-  local codec
-  codec=$(ffprobe -v error -select_streams v:0 \
-    -show_entries stream=codec_name -of csv=p=0 "$mov")
+  local vcodec acodec
+  vcodec=$(stream_codec "$mov" v:0)
+  acodec=$(stream_codec "$mov" a:0)
+
+  local args=(-map 0:v:0)
+  if [[ "$vcodec" == "h264" ]]; then
+    args+=(-c:v copy)
+  else
+    args+=(-c:v libx264 -pix_fmt yuv420p)
+  fi
+  if [[ -n "$acodec" ]]; then
+    args+=(-map 0:a:0)
+    if [[ "$acodec" == "aac" ]]; then
+      args+=(-c:a copy)
+    else
+      args+=(-c:a aac)
+    fi
+  fi
 
   echo "convert: $(basename "$mov") -> $(basename "$out")"
-  if [[ "$codec" == "h264" ]]; then
-    ffmpeg -nostdin -hide_banner -loglevel error -i "$mov" \
-      -c copy -an -movflags +faststart "$out"
-  else
-    ffmpeg -nostdin -hide_banner -loglevel error -i "$mov" \
-      -c:v libx264 -pix_fmt yuv420p -an -movflags +faststart "$out"
-  fi
+  ffmpeg -nostdin -hide_banner -loglevel error -i "$mov" \
+    "${args[@]}" -movflags +faststart "$out"
   rm "$mov"
   echo "remove: $(basename "$mov")"
 }

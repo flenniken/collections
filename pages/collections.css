@@ -283,6 +283,13 @@
   white-space: pre-line;
 }
 
+#images .taken {
+  display: block;
+  margin: -0.25em 1em 1em 1em;
+  font-size: 1em;
+  color: #555;
+}
+
 #images .location {
   display: block;
   margin: 0 1em 1.5em 1em;

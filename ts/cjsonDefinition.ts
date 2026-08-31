@@ -36,6 +36,11 @@ namespace CJson {
     // has no GPS. Added by scripts/add-locations.
     location?: string;
 
+    // When the preview was taken, from EXIF DateTimeOriginal,
+    // e.g. "2023-06-04T19:04:44". Empty string means none.
+    // Added by scripts/add-locations.
+    taken?: string;
+
     // Optional Live Photo video basename, e.g. c2-1-v.mp4.
     iLiveVideo?: string;
 

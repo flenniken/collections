@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Run add-locations on every collection json in dist/images.
+#
+# Usage:
+#   scripts/add-locations-all
+
+if [[ -z "${coder_env}" ]]; then
+  echo "Run from the Collection's docker environment."
+  exit 1
+fi
+
+if [[ ! "$(pwd)" == *collections ]]; then
+  echo "Run from the collections folder:"
+  echo "cd ~/collections"
+  echo "scripts/add-locations-all"
+  exit 1
+fi
+
+set -euo pipefail
+
+shopt -s nullglob
+
+jsons=(dist/images/c*/c*.json)
+if [[ ${#jsons[@]} -eq 0 ]]; then
+  echo "No collection json files in dist/images"
+  exit 1
+fi
+
+while IFS= read -r cjson; do
+  echo "=== $cjson ==="
+  scripts/add-locations "$cjson"
+done < <(printf '%s\n' "${jsons[@]}" | sort -V)

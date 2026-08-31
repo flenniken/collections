@@ -66,7 +66,8 @@ for each image.
 [![Tmp Folder](tmp-listing.png)](#)
 
 Transcode each .mov to .mp4 (H.264).  .mp4 files are support better by
-the browsers.  .mov are mostly for Apple devices.
+the browsers.  .mov are mostly for Apple devices.  The conversion keeps
+the Live Photo soundtrack.
 
 ~~~
 # from container

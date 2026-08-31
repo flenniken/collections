@@ -17,7 +17,8 @@
       "sizet": 238941,
       "iLiveVideo": "c16-1-v.mp4",
       "liveSize": 3819990,
-      "location": ""
+      "location": "",
+      "taken": ""
     },
     {
       "title": "",
@@ -30,7 +31,8 @@
       "sizet": 256799,
       "iLiveVideo": "c16-2-v.mp4",
       "liveSize": 4985693,
-      "location": ""
+      "location": "",
+      "taken": ""
     },
     {
       "title": "",
@@ -43,7 +45,8 @@
       "sizet": 249216,
       "iLiveVideo": "c16-3-v.mp4",
       "liveSize": 4397979,
-      "location": ""
+      "location": "",
+      "taken": ""
     },
     {
       "title": "",
@@ -56,7 +59,8 @@
       "sizet": 148715,
       "iLiveVideo": "c16-4-v.mp4",
       "liveSize": 5473992,
-      "location": ""
+      "location": "",
+      "taken": ""
     },
     {
       "title": "",
@@ -69,7 +73,8 @@
       "sizet": 143600,
       "iLiveVideo": "c16-5-v.mp4",
       "liveSize": 5855968,
-      "location": ""
+      "location": "",
+      "taken": ""
     },
     {
       "title": "",
@@ -82,7 +87,8 @@
       "sizet": 137213,
       "iLiveVideo": "c16-6-v.mp4",
       "liveSize": 5676272,
-      "location": ""
+      "location": "",
+      "taken": ""
     },
     {
       "title": "",
@@ -95,7 +101,8 @@
       "sizet": 96126,
       "iLiveVideo": "c16-11-v.mp4",
       "liveSize": 2303606,
-      "location": ""
+      "location": "",
+      "taken": ""
     },
     {
       "title": "",
@@ -108,7 +115,8 @@
       "sizet": 145999,
       "iLiveVideo": "c16-8-v.mp4",
       "liveSize": 5355338,
-      "location": ""
+      "location": "",
+      "taken": ""
     }
   ],
   "ready": true,

@@ -3,18 +3,21 @@
 # This is the help text shown with -h:
 
 """
-Add GPS location fields to a collection json from its preview images.
+Add GPS location and capture time to a collection json from its
+preview images.
 
 Opens a collection json (e.g. dist/images/c18/c18.json), reads GPS
-from each preview (*-p.jpg), converts EXIF degrees/minutes/seconds to
-decimal degrees used by Google Maps, and writes a collection json
-with a location field on every image.
+and DateTimeOriginal from each preview (*-p.jpg), and writes a
+collection json with location and taken fields on every image.
 
-When a preview has no GPS, location is "" (does not exist).
+location is Google Maps decimal degrees, e.g. "20.7473920,-156.4571441".
+taken is the capture time, e.g. "2023-06-04T19:04:44".
+When a preview is missing GPS or a timestamp, that field is "".
 
 Example:
   scripts/add-locations dist/images/c18/c18.json
   scripts/add-locations dist/images/c18/c18.json -o tmp/c18.json
+  scripts/add-locations-all
 """
 
 import os
@@ -41,12 +44,19 @@ import tempfile
 import json
 import textwrap
 import glob
+import re
 from PIL import Image
 from PIL.ExifTags import GPSTAGS
 
 # Decimal places used by Google Maps query coordinates, e.g.
 # https://www.google.com/maps?q=20.7473920,-156.4571441
 googleMapsDecimals = 7
+
+# EXIF tags for capture time.
+dateTimeTag = 306
+dateTimeOriginalTag = 36867
+dateTimeDigitizedTag = 36868
+exifIfdTag = 0x8769
 
 class LocationsException(Exception):
   """ An exception we plan for. """
@@ -105,18 +115,69 @@ def locationFromGps(gps):
   lng = dmsToDecimal(named.get("GPSLongitude"), named.get("GPSLongitudeRef"))
   return formatGoogleMapsLocation(lat, lng)
 
-def locationFromPreview(previewPath):
+def formatTaken(raw):
   """
-  Return the Google Maps location string from a preview jpg, or "".
+  Convert an EXIF datetime string to ISO local time, or "".
+
+  EXIF stores "2023:06:04 19:04:44". The result is
+  "2023-06-04T19:04:44" with no timezone so the camera's clock time
+  is preserved when displayed.
+  """
+  if not raw:
+    return ""
+  if isinstance(raw, bytes):
+    raw = raw.decode("ascii", "replace")
+  raw = str(raw).strip().rstrip("\x00")
+  match = re.match(
+    r"^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})", raw)
+  if not match:
+    return ""
+  return (f"{match.group(1)}-{match.group(2)}-{match.group(3)}"
+          f"T{match.group(4)}:{match.group(5)}:{match.group(6)}")
+
+def takenFromExif(exif):
+  """
+  Return the capture time from EXIF, or "".
+
+  Prefers DateTimeOriginal, then DateTimeDigitized, then DateTime.
+  """
+  if exif is None:
+    return ""
+  try:
+    exifIfd = exif.get_ifd(exifIfdTag)
+  except Exception:
+    exifIfd = {}
+  raw = None
+  if exifIfd:
+    raw = (exifIfd.get(dateTimeOriginalTag)
+           or exifIfd.get(dateTimeDigitizedTag))
+  if not raw:
+    raw = exif.get(dateTimeTag)
+  return formatTaken(raw)
+
+def metadataFromPreview(previewPath):
+  """
+  Return location and taken strings from a preview jpg.
+  Missing values are "".
   """
   try:
     with Image.open(previewPath) as img:
-      return locationFromGps(gpsFromExif(img.getexif()))
+      exif = img.getexif()
+      return {
+        "location": locationFromGps(gpsFromExif(exif)),
+        "taken": takenFromExif(exif),
+      }
   except LocationsException:
     raise
   except Exception as ex:
     raise LocationsException(
-      f"Error: unable to read GPS from preview: {previewPath}") from ex
+      f"Error: unable to read metadata from preview: {previewPath}") from ex
+
+def locationFromPreview(previewPath):
+  """
+  Return the Google Maps location string from a preview jpg, or "".
+  """
+  return metadataFromPreview(previewPath)["location"]
 
 def previewPaths(folder):
   """
@@ -128,19 +189,20 @@ def previewPaths(folder):
 
 def addLocations(cinfo, folder):
   """
-  Add a location field to each image in cinfo from preview GPS.
+  Add location and taken fields to each image in cinfo from preview
+  EXIF.
 
   folder is the collection folder containing the *-p.jpg files.
-  Returns (cinfo, locations) where locations maps iPreview basename
-  to the location string.
+  Returns (cinfo, metadata) where metadata maps iPreview basename
+  to {location, taken}.
   """
   if "images" not in cinfo:
     raise LocationsException("Error: collection json is missing the images list.")
 
-  locations = {}
+  metadata = {}
   for previewPath in previewPaths(folder):
     basename = os.path.basename(previewPath)
-    locations[basename] = locationFromPreview(previewPath)
+    metadata[basename] = metadataFromPreview(previewPath)
 
   for image in cinfo["images"]:
     iPreview = image.get("iPreview")
@@ -149,9 +211,11 @@ def addLocations(cinfo, folder):
     previewPath = os.path.join(folder, iPreview)
     if not os.path.isfile(previewPath):
       raise LocationsException(f"Error: preview file not found: {previewPath}")
-    image["location"] = locations.get(iPreview, "")
+    imageMeta = metadata.get(iPreview, {"location": "", "taken": ""})
+    image["location"] = imageMeta["location"]
+    image["taken"] = imageMeta["taken"]
 
-  return cinfo, locations
+  return cinfo, metadata
 
 def readCjson(cjsonPath):
   """
@@ -213,15 +277,17 @@ def process(args):
   folder = os.path.dirname(cjsonPath) or "."
 
   cinfo = readCjson(cjsonPath)
-  cinfo, locations = addLocations(cinfo, folder)
+  cinfo, metadata = addLocations(cinfo, folder)
   writeCjson(cinfo, outputPath)
 
-  withCount = sum(1 for image in cinfo["images"] if image["location"])
+  gpsCount = sum(1 for image in cinfo["images"] if image["location"])
+  takenCount = sum(1 for image in cinfo["images"] if image["taken"])
   total = len(cinfo["images"])
-  print(f"Wrote {total} images ({withCount} with GPS) to {outputPath}")
+  print(f"Wrote {total} images ({gpsCount} with GPS, {takenCount} with time) to {outputPath}")
   for image in cinfo["images"]:
     loc = image["location"] if image["location"] else '""'
-    print(f"  {image['iPreview']}  {loc}")
+    taken = image["taken"] if image["taken"] else '""'
+    print(f"  {image['iPreview']}  {loc}  {taken}")
 
 def main(args):
   def signalHandler(sig, frame):
@@ -310,9 +376,11 @@ class TestAddLocations(unittest.TestCase):
           {"iPreview": "c1-1-p.jpg", "title": ""},
         ],
       }
-      cinfo, locations = addLocations(cinfo, folder)
+      cinfo, metadata = addLocations(cinfo, folder)
       gotExpected(cinfo["images"][0]["location"], "")
-      gotExpected(locations["c1-1-p.jpg"], "")
+      gotExpected(cinfo["images"][0]["taken"], "")
+      gotExpected(metadata["c1-1-p.jpg"]["location"], "")
+      gotExpected(metadata["c1-1-p.jpg"]["taken"], "")
     finally:
       os.remove(preview)
       os.rmdir(folder)
@@ -333,6 +401,14 @@ class TestAddLocations(unittest.TestCase):
     finally:
       os.rmdir(folder)
 
+  def test_formatTaken(self):
+    gotExpected(formatTaken("2023:06:04 19:04:44"), "2023-06-04T19:04:44")
+    gotExpected(formatTaken("2025:01:20 07:02:41"), "2025-01-20T07:02:41")
+    gotExpected(formatTaken(""), "")
+    gotExpected(formatTaken(None), "")
+    gotExpected(formatTaken("not a date"), "")
+    gotExpected(formatTaken(b"2023:06:04 19:04:44"), "2023-06-04T19:04:44")
+
   def test_addLocations_real_preview_with_gps(self):
     preview = "dist/images/c1/c1-1-p.jpg"
     if not os.path.isfile(preview):
@@ -351,6 +427,13 @@ class TestAddLocations(unittest.TestCase):
     if not os.path.isfile(preview):
       self.skipTest(f"missing {preview}")
     gotExpected(locationFromPreview(preview), "")
+    gotExpected(metadataFromPreview(preview)["taken"], "")
+
+  def test_addLocations_real_preview_with_time(self):
+    preview = "dist/images/c1/c1-1-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    gotExpected(metadataFromPreview(preview)["taken"], "2023-06-04T19:04:44")
 
   def test_write_and_read_roundtrip(self):
     folder = tempfile.mkdtemp()
@@ -376,6 +459,7 @@ class TestAddLocations(unittest.TestCase):
       writeCjson(loaded, outputPath)
       result = readCjson(outputPath)
       gotExpected(result["images"][0]["location"], "")
+      gotExpected(result["images"][0]["taken"], "")
       gotExpected(result["images"][0]["description"], "Brooklyn’s bridge.")
     finally:
       for name in os.listdir(folder):
