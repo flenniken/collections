@@ -14,7 +14,8 @@
       "width": 3024,
       "height": 4032,
       "size": 1979932,
-      "sizet": 124791
+      "sizet": 124791,
+      "location": ""
     },
     {
       "title": "",
@@ -24,7 +25,8 @@
       "width": 4032,
       "height": 3024,
       "size": 2419254,
-      "sizet": 140146
+      "sizet": 140146,
+      "location": ""
     },
     {
       "title": "",
@@ -34,7 +36,8 @@
       "width": 4032,
       "height": 3024,
       "size": 2949980,
-      "sizet": 131503
+      "sizet": 131503,
+      "location": ""
     },
     {
       "title": "",
@@ -44,7 +47,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3817103,
-      "sizet": 165183
+      "sizet": 165183,
+      "location": ""
     },
     {
       "title": "",
@@ -54,7 +58,8 @@
       "width": 3024,
       "height": 4032,
       "size": 2143615,
-      "sizet": 118275
+      "sizet": 118275,
+      "location": ""
     },
     {
       "title": "",
@@ -64,7 +69,8 @@
       "width": 3024,
       "height": 4032,
       "size": 1451268,
-      "sizet": 88295
+      "sizet": 88295,
+      "location": ""
     },
     {
       "title": "",
@@ -74,7 +80,8 @@
       "width": 3024,
       "height": 4032,
       "size": 2375618,
-      "sizet": 131718
+      "sizet": 131718,
+      "location": ""
     },
     {
       "title": "",
@@ -84,7 +91,8 @@
       "width": 3024,
       "height": 4032,
       "size": 2246238,
-      "sizet": 143246
+      "sizet": 143246,
+      "location": ""
     },
     {
       "title": "",
@@ -94,7 +102,8 @@
       "width": 4032,
       "height": 3024,
       "size": 2553792,
-      "sizet": 94044
+      "sizet": 94044,
+      "location": ""
     },
     {
       "title": "",
@@ -106,7 +115,8 @@
       "size": 2173277,
       "sizet": 93095,
       "iLiveVideo": "c18-4-v.mp4",
-      "liveSize": 3819990
+      "liveSize": 3819990,
+      "location": ""
     },
     {
       "title": "",
@@ -116,7 +126,8 @@
       "width": 3024,
       "height": 4032,
       "size": 1319063,
-      "sizet": 88799
+      "sizet": 88799,
+      "location": ""
     },
     {
       "title": "",
@@ -126,7 +137,8 @@
       "width": 3024,
       "height": 4032,
       "size": 1717406,
-      "sizet": 91231
+      "sizet": 91231,
+      "location": ""
     }
   ],
   "ready": true,

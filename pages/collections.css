@@ -283,6 +283,43 @@
   white-space: pre-line;
 }
 
+#images .location {
+  display: block;
+  margin: 0 1em 1.5em 1em;
+  text-decoration: none;
+  color: inherit;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#images .location-map {
+  display: block;
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #e8e8e8;
+}
+
+#images .location-map iframe {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: calc(100% + 2.2em);
+  border: 0;
+  pointer-events: none;
+}
+
+#images .location-coords {
+  display: block;
+  margin-top: 0.45em;
+  font-size: 0.9em;
+  color: #007aff;
+  text-align: center;
+}
+
 #images #menu {
   margin: 0 1em 1em 1em;
   font-size: 2em;

@@ -78,6 +78,9 @@ function handleDOMContentLoaded() {
 
   startTimer.log("sizeImages")
   sizeImages(imageIndex)
+
+  startTimer.log("setupLocationMaps")
+  setupLocationMaps()
 }
 
 async function handleLoad() {
@@ -108,6 +111,84 @@ async function handleLoad() {
   document.body.style.opacity = "1"
 
   startTimer.log("load Done")
+}
+
+function parseLocation(location?: string): {lat: number, lng: number} | null {
+  // Return lat and lng from a collection location string, or null
+  // when the image has no GPS.
+  if (!location)
+    return null
+  const parts = location.split(",")
+  if (parts.length != 2)
+    return null
+  const lat = parseFloat(parts[0].trim())
+  const lng = parseFloat(parts[1].trim())
+  if (!isFinite(lat) || !isFinite(lng))
+    return null
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180)
+    return null
+  return {lat, lng}
+}
+
+function googleMapsUrl(lat: number, lng: number): string {
+  // Return a Google Maps URL for the given coordinates.
+  return `https://www.google.com/maps?q=${lat},${lng}`
+}
+
+function osmEmbedUrl(lat: number, lng: number): string {
+  // Return an OpenStreetMap embed URL centered on the pin.
+  const dLat = 0.008
+  const dLng = dLat / Math.max(Math.cos(lat * Math.PI / 180), 0.2)
+  const bbox = [lng - dLng, lat - dLat, lng + dLng, lat + dLat].join(",")
+  const params = new URLSearchParams({
+    bbox: bbox,
+    layer: "mapnik",
+    marker: `${lat},${lng}`,
+  })
+  return `https://www.openstreetmap.org/export/embed.html?${params.toString()}`
+}
+
+function createLocationMap(lat: number, lng: number): HTMLAnchorElement {
+  // Return a tappable map with a pin that opens Google Maps.
+  const link = document.createElement("a")
+  link.className = "location"
+  link.href = googleMapsUrl(lat, lng)
+  link.target = "_blank"
+  link.rel = "noopener noreferrer"
+  link.setAttribute("aria-label", "Open location in Google Maps")
+
+  const map = document.createElement("span")
+  map.className = "location-map"
+
+  const iframe = document.createElement("iframe")
+  iframe.src = osmEmbedUrl(lat, lng)
+  iframe.tabIndex = -1
+  iframe.setAttribute("loading", "lazy")
+  iframe.setAttribute("aria-hidden", "true")
+  iframe.referrerPolicy = "no-referrer"
+  map.appendChild(iframe)
+
+  const coords = document.createElement("span")
+  coords.className = "location-coords"
+  coords.textContent = `${lat.toFixed(7)}, ${lng.toFixed(7)}`
+
+  link.appendChild(map)
+  link.appendChild(coords)
+  return link
+}
+
+function setupLocationMaps() {
+  // Add a map under each image description that has GPS.
+  cJson.images.forEach((image, ix) => {
+    const parsed = parseLocation(image.location)
+    if (!parsed)
+      return
+    const colbox = get(`cb${ix + 1}`)
+    const description = colbox.querySelector(".description")
+    if (!description)
+      return
+    description.after(createLocationMap(parsed.lat, parsed.lng))
+  })
 }
 
 function getFirstImage() {

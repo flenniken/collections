@@ -15,7 +15,8 @@
       "width": 4032,
       "height": 3024,
       "size": 2854489,
-      "sizet": 110190
+      "sizet": 110190,
+      "location": "45.9182860,-123.9753030"
     },
     {
       "iPreview": "c2-2-p.jpg",
@@ -25,7 +26,8 @@
       "width": 3471,
       "height": 2604,
       "size": 1749822,
-      "sizet": 134481
+      "sizet": 134481,
+      "location": "45.9308667,-123.9786528"
     },
     {
       "iPreview": "c2-3-p.jpg",
@@ -35,7 +37,8 @@
       "width": 4032,
       "height": 3024,
       "size": 4028718,
-      "sizet": 163082
+      "sizet": 163082,
+      "location": "45.7112833,-123.9408111"
     },
     {
       "iPreview": "c2-4-p.jpg",
@@ -45,7 +48,8 @@
       "width": 3560,
       "height": 2670,
       "size": 2392727,
-      "sizet": 130901
+      "sizet": 130901,
+      "location": "45.7231722,-123.9424361"
     },
     {
       "iPreview": "c2-5-p.jpg",
@@ -55,7 +59,8 @@
       "width": 2772,
       "height": 3696,
       "size": 3925842,
-      "sizet": 109672
+      "sizet": 109672,
+      "location": "45.7218583,-123.9433972"
     },
     {
       "iPreview": "c2-6-p.jpg",
@@ -65,7 +70,8 @@
       "width": 4032,
       "height": 3024,
       "size": 4207376,
-      "sizet": 128412
+      "sizet": 128412,
+      "location": "45.7112500,-123.9417194"
     },
     {
       "iPreview": "c2-7-p.jpg",
@@ -75,7 +81,8 @@
       "width": 3958,
       "height": 2969,
       "size": 2829070,
-      "sizet": 96107
+      "sizet": 96107,
+      "location": "45.7218639,-123.9432444"
     },
     {
       "iPreview": "c2-8-p.jpg",
@@ -85,7 +92,8 @@
       "width": 1988,
       "height": 2983,
       "size": 936214,
-      "sizet": 74608
+      "sizet": 74608,
+      "location": "45.7234889,-123.9424222"
     },
     {
       "iPreview": "c2-9-p.jpg",
@@ -95,7 +103,8 @@
       "width": 1988,
       "height": 2983,
       "size": 1192260,
-      "sizet": 97283
+      "sizet": 97283,
+      "location": "45.7234889,-123.9424222"
     },
     {
       "iPreview": "c2-10-p.jpg",
@@ -105,7 +114,8 @@
       "width": 3920,
       "height": 2940,
       "size": 2209030,
-      "sizet": 98831
+      "sizet": 98831,
+      "location": "45.7247611,-123.9441611"
     },
     {
       "iPreview": "c2-11-p.jpg",
@@ -115,7 +125,8 @@
       "width": 3273,
       "height": 2456,
       "size": 1078308,
-      "sizet": 80614
+      "sizet": 80614,
+      "location": "45.7248000,-123.9441083"
     },
     {
       "iPreview": "c2-12-p.jpg",
@@ -125,7 +136,8 @@
       "width": 3964,
       "height": 2973,
       "size": 2183857,
-      "sizet": 121565
+      "sizet": 121565,
+      "location": "45.7236472,-123.9434972"
     },
     {
       "iPreview": "c2-13-p.jpg",
@@ -135,7 +147,8 @@
       "width": 3024,
       "height": 4032,
       "size": 3353586,
-      "sizet": 119994
+      "sizet": 119994,
+      "location": "45.7241170,-123.9439390"
     },
     {
       "iPreview": "c2-14-p.jpg",
@@ -145,7 +158,8 @@
       "width": 3879,
       "height": 2909,
       "size": 2762393,
-      "sizet": 99989
+      "sizet": 99989,
+      "location": "45.7112278,-123.9408556"
     },
     {
       "iPreview": "c2-15-p.jpg",
@@ -155,7 +169,8 @@
       "width": 4032,
       "height": 3024,
       "size": 6052365,
-      "sizet": 192499
+      "sizet": 192499,
+      "location": "45.7012139,-123.8876944"
     },
     {
       "iPreview": "c2-16-p.jpg",
@@ -165,7 +180,8 @@
       "width": 4032,
       "height": 3024,
       "size": 4576582,
-      "sizet": 208063
+      "sizet": 208063,
+      "location": "45.7013778,-123.8877861"
     }
   ],
   "zoomPoints": {

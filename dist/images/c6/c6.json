@@ -14,7 +14,8 @@
       "width": 3024,
       "height": 4032,
       "size": 4029253,
-      "sizet": 192514
+      "sizet": 192514,
+      "location": "48.4893556,-121.6097417"
     },
     {
       "title": "Bracken Fern",
@@ -24,7 +25,8 @@
       "width": 3024,
       "height": 4032,
       "size": 5693709,
-      "sizet": 215529
+      "sizet": 215529,
+      "location": "48.4907417,-121.6246417"
     },
     {
       "title": "Oak Fern",
@@ -34,7 +36,8 @@
       "width": 3024,
       "height": 4032,
       "size": 3474122,
-      "sizet": 182013
+      "sizet": 182013,
+      "location": "48.4891444,-121.6098778"
     },
     {
       "title": "Licorice Fern",
@@ -44,7 +47,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3570096,
-      "sizet": 204484
+      "sizet": 204484,
+      "location": "48.4896361,-121.6094194"
     },
     {
       "title": "Lady Fern",
@@ -54,7 +58,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3842414,
-      "sizet": 181809
+      "sizet": 181809,
+      "location": "48.4892444,-121.6092083"
     },
     {
       "title": "Trail Katheen",
@@ -64,7 +69,8 @@
       "width": 3024,
       "height": 4032,
       "size": 4076194,
-      "sizet": 199993
+      "sizet": 199993,
+      "location": "48.4898972,-121.6053278"
     },
     {
       "title": "Sword Fern",
@@ -74,7 +80,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3581933,
-      "sizet": 194985
+      "sizet": 194985,
+      "location": "48.4893750,-121.6093944"
     },
     {
       "title": "Bridge and Creek",
@@ -84,7 +91,8 @@
       "width": 3024,
       "height": 4032,
       "size": 3439475,
-      "sizet": 174701
+      "sizet": 174701,
+      "location": "48.4943139,-121.6129083"
     },
     {
       "title": "Skunk Cabbage",
@@ -94,7 +102,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3603549,
-      "sizet": 158117
+      "sizet": 158117,
+      "location": "48.4937444,-121.6208694"
     },
     {
       "title": "Vanilla Leaf",
@@ -104,7 +113,8 @@
       "width": 3024,
       "height": 4032,
       "size": 3424093,
-      "sizet": 167834
+      "sizet": 167834,
+      "location": "48.4900028,-121.6044778"
     },
     {
       "title": "Trillium",
@@ -114,7 +124,8 @@
       "width": 4032,
       "height": 3024,
       "size": 2673033,
-      "sizet": 165419
+      "sizet": 165419,
+      "location": "48.4893861,-121.6093528"
     },
     {
       "title": "Evergreen Trail",
@@ -124,7 +135,8 @@
       "width": 1290,
       "height": 2796,
       "size": 415795,
-      "sizet": 80467
+      "sizet": 80467,
+      "location": ""
     },
     {
       "title": "Deer Fern",
@@ -134,7 +146,8 @@
       "width": 3024,
       "height": 4032,
       "size": 4346982,
-      "sizet": 198489
+      "sizet": 198489,
+      "location": "48.4890944,-121.6126444"
     },
     {
       "title": "Big Stump",
@@ -144,7 +157,8 @@
       "width": 4032,
       "height": 3024,
       "size": 4629553,
-      "sizet": 153573
+      "sizet": 153573,
+      "location": "48.4936861,-121.6217944"
     }
   ],
   "ready": true,

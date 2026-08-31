@@ -15,7 +15,8 @@
       "height": 5472,
       "size": 3084388,
       "iThumbnail": "c3-1-t.jpg",
-      "sizet": 113633
+      "sizet": 113633,
+      "location": ""
     },
     {
       "title": "",
@@ -25,7 +26,8 @@
       "height": 5472,
       "size": 2484071,
       "iThumbnail": "c3-5-t.jpg",
-      "sizet": 106151
+      "sizet": 106151,
+      "location": ""
     },
     {
       "title": "",
@@ -35,7 +37,8 @@
       "height": 5277,
       "size": 2704705,
       "iThumbnail": "c3-3-t.jpg",
-      "sizet": 99305
+      "sizet": 99305,
+      "location": ""
     },
     {
       "title": "",
@@ -45,7 +48,8 @@
       "height": 3648,
       "size": 2745338,
       "iThumbnail": "c3-7-t.jpg",
-      "sizet": 97784
+      "sizet": 97784,
+      "location": ""
     },
     {
       "title": "",
@@ -55,7 +59,8 @@
       "height": 3648,
       "size": 2468483,
       "iThumbnail": "c3-11-t.jpg",
-      "sizet": 90585
+      "sizet": 90585,
+      "location": ""
     },
     {
       "title": "",
@@ -65,7 +70,8 @@
       "height": 3593,
       "size": 2247953,
       "iThumbnail": "c3-8-t.jpg",
-      "sizet": 93426
+      "sizet": 93426,
+      "location": ""
     },
     {
       "title": "",
@@ -75,7 +81,8 @@
       "height": 3648,
       "size": 2225571,
       "iThumbnail": "c3-16-t.jpg",
-      "sizet": 96192
+      "sizet": 96192,
+      "location": ""
     },
     {
       "title": "",
@@ -85,7 +92,8 @@
       "height": 3648,
       "size": 3236207,
       "iThumbnail": "c3-9-t.jpg",
-      "sizet": 104804
+      "sizet": 104804,
+      "location": ""
     },
     {
       "title": "",
@@ -95,7 +103,8 @@
       "height": 3609,
       "size": 2116363,
       "iThumbnail": "c3-10-t.jpg",
-      "sizet": 72205
+      "sizet": 72205,
+      "location": ""
     },
     {
       "title": "",
@@ -105,7 +114,8 @@
       "height": 3648,
       "size": 2977965,
       "iThumbnail": "c3-14-t.jpg",
-      "sizet": 85619
+      "sizet": 85619,
+      "location": ""
     },
     {
       "title": "",
@@ -115,7 +125,8 @@
       "height": 5472,
       "size": 3007427,
       "iThumbnail": "c3-13-t.jpg",
-      "sizet": 90903
+      "sizet": 90903,
+      "location": ""
     },
     {
       "title": "",
@@ -125,7 +136,8 @@
       "height": 3648,
       "size": 2058858,
       "iThumbnail": "c3-17-t.jpg",
-      "sizet": 76421
+      "sizet": 76421,
+      "location": ""
     }
   ],
   "zoomPoints": {

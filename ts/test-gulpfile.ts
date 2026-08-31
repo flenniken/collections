@@ -368,6 +368,16 @@ function validateCinfoNoReadingSuite() {
   test(fn, 4, createTestCinfo({numImages: 1,
     zoomPointKeys: ["933x432", "432x933"]}))
 
+  let cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].location = "20.7483306,-156.4576528"
+  test(fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].location = ""
+  test(fn, 4, cinfo)
+
   let message = "No cinfo."
   testThrow(message, fn, 4, null)
   testThrow(message, fn, 4, 8)
@@ -390,7 +400,7 @@ indexThumbnail, zoomPoints."
     {cNum: 5, numImages: 0}))
 
   message = "Collection 4 image 0 has extra fields: bogus2."
-  let cinfo = createTestCinfo({numImages: 1});
+  cinfo = createTestCinfo({numImages: 1});
   (cinfo.images[0] as any).bogus2 = 1
   testThrow(message, fn, 4, cinfo)
 

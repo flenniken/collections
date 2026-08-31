@@ -14,7 +14,8 @@
       "width": 4032,
       "height": 3024,
       "size": 2437990,
-      "sizet": 91924
+      "sizet": 91924,
+      "location": "35.6488944,-105.9176778"
     },
     {
       "title": "",
@@ -24,7 +25,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3080993,
-      "sizet": 119433
+      "sizet": 119433,
+      "location": "35.6488111,-105.9175028"
     },
     {
       "title": "Rental House",
@@ -34,7 +36,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3191993,
-      "sizet": 119055
+      "sizet": 119055,
+      "location": "35.6489778,-105.9172111"
     },
     {
       "title": "",
@@ -44,7 +47,8 @@
       "width": 3636,
       "height": 2727,
       "size": 1538421,
-      "sizet": 118261
+      "sizet": 118261,
+      "location": "35.6875750,-105.9390417"
     },
     {
       "title": "Necklaces",
@@ -54,7 +58,8 @@
       "width": 2618,
       "height": 3491,
       "size": 3044184,
-      "sizet": 192146
+      "sizet": 192146,
+      "location": "35.6878750,-105.9414444"
     },
     {
       "title": "",
@@ -64,7 +69,8 @@
       "width": 3024,
       "height": 4032,
       "size": 1953816,
-      "sizet": 111926
+      "sizet": 111926,
+      "location": "35.6871722,-105.9383778"
     },
     {
       "title": "The Cathedral Basilica of St. Francis of Assisi",
@@ -74,7 +80,8 @@
       "width": 3706,
       "height": 2779,
       "size": 1587991,
-      "sizet": 99730
+      "sizet": 99730,
+      "location": "35.6869167,-105.9380028"
     },
     {
       "title": "",
@@ -84,7 +91,8 @@
       "width": 2952,
       "height": 3935,
       "size": 1646669,
-      "sizet": 110160
+      "sizet": 110160,
+      "location": "35.6866694,-105.9367833"
     },
     {
       "title": "",
@@ -94,7 +102,8 @@
       "width": 2740,
       "height": 2055,
       "size": 711202,
-      "sizet": 81558
+      "sizet": 81558,
+      "location": "36.3315111,-106.4714639"
     },
     {
       "title": "",
@@ -104,7 +113,8 @@
       "width": 2670,
       "height": 3560,
       "size": 1453762,
-      "sizet": 75355
+      "sizet": 75355,
+      "location": "36.3315556,-106.4715028"
     },
     {
       "title": "",
@@ -114,7 +124,8 @@
       "width": 4032,
       "height": 3024,
       "size": 3638106,
-      "sizet": 131860
+      "sizet": 131860,
+      "location": "36.3345611,-106.4694639"
     },
     {
       "title": "Ghost Ranch Chartres Labyrinth",
@@ -124,7 +135,8 @@
       "width": 4032,
       "height": 3024,
       "size": 4148372,
-      "sizet": 142204
+      "sizet": 142204,
+      "location": "36.3347972,-106.4691361"
     },
     {
       "title": "",
@@ -134,7 +146,8 @@
       "width": 3024,
       "height": 2320,
       "size": 869862,
-      "sizet": 96595
+      "sizet": 96595,
+      "location": "35.6862722,-105.9381194"
     },
     {
       "title": "",
@@ -144,7 +157,8 @@
       "width": 3024,
       "height": 4032,
       "size": 1420432,
-      "sizet": 93677
+      "sizet": 93677,
+      "location": "35.6487500,-105.9175028"
     },
     {
       "title": "",
@@ -154,7 +168,8 @@
       "width": 4032,
       "height": 3024,
       "size": 2503942,
-      "sizet": 132461
+      "sizet": 132461,
+      "location": "35.6501417,-105.9168306"
     },
     {
       "title": "",
@@ -164,7 +179,8 @@
       "width": 3726,
       "height": 2794,
       "size": 1266123,
-      "sizet": 63562
+      "sizet": 63562,
+      "location": "35.6503833,-105.9161111"
     }
   ],
   "ready": true,

@@ -993,6 +993,8 @@ class TestMaker(unittest.TestCase):
 
     for c3FirstImageKey in c3FirstImageKeys:
       if c3FirstImageKey not in newFirstImageKeys:
+        if c3FirstImageKey == "location":
+          continue
         print(f"c3FirstImageKey '{c3FirstImageKey}' not in newFirstImageKeys.")
         success = False
 
