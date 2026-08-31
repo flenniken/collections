@@ -1,0 +1,390 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+
+"""
+Add GPS location fields to a collection json from its preview images.
+
+Opens a collection json (e.g. dist/images/c18/c18.json), reads GPS
+from each preview (*-p.jpg), converts EXIF degrees/minutes/seconds to
+decimal degrees used by Google Maps, and writes a collection json
+with a location field on every image.
+
+When a preview has no GPS, location is "" (does not exist).
+
+Example:
+  scripts/add-locations dist/images/c18/c18.json
+  scripts/add-locations dist/images/c18/c18.json -o tmp/c18.json
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+cwd = os.getcwd()
+if not cwd.endswith("collections"):
+  print(f"""\
+Run from the collections folder:
+cd ~/collections
+scripts/add-locations
+""")
+  exit(1)
+
+import sys
+import argparse
+import traceback
+import signal
+import unittest
+import tempfile
+import json
+import textwrap
+import glob
+from PIL import Image
+from PIL.ExifTags import GPSTAGS
+
+# Decimal places used by Google Maps query coordinates, e.g.
+# https://www.google.com/maps?q=20.7473920,-156.4571441
+googleMapsDecimals = 7
+
+class LocationsException(Exception):
+  """ An exception we plan for. """
+  pass
+
+def dmsToDecimal(dms, ref):
+  """
+  Convert an EXIF GPS DMS triple to a signed decimal degree.
+
+  dms is (degrees, minutes, seconds). ref is N/S for latitude or
+  E/W for longitude. South and west are negative, matching Google Maps.
+  """
+  if dms is None or ref is None:
+    return None
+  if len(dms) != 3:
+    return None
+  degrees, minutes, seconds = [float(part) for part in dms]
+  decimal = degrees + minutes / 60.0 + seconds / 3600.0
+  if ref in ("S", "W"):
+    decimal = -decimal
+  elif ref not in ("N", "E"):
+    return None
+  return decimal
+
+def formatGoogleMapsLocation(lat, lng):
+  """
+  Return the Google Maps query string "lat,lng", or "" if either
+  coordinate is missing.
+  """
+  if lat is None or lng is None:
+    return ""
+  return f"{lat:.{googleMapsDecimals}f},{lng:.{googleMapsDecimals}f}"
+
+def gpsFromExif(exif):
+  """
+  Return the GPS IFD dict from a Pillow Exif object, or {} if none.
+  """
+  if exif is None:
+    return {}
+  try:
+    gps = exif.get_ifd(0x8825)
+  except Exception:
+    return {}
+  if not gps:
+    return {}
+  return gps
+
+def locationFromGps(gps):
+  """
+  Convert a GPS IFD dict to a Google Maps location string, or "".
+  """
+  if not gps:
+    return ""
+  named = {GPSTAGS.get(key, key): value for key, value in gps.items()}
+  lat = dmsToDecimal(named.get("GPSLatitude"), named.get("GPSLatitudeRef"))
+  lng = dmsToDecimal(named.get("GPSLongitude"), named.get("GPSLongitudeRef"))
+  return formatGoogleMapsLocation(lat, lng)
+
+def locationFromPreview(previewPath):
+  """
+  Return the Google Maps location string from a preview jpg, or "".
+  """
+  try:
+    with Image.open(previewPath) as img:
+      return locationFromGps(gpsFromExif(img.getexif()))
+  except LocationsException:
+    raise
+  except Exception as ex:
+    raise LocationsException(
+      f"Error: unable to read GPS from preview: {previewPath}") from ex
+
+def previewPaths(folder):
+  """
+  Return sorted preview file paths (*-p.jpg) in the collection folder.
+  """
+  paths = glob.glob(os.path.join(folder, "*-p.jpg"))
+  paths.sort()
+  return paths
+
+def addLocations(cinfo, folder):
+  """
+  Add a location field to each image in cinfo from preview GPS.
+
+  folder is the collection folder containing the *-p.jpg files.
+  Returns (cinfo, locations) where locations maps iPreview basename
+  to the location string.
+  """
+  if "images" not in cinfo:
+    raise LocationsException("Error: collection json is missing the images list.")
+
+  locations = {}
+  for previewPath in previewPaths(folder):
+    basename = os.path.basename(previewPath)
+    locations[basename] = locationFromPreview(previewPath)
+
+  for image in cinfo["images"]:
+    iPreview = image.get("iPreview")
+    if not iPreview:
+      raise LocationsException("Error: image is missing iPreview.")
+    previewPath = os.path.join(folder, iPreview)
+    if not os.path.isfile(previewPath):
+      raise LocationsException(f"Error: preview file not found: {previewPath}")
+    image["location"] = locations.get(iPreview, "")
+
+  return cinfo, locations
+
+def readCjson(cjsonPath):
+  """
+  Read and return the collection json as a dict.
+  """
+  if not os.path.isfile(cjsonPath):
+    raise LocationsException(f"Error: collection json not found: {cjsonPath}")
+  try:
+    with open(cjsonPath, "r") as fh:
+      return json.load(fh)
+  except json.JSONDecodeError as ex:
+    raise LocationsException(
+      f"Error: collection json is not valid json: {cjsonPath}") from ex
+
+def writeCjson(cinfo, outputPath):
+  """
+  Write the collection json to outputPath.
+  """
+  directory = os.path.dirname(outputPath)
+  if directory and not os.path.isdir(directory):
+    raise LocationsException(f"Error: output folder not found: {directory}")
+  with open(outputPath, "w") as fh:
+    fh.write(json.dumps(cinfo, indent=2, ensure_ascii=False))
+    fh.write("\n")
+
+def parseCommandLine():
+  """
+  Parse the command line arguments.
+  """
+  if len(sys.argv) == 1:
+    sys.argv.append("-h")
+  else:
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ["-t", "--test"]:
+        sys.argv.pop(ix + 1)
+        args = argparse.Namespace(test=True)
+        return args
+
+  parser = argparse.ArgumentParser(
+    prog="add-locations",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=textwrap.dedent(__doc__))
+
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests")
+  parser.add_argument("cjson",
+    help="collection json path, e.g. dist/images/c18/c18.json")
+  parser.add_argument("-o", "--output",
+    help="output collection json path. Defaults to the input file.")
+
+  return parser.parse_args(sys.argv[1:])
+
+def process(args):
+  """
+  Handle the add-locations command.
+  """
+  cjsonPath = args.cjson
+  outputPath = args.output if args.output else cjsonPath
+  folder = os.path.dirname(cjsonPath) or "."
+
+  cinfo = readCjson(cjsonPath)
+  cinfo, locations = addLocations(cinfo, folder)
+  writeCjson(cinfo, outputPath)
+
+  withCount = sum(1 for image in cinfo["images"] if image["location"])
+  total = len(cinfo["images"])
+  print(f"Wrote {total} images ({withCount} with GPS) to {outputPath}")
+  for image in cinfo["images"]:
+    loc = image["location"] if image["location"] else '""'
+    print(f"  {image['iPreview']}  {loc}")
+
+def main(args):
+  def signalHandler(sig, frame):
+    """ Handle ctrl-C """
+    sys.exit(1)
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    process(args)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except LocationsException as ex:
+    print(str(ex))
+    return 1
+  except Exception as ex:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0
+
+# Test code:
+
+def gotExpected(got, expected):
+  if got != expected:
+    msg = f"""
+---
+     got: {got}
+expected: {expected}
+---
+"""
+    assert False, msg
+
+def writeTestJpeg(path):
+  """ Write a tiny jpeg with no GPS. """
+  img = Image.new("RGB", (8, 8), "white")
+  img.save(path, "JPEG")
+
+class TestAddLocations(unittest.TestCase):
+
+  def test_dmsToDecimal_hawaii(self):
+    # Road map example area: (20.7473920, -156.4571441)
+    lat = dmsToDecimal((20.0, 44.0, 53.99), "N")
+    lng = dmsToDecimal((156.0, 27.0, 27.55), "W")
+    gotExpected(round(lat, 7), 20.7483306)
+    gotExpected(round(lng, 7), -156.4576528)
+
+  def test_dmsToDecimal_south_east(self):
+    lat = dmsToDecimal((33.0, 51.0, 54.0), "S")
+    lng = dmsToDecimal((151.0, 12.0, 36.0), "E")
+    gotExpected(round(lat, 7), -33.8650000)
+    gotExpected(round(lng, 7), 151.2100000)
+
+  def test_dmsToDecimal_missing(self):
+    gotExpected(dmsToDecimal(None, "N"), None)
+    gotExpected(dmsToDecimal((20.0, 44.0, 53.99), None), None)
+    gotExpected(dmsToDecimal((20.0, 44.0), "N"), None)
+    gotExpected(dmsToDecimal((20.0, 44.0, 53.99), "X"), None)
+
+  def test_formatGoogleMapsLocation(self):
+    gotExpected(
+      formatGoogleMapsLocation(20.748330555555558, -156.45765277777775),
+      "20.7483306,-156.4576528")
+    gotExpected(formatGoogleMapsLocation(None, -156.4), "")
+    gotExpected(formatGoogleMapsLocation(20.7, None), "")
+
+  def test_locationFromGps_empty(self):
+    gotExpected(locationFromGps({}), "")
+    gotExpected(locationFromGps(None), "")
+
+  def test_locationFromGps_named(self):
+    gps = {
+      1: "N",
+      2: (20.0, 44.0, 53.99),
+      3: "W",
+      4: (156.0, 27.0, 27.55),
+    }
+    gotExpected(locationFromGps(gps), "20.7483306,-156.4576528")
+
+  def test_addLocations_missing_preview_is_empty(self):
+    folder = tempfile.mkdtemp()
+    try:
+      preview = os.path.join(folder, "c1-1-p.jpg")
+      writeTestJpeg(preview)
+      cinfo = {
+        "cNum": 1,
+        "images": [
+          {"iPreview": "c1-1-p.jpg", "title": ""},
+        ],
+      }
+      cinfo, locations = addLocations(cinfo, folder)
+      gotExpected(cinfo["images"][0]["location"], "")
+      gotExpected(locations["c1-1-p.jpg"], "")
+    finally:
+      os.remove(preview)
+      os.rmdir(folder)
+
+  def test_addLocations_missing_file_errors(self):
+    folder = tempfile.mkdtemp()
+    try:
+      cinfo = {
+        "images": [{"iPreview": "c1-1-p.jpg"}],
+      }
+      try:
+        addLocations(cinfo, folder)
+        assert False, "Unexpectedly passed"
+      except LocationsException as ex:
+        gotExpected(
+          str(ex),
+          f"Error: preview file not found: {os.path.join(folder, 'c1-1-p.jpg')}")
+    finally:
+      os.rmdir(folder)
+
+  def test_addLocations_real_preview_with_gps(self):
+    preview = "dist/images/c1/c1-1-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    loc = locationFromPreview(preview)
+    self.assertTrue(loc)
+    latStr, lngStr = loc.split(",")
+    lat = float(latStr)
+    lng = float(lngStr)
+    # Glacier National Park
+    self.assertTrue(48 < lat < 49)
+    self.assertTrue(-114 < lng < -113)
+
+  def test_addLocations_real_preview_without_gps(self):
+    preview = "dist/images/c18/c18-1-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    gotExpected(locationFromPreview(preview), "")
+
+  def test_write_and_read_roundtrip(self):
+    folder = tempfile.mkdtemp()
+    try:
+      preview = os.path.join(folder, "c9-1-p.jpg")
+      writeTestJpeg(preview)
+      inputPath = os.path.join(folder, "c9.json")
+      outputPath = os.path.join(folder, "c9-out.json")
+      cinfo = {
+        "title": "Test",
+        "cNum": 9,
+        "images": [
+          {
+            "title": "",
+            "description": "Brooklyn’s bridge.",
+            "iPreview": "c9-1-p.jpg",
+          },
+        ],
+      }
+      writeCjson(cinfo, inputPath)
+      loaded = readCjson(inputPath)
+      loaded, _ = addLocations(loaded, folder)
+      writeCjson(loaded, outputPath)
+      result = readCjson(outputPath)
+      gotExpected(result["images"][0]["location"], "")
+      gotExpected(result["images"][0]["description"], "Brooklyn’s bridge.")
+    finally:
+      for name in os.listdir(folder):
+        os.remove(os.path.join(folder, name))
+      os.rmdir(folder)
+
+if __name__ == "__main__":
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)

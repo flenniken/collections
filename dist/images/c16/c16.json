@@ -16,7 +16,8 @@
       "size": 2299642,
       "sizet": 238941,
       "iLiveVideo": "c16-1-v.mp4",
-      "liveSize": 3819990
+      "liveSize": 3819990,
+      "location": ""
     },
     {
       "title": "",
@@ -28,7 +29,8 @@
       "size": 2307969,
       "sizet": 256799,
       "iLiveVideo": "c16-2-v.mp4",
-      "liveSize": 4985693
+      "liveSize": 4985693,
+      "location": ""
     },
     {
       "title": "",
@@ -40,7 +42,8 @@
       "size": 2437514,
       "sizet": 249216,
       "iLiveVideo": "c16-3-v.mp4",
-      "liveSize": 4397979
+      "liveSize": 4397979,
+      "location": ""
     },
     {
       "title": "",
@@ -52,7 +55,8 @@
       "size": 2447574,
       "sizet": 148715,
       "iLiveVideo": "c16-4-v.mp4",
-      "liveSize": 5473992
+      "liveSize": 5473992,
+      "location": ""
     },
     {
       "title": "",
@@ -64,7 +68,8 @@
       "size": 2021990,
       "sizet": 143600,
       "iLiveVideo": "c16-5-v.mp4",
-      "liveSize": 5855968
+      "liveSize": 5855968,
+      "location": ""
     },
     {
       "title": "",
@@ -76,7 +81,8 @@
       "size": 2375729,
       "sizet": 137213,
       "iLiveVideo": "c16-6-v.mp4",
-      "liveSize": 5676272
+      "liveSize": 5676272,
+      "location": ""
     },
     {
       "title": "",
@@ -88,7 +94,8 @@
       "size": 1270920,
       "sizet": 96126,
       "iLiveVideo": "c16-11-v.mp4",
-      "liveSize": 2303606
+      "liveSize": 2303606,
+      "location": ""
     },
     {
       "title": "",
@@ -100,7 +107,8 @@
       "size": 2500682,
       "sizet": 145999,
       "iLiveVideo": "c16-8-v.mp4",
-      "liveSize": 5355338
+      "liveSize": 5355338,
+      "location": ""
     }
   ],
   "ready": true,

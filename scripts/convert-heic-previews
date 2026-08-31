@@ -7,6 +7,10 @@
 # so on. Use this for unmodified exports; edit images manually when
 # needed before running the maker.
 #
+# Keeps EXIF/GPS. Strips the ICC color profile so the maker sees JPEG
+# not MPO. heif-convert already rotates pixels to the display
+# orientation; Orientation is reset to 1 so viewers do not rotate again.
+#
 # Usage:
 #   scripts/convert-heic-previews [folder]
 #
@@ -51,8 +55,36 @@ import sys
 
 path = sys.argv[1]
 quality = int(sys.argv[2])
+
+# IFDs to load so tobytes() keeps camera EXIF and GPS.
+exifIfd = 0x8769
+gpsIfd = 0x8825
+interopIfd = 0xA005
+orientationTag = 274
+
 with Image.open(path) as img:
-    img.convert("RGB").save(path, "JPEG", quality=quality, optimize=True)
+    exif = img.getexif()
+    if len(exif) or img.info.get("exif"):
+        for ifd_id in (exifIfd, gpsIfd, interopIfd):
+            try:
+                exif.get_ifd(ifd_id)
+            except Exception:
+                pass
+        # Pixels are already display-oriented; do not rotate again.
+        exif[orientationTag] = 1
+        exif_bytes = exif.tobytes()
+    else:
+        exif_bytes = None
+
+    rgb = img.convert("RGB")
+    save_kwargs = {
+        "format": "JPEG",
+        "quality": quality,
+        "optimize": True,
+    }
+    if exif_bytes:
+        save_kwargs["exif"] = exif_bytes
+    rgb.save(path, **save_kwargs)
 EOF
 }
 

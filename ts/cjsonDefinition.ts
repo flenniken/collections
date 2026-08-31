@@ -31,6 +31,11 @@ namespace CJson {
     // Size of the thumbnail file in bytes.
     sizet: number;
 
+    // Google Maps decimal-degree coordinates from the preview GPS,
+    // e.g. "20.7473920,-156.4571441". Empty string means the preview
+    // has no GPS. Added by scripts/add-locations.
+    location?: string;
+
     // Optional Live Photo video basename, e.g. c2-1-v.mp4.
     iLiveVideo?: string;
 
