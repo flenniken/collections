@@ -233,6 +233,12 @@ scripts/maker -n 9
 Created a collection folder and moved it to: dist/images/c9
 ~~~
 
+Add the GPS locations and time taken to the json:
+
+~~~
+scripts/add-location dist/images/c19/c19.json
+~~~
+
 [⬇](#Contents)
 
 # Edit Collection
