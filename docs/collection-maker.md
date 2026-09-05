@@ -89,20 +89,15 @@ convert: 9.mov -> 9-v.mp4
 done
 ~~~
 
-The conversion uses ffmpeg faststart so iOS can stream the full clip
-immediately. If you already converted files without faststart, fix them:
-
-~~~
-scripts/faststart-live-videos dist/images/c16
-~~~
-
-
 Live videos are optional — you can include them for some images and
-not others. The maker pairs live videos to previews by sorted
-filename order.
+not others. The maker pairs each live video to the preview with the
+same name stem: `10-v.mp4` goes with `10-p.jpg`.
 
 
 Convert the HEIC files to -p.jpg files:
+
+Note: If you only have a video, create a jpg preview image by
+extracting a frame from the video using the Frame Grabber application.
 
 ~~~
 # from container

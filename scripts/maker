@@ -212,6 +212,16 @@ def validateCollectionFolder(num, ftg):
   if numLiveVideos > numPreviews:
     raise MakerException(
       f"Error: {numLiveVideos} live videos, expected at most {numPreviews}.")
+  previewStems = set()
+  for fileInfo in ftg.previews:
+    stem = pairingStem(fileInfo.basename, "-p.jpg")
+    if stem:
+      previewStems.add(stem)
+  for fileInfo in ftg.liveVideos:
+    stem = pairingStem(fileInfo.basename, "-v.mp4")
+    if stem not in previewStems:
+      raise MakerException(
+        f"Error: live video {fileInfo.basename} has no matching {stem}-p.jpg")
   if numJson > 1:
     raise MakerException(f"Error: {numJson} json files, expected 1.")
   if numJson == 1:
@@ -250,6 +260,7 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
   Create the collection info (cinfo) for the given collection number
   """
   assert len(ftg.previews) == len(ftg.thumbnails)
+  videosByStem = liveVideosByPreviewStem(ftg)
   images = []
   order = []
 
@@ -272,8 +283,8 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     collectionImage['size'] = fileInfo.size
 
     collectionImage['sizet'] = thumbnailFileInfo.size
-    if ix < len(ftg.liveVideos):
-      liveVideoFileInfo = ftg.liveVideos[ix]
+    liveVideoFileInfo = liveVideoForPreview(previewFileInfo, videosByStem)
+    if liveVideoFileInfo:
       collectionImage['iLiveVideo'] = getStdLiveVideoName(num, ix)
       collectionImage['liveSize'] = liveVideoFileInfo.size
     images.append(collectionImage)
@@ -307,6 +318,39 @@ def getStdImageName(num, ix, kind):
 
 def getStdLiveVideoName(num, ix):
   return f"c{num}-{ix+1}-v.mp4"
+
+def pairingStem(filename, suffix):
+  """
+  Return the shared name used to pair a preview, thumbnail, or live
+  video, e.g. "10" from "10-p.jpg" or "10-v.mp4".
+  """
+  if filename.endswith(suffix):
+    return filename[:-len(suffix)]
+  return None
+
+def liveVideosByPreviewStem(ftg):
+  """
+  Return a dict of live video FileInfo keyed by the matching preview
+  stem.
+  """
+  videosByStem = {}
+  for fileInfo in ftg.liveVideos:
+    stem = pairingStem(fileInfo.basename, "-v.mp4")
+    if stem is None:
+      continue
+    if stem in videosByStem:
+      raise MakerException(f"Error: duplicate live video stem: {stem}")
+    videosByStem[stem] = fileInfo
+  return videosByStem
+
+def liveVideoForPreview(previewFileInfo, videosByStem):
+  """
+  Return the live video that shares a stem with the preview, or None.
+  """
+  stem = pairingStem(previewFileInfo.basename, "-p.jpg")
+  if stem is None:
+    return None
+  return videosByStem.get(stem)
 
 def renameFiles(num, folder, ftg):
   """
@@ -354,8 +398,12 @@ def renameFiles(num, folder, ftg):
     os.rename(nPreviewName, stdImageName)
     os.rename(nThumbnailName, stdThumbnailName)
 
-  for ix, fileInfo in enumerate(ftg.liveVideos):
-    nLiveVideoName = os.path.join(tempFolder, fileInfo.basename)
+  videosByStem = liveVideosByPreviewStem(ftg)
+  for ix in range(len(ftg.previews)):
+    liveVideoFileInfo = liveVideoForPreview(ftg.previews[ix], videosByStem)
+    if not liveVideoFileInfo:
+      continue
+    nLiveVideoName = os.path.join(tempFolder, liveVideoFileInfo.basename)
     stdLiveVideoName = os.path.join(folder, getStdLiveVideoName(num, ix))
     os.rename(nLiveVideoName, stdLiveVideoName)
 
@@ -677,6 +725,64 @@ class TestMaker(unittest.TestCase):
     gotExpected(getStdImageName(23, 15, "preview"), "c23-16-p.jpg")
     gotExpected(getStdImageName(2, 3, "thumbnail"), "c2-4-t.jpg")
     gotExpected(getStdImageName(23, 15, "thumbnail"), "c23-16-t.jpg")
+
+  def test_pairingStem(self):
+    gotExpected(pairingStem("10-p.jpg", "-p.jpg"), "10")
+    gotExpected(pairingStem("10-v.mp4", "-v.mp4"), "10")
+    gotExpected(pairingStem("c21-10-p.jpg", "-p.jpg"), "c21-10")
+    gotExpected(pairingStem("10-p.jpg", "-v.mp4"), None)
+
+  def test_liveVideoPairedByStem(self):
+    # 2 has no video; 10 does. Lex order is 1, 10, 2, 3 so a list-index
+    # pairing would attach 3-v.mp4 to 2-p.jpg.
+    num = 21
+    folder = tempfile.mkdtemp(prefix="maker-")
+    try:
+      for i in (1, 2, 3, 10):
+        createFile(os.path.join(folder, f"{i}-p.jpg"), f"p{i}")
+        createFile(os.path.join(folder, f"{i}-t.jpg"), f"t{i}")
+      for i in (1, 3, 10):
+        createFile(os.path.join(folder, f"{i}-v.mp4"), f"v{i}" * 10)
+      ftg = FileTypeGroups(getFileInfoList(folder))
+      previewImageInfoList = getTestImageInfoList(ftg.previews)
+      cinfo = createCollectionCinfo(num, ftg, previewImageInfoList)
+      # Lex order: 1, 10, 2, 3
+      gotExpected(cinfo["images"][0]["iPreview"], "c21-1-p.jpg")
+      gotExpected(cinfo["images"][0]["iLiveVideo"], "c21-1-v.mp4")
+      gotExpected(cinfo["images"][1]["iPreview"], "c21-2-p.jpg")
+      gotExpected(cinfo["images"][1]["iLiveVideo"], "c21-2-v.mp4")
+      gotExpected(cinfo["images"][2]["iPreview"], "c21-3-p.jpg")
+      gotExpected("iLiveVideo" in cinfo["images"][2], False)
+      gotExpected(cinfo["images"][3]["iPreview"], "c21-4-p.jpg")
+      gotExpected(cinfo["images"][3]["iLiveVideo"], "c21-4-v.mp4")
+
+      renameFiles(num, folder, ftg)
+      names = sorted(os.listdir(folder))
+      gotExpected("c21-1-v.mp4" in names, True)
+      gotExpected("c21-2-v.mp4" in names, True)
+      gotExpected("c21-3-v.mp4" in names, False)
+      gotExpected("c21-4-v.mp4" in names, True)
+      with open(os.path.join(folder, "c21-4-v.mp4"), encoding="utf-8") as fh:
+        gotExpected(fh.read(), "v3" * 10)
+    finally:
+      shutil.rmtree(folder)
+
+  def test_liveVideoWithoutPreviewErrors(self):
+    folder = tempfile.mkdtemp(prefix="maker-")
+    try:
+      for i in range(1, 9):
+        createFile(os.path.join(folder, f"{i}-p.jpg"), f"p{i}")
+        createFile(os.path.join(folder, f"{i}-t.jpg"), f"t{i}")
+      createFile(os.path.join(folder, "99-v.mp4"), "orphan")
+      ftg = FileTypeGroups(getFileInfoList(folder))
+      try:
+        validateCollectionFolder(21, ftg)
+        assert False, "Unexpectedly passed"
+      except MakerException as ex:
+        gotExpected(str(ex),
+          "Error: live video 99-v.mp4 has no matching 99-p.jpg")
+    finally:
+      shutil.rmtree(folder)
 
   def test_makeTestFolder(self):
     num = 4
