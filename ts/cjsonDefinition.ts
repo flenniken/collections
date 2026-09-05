@@ -41,11 +41,15 @@ namespace CJson {
     // Added by scripts/add-locations.
     taken?: string;
 
-    // Optional Live Photo video basename, e.g. c2-1-v.mp4.
+    // Optional Live Photo or clip video basename, e.g. c2-1-v.mp4.
     iLiveVideo?: string;
 
     // Size of the live video file in bytes.
     liveSize?: number;
+
+    // Duration of the live video in seconds. Clips longer than a Live
+    // Photo play from a play button instead of press-and-hold.
+    liveDuration?: number;
   }
 
   export interface ZoomPoint {

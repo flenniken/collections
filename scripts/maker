@@ -38,6 +38,7 @@ from boto_client import getBotoClient, getAwsSettings
 import random
 import string
 import shutil
+import struct
 from PIL import Image, ImageOps
 
 thumbnailDim = 480
@@ -255,7 +256,7 @@ def validateCollectionFolder(num, ftg):
       raise MakerException(
         f"Error: there are {numOther} extra files in the folder, first: {first}")
 
-def createCollectionCinfo(num, ftg, previewImageInfoList):
+def createCollectionCinfo(num, ftg, previewImageInfoList, folder):
   """
   Create the collection info (cinfo) for the given collection number
   """
@@ -287,6 +288,10 @@ def createCollectionCinfo(num, ftg, previewImageInfoList):
     if liveVideoFileInfo:
       collectionImage['iLiveVideo'] = getStdLiveVideoName(num, ix)
       collectionImage['liveSize'] = liveVideoFileInfo.size
+      duration = mp4DurationSeconds(
+        os.path.join(folder, liveVideoFileInfo.basename))
+      if duration is not None:
+        collectionImage['liveDuration'] = round(duration, 3)
     images.append(collectionImage)
 
   # Create the collection info (cinfo).
@@ -318,6 +323,68 @@ def getStdImageName(num, ix, kind):
 
 def getStdLiveVideoName(num, ix):
   return f"c{num}-{ix+1}-v.mp4"
+
+def _mp4Atoms(fh, end):
+  while fh.tell() + 8 <= end:
+    start = fh.tell()
+    hdr = fh.read(8)
+    if len(hdr) < 8:
+      return
+    size, typ = struct.unpack(">I4s", hdr)
+    if size == 1:
+      if fh.tell() + 8 > end:
+        return
+      size = struct.unpack(">Q", fh.read(8))[0]
+    elif size == 0:
+      size = end - start
+    if size < 8:
+      return
+    payloadStart = fh.tell()
+    atomEnd = start + size
+    if atomEnd > end:
+      return
+    yield typ, payloadStart, atomEnd
+    fh.seek(atomEnd)
+
+def _mp4Duration(fh, end):
+  for typ, payloadStart, atomEnd in _mp4Atoms(fh, end):
+    if typ == b"moov":
+      found = _mp4Duration(fh, atomEnd)
+      if found is not None:
+        return found
+    elif typ == b"mvhd":
+      fh.seek(payloadStart)
+      versionFlags = fh.read(4)
+      if len(versionFlags) < 4:
+        return None
+      if versionFlags[0] == 1:
+        fh.read(16)
+        tsDur = fh.read(12)
+        if len(tsDur) < 12:
+          return None
+        timescale = struct.unpack(">I", tsDur[:4])[0]
+        duration = struct.unpack(">Q", tsDur[4:12])[0]
+      else:
+        fh.read(8)
+        tsDur = fh.read(8)
+        if len(tsDur) < 8:
+          return None
+        timescale, duration = struct.unpack(">II", tsDur)
+      if timescale <= 0:
+        return None
+      return duration / timescale
+  return None
+
+def mp4DurationSeconds(path):
+  """
+  Return the movie duration in seconds from an mp4, or None.
+  """
+  try:
+    fileEnd = os.path.getsize(path)
+    with open(path, "rb") as fh:
+      return _mp4Duration(fh, fileEnd)
+  except OSError:
+    return None
 
 def pairingStem(filename, suffix):
   """
@@ -469,7 +536,7 @@ def new(num):
   getImageInfoList(sourceFolder, ftg.thumbnails, previews=False)
 
   # Write the cjson file in the tmp folder.
-  cinfo = createCollectionCinfo(num, ftg, previewImageInfoList)
+  cinfo = createCollectionCinfo(num, ftg, previewImageInfoList, sourceFolder)
   cjsonFilename = os.path.join(sourceFolder, f"c{num}.json")
   with open(cjsonFilename, "w") as fh:
     fh.write(json.dumps(cinfo, indent=2))
@@ -732,6 +799,23 @@ class TestMaker(unittest.TestCase):
     gotExpected(pairingStem("c21-10-p.jpg", "-p.jpg"), "c21-10")
     gotExpected(pairingStem("10-p.jpg", "-v.mp4"), None)
 
+  def test_mp4DurationSeconds_invalid(self):
+    folder = tempfile.mkdtemp(prefix="maker-")
+    try:
+      path = os.path.join(folder, "x-v.mp4")
+      createFile(path, "not an mp4")
+      gotExpected(mp4DurationSeconds(path), None)
+    finally:
+      shutil.rmtree(folder)
+
+  def test_mp4DurationSeconds(self):
+    path = "dist/images/c21/c21-16-v.mp4"
+    if not os.path.exists(path):
+      return
+    seconds = mp4DurationSeconds(path)
+    assert seconds is not None
+    assert seconds > 10
+
   def test_liveVideoPairedByStem(self):
     # 2 has no video; 10 does. Lex order is 1, 10, 2, 3 so a list-index
     # pairing would attach 3-v.mp4 to 2-p.jpg.
@@ -745,7 +829,7 @@ class TestMaker(unittest.TestCase):
         createFile(os.path.join(folder, f"{i}-v.mp4"), f"v{i}" * 10)
       ftg = FileTypeGroups(getFileInfoList(folder))
       previewImageInfoList = getTestImageInfoList(ftg.previews)
-      cinfo = createCollectionCinfo(num, ftg, previewImageInfoList)
+      cinfo = createCollectionCinfo(num, ftg, previewImageInfoList, folder)
       # Lex order: 1, 10, 2, 3
       gotExpected(cinfo["images"][0]["iPreview"], "c21-1-p.jpg")
       gotExpected(cinfo["images"][0]["iLiveVideo"], "c21-1-v.mp4")
@@ -1005,7 +1089,7 @@ class TestMaker(unittest.TestCase):
 
       previewImageInfoList = getTestImageInfoList(ftg.previews)
 
-      cinfo = createCollectionCinfo(num, ftg, previewImageInfoList)
+      cinfo = createCollectionCinfo(num, ftg, previewImageInfoList, folder)
       cjson = json.dumps(cinfo, indent=2)
       # print(cjson)
 
@@ -1064,7 +1148,7 @@ class TestMaker(unittest.TestCase):
 
       previewImageInfoList = getTestImageInfoList(ftg.previews)
 
-      cinfoNew = createCollectionCinfo(num, ftg, previewImageInfoList)
+      cinfoNew = createCollectionCinfo(num, ftg, previewImageInfoList, folder)
     finally:
       shutil.rmtree(folder)
 

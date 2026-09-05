@@ -358,6 +358,24 @@ function validateCinfoImageSuite() {
   image = createTestImage(4, 2)
   image.height = 932
   testThrow("Collection 4 image 2: preview height must be >= 933: got: 932.", fn, 4, 2, true, image)
+
+  image = createTestImage(4, 2)
+  image.iLiveVideo = "c4-2-v.mp4"
+  image.liveSize = 100
+  image.liveDuration = 12.5
+  test(fn, 4, 2, false, image)
+
+  image = createTestImage(4, 2)
+  image.liveDuration = 12.5
+  testThrow("Collection 4 image 2: liveDuration is not allowed without iLiveVideo.",
+    fn, 4, 2, false, image)
+
+  image = createTestImage(4, 2)
+  image.iLiveVideo = "c4-2-v.mp4"
+  image.liveSize = 100
+  image.liveDuration = 0
+  testThrow("Collection 4 image 2: liveDuration must be a positive number.",
+    fn, 4, 2, false, image)
 }
 
 function validateCinfoNoReadingSuite() {
@@ -386,6 +404,13 @@ function validateCinfoNoReadingSuite() {
   cinfo = createTestCinfo({numImages: 1,
     zoomPointKeys: ["933x432", "432x933"]})
   cinfo.images[0].taken = ""
+  test(fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].iLiveVideo = "c4-0-v.mp4"
+  cinfo.images[0].liveSize = 100
+  cinfo.images[0].liveDuration = 34.969
   test(fn, 4, cinfo)
 
   let message = "No cinfo."
@@ -475,6 +500,7 @@ function getImagePathSuite() {
   test(fn, "c4-10-p.jpg", "dist/images/c4/c4-10-p.jpg")
   testThrow("Invalid basename name: bogus.jpg", fn, "bogus.jpg")
   test(fn, "c4-10-t.jpg", "dist/images/c4/c4-10-t.jpg")
+  test(fn, "c21-16-v.mp4", "dist/images/c21/c21-16-v.mp4")
 }
 
 function testGetJpegDimensions(filename: string, eDims: { width: number, height: number }) {

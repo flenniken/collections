@@ -91,7 +91,9 @@ done
 
 Live videos are optional — you can include them for some images and
 not others. The maker pairs each live video to the preview with the
-same name stem: `10-v.mp4` goes with `10-p.jpg`.
+same name stem: `10-v.mp4` goes with `10-p.jpg`. Live Photos play when
+you press and hold. Longer videos, such as a 30 second clip, show a
+play button instead of the LIVE badge.
 
 
 Convert the HEIC files to -p.jpg files:
@@ -116,7 +118,7 @@ Manual steps:
 | File     | Role     |
 | -------- | -------- |
 | -p.jpg | The still photo shown on the image page, used for dimensions in cjson, zoom/pan, and offline download |
-| -v.mp4 | Optional motion clip, played only on press-and-hold over the still |
+| -v.mp4 | Optional motion clip. Live Photos play on press-and-hold. Longer videos show a play button, play to the end, then stop |
 | -t.jpg | Square thumbnail for the index and thumbnail pages |
 
 

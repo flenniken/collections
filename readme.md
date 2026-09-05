@@ -60,7 +60,8 @@ orientation and size.
 
 You can zoom and pan an image with two fingers.  A double tap cycles
 through the zoom point, fit-to-screen, and fill-screen views. You can
-play live photos with a long press.
+play live photos with a long press. Longer videos you press a play
+button.
 
 You scroll left and right to go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by

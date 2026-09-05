@@ -29,6 +29,11 @@ const framesPerSec = 30
 const LIVE_PRESS_MS = 400
 // Shorter hold delay on touch devices before starting playback.
 const LIVE_PRESS_MS_IOS = 250
+// Live Photos are about three seconds. Longer clips get a play button.
+const LIVE_PHOTO_MAX_S = 4
+// When duration is missing, a much larger file is a clip. Live Photos
+// in this project are under 6 MB; c21-16-v.mp4 is 44 MB.
+const CLIP_MIN_BYTES = 8_000_000
 
 // Live Photo press state.
 let livePressTimer: ReturnType<typeof setTimeout> | null = null
@@ -39,6 +44,8 @@ let livePressTouchId: number | null = null
 let liveVideoPlayingIx: number | null = null
 // Ignore pause events triggered by stopLiveVideo().
 let liveVideoStopping = false
+// Clip play requested by the play button, waiting for the blob.
+let clipPlayImageIx: number | null = null
 
 // Horizontal movement before playback means the user is scrolling.
 const LIVE_SCROLL_CANCEL_PX = 12
@@ -353,6 +360,30 @@ function imageHasLiveVideo(imageIx: number): boolean {
   return !!cJson.images[imageIx].iLiveVideo
 }
 
+function imageVideoDuration(imageIx: number): number | null {
+  const d = cJson.images[imageIx].liveDuration
+  if (typeof d === "number" && d > 0)
+    return d
+  const video = getLiveVideoElement(imageIx)
+  if (video && Number.isFinite(video.duration) && video.duration > 0)
+    return video.duration
+  return null
+}
+
+function imageIsClipVideo(imageIx: number): boolean {
+  if (!imageHasLiveVideo(imageIx))
+    return false
+  const duration = imageVideoDuration(imageIx)
+  if (duration !== null)
+    return duration > LIVE_PHOTO_MAX_S
+  const size = cJson.images[imageIx].liveSize
+  return typeof size === "number" && size > CLIP_MIN_BYTES
+}
+
+function imageIsLivePhoto(imageIx: number): boolean {
+  return imageHasLiveVideo(imageIx) && !imageIsClipVideo(imageIx)
+}
+
 function getLiveVideoElement(imageIx: number): HTMLVideoElement | null {
   const video = document.getElementById(`v${imageIx + 1}`)
   if (!video)
@@ -381,6 +412,7 @@ function addLiveBadge(imageIx: number) {
   if (!container)
     return
   container.classList.add("has-live")
+  container.classList.remove("has-clip")
   if (container.querySelector(".live-badge"))
     return
   const badge = document.createElement("div")
@@ -395,21 +427,76 @@ function addLiveBadge(imageIx: number) {
   container.appendChild(badge)
 }
 
+function addPlayButton(imageIx: number) {
+  const container = document.getElementById(`c${imageIx + 1}`)
+  if (!container)
+    return
+  container.classList.add("has-clip")
+  container.classList.remove("has-live")
+  let button = container.querySelector(".clip-play") as HTMLButtonElement | null
+  if (!button) {
+    button = document.createElement("button")
+    button.type = "button"
+    button.className = "clip-play"
+    button.setAttribute("aria-label", "Play video")
+    button.innerHTML =
+      '<svg class="clip-play-icon" viewBox="0 0 24 24" aria-hidden="true">' +
+      '<path fill="currentColor" d="M8 5.14v13.72L19 12 8 5.14z"/>' +
+      '</svg>'
+    container.appendChild(button)
+  }
+  if (button.dataset.clipReady === "1")
+    return
+  button.dataset.clipReady = "1"
+  const play = (event: Event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    requestClipPlay(imageIx)
+  }
+  button.addEventListener("click", play)
+  button.addEventListener("touchstart", (event) => {
+    event.stopPropagation()
+  }, {passive: true})
+}
+
+function applyVideoKind(imageIx: number) {
+  const container = document.getElementById(`c${imageIx + 1}`)
+  const video = getLiveVideoElement(imageIx)
+  if (!container || !video || !imageHasLiveVideo(imageIx))
+    return
+  if (imageIsClipVideo(imageIx)) {
+    video.loop = false
+    addPlayButton(imageIx)
+  } else if (imageIsLivePhoto(imageIx)) {
+    video.loop = true
+    addLiveBadge(imageIx)
+  }
+}
+
 function setupLiveVideos() {
-  // Configure Live Photo video elements from the collection json.
+  // Configure Live Photo and clip video elements from the collection json.
   cJson.images.forEach((image, imageIx) => {
     if (!image.iLiveVideo)
       return
-    addLiveBadge(imageIx)
+    const container = document.getElementById(`c${imageIx + 1}`)
+    if (container)
+      container.classList.remove("has-live")
     const video = getLiveVideoElement(imageIx)
     if (!video)
       return
     video.playsInline = true
     ;(video as HTMLVideoElement & { webkitPlaysInline?: boolean }).webkitPlaysInline = true
     video.muted = true
-    video.loop = true
+    video.loop = false
     video.preload = "auto"
     sizeLiveVideo(imageIx, image)
+    applyVideoKind(imageIx)
+    video.addEventListener("loadedmetadata", () => applyVideoKind(imageIx))
+    video.addEventListener("durationchange", () => applyVideoKind(imageIx))
+    video.addEventListener("ended", () => {
+      if (imageIsClipVideo(imageIx))
+        stopLiveVideo(imageIx)
+    })
     // Show the video only once frames are rolling so a slow start never
     // leaves a frozen frame sitting on top of the photo.
     video.addEventListener("playing", () => {
@@ -419,6 +506,11 @@ function setupLiveVideos() {
     video.addEventListener("pause", () => {
       if (liveVideoStopping)
         return
+      if (imageIsClipVideo(imageIx)) {
+        if (video.ended)
+          stopLiveVideo(imageIx)
+        return
+      }
       if (liveVideoPlayingIx === imageIx && livePressImageIx === imageIx)
         void video.play().catch(() => {})
     })
@@ -497,9 +589,17 @@ function whenLiveVideoBlobReady(imageIx: number, onReady: () => void) {
 function updateLiveVideos(centerIx: number) {
   // Load the videos near the current image and release the others so
   // the one you press is fully loaded and decoded before you press it.
+  // Longer clips stay unloaded until you are on that image.
   cJson.images.forEach((_image, imageIx) => {
     if (!imageHasLiveVideo(imageIx))
       return
+    if (imageIsClipVideo(imageIx)) {
+      if (imageIx === centerIx)
+        loadLiveVideoBlob(imageIx)
+      else
+        releaseLiveVideo(imageIx)
+      return
+    }
     if (Math.abs(imageIx - centerIx) <= LIVE_VIDEO_WINDOW)
       loadLiveVideoBlob(imageIx)
     else
@@ -601,6 +701,8 @@ function stopLiveVideo(imageIx: number) {
   video.classList.remove("playing")
   if (liveVideoPlayingIx === imageIx)
     liveVideoPlayingIx = null
+  if (clipPlayImageIx === imageIx)
+    clipPlayImageIx = null
 }
 
 function primeLiveVideoForSound(imageIx: number) {
@@ -633,7 +735,7 @@ function stopAllLiveVideos() {
   })
 }
 
-function playLiveVideo(imageIx: number) {
+function playCollectionVideo(imageIx: number, kind: "hold" | "clip") {
   if (!imageHasLiveVideo(imageIx))
     return
 
@@ -650,8 +752,14 @@ function playLiveVideo(imageIx: number) {
   const zoomPoint = getZoomPoint(imageIx)
   setImageTransform(imageIx, zoomPoint)
 
+  const stillRequested = () => {
+    if (kind === "hold")
+      return livePressImageIx === imageIx
+    return clipPlayImageIx === imageIx
+  }
+
   const start = () => {
-    if (livePressImageIx !== imageIx)
+    if (!stillRequested())
       return
     if (video.currentTime > 0)
       video.currentTime = 0
@@ -671,10 +779,23 @@ function playLiveVideo(imageIx: number) {
   // Playing a partly loaded video runs about a second and then stops
   // until the rest of it loads.
   whenLiveVideoBlobReady(imageIx, () => {
-    if (livePressImageIx !== imageIx)
+    if (!stillRequested())
       return
     whenLiveVideoPlayable(imageIx, start)
   })
+}
+
+function playLiveVideo(imageIx: number) {
+  playCollectionVideo(imageIx, "hold")
+}
+
+function requestClipPlay(imageIx: number) {
+  if (liveVideoPlayingIx === imageIx)
+    return
+  cancelLivePress()
+  clipPlayImageIx = imageIx
+  primeLiveVideoForSound(imageIx)
+  playCollectionVideo(imageIx, "clip")
 }
 
 function isTouchDevice(): boolean {
@@ -950,7 +1071,7 @@ function handleContainerTouchStart(event: Event) {
 
   // When not two fingers touching, start a Live Photo press.
   if (touches.length != 2) {
-    if (touches.length == 1 && !zpan.zooming && imageHasLiveVideo(imageIndex))
+    if (touches.length == 1 && !zpan.zooming && imageIsLivePhoto(imageIndex))
       startLivePress(imageIndex, event)
     return
   }
@@ -1114,7 +1235,7 @@ function handleTouchMove(event: TouchEvent) {
     const dx = touches[0].clientX - livePressStartX
     const dy = touches[0].clientY - livePressStartY
 
-    if (liveVideoPlayingIx !== null) {
+    if (liveVideoPlayingIx !== null && imageIsLivePhoto(liveVideoPlayingIx)) {
       event.preventDefault()
       return
     }
@@ -1246,7 +1367,7 @@ function handleTouchEnd(event: TouchEvent) {
     return
 
   cancelLivePress()
-  if (liveVideoPlayingIx !== null)
+  if (liveVideoPlayingIx !== null && imageIsLivePhoto(liveVideoPlayingIx))
     stopLiveVideo(liveVideoPlayingIx)
 
   if (zpan.zooming) {
@@ -1389,6 +1510,10 @@ function handleScroll() {
       // Set the image index and stop the interval checking.
       imageIndex = imageIx
       log(`scolling stopped on image: ${imageIndex + 1}`)
+      if (liveVideoPlayingIx !== null && liveVideoPlayingIx !== imageIx)
+        stopLiveVideo(liveVideoPlayingIx)
+      if (clipPlayImageIx !== null && clipPlayImageIx !== imageIx)
+        clipPlayImageIx = null
       updateLiveVideos(imageIx)
       clearInterval(scrollStopId);
       scrollStopId = 0

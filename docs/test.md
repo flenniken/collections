@@ -112,6 +112,11 @@ When making changes to the image page test them with these steps:
 * press and hold an image that has no Live Photo and verify nothing happens
 * press and hold a Live Photo then slide sideways and verify it scrolls
   to the next image instead of playing
+* tap the play button on a longer video (c21 image 10, c21-16-v.mp4)
+  and verify it plays to the end then stops, without holding, and
+  without a LIVE badge
+* tap a longer video's still photo (not the play button) and verify it
+  does not start playing
 * rotate the last image then rotate it back and verify it remains on the same image
 * scroll h & v in landscape mode
 * no flash on load and no flash on rotate

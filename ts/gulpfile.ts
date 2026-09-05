@@ -835,7 +835,8 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
   const imageRequiredFields = [
     "iPreview", "iThumbnail", "title", "description",
     "width", "height", "size", "sizet"]
-  const imageOptionalFields = ["iLiveVideo", "liveSize", "location", "taken"]
+  const imageOptionalFields = [
+    "iLiveVideo", "liveSize", "liveDuration", "location", "taken"]
 
   // Check that the image does not have extra fields.
   cinfo.images.forEach((image, ix) => {
@@ -849,7 +850,7 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
 
 export function getImagePath(basename: string) {
   // Return the path given an image basename.
-  const obj = parseImageName(basename)
+  const obj = parseImageName(basename) ?? parseLiveVideoName(basename)
   if (obj == null)
     throw new Error(`Invalid basename name: ${basename}`);
   return `dist/images/c${obj.cNum}/${basename}`;
@@ -995,6 +996,10 @@ different inum: iPreview ${image.iPreview}, iThumbnail ${image.iThumbnail}`)
   if (image.iLiveVideo) {
     if (typeof image.liveSize !== "number")
       throw new Error(`Collection ${cNum} image ${ix}: liveSize is required when iLiveVideo is set.`)
+    if ("liveDuration" in image &&
+        (typeof image.liveDuration !== "number" || !(image.liveDuration > 0))) {
+      throw new Error(`Collection ${cNum} image ${ix}: liveDuration must be a positive number.`)
+    }
     validateLiveVideoName(cNum, ix, image.iLiveVideo, image.iPreview)
     const liveObj = parseLiveVideoName(image.iLiveVideo)
     if (liveObj?.iNum !== previewObj?.iNum) {
@@ -1002,6 +1007,8 @@ different inum: iPreview ${image.iPreview}, iThumbnail ${image.iThumbnail}`)
     }
   } else if ("liveSize" in image) {
     throw new Error(`Collection ${cNum} image ${ix}: liveSize is not allowed without iLiveVideo.`)
+  } else if ("liveDuration" in image) {
+    throw new Error(`Collection ${cNum} image ${ix}: liveDuration is not allowed without iLiveVideo.`)
   }
 
   // Check that width and height greater than or equal to previewMinDim = 933

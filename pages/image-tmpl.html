@@ -106,6 +106,45 @@ body {
 .container video.live-video.playing ~ .live-badge {
   opacity: 0;
 }
+.container.has-clip .live-badge {
+  display: none;
+}
+.clip-play {
+  display: none;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 72px;
+  height: 72px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-user-drag: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.container.has-clip .clip-play {
+  display: flex;
+}
+.clip-play-icon {
+  width: 36px;
+  height: 36px;
+  margin-left: 4px;
+  display: block;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.45));
+}
+.container.has-clip video.live-video.playing ~ .clip-play {
+  opacity: 0;
+  pointer-events: none;
+}
   </style>
   <script>
 //$ block
@@ -138,6 +177,11 @@ body {
           </svg>
           <span>LIVE</span>
         </div>
+        <button type="button" class="clip-play" aria-label="Play video">
+          <svg class="clip-play-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="currentColor" d="M8 5.14v13.72L19 12 8 5.14z"/>
+          </svg>
+        </button>
       </div>
       <h3 class="title">{title}</h3>
       <p class="description">{description}</p>
