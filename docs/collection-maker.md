@@ -419,7 +419,7 @@ Send a notification to all users.
 scripts/notification --publish all "Manzantia 2026"
 ~~~
 
-#Replace Image
+# Replace Image
 
 Steps to replacement an image with a new one:
 

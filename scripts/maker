@@ -477,27 +477,6 @@ def renameFiles(num, folder, ftg):
   # Remove the empty temp folder.
   os.rmdir(tempFolder)
 
-def checkNumber(s3Client, num):
-  """
-  Check that num is the next available number.
-  """
-  if num < 0:
-    raise MakerException(f"Error: invalid collection number: {num}.")
-
-  s3client = getBotoClient('s3')
-  awsSettings = getAwsSettings()
-  settings = awsSettings['settings']
-  bucket_name = settings['bucket_name']
-
-  # Make sure the number is not already used.
-  if keyExists(s3Client, bucket_name, f"images/c{num}/c{num}.json"):
-    raise MakerException("Error: the collection number is already used.")
-
-  # Make sure the previous number is used.
-  if num > 1:
-    if not keyExists(s3Client, bucket_name, f"images/c{num-1}/c{num-1}.json"):
-      raise MakerException("Error: the collection number is not next.")
-
 def keyExists(s3Client, bucket_name, key):
   """
   Return true when the file exists in the s3 bucket else return false.
@@ -519,7 +498,6 @@ def new(num):
     raise MakerException(f"Missing the collection folder: {sourceFolder}")
 
   s3client = getBotoClient('s3')
-  checkNumber(s3client, num)
 
   localDestFolder = f"dist/images/c{num}"
   if os.path.exists(localDestFolder):
@@ -971,19 +949,6 @@ class TestMaker(unittest.TestCase):
     assert keyExists(tc.s3Client, bucket_name, "images/c1/c1-1-p.jpg") == True
     assert keyExists(tc.s3Client, bucket_name, "images/c1/c1-1-t.jpg") == True
     assert keyExists(tc.s3Client, bucket_name, "images/c1/xyz.jpg") == False
-
-  def test_checkNumber(self):
-    if not internet:
-      return
-    return
-
-    checkNumber(tc.s3Client, 4)
-
-    with self.assertRaises(MakerException):
-      checkNumber(tc.s3Client, 3)
-
-    with self.assertRaises(MakerException):
-      checkNumber(tc.s3Client, 5)
 
   def test_getFileInfoList(self):
     fileInfoList = getFileInfoList("dist")
