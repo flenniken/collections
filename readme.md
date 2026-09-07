@@ -45,6 +45,7 @@ The icons do the following:
 * ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
 * ![download images](dist/icons/download.svg) download the collection's images
 * ![delete cached images](dist/icons/trash-can.svg) delete the collection's cached images
+* ![share image](dist/icons/share.svg) on the image page, share the image
 
 [⬇](#Contents)
 
@@ -70,7 +71,8 @@ side.  This is good for multi-images that look like one wide image.
 You scroll to the bottom to see a description of the image.
 
 You go back to the thumbnails or index page by scrolling to the bottom
-and tapping the thumbnail or index icon.
+and tapping the thumbnail or index icon. Tap the share icon to save
+the current photo or send it with the phone’s share sheet.
 
 [⬇](#Contents)
 

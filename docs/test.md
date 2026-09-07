@@ -122,6 +122,7 @@ When making changes to the image page test them with these steps:
 * no flash on load and no flash on rotate
 * tap the thumbnails menu icon
 * tap the index menu icon
+  * tap the share icon and verify the share sheet appears, or the photo downloads
 
 [⬇](#Contents)
 

@@ -605,6 +605,7 @@ function updateLiveVideos(centerIx: number) {
     else
       releaseLiveVideo(imageIx)
   })
+  void updateSharePreview(centerIx)
 }
 
 function releaseLiveVideo(imageIx: number) {
@@ -1567,4 +1568,98 @@ function downloadCjson() {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+// Prefetch the current preview so share() can run in the tap gesture.
+let sharePreviewFile: File | null = null
+let sharePreviewIx: number | null = null
+
+async function fetchPreviewFile(imageIx: number): Promise<File> {
+  const image = cJson.images[imageIx]
+  const filename = image.iPreview
+  const baseUrl = `/images/c${cJson.cNum}/${filename}`
+  const auth = await liveVideoAuthInit()
+  const url = `${baseUrl}${auth.urlSuffix}`
+  const init: RequestInit = auth.headers ? { headers: auth.headers } : {}
+  const response = await fetch(url, init)
+  if (!response.ok)
+    throw new Error(`fetch failed: ${response.status}`)
+  const blob = await response.blob()
+  const type = blob.type || "image/jpeg"
+  return new File([blob], filename, { type: type })
+}
+
+async function updateSharePreview(imageIx: number) {
+  sharePreviewIx = imageIx
+  sharePreviewFile = null
+  try {
+    const file = await fetchPreviewFile(imageIx)
+    if (sharePreviewIx === imageIx)
+      sharePreviewFile = file
+  } catch (err) {
+    log(`share preview load failed: ${err}`)
+  }
+}
+
+function canShareFiles(file: File): boolean {
+  const nav = navigator as Navigator & {
+    share?: (data: ShareData) => Promise<void>
+    canShare?: (data: ShareData) => boolean
+  }
+  if (typeof nav.share !== "function")
+    return false
+  if (typeof nav.canShare !== "function")
+    return true
+  try {
+    return nav.canShare({ files: [file] })
+  } catch {
+    return false
+  }
+}
+
+function downloadBlobFile(file: File) {
+  const url = URL.createObjectURL(file)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = file.name
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
+async function shareCurrentImage() {
+  const imageIx = imageIndex
+  const image = cJson.images[imageIx]
+  log(`Share image ${imageIx + 1}: ${image.iPreview}`)
+
+  let file = sharePreviewFile
+  if (!file || sharePreviewIx !== imageIx) {
+    try {
+      file = await fetchPreviewFile(imageIx)
+      if (sharePreviewIx === imageIx)
+        sharePreviewFile = file
+    } catch (err) {
+      log(`share fetch failed: ${err}`)
+      window.alert("Unable to share this photo.")
+      return
+    }
+  }
+
+  if (canShareFiles(file)) {
+    try {
+      // iOS Copy pastes the image twice if title or text is included
+      // with the file.
+      await navigator.share({ files: [file] })
+      return
+    } catch (err) {
+      const name = err instanceof Error ? err.name : ""
+      if (name === "AbortError")
+        return
+      log(`share failed: ${err}`)
+    }
+  }
+
+  log(`Download ${file.name}`)
+  downloadBlobFile(file)
 }
