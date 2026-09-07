@@ -23,6 +23,11 @@ script does this.
 You can use the deploy script to list the modified files without
 copying them with the -m option.
 
+It compares each local file to the S3 ETag. Small files use the MD5 of
+the whole file. Files 8 MB or larger are uploaded in parts, so their
+ETag is not a whole-file MD5; the script matches that multipart ETag
+instead of copying them every time.
+
 ~~~
 deploy —m
 ~~~

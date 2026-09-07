@@ -26,10 +26,24 @@ from boto_client import getBotoClient, getAwsSettings
 import time
 import hashlib
 import mimetypes
+import tempfile
+import shutil
+from boto3.s3.transfer import TransferConfig
 
 class DeployException(Exception):
   """ An exception we plan for. """
   pass
+
+# boto3 upload_file uses multipart for files this size or larger. The
+# S3 ETag is then MD5-of-part-MD5s plus a dash and the part count, not
+# the MD5 of the whole file. c21-16-v.mp4 is 44 MB, so it always looked
+# modified when we compared a whole-file MD5 to that ETag.
+S3_MULTIPART_THRESHOLD = 8 * 1024 * 1024
+S3_MULTIPART_CHUNKSIZE = 8 * 1024 * 1024
+S3_TRANSFER_CONFIG = TransferConfig(
+  multipart_threshold=S3_MULTIPART_THRESHOLD,
+  multipart_chunksize=S3_MULTIPART_CHUNKSIZE,
+)
 
 def getFileInfo(s3Client, bucket_name, exclude_prefix):
     """
@@ -86,7 +100,8 @@ def copyFilesToS3(s3Client, bucket_name, filenames):
     # Upload the file to S3
     print(f"Copying {localPath} to s3 as {content_type}")
     s3Client.upload_file(localPath, bucket_name, filename,
-      ExtraArgs={'ContentType': content_type})
+      ExtraArgs={'ContentType': content_type},
+      Config=S3_TRANSFER_CONFIG)
 
 def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   """
@@ -163,6 +178,48 @@ def listModified(s3Client, bucket_name):
   for filename in modifiedFiles:
     print(filename)
 
+def md5File(path):
+  """
+  Return the MD5 hex digest of the file, read in chunks.
+  """
+  md5 = hashlib.md5()
+  with open(path, "rb") as fh:
+    while True:
+      data = fh.read(1024 * 1024)
+      if not data:
+        break
+      md5.update(data)
+  return md5.hexdigest()
+
+def multipartEtag(path, chunksize=S3_MULTIPART_CHUNKSIZE):
+  """
+  Return the S3 multipart ETag for the file: MD5 of the concatenated
+  per-part MD5s, a dash, and the part count.
+  """
+  partMd5s = []
+  with open(path, "rb") as fh:
+    while True:
+      data = fh.read(chunksize)
+      if not data:
+        break
+      partMd5s.append(hashlib.md5(data).digest())
+  if not partMd5s:
+    return hashlib.md5(b"").hexdigest()
+  return hashlib.md5(b"".join(partMd5s)).hexdigest() + f"-{len(partMd5s)}"
+
+def fileMatchesS3Etag(path, etag, chunksize=S3_MULTIPART_CHUNKSIZE):
+  """
+  Return true when the local file matches the S3 ETag. A plain 32-char
+  ETag is the MD5 of the file. An ETag with a dash is a multipart
+  upload.
+  """
+  if etag is None:
+    return False
+  etag = etag.strip('"')
+  if "-" in etag:
+    return etag == multipartEtag(path, chunksize=chunksize)
+  return etag == md5File(path)
+
 def getFileHashes(path):
   """
   Get the md5 hashes of the files in the given folder.
@@ -173,12 +230,10 @@ def getFileHashes(path):
       filepath = os.path.join(root, filename)
       if not os.path.isfile(filepath):
         continue
-      with open(filepath, 'rb') as f:
-        file_content = f.read()
-        md5_hash = hashlib.md5(file_content).hexdigest()
-        # Store the relative path to the file in the dist folder.
-        relative_path = os.path.relpath(filepath, 'dist')
-        fileHashes[relative_path] = md5_hash
+      md5_hash = md5File(filepath)
+      # Store the relative path to the file in the dist folder.
+      relative_path = os.path.relpath(filepath, 'dist')
+      fileHashes[relative_path] = md5_hash
   return fileHashes
 
 def getS3FileHashes(s3Client, bucket_name):
@@ -190,7 +245,8 @@ def getS3FileHashes(s3Client, bucket_name):
   s3FileHashes = {}
   for info in fileInfo:
     filename = info['Key']
-    # The ETag is the md5 hash of the file content.
+    # ETag is the MD5 of the file, or MD5-of-part-MD5s-N for a
+    # multipart upload.
     md5_hash = info['ETag'].strip('"')
     s3FileHashes[filename] = md5_hash
   return s3FileHashes
@@ -200,18 +256,16 @@ def getModifiedFiles(s3Client, bucket_name):
   Return the modified website files in the dist folder.
   """
   modified = []
-  # Get the dist files and their md5 hashes. Return a dictionary mapping
-  # the filename to the md5 hash.
   s3FileHashes = getS3FileHashes(s3Client, bucket_name)
-  distFileHashes = getFileHashes("dist")
-
-  for filename, md5 in distFileHashes.items():
-    s3hash = s3FileHashes.get(filename, None)
-    if s3hash is None:
-      modified.append(filename)
-      continue
-    if s3hash != md5:
-      modified.append(filename)
+  for root, dirs, files in os.walk("dist"):
+    for filename in files:
+      filepath = os.path.join(root, filename)
+      if not os.path.isfile(filepath):
+        continue
+      relative_path = os.path.relpath(filepath, "dist")
+      s3hash = s3FileHashes.get(relative_path)
+      if s3hash is None or not fileMatchesS3Etag(filepath, s3hash):
+        modified.append(relative_path)
 
   return modified
 
@@ -371,10 +425,51 @@ class TestModule(unittest.TestCase):
     # for filename, md5 in fileHashes.items():
     #   print(f"{md5}: {filename}")
     self.assertTrue(len(fileHashes) > 0)
-    for filename, md5 in fileHashes.items():
+    for filename, etag in fileHashes.items():
       self.assertTrue(len(filename) > 0)
-      self.assertEqual(len(md5), 32)
-      self.assertTrue(md5.isalnum())
+      if "-" in etag:
+        digest, parts = etag.split("-", 1)
+        self.assertEqual(len(digest), 32)
+        self.assertTrue(digest.isalnum())
+        self.assertTrue(parts.isdigit())
+        self.assertGreaterEqual(int(parts), 2)
+      else:
+        self.assertEqual(len(etag), 32)
+        self.assertTrue(etag.isalnum())
+
+  def test_multipartEtag(self):
+    folder = tempfile.mkdtemp()
+    try:
+      path = os.path.join(folder, "x.bin")
+      data = b"abcdefghijklmnopqrstuvwxy"
+      with open(path, "wb") as fh:
+        fh.write(data)
+      parts = [data[0:10], data[10:20], data[20:25]]
+      expected = hashlib.md5(b"".join(
+        hashlib.md5(part).digest() for part in parts
+      )).hexdigest() + "-3"
+      self.assertEqual(multipartEtag(path, chunksize=10), expected)
+      self.assertTrue(fileMatchesS3Etag(path, expected, chunksize=10))
+      self.assertTrue(fileMatchesS3Etag(path, md5File(path)))
+      self.assertTrue(fileMatchesS3Etag(path, '"' + md5File(path) + '"'))
+      self.assertFalse(fileMatchesS3Etag(path, "0" * 32))
+      self.assertFalse(fileMatchesS3Etag(path, None))
+    finally:
+      shutil.rmtree(folder)
+
+  def test_c21_16_matchesS3Etag(self):
+    path = "dist/images/c21/c21-16-v.mp4"
+    self.assertTrue(os.path.isfile(path))
+    self.assertGreater(os.path.getsize(path), S3_MULTIPART_THRESHOLD)
+    etag = multipartEtag(path)
+    self.assertTrue(etag.endswith("-6"))
+    self.assertTrue(fileMatchesS3Etag(path, etag))
+    awsSettings = getAwsSettings()
+    settings = awsSettings['settings']
+    s3Hashes = getS3FileHashes(tc.s3Client, settings['bucket_name'])
+    key = "images/c21/c21-16-v.mp4"
+    if key in s3Hashes:
+      self.assertTrue(fileMatchesS3Etag(path, s3Hashes[key]))
 
 if __name__ == '__main__':
   args = parseCommandLine()
