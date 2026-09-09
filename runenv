@@ -34,7 +34,7 @@ function runMe() {
 
     # Run the container.
     status=$(docker inspect $collectionsContainer 2>/dev/null | grep Status)
-    mapports='-p 127.0.0.1:8000:8000'
+    mapports='-p 127.0.0.1:8000:8000 -p 127.0.0.1:3001:3001'
     case $status in
       *running*)
         echo "The $collectionsContainer is running, attaching to it..."

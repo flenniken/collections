@@ -1549,8 +1549,18 @@ function showAdminIcons() {
   }
 }
 
-function downloadCjson() {
-  // Create and download a cjson file.
+async function downloadCjson() {
+  // Save the collection json on localhost, or download it otherwise.
+
+  if (isLocalhost()) {
+    try {
+      await saveCollection(cJson)
+      log("Collection saved.")
+    } catch (error) {
+      logError("Collection save failed", error)
+    }
+    return
+  }
 
   // Convert collection info to a json string.
   const cjson = JSON.stringify(cJson, null, 2)

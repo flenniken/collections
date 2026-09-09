@@ -62,3 +62,26 @@ function forClasses(parent: Element | Document,
     callback(<HTMLElement>elements[ix])
   }
 }
+
+function isLocalhost(): boolean {
+  // Return true when the page is served from the docker nginx server.
+  const host = window.location.hostname
+  return host === "localhost" || host === "127.0.0.1"
+}
+
+async function saveCollection(collection: { cNum: number }) {
+  // Save the collection json by calling the admin saveCollection api.
+  const response = await fetch(
+    "http://localhost:3001/saveCollection",
+    {
+      method: "POST",
+      headers:
+      {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(collection)
+    })
+  if (!response.ok)
+    throw new Error(`Save failed: ${response.status}`)
+  return await response.json()
+}

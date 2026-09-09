@@ -24,7 +24,7 @@ let currentThumbnailIx: number = 0;
 let currentImageIx: number = 0;
 
 addChangeListener("collection-dropdown", selectCollection)
-addClickListener("save-button", saveCollection)
+addClickListener("save-button", onSaveCollection)
 addClickListener("optimize-button", () => {
   if (cinfo)
     optimizeCollection(cinfo)
@@ -588,8 +588,8 @@ async function availableImageClick(order: number[], availIndex: number) {
   setImage(cinfo.cNum, cinfo.images, `ci${firstBlankIx}`, `cb${firstBlankIx}`, availIndex)
 }
 
-async function saveCollection(event: Event) {
-  // Download the cjson file.
+async function onSaveCollection(event: Event) {
+  // Save the cjson file through the localhost admin API.
   log("The save-button was clicked.")
 
   if (!cinfo) {
@@ -597,7 +597,12 @@ async function saveCollection(event: Event) {
     return
   }
 
-  downloadCjson(cinfo)
+  try {
+    await saveCollection(cinfo)
+    log("Collection saved.")
+  } catch (error) {
+    logError("Collection save failed", error)
+  }
 }
 
 function optimizeCollection(cjsoninfo: CJson.Collection) {
@@ -801,20 +806,3 @@ function disableInputs(disable: boolean) {
   })
 }
 
-function downloadCjson(cinfo: CJson.Collection) {
-  // Create and download a cjson file.
-
-  // Convert collection info to a json string.
-  const cjson = JSON.stringify(cinfo, null, 2)
-
-  // Create a download link and click it.
-  const blob = new Blob([cjson], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `c${cinfo.cNum}.json`
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}

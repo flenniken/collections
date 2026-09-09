@@ -123,6 +123,8 @@ When making changes to the image page test them with these steps:
 * tap the thumbnails menu icon
 * tap the index menu icon
   * tap the share icon and verify the share sheet appears, or the photo downloads
+  * as admin on localhost, tap the download icon and verify it writes
+    `dist/images/cN/cN.json` instead of downloading a file
 
 [⬇](#Contents)
 

@@ -124,5 +124,9 @@ COPY --chown=coder:coder glow.yml /home/coder/.config/glow/glow.yml
 # Start in the collections directory.
 WORKDIR /home/coder/collections
 
-# Start cron, nginx and leave the container running in bash.
-CMD sudo service cron start; sudo nginx && /bin/bash
+# Start cron, nginx, the localhost admin API, and leave the
+# container running in bash.
+CMD sudo service cron start; \
+    sudo nginx; \
+    python3 /home/coder/collections/scripts/admin_api.py & \
+    /bin/bash

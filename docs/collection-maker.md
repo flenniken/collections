@@ -276,15 +276,11 @@ your changes using the **Save** button to avoid losing
 them. Refreshing the page or selecting a different collection without
 saving will __discard your changes__.
 
-When you save, the `cjson` file it is downloaded to your `Downloads`
-folder. Move it to the `images` directory. For example:
-
-~~~
-mv ~/Downloads/c9.json dist/images/c9/
-~~~
-
-Then repeat the rebuild and refresh steps in this section until the
-descriptions, etc. are complete.
+When you save, the maker page writes the `cjson` file to the
+collection folder, for example `dist/images/c9/c9.json`. The localhost
+admin API on port 3001 does the write. It starts with the docker
+container. Then repeat the rebuild and refresh steps in this section
+until the descriptions, etc. are complete.
 
 __Maker Page UI__
 
@@ -320,10 +316,12 @@ g all
 scripts/deploy -s
 ~~~
 
-On your iphone, on the image page, size and pan each image to define
-its zoom points. Click the download icon then air-drop it to
-yourself. This saves it in the downloads folder on your desktop
-machine.  Then you move it to the collection's folder.
+On localhost, on the image page, size and pan each image to define
+its zoom points. Click the download icon to write the `cjson` to
+`dist/images/cN/cN.json`.
+
+On an iPhone the download icon still downloads the file. Air-drop it
+to yourself, then move it to the collection's folder.
 
 ♫ Note: air-drop doesn't work when your iphone is plugged into your
 mac.
