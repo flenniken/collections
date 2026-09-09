@@ -126,10 +126,14 @@ const VAPID_PUBLIC_KEY = 'BDHakmrjRIE...'
 Rotate VAPID keys when a private key has been exposed or you need a
 fresh key pair. A push subscription is created with the public key in
 `ts/notify.ts`. After you rotate keys, existing subscriptions no longer
-work. Sending to them returns a 403 error:
+work. Apple returns 400 `VapidPkHashMismatch`. Other push services may
+return 403:
 
 >the VAPID credentials in the authorization header do not correspond to
 the credentials used to create the subscriptions.
+
+The next `--publish` deletes Apple mismatch subscriptions from
+DynamoDB automatically, the same as 410 Gone.
 
 Updating `~/.aws/vapid` or a test JSON file is not enough. Each browser
 must subscribe again with the new public key.
@@ -185,9 +189,10 @@ Or publish to one user after the subscription is saved in DynamoDB:
 scripts/notification --publish <user-id> "Test collection"
 ~~~
 
-Subscriptions stored in DynamoDB before the rotation are stale. Re-subscribe
-on each device and save again, or wait for users to turn notifications
-off and on.
+Subscriptions stored in DynamoDB before the rotation are stale. The
+next `--publish` removes Apple `VapidPkHashMismatch` rows. Devices
+re-subscribe automatically when users open the app with the new public
+key.
 
 [⬇](#Contents) Contents
 
@@ -401,8 +406,9 @@ matching subscription. Use "all" to notify every subscriber, or pass
 a Cognito user id to test with one user. Add a subject line to the
 [VAPID] section of ~/.aws/vapid (contact email for web-push).
 
-When a push endpoint returns 410 Gone (or 404 Not Found), the
-subscription is removed from DynamoDB automatically.
+When a push endpoint returns 410 Gone, 404 Not Found, or Apple's 400
+`VapidPkHashMismatch` (subscription created with an old VAPID public
+key), the subscription is removed from DynamoDB automatically.
 
 ## List Subscriptions
 

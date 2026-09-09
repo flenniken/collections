@@ -134,6 +134,8 @@ const LAMBDA_EXECUTION_ROLE = 'collections-lambda'
 
 // Push services return 410 Gone when a subscription has expired or the
 // user unsubscribed. Some services return 404 for an invalid endpoint.
+// Apple returns 400 VapidPkHashMismatch after a VAPID key change; that
+// is handled in isExpiredSubscriptionError, not this set.
 const EXPIRED_SUBSCRIPTION_STATUS_CODES = new Set([410, 404])
 
 // Lambda functions that can be deployed with --deploy.
@@ -392,9 +394,18 @@ function formatPushError(error) {
   return message
 }
 
+function isVapidMismatchError(error) {
+  // Apple Web Push returns 400 {"reason":"VapidPkHashMismatch"} when
+  // the subscription was created with a different VAPID public key.
+  const text = `${error.body || ''}\n${error.message || ''}`
+  return text.includes('VapidPkHashMismatch')
+}
+
 function isExpiredSubscriptionError(error) {
   // Return true when the push endpoint is permanently invalid.
-  return EXPIRED_SUBSCRIPTION_STATUS_CODES.has(error.statusCode)
+  if (EXPIRED_SUBSCRIPTION_STATUS_CODES.has(error.statusCode))
+    return true
+  return isVapidMismatchError(error)
 }
 
 async function deleteSubscription(userId, endpoint) {
@@ -407,7 +418,7 @@ async function deleteSubscription(userId, endpoint) {
 }
 
 async function removeExpiredSubscription(userId, endpoint) {
-  // Delete a stale subscription after a 410 or 404 push error.
+  // Delete a stale subscription after a 410, 404, or VAPID mismatch.
   await deleteSubscription(userId, endpoint)
   console.log(
     `Removed expired subscription for ${userId} ${shortEndpoint(endpoint)}`
