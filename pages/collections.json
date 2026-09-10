@@ -1,6 +1,41 @@
 {
   "indexCollections": [
     {
+      "cNum": 25,
+      "building": false,
+      "ready": true,
+      "title": "Simon Fraser University",
+      "modified": false,
+      "indexDescription": "Simon Fraser University",
+      "iThumbnail": "c25-16-t.jpg",
+      "posted": "2026-09-10",
+      "iCount": 16,
+      "totalSize": 41831167,
+      "iNumList": [
+        16,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "liveINums": [
+        16,
+        7,
+        15
+      ]
+    },
+    {
       "cNum": 24,
       "building": false,
       "ready": true,

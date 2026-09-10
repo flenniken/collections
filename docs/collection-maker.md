@@ -72,7 +72,7 @@ convert: c24-1-p.HEIC -> c24-1-p.jpg
 ~~~
 
 If you only have a video, make a jpg preview by extracting a frame
-with Frame Grabber.
+with the free Frame Grabber application.
 
 Convert remaining `.mov` files to `.mp4`. The basename stays the same.
 Browsers play mp4 more reliably. The conversion keeps the Live Photo
