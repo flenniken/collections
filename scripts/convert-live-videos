@@ -1,17 +1,15 @@
 #!/bin/bash
 
-# Convert Live Photo .mov files to -v.mp4 for the collection maker.
+# Convert Live Photo .mov files to .mp4, keeping the existing basename.
 #
-# Apple Photos exports Live Photos as paired .HEIC and .mov files, for
-# example 1.mov and 1.HEIC. This script creates 1-v.mp4, 2-v.mp4, and
-# so on to pair with 1-p.jpg, 2-p.jpg after you create the previews.
-# Keeps the Live Photo soundtrack when the .mov has audio.
+# After standard-rename, files look like c25-1-v.mov. This script
+# writes c25-1-v.mp4 and removes the .mov. Keeps the Live Photo
+# soundtrack when the .mov has audio.
 #
 # Usage:
-#   scripts/convert-live-videos [folder]
+#   scripts/convert-live-videos tmp/cN
 #
-# Run from a tmp collection folder, or pass the folder as an argument.
-# Removes each .mov after its -v.mp4 is created (or already exists).
+# Removes each .mov after its .mp4 is created (or already exists).
 # Requires ffmpeg (and ffprobe) on your PATH.
 
 set -euo pipefail
@@ -52,7 +50,7 @@ stream_codec() {
 convert_mov() {
   local mov="$1"
   local base="${mov%.*}"
-  local out="${base}-v.mp4"
+  local out="${base}.mp4"
 
   if [[ -e "$out" ]]; then
     echo "skip (exists): $(basename "$out")"

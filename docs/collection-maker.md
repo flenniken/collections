@@ -2,125 +2,106 @@
 
 How to create a new collection for the Collections project.
 
-* create a folder with images
-* run the maker command
-* edit the collection with the maker web page
-* define zoom points for the images
-* deploy
+* create a `tmp/cN` folder and add images
+* rename, convert, and make thumbnails
+* run the maker command to write `cN.json`
+* move the folder to `dist/images` and build
+* edit descriptions and order on the maker web page
+* deploy, set zoom points, then publish
 
 [⬇](#Contents) (table of contents at the bottom)
 
 # Create Folder
 
-Create a tmp folder with images and their thumbnails. Make sure the
-folder contains:
-
-* start with 8 to 20 of your best photos. Pick ones with a story you can write about.
-* each image has a thumbnail
-* all images are jpg
-* preview files end with -p.jpg
-* thumbnail files end with -t.jpg
-* preview files are at least 933 pixels wide and tall
-* thumbnail files are square 480 x 480 pixels
-* no extra files exist in the folder
-
-Create the folder in the tmp folder named with the collection
-number. You can determine the next collection number by listing the
-images folder. In the example 9 is the next number:
+Create a tmp folder named with the collection prefix. List
+`dist/images` to find the next number. For collection 24:
 
 ~~~
-cd ~/code/collections
-ls dist/images
-
-c1 c2 c3 c4 c5 c6 c7 c8
+mkdir tmp/c24
 ~~~
 
-Create the folder, For example, for the 9th collection. Name it 9, not
-c9, it will be renamed later.
-
-~~~
-mkdir tmp/9
-~~~
+Put 8, 10, 12 or 16 of your best photos in the folder. Export unmodified
+originals from Apple Photos, or copy files from Adobe Bridge.
 
 __Mac Photos__
 
-Here are the steps you can use to collect the files with the Mac
-Photos app.
-
-* launch Photos App
-* create an album with all the photos, good and bad, for the topic
-* mark 8 to 20 favorite images by clicking the heart icon
-* filter by favorites so just the favorites show
-* select all
-* select export menu: File > Export > Export Unmodified Originals for 20 Photos
+* create an album with all the photos for the topic
+* mark 8 to 20 favorites
+* filter by favorites, select all
+* File > Export > Export Unmodified Originals
 * uncheck "Export IPTC as XMP"
-* select filename: Sequential
-* leave the prefix blank
-* leave the Subfolder Format as None
-* click Export
-* select the empty tmp/9 folder
+* filename: Sequential, no prefix, no subfolder
+* export into the empty `tmp/c24` folder
 
-If your photos were Live Photos, you end up with .HEIC and .mov files
-for each image.
+Live Photos export as paired `.HEIC` and `.mov` files.
 
 [![Tmp Folder](tmp-listing.png)](#)
 
-Transcode each .mov to .mp4 (H.264).  .mp4 files are support better by
-the browsers.  .mov are mostly for Apple devices.  The conversion keeps
-the Live Photo soundtrack.
+__Standard Rename__
+
+Rename camera JPEGs or HEIC/mov pairs to the standard collection
+names. JPEG extensions become `.jpg`. Files that already use the
+standard name are left alone. New files take the next number after the
+highest number in the folder. Gaps are kept.
 
 ~~~
 # from container
-scripts/convert-live-videos tmp/16
-
-skip (exists): 1-v.mp4
-convert: 10.mov -> 10-v.mp4
-convert: 11.mov -> 11-v.mp4
-convert: 12.mov -> 12-v.mp4
-convert: 13.mov -> 13-v.mp4
-convert: 14.mov -> 14-v.mp4
-convert: 15.mov -> 15-v.mp4
-convert: 16.mov -> 16-v.mp4
-convert: 2.mov -> 2-v.mp4
-convert: 3.mov -> 3-v.mp4
-convert: 4.mov -> 4-v.mp4
-convert: 8.mov -> 8-v.mp4
-convert: 9.mov -> 9-v.mp4
-done
+scripts/standard-rename tmp/c24
 ~~~
 
-Live videos are optional — you can include them for some images and
-not others. The maker pairs each live video to the preview with the
-same name stem: `10-v.mp4` goes with `10-p.jpg`. Live Photos play when
-you press and hold. Longer videos, such as a 30 second clip, show a
-play button instead of the LIVE badge.
-
-
-Convert the HEIC files to -p.jpg files:
-
-Note: If you only have a video, create a jpg preview image by
-extracting a frame from the video using the Frame Grabber application.
+Examples:
 
 ~~~
-# from container
-scripts/convert-heic-previews tmp/16
+DSCN1888.JPG  ->  c24-1-p.jpg
+DSCN1889.JPEG ->  c24-2-p.jpg
+
+1.HEIC  1.mov  ->  c24-1-p.HEIC  c24-1-v.mov
+2.HEIC  2.mov  ->  c24-2-p.HEIC  c24-2-v.mov
 ~~~
 
-Manual steps:
+Delete any `.mov` files you do not want to keep.
+
+__Convert HEIC and MOV__
+
+Convert remaining HEIC stills to jpg. The basename stays the same:
+
+~~~
+scripts/convert-heic-previews tmp/c24
+
+convert: c24-1-p.HEIC -> c24-1-p.jpg
+~~~
+
+If you only have a video, make a jpg preview by extracting a frame
+with Frame Grabber.
+
+Convert remaining `.mov` files to `.mp4`. The basename stays the same.
+Browsers play mp4 more reliably. The conversion keeps the Live Photo
+soundtrack.
+
+~~~
+scripts/convert-live-videos tmp/c24
+
+convert: c24-1-v.mov -> c24-1-v.mp4
+~~~
+
+Live videos are optional. The maker pairs each video with the preview
+that shares a stem: `c24-10-v.mp4` goes with `c24-10-p.jpg`. Live
+Photos play on press-and-hold. Longer clips show a play button
+instead of the LIVE badge.
+
+You can also convert HEIC in Photoshop:
 
 * Open the HEIC files in Photoshop
 * edit then flatten if necessary
-* save each file as jpg (use File > Save) -- uncheck "Embed
-  Color Profile: Display P3"
-* Use Jpg options: Quality 8, Baseline, no preview
-
+* save each file as jpg (File > Save) -- uncheck "Embed Color
+  Profile: Display P3"
+* Jpg options: Quality 8, Baseline, no preview
 
 | File     | Role     |
 | -------- | -------- |
 | -p.jpg | The still photo shown on the image page, used for dimensions in cjson, zoom/pan, and offline download |
 | -v.mp4 | Optional motion clip. Live Photos play on press-and-hold. Longer videos show a play button, play to the end, then stop |
 | -t.jpg | Square thumbnail for the index and thumbnail pages |
-
 
 ♫ Notes:
 
@@ -132,155 +113,94 @@ flatten the image (layer > flatten image), then save.
 maker command will report the file as MPO format instead of JPEG. MPO
 files are not supported.
 
-* Once all the jpg are created, remove the HEIC files
+__Thumbnails__
 
-Rename the jpg files (preview images) to end with "-p.jpg". Sometimes
-you will get .jpeg files instead of .jpg files, the rename code below
-handles this case. For example:
+Copy each preview to a thumbnail file:
 
 ~~~
-cd tmp/9
-
-for file in *.jpg; do
-  mv "$file" "${file/.jpg/-p.jpg}"
-done
-for file in *.jpeg; do
-  mv "$file" "${file/.jpeg/-p.jpg}"
-done
-for file in *.JPG; do
-  mv "$file" "${file/.JPG/-p.jpg}"
-done
-~~~
-
-You should have a folder that looks something like:
-
-~~~
-ls
-
-1-p.jpg    2-p.jpg    4-p.jpg  6-p.jpg  8-p.jpg
-10-p.jpg   3-p.jpg    5-p.jpg  7-p.jpg  9-p.jpg
-~~~
-
-Then copy all the images which will become the thumbnails:
-
-~~~
-# in tmp/9 folder
-for file in *-p.jpg; do
+# from the collections folder
+folder=c24 # variable
+for file in tmp/$folder/*-p.jpg; do
   cp "$file" "${file/-p.jpg/-t.jpg}"
 done
 ~~~
 
-You should have a folder that looks something like:
-
-~~~
-ls
-
-1-p.jpg  10-p.jpg 2-p.jpg  3-p.jpg  4-p.jpg  5-p.jpg  6-p.jpg  7-p.jpg  8-p.jpg  9-p.jpg
-1-t.jpg  10-t.jpg 2-t.jpg  3-t.jpg  4-t.jpg  5-t.jpg  6-t.jpg  7-t.jpg  8-t.jpg  9-t.jpg
-~~~
-
-Open the thumbnails (`-t`) images in Photoshop and crop them square
-480 x 480 dimensions.
+Open the `-t` files in Photoshop and crop them square 480 x 480.
 
 * use the crop tool
-* use the Image Size dialog
+* use the Image Size dialog (option+command i)
 * save
 * close
 
-You should have a files that looks something like the following. Notice
-the sizes of the p verses the t files:
+The folder should contain matching `-p.jpg` and `-t.jpg` files, optional
+`-v.mp4` files, and nothing extra. Previews must be at least 933
+pixels on both sides.
 
-~~~
-ls -s
-
- 5448 1-p.jpg   7408 2-p.jpg   3680 4-p.jpg   3576 6-p.jpg  10832 8-p.jpg
-  200 1-t.jpg    224 2-t.jpg    256 4-t.jpg    200 6-t.jpg    264 8-t.jpg
- 4240 10-p.jpg  3704 3-p.jpg   3368 5-p.jpg   4192 7-p.jpg   9136 9-p.jpg
-  216 10-t.jpg   224 3-t.jpg    256 5-t.jpg    248 7-t.jpg    256 9-t.jpg
-~~~
-
-Duplicate the tmp folder in the Finder. Right click the tmp/9 folder
-and select "duplicate".  You will get a "tmp/9 copy" folder.
+Duplicate the tmp folder in the Finder if you want a backup.
 
 [⬇](#Contents)
 
 # Run Maker
 
-Run the maker command to create the `cjson` file and to move the
-collection's tmp folder to the dist folder.
-
-The `cjson` file contains empty titles, descriptions, and an arbitrary
-image order. You will update this information later using the maker
-web page.
-
-The maker command validates the files and if a problem is found, the
-process stops so you can correct it. The command:
-
-* validates the files
-* creates the `cjson` file in the folder
-* moves the new folder to the `images` directory
-* sets the `cjson` order list to `-1`, indicating no images are in the collection yet
-
-For example:
+Run the maker command to validate the files and write `cN.json`. It
+leaves the folder in place.
 
 ~~~
 # from container
-scripts/maker -n 9
+scripts/maker tmp/c24
 
-Created a collection folder and moved it to: dist/images/c9
+Wrote tmp/c24/c24.json
 ~~~
 
-Add the GPS locations and time taken to the json:
+The json has empty titles and descriptions and the order isn't set.
+You fill those in later on the maker web page. Collections start in
+building state, so only admins see them.
+
+Add GPS locations and capture times:
 
 ~~~
-scripts/add-location dist/images/c19/c19.json
+scripts/add-locations tmp/c24/c24.json
+~~~
+
+Move the folder into dist, then build:
+
+~~~
+mv tmp/c24 dist/images/
+g all
 ~~~
 
 [⬇](#Contents)
 
 # Edit Collection
 
-Use the maker page to determine the photo order, to add descriptive
-text, etc.
+Use the maker page to set the photo order and write descriptions.
 
-You build the maker page with gulp, for example:
+Build first:
 
 ~~~
 g all
 ~~~
 
-You access the Maker Page as an admin from the index's about box by
-clicking the maker link.  Select the collection to edit from the
-dropdown menu. Before you name the collection, the select list will
-show the collection number only, like: "title (9)".
+Open the Maker Page as an admin from the index about box. Select the
+collection from the dropdown. Before you name it, the list shows the
+collection number, like: "title (24)".
 
-Once the page is loaded in your browser you can continue to use it
-without having to go back to the index page about box.
-
-You see the local host index page with the url:
+Use the local site:
 
 ~~~
 http://localhost:8000/
 ~~~
 
-Perform all testing on `localhost` before publishing the collection.
-
-♫ Note: after building a new maker page, do a hard refresh on the page
-(shift-cmd-R) so the photos appear in their correct location on the
-page.
+♫ Note: after building a new maker page, do a hard refresh
+(shift-cmd-R) so the photos appear in the correct location.
 
 __Saving Changes__
 
-Edits to the maker page update the `cjson` in memory version. Save
-your changes using the **Save** button to avoid losing
-them. Refreshing the page or selecting a different collection without
-saving will __discard your changes__.
+Edits update the in-memory `cjson`. Save with the **Save** button.
+Refreshing or switching collections without saving discards changes.
 
-When you save, the maker page writes the `cjson` file to the
-collection folder, for example `dist/images/c9/c9.json`. The localhost
-admin API on port 3001 does the write. It starts with the docker
-container. Then repeat the rebuild and refresh steps in this section
-until the descriptions, etc. are complete.
+Save writes `dist/images/cN/cN.json` through the localhost admin API
+on port 3001. Then run `g all` and test on Chrome at localhost.
 
 __Maker Page UI__
 
@@ -305,29 +225,24 @@ __Interactions__
 
 # Zoom Points
 
-Build and deploy the code then set the zoom points.
-
-After specifying the required elements and clicking the **Optimize**
-button, the collection is marked as ready. Gulp builds ready
-collections.
+After the descriptions and order look good, deploy and set zoom
+points.
 
 ~~~
 g all
 scripts/deploy -s
 ~~~
 
-On localhost, on the image page, size and pan each image to define
-its zoom points. Click the download icon to write the `cjson` to
-`dist/images/cN/cN.json`.
+On an iPhone, on the image page, size and pan each image. Click the
+download icon and air-drop the `cjson` to your desktop, then move it
+to `dist/images/cN/cN.json`.
 
-On an iPhone the download icon still downloads the file. Air-drop it
-to yourself, then move it to the collection's folder.
+On localhost the download icon writes that file directly.
 
 ♫ Note: air-drop doesn't work when your iphone is plugged into your
 mac.
 
-Run the `g all` command to build in the final zoom points, then deploy
-and test the image pages again.
+Run `g all`, deploy, and check the image pages again.
 
 __Zoom Point Guide__
 
@@ -401,6 +316,9 @@ scripts/deploy -s
 ~~~
 
 Test by logging out of admin and logging back in as a regular user.
+On the iPhone, confirm the new collection appears in the index.
+
+[⬇](#Contents)
 
 # Notifiy
 
@@ -416,6 +334,8 @@ Send a notification to all users.
 ~~~
 scripts/notification --publish all "Manzantia 2026"
 ~~~
+
+[⬇](#Contents)
 
 # Replace Image
 
@@ -434,8 +354,8 @@ Steps to replacement an image with a new one:
 
 # Contents
 
-* [Create Folder](#create-folder) -- create a folder with the collection images.
-* [Run Maker](#run-maker) -- Run the maker command.
+* [Create Folder](#create-folder) -- how to collect, rename, convert, and thumbnail images.
+* [Run Maker](#run-maker) -- how to write cN.json and move the folder to dist.
 * [Edit Collection](#edit-collection) -- how to order and describe the new collection.
 * [Zoom Points](#zoom-points) -- how to set the collection zoom points.
 * [Remove DS Store Files](#remove-ds-store-files) -- remove the .DS_Store files.

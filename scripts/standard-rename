@@ -1,0 +1,395 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+
+"""
+Rename files in a collection folder to the standard collection names.
+
+Camera JPEGs become cN-1-p.jpg, cN-2-p.jpg, and so on. HEIC stills
+become cN-1-p.HEIC and matching .mov files become cN-1-v.mov.
+
+Files that already use the standard name are left alone. Gaps in the
+existing numbers are kept. New files take the next number after the
+highest number already in the folder.
+
+JPEG extensions (JPG, JPEG, jpg, jpeg) are renamed to jpg.
+
+Example:
+  scripts/standard-rename tmp/c24
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+cwd = os.getcwd()
+if not cwd.endswith("collections"):
+  print(f"""\
+Run from the collections folder:
+cd ~/collections
+scripts/standard-rename tmp/c24
+""")
+  exit(1)
+
+import sys
+import argparse
+import traceback
+import signal
+import unittest
+import tempfile
+import shutil
+import re
+import textwrap
+
+class RenameException(Exception):
+  """ An exception we plan for. """
+  pass
+
+JPEG_EXTS = {".jpg", ".jpeg"}
+HEIC_EXTS = {".heic"}
+VIDEO_EXTS = {".mov", ".mp4"}
+SKIP_NAMES = {".ds_store"}
+
+STANDARD_RE = re.compile(r"^(c\d+)-(\d+)-([ptv])(\.[A-Za-z0-9]+)$")
+SUFFIX_STEM_RE = re.compile(r"^(.*)-([ptv])$")
+COLLECTION_RE = re.compile(r"^c\d+$")
+DIGITS_RE = re.compile(r"(\d+)")
+
+def collectionPrefix(folder):
+  """
+  Return the collection prefix from the folder name, e.g. c24.
+  """
+  name = os.path.basename(os.path.abspath(folder))
+  if not COLLECTION_RE.fullmatch(name):
+    raise RenameException(
+      f"Folder name must be a collection like c24, got: {name}")
+  return name
+
+def naturalKey(text):
+  """
+  Return a sort key that orders 2 before 10.
+  """
+  parts = DIGITS_RE.split(text)
+  key = []
+  for part in parts:
+    if part.isdigit():
+      key.append((1, int(part)))
+    else:
+      key.append((0, part.lower()))
+  return key
+
+def listFilenames(folder):
+  """
+  Return the file names in the folder, excluding directories.
+  """
+  names = []
+  for name in os.listdir(folder):
+    path = os.path.join(folder, name)
+    if os.path.isfile(path):
+      names.append(name)
+  return names
+
+def parseStandard(prefix, name):
+  """
+  Return (number, kind, ext) when name is already a standard name
+  for this collection, else None.
+  """
+  match = STANDARD_RE.fullmatch(name)
+  if not match:
+    return None
+  filePrefix, number, kind, ext = match.groups()
+  if filePrefix != prefix:
+    return None
+  return int(number), kind, ext
+
+def kindFromExt(ext):
+  """
+  Return p or v from a file extension, or None when unknown.
+  """
+  lower = ext.lower()
+  if lower in JPEG_EXTS or lower in HEIC_EXTS:
+    return "p"
+  if lower in VIDEO_EXTS:
+    return "v"
+  return None
+
+def destExt(kind, ext):
+  """
+  Return the destination extension, including the leading dot.
+  """
+  lower = ext.lower()
+  if kind in ("p", "t") and lower in JPEG_EXTS:
+    return ".jpg"
+  if lower in VIDEO_EXTS:
+    return lower
+  return ext
+
+def parseNew(name):
+  """
+  Return (groupStem, kind, destExt) for a file that needs renaming,
+  or None to skip it.
+  """
+  if name.lower() in SKIP_NAMES:
+    return None
+  stem, ext = os.path.splitext(name)
+  if not ext:
+    return None
+  match = SUFFIX_STEM_RE.fullmatch(stem)
+  if match:
+    groupStem, kind = match.groups()
+  else:
+    kind = kindFromExt(ext)
+    if kind is None:
+      return None
+    groupStem = stem
+  return groupStem, kind, destExt(kind, ext)
+
+def standardDest(prefix, number, kind, ext):
+  """
+  Return the standard file name.
+  """
+  return f"{prefix}-{number}-{kind}{destExt(kind, ext)}"
+
+def planRenames(folder):
+  """
+  Return the (source, dest) rename pairs for the folder.
+  """
+  prefix = collectionPrefix(folder)
+  names = listFilenames(folder)
+  standardNums = []
+  extFixes = []
+  groups = {}
+  unknown = []
+
+  for name in names:
+    parsed = parseStandard(prefix, name)
+    if parsed:
+      number, kind, ext = parsed
+      standardNums.append(number)
+      dest = standardDest(prefix, number, kind, ext)
+      if dest != name:
+        extFixes.append((name, dest))
+      continue
+    parsedNew = parseNew(name)
+    if parsedNew is None:
+      if name.lower() not in SKIP_NAMES:
+        unknown.append(name)
+      continue
+    groupStem, kind, extension = parsedNew
+    groups.setdefault(groupStem, []).append((name, kind, extension))
+
+  for name in sorted(unknown):
+    print(f"skip (unknown): {name}")
+
+  for groupStem, items in groups.items():
+    kinds = [kind for _, kind, _ in items]
+    if len(kinds) != len(set(kinds)):
+      raise RenameException(
+        f"Duplicate file type for stem {groupStem}: "
+        f"{', '.join(src for src, _, _ in items)}")
+
+  maxNum = max(standardNums) if standardNums else 0
+  planned = list(extFixes)
+  nextNum = maxNum + 1
+  usedDests = {dest for _, dest in planned}
+  usedDests.update(name for name in names
+    if parseStandard(prefix, name) and name not in {src for src, _ in planned})
+
+  for groupStem in sorted(groups, key=naturalKey):
+    items = groups[groupStem]
+    for src, kind, extension in items:
+      dest = f"{prefix}-{nextNum}-{kind}{extension}"
+      if dest in usedDests or (os.path.exists(os.path.join(folder, dest))
+          and dest != src):
+        raise RenameException(f"Destination exists: {dest}")
+      planned.append((src, dest))
+      usedDests.add(dest)
+    nextNum += 1
+
+  return planned
+
+def renameFile(folder, src, dest):
+  """
+  Rename src to dest in folder. Handle a case-only change.
+  """
+  srcPath = os.path.join(folder, src)
+  destPath = os.path.join(folder, dest)
+  if src == dest:
+    return
+  if os.path.exists(destPath):
+    if os.path.samefile(srcPath, destPath):
+      tmpPath = destPath + ".tmp-rename"
+      os.rename(srcPath, tmpPath)
+      os.rename(tmpPath, destPath)
+      return
+    raise RenameException(f"Destination exists: {dest}")
+  os.rename(srcPath, destPath)
+
+def standardRename(folder):
+  """
+  Rename the files in folder to the standard collection names.
+  """
+  if not os.path.isdir(folder):
+    raise RenameException(f"Not a directory: {folder}")
+  planned = planRenames(folder)
+  if not planned:
+    print("No files to rename.")
+    return
+  for src, dest in planned:
+    print(f"rename: {src} -> {dest}")
+    renameFile(folder, src, dest)
+
+def parseCommandLine():
+  """
+  Parse the command line arguments.
+  """
+  if len(sys.argv) == 1:
+    sys.argv.append("-h")
+  else:
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ["-t", "--test"]:
+        sys.argv.pop(ix + 1)
+        args = argparse.Namespace(test=True)
+        return args
+
+  parser = argparse.ArgumentParser(
+    prog="standard-rename",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=textwrap.dedent(__doc__))
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests")
+  parser.add_argument("folder",
+    help="collection folder, e.g. tmp/c24")
+  return parser.parse_args(sys.argv[1:])
+
+def main(args):
+  def signalHandler(sig, frame):
+    """ Handle ctrl-C """
+    sys.exit(1)
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    standardRename(args.folder)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except RenameException as ex:
+    print(str(ex))
+    return 1
+  except Exception:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0
+
+def gotExpected(got, expected):
+  if got != expected:
+    msg = f"""
+---
+     got: {got}
+expected: {expected}
+---
+"""
+    assert False, msg
+
+def createFiles(folder, names):
+  for name in names:
+    with open(os.path.join(folder, name), "w") as fh:
+      fh.write(name)
+
+def listed(folder):
+  return sorted(os.listdir(folder))
+
+class TestStandardRename(unittest.TestCase):
+
+  def setUp(self):
+    self.folder = tempfile.mkdtemp()
+
+  def tearDown(self):
+    shutil.rmtree(self.folder)
+
+  def folderNamed(self, name):
+    path = os.path.join(self.folder, name)
+    os.mkdir(path)
+    return path
+
+  def test_collectionPrefix(self):
+    path = self.folderNamed("c24")
+    gotExpected(collectionPrefix(path), "c24")
+
+  def test_collectionPrefix_bad(self):
+    path = self.folderNamed("24")
+    with self.assertRaises(RenameException):
+      collectionPrefix(path)
+
+  def test_camera_jpegs(self):
+    path = self.folderNamed("c24")
+    createFiles(path, ["DSCN1888.JPG", "DSCN1889.jpeg", "DSCN1890.jpg"])
+    standardRename(path)
+    gotExpected(listed(path),
+      ["c24-1-p.jpg", "c24-2-p.jpg", "c24-3-p.jpg"])
+
+  def test_already_standard(self):
+    path = self.folderNamed("c24")
+    createFiles(path, ["c24-1-p.jpg", "c24-2-p.jpg", "c24-2-v.mov"])
+    standardRename(path)
+    gotExpected(listed(path),
+      ["c24-1-p.jpg", "c24-2-p.jpg", "c24-2-v.mov"])
+
+  def test_append_after_last_number(self):
+    path = self.folderNamed("c24")
+    createFiles(path, ["c24-1-p.jpg", "c24-4-p.jpg", "DSCN2000.JPG"])
+    standardRename(path)
+    gotExpected(listed(path),
+      ["c24-1-p.jpg", "c24-4-p.jpg", "c24-5-p.jpg"])
+
+  def test_heic_mov_pairs(self):
+    path = self.folderNamed("c25")
+    createFiles(path, ["1.HEIC", "1.mov", "2.HEIC", "2.mov", "3.HEIC", "3.mov"])
+    standardRename(path)
+    gotExpected(listed(path), [
+      "c25-1-p.HEIC", "c25-1-v.mov",
+      "c25-2-p.HEIC", "c25-2-v.mov",
+      "c25-3-p.HEIC", "c25-3-v.mov",
+    ])
+
+  def test_natural_sort(self):
+    path = self.folderNamed("c25")
+    createFiles(path, ["10.HEIC", "2.HEIC"])
+    standardRename(path)
+    gotExpected(listed(path), ["c25-1-p.HEIC", "c25-2-p.HEIC"])
+    self.assertTrue(os.path.isfile(os.path.join(path, "c25-1-p.HEIC")))
+    with open(os.path.join(path, "c25-1-p.HEIC")) as fh:
+      gotExpected(fh.read(), "2.HEIC")
+
+  def test_p_t_v_same_number(self):
+    path = self.folderNamed("c24")
+    createFiles(path, ["1-p.jpg", "1-t.jpg", "1-v.mp4"])
+    standardRename(path)
+    gotExpected(listed(path),
+      ["c24-1-p.jpg", "c24-1-t.jpg", "c24-1-v.mp4"])
+
+  def test_standard_jpeg_extension(self):
+    path = self.folderNamed("c24")
+    createFiles(path, ["c24-1-p.JPG"])
+    standardRename(path)
+    gotExpected(listed(path), ["c24-1-p.jpg"])
+
+  def test_skip_unknown(self):
+    path = self.folderNamed("c24")
+    createFiles(path, ["notes.txt", "photo.JPG"])
+    standardRename(path)
+    gotExpected(listed(path), ["c24-1-p.jpg", "notes.txt"])
+
+  def test_duplicate_type(self):
+    path = self.folderNamed("c24")
+    createFiles(path, ["1.jpg", "1.jpeg"])
+    with self.assertRaises(RenameException):
+      standardRename(path)
+
+if __name__ == "__main__":
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)

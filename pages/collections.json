@@ -1,6 +1,34 @@
 {
   "indexCollections": [
     {
+      "cNum": 24,
+      "building": false,
+      "ready": true,
+      "title": "Hood River Ski Trip",
+      "modified": false,
+      "indexDescription": "Weekend ski trip from Hood River.",
+      "iThumbnail": "c24-5-t.jpg",
+      "posted": "2026-09-09",
+      "iCount": 14,
+      "totalSize": 10995659,
+      "iNumList": [
+        5,
+        2,
+        1,
+        12,
+        3,
+        4,
+        7,
+        8,
+        9,
+        10,
+        11,
+        13,
+        14,
+        6
+      ]
+    },
+    {
       "cNum": 23,
       "building": false,
       "ready": true,

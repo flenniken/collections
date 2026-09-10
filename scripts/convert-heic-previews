@@ -1,22 +1,19 @@
 #!/bin/bash
 
-# Convert Apple Photos HEIC exports to -p.jpg preview files for the maker.
+# Convert HEIC stills to jpg, keeping the existing basename.
 #
-# Apple Photos exports Live Photos as paired .HEIC and .mov files, for
-# example 1.HEIC and 1.mov. This script creates 1-p.jpg, 2-p.jpg, and
-# so on. Use this for unmodified exports; edit images manually when
-# needed before running the maker.
+# After standard-rename, files look like c25-1-p.HEIC. This script
+# writes c25-1-p.jpg and removes the HEIC.
 #
 # Keeps EXIF/GPS. Strips the ICC color profile so the maker sees JPEG
 # not MPO. heif-convert already rotates pixels to the display
 # orientation; Orientation is reset to 1 so viewers do not rotate again.
 #
 # Usage:
-#   scripts/convert-heic-previews [folder]
+#   scripts/convert-heic-previews tmp/cN
 #
-# Run from the docker container (or macOS with sips). Pass a tmp
-# collection folder, or run from that folder. Removes each .heic after
-# its -p.jpg is created (or already exists).
+# Run from the docker container (or macOS with sips). Removes each
+# .heic after its .jpg is created (or already exists).
 
 set -euo pipefail
 
@@ -102,7 +99,7 @@ EOF
 convert_heic() {
   local heic="$1"
   local base="${heic%.*}"
-  local out="${base}-p.jpg"
+  local out="${base}.jpg"
 
   if [[ -e "$out" ]]; then
     echo "skip (exists): $(basename "$out")"

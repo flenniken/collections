@@ -3,9 +3,16 @@
 # This is the help text shown with -h:
 
 """
-Make a new collection from a folder of images or create
-a collections.json. See collection-maker.md for a guide to
-making collections.
+Validate a collection folder and write its cjson file.
+
+Pass a folder named like tmp/c24. The files must already use standard
+names (c24-1-p.jpg, c24-1-t.jpg, optional c24-1-v.mp4). Maker writes
+tmp/c24/c24.json and leaves the folder in place.
+
+See collection-maker.md for the full workflow.
+
+Example:
+  scripts/maker tmp/c24
 """
 
 import os
@@ -20,7 +27,7 @@ if not cwd.endswith("collections"):
   print(f"""\
 Run from the collections folder:
 cd ~/collections
-scripts/maker
+scripts/maker tmp/c24
 """)
   exit(1)
 
@@ -33,6 +40,7 @@ import unittest
 import tempfile
 import json
 import sys
+import re
 import textwrap
 from boto_client import getBotoClient, getAwsSettings
 import random
@@ -44,10 +52,8 @@ from PIL import Image, ImageOps
 thumbnailDim = 480
 previewMinDim = 933
 
-workingDir='/home/coder/collections'
-
-# Folder where the new collection folder exists.
-tmpFolder=f'{workingDir}/tmp'
+COLLECTION_RE = re.compile(r"^c(\d+)$")
+DIGITS_RE = re.compile(r"(\d+)")
 
 # True when the internet connection is working.
 internet = True
@@ -55,6 +61,30 @@ internet = True
 class MakerException(Exception):
   """ An exception we plan for. """
   pass
+
+def collectionPrefix(folder):
+  """
+  Return (prefix, number) from a folder named like tmp/c24.
+  """
+  name = os.path.basename(os.path.abspath(folder))
+  match = COLLECTION_RE.fullmatch(name)
+  if not match:
+    raise MakerException(
+      f"Folder name must be a collection like c24, got: {name}")
+  return name, int(match.group(1))
+
+def naturalKey(text):
+  """
+  Return a sort key that orders 2 before 10.
+  """
+  parts = DIGITS_RE.split(text)
+  key = []
+  for part in parts:
+    if part.isdigit():
+      key.append((1, int(part)))
+    else:
+      key.append((0, part.lower()))
+  return key
 
 class FileInfo(object):
   """
@@ -218,6 +248,19 @@ def validateCollectionFolder(num, ftg):
     stem = pairingStem(fileInfo.basename, "-p.jpg")
     if stem:
       previewStems.add(stem)
+  thumbStems = set()
+  for fileInfo in ftg.thumbnails:
+    stem = pairingStem(fileInfo.basename, "-t.jpg")
+    if stem:
+      thumbStems.add(stem)
+  missingThumbs = sorted(previewStems - thumbStems, key=naturalKey)
+  if missingThumbs:
+    raise MakerException(
+      f"Error: no thumbnail for {missingThumbs[0]}-p.jpg")
+  extraThumbs = sorted(thumbStems - previewStems, key=naturalKey)
+  if extraThumbs:
+    raise MakerException(
+      f"Error: thumbnail {extraThumbs[0]}-t.jpg has no matching preview")
   for fileInfo in ftg.liveVideos:
     stem = pairingStem(fileInfo.basename, "-v.mp4")
     if stem not in previewStems:
@@ -258,35 +301,52 @@ def validateCollectionFolder(num, ftg):
 
 def createCollectionCinfo(num, ftg, previewImageInfoList, folder):
   """
-  Create the collection info (cinfo) for the given collection number
+  Create the collection info (cinfo) for the given collection number.
+  Image names in the json match the files on disk.
   """
   assert len(ftg.previews) == len(ftg.thumbnails)
   videosByStem = liveVideosByPreviewStem(ftg)
+  thumbsByStem = {}
+  for fileInfo in ftg.thumbnails:
+    stem = pairingStem(fileInfo.basename, "-t.jpg")
+    if stem is None:
+      continue
+    if stem in thumbsByStem:
+      raise MakerException(f"Error: duplicate thumbnail stem: {stem}")
+    thumbsByStem[stem] = fileInfo
+
+  previews = sorted(ftg.previews, key=lambda item: naturalKey(item.basename))
+  infoByName = {fileInfo.basename: info
+    for fileInfo, info in zip(ftg.previews, previewImageInfoList)}
+
   images = []
   order = []
 
   for ix in range(16):
     order.append(-1)
 
-  for ix, fileInfo in enumerate(ftg.previews):
-    previewFileInfo = ftg.previews[ix]
-    thumbnailFileInfo = ftg.thumbnails[ix]
-    previewImageInfo = previewImageInfoList[ix]
+  for fileInfo in previews:
+    stem = pairingStem(fileInfo.basename, "-p.jpg")
+    thumbnailFileInfo = thumbsByStem.get(stem)
+    if thumbnailFileInfo is None:
+      raise MakerException(
+        f"Error: no thumbnail for {fileInfo.basename}")
+    previewImageInfo = infoByName[fileInfo.basename]
 
     collectionImage = {}
     collectionImage['title'] = ""
     collectionImage['description'] = ""
 
-    collectionImage['iPreview'] = getStdImageName(num, ix, "preview")
-    collectionImage['iThumbnail'] = getStdImageName(num, ix, "thumbnail")
+    collectionImage['iPreview'] = fileInfo.basename
+    collectionImage['iThumbnail'] = thumbnailFileInfo.basename
     collectionImage['width'] = previewImageInfo.width
     collectionImage['height'] = previewImageInfo.height
     collectionImage['size'] = fileInfo.size
 
     collectionImage['sizet'] = thumbnailFileInfo.size
-    liveVideoFileInfo = liveVideoForPreview(previewFileInfo, videosByStem)
+    liveVideoFileInfo = liveVideoForPreview(fileInfo, videosByStem)
     if liveVideoFileInfo:
-      collectionImage['iLiveVideo'] = getStdLiveVideoName(num, ix)
+      collectionImage['iLiveVideo'] = liveVideoFileInfo.basename
       collectionImage['liveSize'] = liveVideoFileInfo.size
       duration = mp4DurationSeconds(
         os.path.join(folder, liveVideoFileInfo.basename))
@@ -320,9 +380,6 @@ def getStdImageName(num, ix, kind):
 
   name = f"c{num}-{ix+1}-{prefix}.jpg"
   return name
-
-def getStdLiveVideoName(num, ix):
-  return f"c{num}-{ix+1}-v.mp4"
 
 def _mp4Atoms(fh, end):
   while fh.tell() + 8 <= end:
@@ -419,64 +476,6 @@ def liveVideoForPreview(previewFileInfo, videosByStem):
     return None
   return videosByStem.get(stem)
 
-def renameFiles(num, folder, ftg):
-  """
-  Rename the image files in the given folder to use the standard
-  collection naming based on the collection number an their index.
-  """
-  assert len(ftg.previews) == len(ftg.thumbnails)
-
-  # Move the previews, thumbnails, and live videos to the temporary folder abc.
-  tempFolder = os.path.join(folder, "abc")
-  if os.path.exists(tempFolder):
-    raise MakerException(f"Error: temporary folder {tempFolder} exists.")
-  os.mkdir(tempFolder)
-  for ix in range(len(ftg.previews)):
-    oPreviewName = os.path.join(folder, ftg.previews[ix].basename)
-    oThumbnailName = os.path.join(folder, ftg.thumbnails[ix].basename)
-
-    nPreviewName = os.path.join(tempFolder, ftg.previews[ix].basename)
-    nThumbnailName = os.path.join(tempFolder, ftg.thumbnails[ix].basename)
-
-    if os.path.exists(nPreviewName):
-      raise MakerException(f"Error: file {nPreviewName} exists.")
-    if os.path.exists(nThumbnailName):
-      raise MakerException(f"Error: file {nThumbnailName} exists.")
-
-    os.rename(oPreviewName, nPreviewName)
-    os.rename(oThumbnailName, nThumbnailName)
-
-  for fileInfo in ftg.liveVideos:
-    oLiveVideoName = os.path.join(folder, fileInfo.basename)
-    nLiveVideoName = os.path.join(tempFolder, fileInfo.basename)
-    if os.path.exists(nLiveVideoName):
-      raise MakerException(f"Error: file {nLiveVideoName} exists.")
-    os.rename(oLiveVideoName, nLiveVideoName)
-
-  # Move the temporary preview and thumbnails back to the original
-  # folder and give them their standard names
-  for ix in range(len(ftg.previews)):
-    nPreviewName = os.path.join(tempFolder, ftg.previews[ix].basename)
-    nThumbnailName = os.path.join(tempFolder, ftg.thumbnails[ix].basename)
-
-    stdImageName = os.path.join(folder, getStdImageName(num, ix, "preview"))
-    stdThumbnailName = os.path.join(folder, getStdImageName(num, ix, "thumbnail"))
-
-    os.rename(nPreviewName, stdImageName)
-    os.rename(nThumbnailName, stdThumbnailName)
-
-  videosByStem = liveVideosByPreviewStem(ftg)
-  for ix in range(len(ftg.previews)):
-    liveVideoFileInfo = liveVideoForPreview(ftg.previews[ix], videosByStem)
-    if not liveVideoFileInfo:
-      continue
-    nLiveVideoName = os.path.join(tempFolder, liveVideoFileInfo.basename)
-    stdLiveVideoName = os.path.join(folder, getStdLiveVideoName(num, ix))
-    os.rename(nLiveVideoName, stdLiveVideoName)
-
-  # Remove the empty temp folder.
-  os.rmdir(tempFolder)
-
 def keyExists(s3Client, bucket_name, key):
   """
   Return true when the file exists in the s3 bucket else return false.
@@ -487,45 +486,33 @@ def keyExists(s3Client, bucket_name, key):
   except Exception:
     return False
 
-def new(num):
+def new(folder):
   """
-  Create a new local collection folder from a folder of images.
+  Validate the collection folder and write its cjson file. Leave the
+  folder in place.
   """
-  assert int(num) > 0
+  if not os.path.isdir(folder):
+    raise MakerException(f"Missing the collection folder: {folder}")
 
-  sourceFolder = os.path.join(tmpFolder, str(num))
-  if not os.path.exists(sourceFolder):
-    raise MakerException(f"Missing the collection folder: {sourceFolder}")
+  prefix, num = collectionPrefix(folder)
 
-  s3client = getBotoClient('s3')
-
-  localDestFolder = f"dist/images/c{num}"
-  if os.path.exists(localDestFolder):
-    raise MakerException(f"The local collection folder already exists: {localDestFolder}")
-
-  # Get names and info of all the files in the sourceFolder and
-  # validate that they work in a collection.
-  fileInfoList = getFileInfoList(sourceFolder)
+  # Get names and info of all the files in the folder and validate
+  # that they work in a collection.
+  fileInfoList = getFileInfoList(folder)
   ftg = FileTypeGroups(fileInfoList)
   validateCollectionFolder(num, ftg)
 
   # Validate the image dimensions and return the preview image information.
-  previewImageInfoList = getImageInfoList(sourceFolder, ftg.previews, previews=True)
-  getImageInfoList(sourceFolder, ftg.thumbnails, previews=False)
+  previewImageInfoList = getImageInfoList(folder, ftg.previews, previews=True)
+  getImageInfoList(folder, ftg.thumbnails, previews=False)
 
-  # Write the cjson file in the tmp folder.
-  cinfo = createCollectionCinfo(num, ftg, previewImageInfoList, sourceFolder)
-  cjsonFilename = os.path.join(sourceFolder, f"c{num}.json")
-  with open(cjsonFilename, "w") as fh:
-    fh.write(json.dumps(cinfo, indent=2))
+  cinfo = createCollectionCinfo(num, ftg, previewImageInfoList, folder)
+  cjsonFilename = os.path.join(folder, f"{prefix}.json")
+  with open(cjsonFilename, "w", encoding="utf-8") as fh:
+    fh.write(json.dumps(cinfo, indent=2, ensure_ascii=False))
+    fh.write("\n")
 
-  # Rename the images in the tmp folder to their standard names.
-  renameFiles(num, sourceFolder, ftg)
-
-  # Move the tmp folder to the local images folder.
-  os.rename(sourceFolder, localDestFolder)
-
-  print(f"Created a collection folder and moved it to: {localDestFolder}")
+  print(f"Wrote {cjsonFilename}")
 
 def parseCommandLine():
   """
@@ -545,13 +532,13 @@ def parseCommandLine():
   # Use this module's comment at the top of the file for the
   # description.
   parser = argparse.ArgumentParser(
-  prog='PROG', formatter_class=argparse.RawDescriptionHelpFormatter,
+  prog='maker', formatter_class=argparse.RawDescriptionHelpFormatter,
   description=textwrap.dedent(__doc__))
 
   parser.add_argument("-t", "--test", action="store_true",
     help="""run internal unit tests""")
-  parser.add_argument("-n", "--new", type=int, metavar="collectionNum",
-    help="create a new local collection folder from a directory of images")
+  parser.add_argument("folder",
+    help="collection folder, e.g. tmp/c24")
 
   args = parser.parse_args(sys.argv[1:])
 
@@ -567,8 +554,8 @@ def process(args):
   """
   Handle the maker command's options.
   """
-  if args.new:
-    new(args.new)
+  if args.folder:
+    new(args.folder)
 
 def main(args):
   def signalHandler(sig, frame):
@@ -681,11 +668,11 @@ def makeTestFolder(num, previews=8, thumbnails=8, cjson=1,
   folder = tempfile.mkdtemp(prefix="maker-")
 
   for ix in range(previews):
-    filename = randomName(folder, 6, f"p{ix+1:02d}-", "-p.jpg")
+    filename = os.path.join(folder, f"c{num}-{ix+1}-p.jpg")
     createFile(filename, f"fake preview file {'a' * ix}")
 
   for ix in range(thumbnails):
-    filename = randomName(folder, 6, f"t{ix+1:02d}-", "-t.jpg")
+    filename = os.path.join(folder, f"c{num}-{ix+1}-t.jpg")
     createFile(filename, f"fake thumbnail file {'b' * ix}")
 
   for ix in range(cjson):
@@ -765,6 +752,27 @@ class TestMaker(unittest.TestCase):
     gotExpected(contents, "test contents")
     shutil.rmtree(folder)
 
+  def test_collectionPrefix(self):
+    parent = tempfile.mkdtemp(prefix="maker-")
+    path = os.path.join(parent, "c24")
+    os.mkdir(path)
+    try:
+      gotExpected(collectionPrefix(path), ("c24", 24))
+    finally:
+      shutil.rmtree(parent)
+
+  def test_collectionPrefix_bad(self):
+    folder = tempfile.mkdtemp(prefix="maker-")
+    try:
+      try:
+        collectionPrefix(folder)
+        fail("Unexpectedly passed")
+      except MakerException as ex:
+        self.assertTrue(str(ex).startswith(
+          "Folder name must be a collection like c24"))
+    finally:
+      shutil.rmtree(folder)
+
   def test_getStdImageName(self):
     gotExpected(getStdImageName(2, 3, "preview"), "c2-4-p.jpg")
     gotExpected(getStdImageName(23, 15, "preview"), "c23-16-p.jpg")
@@ -795,8 +803,8 @@ class TestMaker(unittest.TestCase):
     assert seconds > 10
 
   def test_liveVideoPairedByStem(self):
-    # 2 has no video; 10 does. Lex order is 1, 10, 2, 3 so a list-index
-    # pairing would attach 3-v.mp4 to 2-p.jpg.
+    # 2 has no video; 10 does. Pair by stem, not by list index, and
+    # keep the names already on disk.
     num = 21
     folder = tempfile.mkdtemp(prefix="maker-")
     try:
@@ -808,24 +816,14 @@ class TestMaker(unittest.TestCase):
       ftg = FileTypeGroups(getFileInfoList(folder))
       previewImageInfoList = getTestImageInfoList(ftg.previews)
       cinfo = createCollectionCinfo(num, ftg, previewImageInfoList, folder)
-      # Lex order: 1, 10, 2, 3
-      gotExpected(cinfo["images"][0]["iPreview"], "c21-1-p.jpg")
-      gotExpected(cinfo["images"][0]["iLiveVideo"], "c21-1-v.mp4")
-      gotExpected(cinfo["images"][1]["iPreview"], "c21-2-p.jpg")
-      gotExpected(cinfo["images"][1]["iLiveVideo"], "c21-2-v.mp4")
-      gotExpected(cinfo["images"][2]["iPreview"], "c21-3-p.jpg")
-      gotExpected("iLiveVideo" in cinfo["images"][2], False)
-      gotExpected(cinfo["images"][3]["iPreview"], "c21-4-p.jpg")
-      gotExpected(cinfo["images"][3]["iLiveVideo"], "c21-4-v.mp4")
-
-      renameFiles(num, folder, ftg)
-      names = sorted(os.listdir(folder))
-      gotExpected("c21-1-v.mp4" in names, True)
-      gotExpected("c21-2-v.mp4" in names, True)
-      gotExpected("c21-3-v.mp4" in names, False)
-      gotExpected("c21-4-v.mp4" in names, True)
-      with open(os.path.join(folder, "c21-4-v.mp4"), encoding="utf-8") as fh:
-        gotExpected(fh.read(), "v3" * 10)
+      gotExpected(cinfo["images"][0]["iPreview"], "1-p.jpg")
+      gotExpected(cinfo["images"][0]["iLiveVideo"], "1-v.mp4")
+      gotExpected(cinfo["images"][1]["iPreview"], "2-p.jpg")
+      gotExpected("iLiveVideo" in cinfo["images"][1], False)
+      gotExpected(cinfo["images"][2]["iPreview"], "3-p.jpg")
+      gotExpected(cinfo["images"][2]["iLiveVideo"], "3-v.mp4")
+      gotExpected(cinfo["images"][3]["iPreview"], "10-p.jpg")
+      gotExpected(cinfo["images"][3]["iLiveVideo"], "10-v.mp4")
     finally:
       shutil.rmtree(folder)
 
@@ -869,16 +867,10 @@ class TestMaker(unittest.TestCase):
     gotExpected(str(ftg.htmlFilesT[0]), "file       25 thumbnails-4.html")
 
     for ix, fileInfo in enumerate(ftg.previews):
-      # fileInfo: file       18 p01-kw34Ml-p.jpg
-      gotExpected(len(str(fileInfo)), 30)
-      gotExpected(str(fileInfo)[0:18], f"file       {18+ix} p{ix+1:02d}-")
-      gotExpected(str(fileInfo)[-6:], "-p.jpg")
+      gotExpected(fileInfo.basename, f"c{num}-{ix+1}-p.jpg")
 
     for ix, fileInfo in enumerate(ftg.thumbnails):
-      # fileInfo: file       20 t01-0PeLgR-t.jpg
-      gotExpected(len(str(fileInfo)), 30)
-      gotExpected(str(fileInfo)[0:18], f"file       {20+ix} t{ix+1:02d}-")
-      gotExpected(str(fileInfo)[-6:], "-t.jpg")
+      gotExpected(fileInfo.basename, f"c{num}-{ix+1}-t.jpg")
 
   def test_makeTestFolderAll(self):
     folder = makeTestFolder(4, previews=1, thumbnails=2, cjson=3,
@@ -1065,33 +1057,15 @@ class TestMaker(unittest.TestCase):
       gotExpected(cinfo['ready'], False)
       # gotExpected(len(cinfo['order']), 0)
       # gotExpected(len(cinfo['images']), 8)
+      previews = sorted(ftg.previews, key=lambda item: naturalKey(item.basename))
       for ix, image in enumerate(cinfo['images']):
-        #print(json.dumps(image, indent=2))
+        preview = previews[ix]
+        stem = pairingStem(preview.basename, "-p.jpg")
         gotExpected(image['title'], "")
         gotExpected(image['description'], "")
-        gotExpected(image['iPreview'], getStdImageName(num, ix, "preview"))
-        gotExpected(image['iThumbnail'], getStdImageName(num, ix, "thumbnail"))
-        # self.assertTrue(image['iPreview'].startswith(f"p{ix+1:02d}-"))
-        # self.assertTrue(image['iPreview'].endswith("-p.jpg"))
-        # self.assertTrue(image['iThumbnail'].startswith(f"t{ix+1:02d}-"))
-        # self.assertTrue(image['iThumbnail'].endswith("-t.jpg"))
-        gotExpected(image['width'], 933+ix)
-        gotExpected(image['height'], 933+ix)
-        gotExpected(image['size'], 18+ix)
-        gotExpected(image['sizet'], 20+ix)
-
-      renameFiles(num, folder, ftg)
-
-      fileInfoList = getFileInfoList(folder)
-
-      ftg = FileTypeGroups(fileInfoList)
-
-      for ix, fileInfo in enumerate(ftg.previews):
-        # pv('fileInfo', fileInfo)
-        gotExpected(fileInfo.basename, getStdImageName(num, ix, "preview"))
-      for ix, fileInfo in enumerate(ftg.thumbnails):
-        # pv('fileInfo', fileInfo)
-        gotExpected(fileInfo.basename, getStdImageName(num, ix, "thumbnail"))
+        gotExpected(image['iPreview'], preview.basename)
+        gotExpected(image['iThumbnail'], f"{stem}-t.jpg")
+        gotExpected(image['size'], preview.size)
 
       validateCollectionFolder(num, ftg)
 
