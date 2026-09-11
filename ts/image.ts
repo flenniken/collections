@@ -119,6 +119,8 @@ async function handleLoad() {
   document.body.style.visibility = "visible"
   document.body.style.opacity = "1"
 
+  observeLocationMaps()
+
   startTimer.log("load Done")
 }
 
@@ -159,7 +161,8 @@ function osmEmbedUrl(lat: number, lng: number): string {
 
 function createLocationMap(lat: number, lng: number): HTMLElement {
   // Return a tappable map that opens Google Maps, with copyable
-  // coordinates under it.
+  // coordinates under it. The iframe src is set later, when the map
+  // is near the viewport, so OpenStreetMap does not block page load.
   const wrap = document.createElement("div")
   wrap.className = "location"
 
@@ -169,14 +172,7 @@ function createLocationMap(lat: number, lng: number): HTMLElement {
   link.target = "_blank"
   link.rel = "noopener noreferrer"
   link.setAttribute("aria-label", "Open location in Google Maps")
-
-  const iframe = document.createElement("iframe")
-  iframe.src = osmEmbedUrl(lat, lng)
-  iframe.tabIndex = -1
-  iframe.setAttribute("loading", "lazy")
-  iframe.setAttribute("aria-hidden", "true")
-  iframe.referrerPolicy = "no-referrer"
-  link.appendChild(iframe)
+  link.dataset.osmSrc = osmEmbedUrl(lat, lng)
 
   const coords = document.createElement("span")
   coords.className = "location-coords"
@@ -185,6 +181,37 @@ function createLocationMap(lat: number, lng: number): HTMLElement {
   wrap.appendChild(link)
   wrap.appendChild(coords)
   return wrap
+}
+
+function loadLocationMap(link: HTMLElement) {
+  // Start the OpenStreetMap iframe for one photo.
+  if (link.querySelector("iframe"))
+    return
+  const src = link.dataset.osmSrc
+  if (!src)
+    return
+  const iframe = document.createElement("iframe")
+  iframe.src = src
+  iframe.tabIndex = -1
+  iframe.setAttribute("aria-hidden", "true")
+  iframe.referrerPolicy = "no-referrer"
+  link.appendChild(iframe)
+}
+
+function observeLocationMaps() {
+  // Load a map only when its gray square is close to on screen.
+  const maps = document.querySelectorAll(".location-map")
+  if (maps.length === 0)
+    return
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting)
+        continue
+      loadLocationMap(entry.target as HTMLElement)
+      observer.unobserve(entry.target)
+    }
+  }, { rootMargin: "100px" })
+  maps.forEach(map => observer.observe(map))
 }
 
 function formatTaken(taken?: string): string {
