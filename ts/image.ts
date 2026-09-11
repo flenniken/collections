@@ -97,6 +97,7 @@ async function handleLoad() {
   // Show the admin icons when an admin is logged in.
   showAdminIcons()
   setupDescriptionEditing()
+  setupZoomPad()
 
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
@@ -1232,6 +1233,35 @@ function add_border(img: HTMLElement, zoomPoint: CJson.ZoomPoint) {
   }
 }
 
+function clampScale(image: CJson.Image, scale: number): number {
+  // Limit scale to 1 and keep at least half the area filled.
+  if (scale > 1)
+    scale = 1
+  const minScale = Math.min(
+    (availWidth / 2) / image.width,
+    (availHeight / 2) / image.height
+  )
+  if (scale < minScale)
+    scale = minScale
+  return scale
+}
+
+function clampTranslation(image: CJson.Image, scale: number,
+    tx: number, ty: number): {tx: number, ty: number} {
+  // Keep some of the image visible in the area.
+  const newIw = image.width * scale
+  const newIh = image.height * scale
+  if (tx > availWidth - zpan.minVisible)
+    tx = availWidth - zpan.minVisible
+  if (ty > availHeight - zpan.minVisible)
+    ty = availHeight - zpan.minVisible
+  if (tx + newIw < zpan.minVisible)
+    tx = zpan.minVisible - newIw
+  if (ty + newIh < zpan.minVisible)
+    ty = zpan.minVisible - newIh
+  return {tx, ty}
+}
+
 function handleTouchMove(event: TouchEvent) {
   // Zoom and pan the image.
 
@@ -1283,16 +1313,7 @@ function handleTouchMove(event: TouchEvent) {
 
   // Limit the scale to a maximum of 1 and a minimum that keeps at
   // least half the area visible in both dimensions.
-  if (zpan.current.scale > 1.0)
-    zpan.current.scale = 1.0
-  const minScale = Math.min(
-    (availWidth / 2) / image.width,
-    (availHeight / 2) / image.height
-  )
-  if (zpan.current.scale < minScale)
-    zpan.current.scale = minScale
-  let newIw = image.width * zpan.current.scale
-  let newIh = image.height * zpan.current.scale
+  zpan.current.scale = clampScale(image, zpan.current.scale)
 
   // Calculate the new image upper left hand corner based on the
   // center point between the two fingers and how far apart they are
@@ -1304,21 +1325,9 @@ function handleTouchMove(event: TouchEvent) {
   let tx = zpan.start!.tx - (movedCx - zpan.start!.cx) + (zpan.current.cx - zpan.start!.cx)
   let ty = zpan.start!.ty - (movedCy - zpan.start!.cy) + (zpan.current.cy - zpan.start!.cy)
 
-  // Keep some of the image visible.
-  if (tx > availWidth - zpan.minVisible) {
-    tx = availWidth - zpan.minVisible
-  }
-  if (ty > availHeight - zpan.minVisible) {
-    ty = availHeight - zpan.minVisible
-  }
-  const rightEdge = tx + newIw
-  if (rightEdge < zpan.minVisible) {
-    tx = zpan.minVisible - newIw
-  }
-  const bottomEdge = ty + newIh
-  if (bottomEdge < zpan.minVisible) {
-    ty = zpan.minVisible - newIh
-  }
+  const clamped = clampTranslation(image, zpan.current.scale, tx, ty)
+  tx = clamped.tx
+  ty = clamped.ty
 
   zoomPoint.scale = zpan.current.scale;
   zoomPoint.tx = tx;
@@ -1351,7 +1360,8 @@ function livePressTouchEnded(event: TouchEvent): boolean {
 
 function handleContextMenu(event: Event) {
   const target = event.target
-  if (target instanceof Element && target.closest(".container"))
+  if (target instanceof Element &&
+      (target.closest(".container") || target.closest("#zoom-pad")))
     event.preventDefault()
 }
 
@@ -1362,7 +1372,8 @@ function handleDragStart(event: Event) {
   // outside the photo, selected description text for example, is left
   // alone.
   const target = event.target
-  if (target instanceof Element && target.closest(".container"))
+  if (target instanceof Element &&
+      (target.closest(".container") || target.closest("#zoom-pad")))
     event.preventDefault()
 }
 
@@ -1537,6 +1548,7 @@ function showAdminIcons() {
   // Show the admin icons when an admin is logged in.
 
   const admin = isAdmin()
+  const localAdmin = admin && isLocalhost()
 
   // Show or hide the admin content.
   document.querySelectorAll('.admin').forEach(el => {
@@ -1546,12 +1558,176 @@ function showAdminIcons() {
       el.classList.remove('visible');
     }
   });
+  document.querySelectorAll('.admin-local').forEach(el => {
+    if (localAdmin)
+      el.classList.add('visible')
+    else
+      el.classList.remove('visible')
+  })
 
-  if (admin) {
+  if (localAdmin) {
+    log("Admin content is now visible on localhost.")
+  } else if (admin) {
     log("Admin content is now visible.");
   } else {
     log("User is not an admin, hiding admin content.");
   }
+}
+
+const ZOOM_PAD_SCALE = 1.12
+const ZOOM_PAD_SCALE_FINE = 1.02
+const ZOOM_PAD_PAN = 48
+const ZOOM_PAD_PAN_FINE = 1
+const ZOOM_PAD_HOLD_MS = 360
+const ZOOM_PAD_REPEAT_MS = 70
+
+let zoomPadHoldTimer: ReturnType<typeof setTimeout> | null = null
+let zoomPadHoldInterval: ReturnType<typeof setInterval> | null = null
+let zoomPadCommandDown = false
+
+function setupZoomPad() {
+  // Desktop admin zoom and pan buttons, shown on localhost.
+  const pad = get("zoom-pad")
+  pad.querySelectorAll("button").forEach((button) => {
+    const action = (button as HTMLElement).dataset.zoomAction
+    if (!action)
+      return
+    button.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0)
+        return
+      event.preventDefault()
+      event.stopPropagation()
+      zoomPadCommandDown = event.metaKey
+      runZoomPadAction(action)
+      startZoomPadHold(action)
+    })
+  })
+  pad.addEventListener("contextmenu", (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+  })
+  // Chrome still sends contextmenu on a long press, and often
+  // pointercancel with it. Suppress the menu above, but keep repeating
+  // until the pointer is actually released.
+  window.addEventListener("pointerup", stopZoomPadHold, true)
+  window.addEventListener("mouseup", stopZoomPadHold, true)
+  window.addEventListener("keydown", handleZoomPadKeydown, true)
+  window.addEventListener("keyup", handleZoomPadKeyup, true)
+  window.addEventListener("blur", () => {
+    zoomPadCommandDown = false
+    stopZoomPadHold()
+  })
+}
+
+function toggleZoomPad() {
+  const pad = get("zoom-pad")
+  const open = !pad.classList.contains("open")
+  pad.classList.toggle("open", open)
+  get("zoom-pad-icon").classList.toggle("icon-current", open)
+  if (!open)
+    stopZoomPadHold()
+  log(open ? "Zoom pad on." : "Zoom pad off.")
+}
+
+function startZoomPadHold(action: string) {
+  stopZoomPadHold()
+  zoomPadHoldTimer = setTimeout(() => {
+    zoomPadHoldTimer = null
+    zoomPadHoldInterval = setInterval(() => {
+      runZoomPadAction(action)
+    }, ZOOM_PAD_REPEAT_MS)
+  }, ZOOM_PAD_HOLD_MS)
+}
+
+function stopZoomPadHold() {
+  if (zoomPadHoldTimer !== null) {
+    clearTimeout(zoomPadHoldTimer)
+    zoomPadHoldTimer = null
+  }
+  if (zoomPadHoldInterval !== null) {
+    clearInterval(zoomPadHoldInterval)
+    zoomPadHoldInterval = null
+  }
+}
+
+function handleZoomPadKeydown(event: KeyboardEvent) {
+  if (event.key === "Meta")
+    zoomPadCommandDown = true
+  else
+    zoomPadCommandDown = event.metaKey
+
+  if (!get("zoom-pad").classList.contains("open"))
+    return
+  if (isEditableTarget(event.target))
+    return
+
+  let action = ""
+  if (event.key === "ArrowLeft")
+    action = "pan-left"
+  else if (event.key === "ArrowRight")
+    action = "pan-right"
+  else if (event.key === "ArrowUp")
+    action = "pan-up"
+  else if (event.key === "ArrowDown")
+    action = "pan-down"
+  else if (event.key === "+" || event.key === "=")
+    action = "zoom-in"
+  else if (event.key === "-" || event.key === "_")
+    action = "zoom-out"
+  if (!action)
+    return
+  event.preventDefault()
+  runZoomPadAction(action)
+}
+
+function handleZoomPadKeyup(event: KeyboardEvent) {
+  if (event.key === "Meta" || !event.metaKey)
+    zoomPadCommandDown = false
+}
+
+function runZoomPadAction(action: string) {
+  const scale = zoomPadCommandDown ? ZOOM_PAD_SCALE_FINE : ZOOM_PAD_SCALE
+  const pan = zoomPadCommandDown ? ZOOM_PAD_PAN_FINE : ZOOM_PAD_PAN
+  if (action === "zoom-in")
+    adjustCurrentZoom(scale, 0, 0)
+  else if (action === "zoom-out")
+    adjustCurrentZoom(1 / scale, 0, 0)
+  else if (action === "pan-left")
+    adjustCurrentZoom(1, -pan, 0)
+  else if (action === "pan-right")
+    adjustCurrentZoom(1, pan, 0)
+  else if (action === "pan-up")
+    adjustCurrentZoom(1, 0, -pan)
+  else if (action === "pan-down")
+    adjustCurrentZoom(1, 0, pan)
+}
+
+function adjustCurrentZoom(scaleFactor: number, panX: number, panY: number) {
+  // Nudge the current image zoom point from the desktop pad.
+  const imageIx = imageIndex
+  const image = cJson.images[imageIx]
+  const zoomPoint = getZoomPoint(imageIx)
+  let scale = zoomPoint.scale
+  let tx = zoomPoint.tx
+  let ty = zoomPoint.ty
+
+  if (scaleFactor != 1) {
+    const cx = availWidth / 2
+    const cy = availHeight / 2
+    const newScale = clampScale(image, scale * scaleFactor)
+    const k = newScale / scale
+    tx = cx - (cx - tx) * k
+    ty = cy - (cy - ty) * k
+    scale = newScale
+  }
+
+  const clamped = clampTranslation(image, scale, tx + panX, ty + panY)
+  zoomPoint.scale = scale
+  zoomPoint.tx = clamped.tx
+  zoomPoint.ty = clamped.ty
+  const img = get(`i${imageIx + 1}`)
+  add_border(img, zoomPoint)
+  setImageTransform(imageIx, zoomPoint)
 }
 
 function isEditableTarget(target: EventTarget | null): boolean {

@@ -8,7 +8,7 @@ How to create a new collection for the Collections project.
 * move the folder to `dist/images` and build
 * edit descriptions in place on the index, thumbnails, and image pages
 * set order on the maker page
-* deploy, set zoom points, then publish
+* set zoom points on localhost, then publish
 
 [⬇](#Contents) (table of contents at the bottom)
 
@@ -237,17 +237,21 @@ __Interactions__
 
 # Zoom Points
 
-After the descriptions and order look good, deploy and set zoom
-points.
+After the descriptions and order look good, set zoom points.
 
-~~~
-g all
-scripts/deploy -s
-~~~
+On localhost Chrome, open the image page as admin. Tap the four-arrow
+icon in the bottom menu to show zoom and pan buttons at the upper
+right of the photo.
+Zoom and pan each image, then tap the download icon to write
+`dist/images/cN/cN.json`. Hold a button to repeat. Arrow keys and
++/- work while the pad is open. Hold Command for one-pixel pans and
+smaller zoom steps.
 
-On an iPhone, on the image page, size and pan each image. Click the
-download icon and air-drop the `cjson` to your desktop, then move it
-to `dist/images/cN/cN.json`.
+Use the same phone viewport you test on an iPhone, for example
+iPhone 14 Pro Max at 430 x 933 and 932 x 430.
+
+You can still set zoom points on an iPhone with pinch and pan, then
+tap the download icon and air-drop the `cjson` to your desktop.
 
 On localhost the download icon writes that file directly.
 

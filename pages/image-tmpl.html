@@ -197,8 +197,20 @@ body {
       onclick="shareCurrentImage()" alt="share">
     <img class="icon right admin" src="/icons/download.svg"
       onclick="downloadCjson()" alt="save cjson">
+    <img id="zoom-pad-icon" class="icon right admin-local"
+      src="/icons/move.svg" onclick="toggleZoomPad()" alt="zoom and pan">
     <img class="icon right" src="/icons/refresh.svg"
       onclick="window.location.reload()" alt="refresh">
+  </div>
+  <div id="zoom-pad" aria-label="Zoom and pan">
+    <button type="button" data-zoom-action="zoom-in" aria-label="Zoom in">+</button>
+    <div class="zoom-dpad">
+      <button type="button" data-zoom-action="pan-up" aria-label="Pan up">▲</button>
+      <button type="button" data-zoom-action="pan-left" aria-label="Pan left">◀</button>
+      <button type="button" data-zoom-action="pan-right" aria-label="Pan right">▶</button>
+      <button type="button" data-zoom-action="pan-down" aria-label="Pan down">▼</button>
+    </div>
+    <button type="button" data-zoom-action="zoom-out" aria-label="Zoom out">−</button>
   </div>
 </body>
 </html>
