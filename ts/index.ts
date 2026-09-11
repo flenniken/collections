@@ -72,6 +72,7 @@ async function setCollectionState(cNum: number, collectionState: string) {
   }
 
   const parent = get(`c${cNum}`)
+  parent.dataset.cached = collectionState == "withImages" ? "1" : ""
 
   // Show or hide the elements with class "withImages".
   forClasses(parent, "withImages", (element) => {
@@ -405,14 +406,33 @@ Are you sure you want to delete this collection's images from the cache?`
   }
 }
 
+async function collectionHasCachedImages(cNum: number): Promise<boolean> {
+  // Return true when this collection's photos are in the app cache.
+  const cache = await openCreateCache()
+  const readyResponse = await cache.match(new Request(`c${cNum}-ready`))
+  return readyResponse !== undefined
+}
+
 function viewThumbnails(cNum: number) {
   log(`view thumbnails for collection ${cNum}`)
-  window.location.assign(`images/c${cNum}/thumbnails-${cNum}.html`)
+  void openCachedCollectionPage(cNum,
+    `images/c${cNum}/thumbnails-${cNum}.html`)
 }
 
 function viewCollection(cNum: number) {
   log(`view collection ${cNum}`)
-  window.location.assign(`images/c${cNum}/image-${cNum}.html`)
+  void openCachedCollectionPage(cNum, `images/c${cNum}/image-${cNum}.html`)
+}
+
+async function openCachedCollectionPage(cNum: number, url: string) {
+  // Open a collection page only when its photos are cached. Compact
+  // index rows keep their thumbnail visible after you delete images,
+  // and that thumbnail would otherwise open an empty image page.
+  if (!await collectionHasCachedImages(cNum)) {
+    log(`Collection ${cNum} images are not cached.`)
+    return
+  }
+  window.location.assign(url)
 }
 
 async function clearAppCache() {

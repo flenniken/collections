@@ -137,6 +137,10 @@
   cursor: pointer;
 }
 
+#index .collection.compact:not([data-cached="1"]) .line-thumb {
+  cursor: default;
+}
+
 #index .collection.compact .title {
   flex: 1 1 auto;
   min-width: 0;
