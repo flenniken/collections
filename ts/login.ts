@@ -35,6 +35,11 @@ function getFirstLetter() {
 
 function updateLoginUI() {
   // Update the UI to reflect the current login state.
+  if (iphoneRequiresHomeScreen()) {
+    get("login-me-in").style.display = "none"
+    get("first-letter").style.display = "none"
+    return
+  }
   if (hasLoggedIn()) {
     // Keep Cognito settings available for token refresh on other pages.
     storeCognitoAuth(settings.domain, settings.client_id)
@@ -52,6 +57,8 @@ function updateLoginUI() {
 function logMeIn() {
   // Login or show the user information.
   log("logMeIn")
+  if (iphoneRequiresHomeScreen())
+    return
 
   const userInfo = fetchUserInfo()
   if (userInfo)

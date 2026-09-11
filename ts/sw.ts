@@ -101,20 +101,19 @@ async function fetchRemote(cache: Cache, request: Request,
   // Fetch a file on the net and store it in one or more
   // caches. Return a promise that resolves to a response.
   //
-  // When storeTwice is true, it does the normal thing, it looks in
-  // the browser cache and returns that, otherwise it fetches the
-  // remote file and then stores it in the browser cache and the
-  // application cache.
+  // When storeTwice is true, revalidate with the network so a
+  // CloudFront invalidation is visible, then store the result in the
+  // browser cache and the application cache.
   //
-  // When storeTwice is false, it fetches the file from the net and
-  // stores it in the application cache but not the browser cache.
+  // When storeTwice is false, fetch from the net and store in the
+  // application cache but not the browser cache.
   //
   // If the reponse is not "ok", it throws the reponse status as a
   // string.
 
   let options: any
   if (storeTwice) {
-    options = {"cache": "default"}
+    options = {"cache": "no-cache"}
   }
   else {
     options = {"cache": "no-store"}

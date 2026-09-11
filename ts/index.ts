@@ -314,6 +314,8 @@ function updateAboutInstalledIcon() {
 
 function about() {
   log("about")
+  if (iphoneRequiresHomeScreen())
+    return
   updateAboutNotifications()
   updateAboutInstalledIcon()
   get("about-box").style.display = 'block'

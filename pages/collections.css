@@ -56,7 +56,10 @@
 }
 
 #index.iphone-install-required .collections,
-#index.iphone-install-required .bottom-menu {
+#index.iphone-install-required .bottom-menu,
+#index.iphone-install-required #login-me-in,
+#index.iphone-install-required #first-letter,
+#index.iphone-install-required #user-info {
   display: none;
 }
 
