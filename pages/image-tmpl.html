@@ -24,7 +24,7 @@ body {
   opacity: 0;
 }
 //$ # Selecting is turned off over the photo and the menu so pressing
-//$ # them does not bring up the callout or the text loupe. The title and
+//$ # them does not bring up the callout or the text loupe. The
 //$ # description text stays selectable so you can copy it.
 .bottom-menu {
   -webkit-user-select: none;
@@ -160,14 +160,12 @@ body {
 <!--$ : t.repeat = len(s.images) -->
 <!--$ : image = s.images[t.row] -->
 <!--$ : id = add(t.row, 1) -->
-<!--$ : title = html(image.title, "body") -->
-<!--$ : titleAttr = html(image.title, "attribute") -->
 <!--$ : description = html(image.description, "body") -->
 <!--$ : previewUrl = format("/images/c{s.cNum}/{image.iPreview}") -->
 <!--$ : liveClass = if(exists(image, "iLiveVideo"), " has-live", "") -->
     <div class="colbox" id="cb{id}">
       <div class="container{liveClass}" id="c{id}">
-        <img id="i{id}" src="{previewUrl}" alt="{titleAttr}" draggable="false">
+        <img id="i{id}" src="{previewUrl}" alt="" draggable="false">
         <video id="v{id}" class="live-video" playsinline webkit-playsinline muted preload="auto"></video>
         <div class="live-badge" aria-label="Live Photo">
           <svg class="live-badge-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -183,7 +181,6 @@ body {
           </svg>
         </button>
       </div>
-      <h3 class="title">{title}</h3>
       <p class="description">{description}</p>
     </div>
 <!--$ endblock -->

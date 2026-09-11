@@ -833,7 +833,7 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
 
   // Check that each image object has the required fields.
   const imageRequiredFields = [
-    "iPreview", "iThumbnail", "title", "description",
+    "iPreview", "iThumbnail", "description",
     "width", "height", "size", "sizet"]
   const imageOptionalFields = [
     "iLiveVideo", "liveSize", "liveDuration", "location", "taken"]

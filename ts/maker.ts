@@ -9,7 +9,7 @@
 
 type OptionalCinfo = CJson.Collection | null
 type RequiredIdType = string | null;
-type ImageTextType = "title" | "description";
+type ImageTextType = "description";
 type TextType = "title" | "description" | "indexDescription" | "posted";
 type ListenerFunction = (this: HTMLElement, ev: MouseEvent) => void
 
@@ -33,7 +33,6 @@ addBlurListener("collection-title", "title", "collection-title-required")
 addBlurListener("description", "description", "description-required")
 addBlurListener("index-description", "indexDescription", "index-description-required")
 addBlurListener("post-date", "posted", "post-date-required")
-addBlurImageTextListener("image-title", "title", "")
 addBlurImageTextListener("image-description", "description", "image-description-required")
 addClickListener("previous-image", previousImage)
 addClickListener("next-image", nextImage)
@@ -487,22 +486,18 @@ function findThumbnailIx(order: number[], images: CJson.Image[],
 }
 
 function setImgDetails(cNum: number, images: CJson.Image[], currentImageIx: number) {
-  // Set the image details section with the image, image title and
-  // image description for the given image index along with their
-  // required state.
-  let imageTitle: string
+  // Set the image details section with the image and image
+  // description for the given image index along with their required
+  // state.
   let imageDescription: string
   if (currentImageIx == -1) {
-    imageTitle = ""
     imageDescription = ""
   }
   else {
     const image = images[currentImageIx]
-    imageTitle = image.title
     imageDescription = image.description
   }
   setImage(cNum, images, "image-details", "image-details-required", currentImageIx)
-  setText("image-title", null, imageTitle)
   setText("image-description", "image-description-required", imageDescription)
 }
 
@@ -521,7 +516,7 @@ function setImage(cNum: number, images: CJson.Collection["images"],
   else {
     const image = images[imageIndex]
     element.src = `/images/c${cNum}/${image.iThumbnail}`
-    element.alt = image.title
+    element.alt = ""
     required = false
   }
   setRequired(requiredId, required)

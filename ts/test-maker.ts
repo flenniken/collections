@@ -245,7 +245,6 @@ function createTestImage(unique: number): CJson.Image {
   let image: CJson.Image = {
     iPreview: `image url ${unique}`,
     iThumbnail: `thumbnail ${unique}`,
-    title: `${unique}`,
     description: `description ${unique}`,
     width: 2040+unique,
     height: 1024+unique,
@@ -433,12 +432,10 @@ function setTextSuite() {
   test(fn, "collection-title", "collection-title-required", "the title")
   test(fn, "post-date", "post-date-required", "2025-04-12")
   test(fn, "description", "description-required", "the description")
-  test(fn, "image-title", null, "image title")
 
   test(fn, "collection-title", "collection-title-required", "")
   test(fn, "post-date", "post-date-required", "")
   test(fn, "description", "description-required", "")
-  test(fn, "image-title", null, "")
 }
 
 function testEncoding(elementId: string, text: string) {
@@ -457,14 +454,12 @@ function testReorderImages(order: number[], images: CJson.Image[],
   // Test the reorderImages function.
   let imageIds: number[] = []
   for (const image of images) {
-    // The test cjson uses the title for the uniqueId.
-    imageIds.push(parseInt(image.title))
+    imageIds.push(parseInt(image.description.replace("description ", ""), 10))
   }
   const gotImages = reorderImages(order, images)
   let gotIds: number[] = []
   for (const image of gotImages) {
-    // The test cjson uses the title for the uniqueId.
-    gotIds.push(parseInt(image.title))
+    gotIds.push(parseInt(image.description.replace("description ", ""), 10))
   }
   const msg = `order: ${JSON.stringify(order)}, images: ${JSON.stringify(imageIds)}`
   gotExpected(gotIds, eIds, msg)

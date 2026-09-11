@@ -13,9 +13,6 @@ namespace CJson {
     // e.g. c2-1-t.jpg. Thumbnails are 480 x 480 pixels.
     iThumbnail: string;
 
-    // The image title which can be and empty string.
-    title: string;
-
     // The required image description. Once the collection is ready,
     // the description cannot be blank.
     description: string;

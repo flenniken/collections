@@ -152,8 +152,8 @@ scripts/maker tmp/c24
 Wrote tmp/c24/c24.json
 ~~~
 
-The json has empty titles and descriptions and the order isn't set.
-You fill those in later on the maker web page. Collections start in
+The json has empty descriptions and the order isn't set.
+You fill those in later. Collections start in
 building state, so only admins see them.
 
 Add GPS locations and capture times:

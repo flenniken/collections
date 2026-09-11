@@ -373,7 +373,7 @@ class TestAddLocations(unittest.TestCase):
       cinfo = {
         "cNum": 1,
         "images": [
-          {"iPreview": "c1-1-p.jpg", "title": ""},
+          {"iPreview": "c1-1-p.jpg"},
         ],
       }
       cinfo, metadata = addLocations(cinfo, folder)
@@ -447,7 +447,6 @@ class TestAddLocations(unittest.TestCase):
         "cNum": 9,
         "images": [
           {
-            "title": "",
             "description": "Brooklyn’s bridge.",
             "iPreview": "c9-1-p.jpg",
           },

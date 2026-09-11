@@ -77,7 +77,6 @@ function fakeImagesFromNumbers(cNum: number, iNums: number[]): CJson.Image[] {
     const image: CJson.Image = {
       iPreview: `c${cNum}-${iNum}-p.jpg`,
       iThumbnail: `c${cNum}-${iNum}-t.jpg`,
-      title: `Image ${iNum}`,
       description: `Description for image ${iNum}`,
       width: 0,
       height: 0,
@@ -306,7 +305,6 @@ function createTestImage(cNum: number, ix: number,
   const image: CJson.Image = {
     iPreview: `c${cNum}-${ix}-p.jpg`,
     iThumbnail: `c${cNum}-${ix}-t.jpg`,
-    title: `Title ${ix}`,
     description: `Description ${ix}`,
     width: imageWidth,
     height: imageHeight,
@@ -346,7 +344,6 @@ function validateCinfoImageSuite() {
   testThrow(eMessage, fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
-  image.title = ""
   image.description = ""
   test(fn, 4, 2, false, image)
   testThrow("Collection 4 image 2: description is required for ready collections.", fn, 4, 2, true, image)
