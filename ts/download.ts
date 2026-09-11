@@ -67,6 +67,10 @@ async function downloadCollection(cNum: number) {
     window.alert(["You need to login before you can download images."])
     return
   }
+  if (iphoneRequiresHomeScreen()) {
+    window.alert(["Install Collections on your home screen, then open it from its icon to download photos."])
+    return
+  }
 
   const indexCollection = getIndexCollection(cNum)
 

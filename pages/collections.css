@@ -55,6 +55,11 @@
   padding: 5px;
 }
 
+#index.iphone-install-required .collections,
+#index.iphone-install-required .bottom-menu {
+  display: none;
+}
+
 #index .collections {
   display: flex;
   margin-left: auto;

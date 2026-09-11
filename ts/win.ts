@@ -69,6 +69,23 @@ function isLocalhost(): boolean {
   return host === "localhost" || host === "127.0.0.1"
 }
 
+function isRunningFromInstalledIcon(): boolean {
+  // Return true when the app is running as an installed PWA from its
+  // home screen or desktop icon.
+  if (window.matchMedia("(display-mode: standalone)").matches)
+    return true
+  const nav = window.navigator as Navigator & { standalone?: boolean }
+  if (nav.standalone === true)
+    return true
+  return false
+}
+
+function iphoneRequiresHomeScreen(): boolean {
+  // iPhone Safari in the browser stores photos separately from the
+  // home screen app. Require the home screen icon before download.
+  return navigator.platform == "iPhone" && !isRunningFromInstalledIcon()
+}
+
 async function saveCollection(collection: { cNum: number }) {
   // Save the collection json by calling the admin saveCollection api.
   const response = await fetch(

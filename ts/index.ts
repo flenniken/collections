@@ -107,6 +107,28 @@ async function setCollectionState(cNum: number, collectionState: string) {
   }
 }
 
+async function setIndexCollectionStates() {
+  // Show download or view controls for each collection from the cache.
+  const cache = await openCreateCache()
+
+  if (!csjson.indexCollections) {
+    logError(`Missing csjson.indexCollections!`)
+    return
+  }
+
+  csjson.indexCollections.forEach(async (indexCollections: CJson.IndexCollection) => {
+    const cNum = indexCollections.cNum
+    const readyRequest = new Request(`c${cNum}-ready`)
+    const readyResponse = await cache.match(readyRequest);
+    if (readyResponse) {
+      setCollectionState(cNum, "withImages")
+    } else {
+      log(`Collection ${cNum} is not cached yet.`);
+      setCollectionState(cNum, "withoutImages")
+    }
+  })
+}
+
 function showHideAdminUI(pageId: string) {
   // Show the admin icons on the index page when an admin is logged
   // in.
@@ -178,27 +200,9 @@ async function handleLoad() {
   // ]
   // downloadUrls(sharedCollectionUrls)
 
-  // Open or create the cache.
-  const cache = await openCreateCache()
-
-  if (!csjson.indexCollections) {
-    logError(`Missing csjson.indexCollections!`)
-    return
+  if (!iphoneRequiresHomeScreen()) {
+    await setIndexCollectionStates()
   }
-
-  // Add a banner over the collections that are not cached.
-  csjson.indexCollections.forEach(async (indexCollections: CJson.IndexCollection) => {
-    const cNum = indexCollections.cNum
-    const readyRequest = new Request(`c${cNum}-ready`)
-    const readyResponse = await cache.match(readyRequest);
-    if (readyResponse) {
-      // The collection is completely cached.
-      setCollectionState(cNum, "withImages")
-    } else {
-      log(`Collection ${cNum} is not cached yet.`);
-      setCollectionState(cNum, "withoutImages")
-    }
-  })
 
   // Scroll to the saved scroll position if it exists.
   const savedScrollPosition = localStorage.getItem("indexScrollPosition");
@@ -222,23 +226,6 @@ async function handleLoad() {
 
 }
 
-function isRunningFromInstalledIcon(): boolean {
-  // Return true when the app is running as an installed PWA from its
-  // home screen or desktop icon.
-  if (window.matchMedia("(display-mode: standalone)").matches)
-    return true
-  // @ts-ignore
-  if (window.navigator.standalone === true)
-    return true
-  return false
-}
-
-function isCollectionsRunning() {
-  // Detect whether Collections is already running. This only works on
-  // Safari.
-  return isRunningFromInstalledIcon()
-}
-
 function isIosSafari() {
   // Return true when the running on the Safari browser and not the
   // other browsers on an iPhone.  Apple requires all browsers to use
@@ -258,67 +245,31 @@ function isIosSafari() {
 
 
 function installBanner() {
-  // Show an install banner if appropriate.
-
+  // On iPhone, require the home screen icon before showing
+  // collections. Safari in the browser and the installed app store
+  // photos in different places.
   log(`userAgent: ${navigator.userAgent}`)
-
-  // Detect running from the desktop icon.
-  if (isRunningFromInstalledIcon()) {
-    runningFromIcon = true
-    log("Running from the desktop icon.")
-    return
-  }
-  // Not running from the icon.
-
   log(`navigator.platform: ${navigator.platform}`)
 
-  // When the user is on a non-iPhone platform don't show any banner.
+  if (isRunningFromInstalledIcon()) {
+    runningFromIcon = true
+    log("Running from the home screen icon.")
+    return
+  }
   if (navigator.platform != "iPhone") {
     log("No banner.")
     return
   }
-  log("We're running on an iPhone.")
 
-  // Detect whether we're running on Safari.
+  log("We're running on an iPhone.")
+  get("index").classList.add("iphone-install-required")
   if (!isIosSafari()) {
     log("Not running safari.")
-
     get("switch-browser").style.display = "block"
-
-    // Hide the bottom menu.
-    // Don't allow downloading when the user should be running from the icon.
-
-    forClasses(get("index"), "bottom-menu", (element) => {
-      element.style.display = "none"
-    })
     return
   }
-  log("Running on Safari.")
-
-  // Detect whether Collections is already running.
-  if (isCollectionsRunning()) {
-    log("On an iPhone on Safari and Collections is already running.")
-
-    // You're already running the Collections app full screen switch
-    // over to it.
-    return
-  }
-  log("Not already running, show install banner.")
-
-  // You can’t detect:
-  // * If the user has installed your PWA but is not running it right now.
-  // * If the app is installed but the user opened it from Safari anyway.
-
-  // On an iPhone on Safari but not running from the icon, show the
-  // install banner.
+  log("Running on Safari, show install banner.")
   get("install-banner").style.display = "block"
-
-  // Hide the bottom menu.
-  // Don't allow downloading when the user should be running from the icon.
-
-  forClasses(get("index"), "bottom-menu", (element) => {
-    element.style.display = "none"
-  })
 }
 
 addEventListener("message", (event) => {
@@ -428,6 +379,10 @@ async function openCachedCollectionPage(cNum: number, url: string) {
   // Open a collection page only when its photos are cached. Compact
   // index rows keep their thumbnail visible after you delete images,
   // and that thumbnail would otherwise open an empty image page.
+  if (iphoneRequiresHomeScreen()) {
+    log("Open collections from the home screen icon to view photos.")
+    return
+  }
   if (!await collectionHasCachedImages(cNum)) {
     log(`Collection ${cNum} images are not cached.`)
     return
