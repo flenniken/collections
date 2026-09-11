@@ -1565,43 +1565,27 @@ function setupDescriptionEditing() {
 
   const descriptions = area!.querySelectorAll(".description")
   descriptions.forEach((el, ix) => {
-    const p = el as HTMLElement
-    p.setAttribute("contenteditable", "plaintext-only")
-    if (p.contentEditable !== "plaintext-only")
-      p.contentEditable = "true"
-    p.classList.add("editable")
-    p.addEventListener("keydown", (event) => {
-      if (event.key === "Escape") {
-        p.textContent = cJson.images[ix].description
-        p.blur()
-      }
-    })
-    p.addEventListener("blur", () => {
-      void saveEditedDescription(ix, p)
-    })
+    enablePlaintextEditing(el as HTMLElement,
+      () => cJson.images[ix].description,
+      (text) => saveEditedDescription(ix, text))
   })
   log("Admin description editing is on.")
 }
 
-async function saveEditedDescription(imageIx: number, el: HTMLElement) {
-  // Write the description back to cJson and save on localhost.
-  const text = el.innerText.replace(/\r\n/g, "\n")
-  if (text === cJson.images[imageIx].description)
-    return
-
-  cJson.images[imageIx].description = text
-  log(`Description ${imageIx + 1} updated.`)
-
+async function saveEditedDescription(imageIx: number, text: string) {
+  // Merge the image description into the collection json on disk.
   if (!isLocalhost()) {
+    cJson.images[imageIx].description = text
     log("Save with the download icon to keep the change.")
     return
   }
 
   try {
-    await saveCollection(cJson)
-    log("Collection saved.")
+    await saveDescription(cJson.cNum, "imageDescription", text, imageIx)
+    cJson.images[imageIx].description = text
+    log(`Description ${imageIx + 1} saved.`)
   } catch (error) {
-    logError("Collection save failed", error)
+    logError("Description save failed", error)
   }
 }
 

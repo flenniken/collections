@@ -85,3 +85,59 @@ async function saveCollection(collection: { cNum: number }) {
     throw new Error(`Save failed: ${response.status}`)
   return await response.json()
 }
+
+type DescriptionField = "description" | "indexDescription" | "imageDescription"
+
+async function saveDescription(cNum: number, field: DescriptionField,
+    text: string, imageIx?: number) {
+  // Merge one description into the collection json on disk.
+  const payload: {
+    cNum: number
+    field: DescriptionField
+    text: string
+    imageIx?: number
+  } = { cNum, field, text }
+  if (field == "imageDescription") {
+    if (imageIx === undefined)
+      throw new Error("imageIx is required")
+    payload.imageIx = imageIx
+  }
+  const response = await fetch(
+    "http://localhost:3001/saveDescription",
+    {
+      method: "POST",
+      headers:
+      {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    })
+  if (!response.ok)
+    throw new Error(`Save failed: ${response.status}`)
+  return await response.json()
+}
+
+function editedTextFromElement(el: HTMLElement): string {
+  return el.innerText.replace(/\r\n/g, "\n")
+}
+
+function enablePlaintextEditing(el: HTMLElement, getOriginal: () => string,
+    onCommit: (text: string) => Promise<void>) {
+  // Let an admin tap the element and edit it in place.
+  el.setAttribute("contenteditable", "plaintext-only")
+  if (el.contentEditable !== "plaintext-only")
+    el.contentEditable = "true"
+  el.classList.add("editable")
+  el.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      el.textContent = getOriginal()
+      el.blur()
+    }
+  })
+  el.addEventListener("blur", () => {
+    const text = editedTextFromElement(el)
+    if (text === getOriginal())
+      return
+    void onCommit(text)
+  })
+}

@@ -104,7 +104,7 @@ function ts2js(srcList: string[], destFile: string, destDir: string,
 // objects.
 const image_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "ts/image.ts"]
-const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/thumbnails.ts"]
+const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/userInfo.ts", "ts/thumbnails.ts"]
 const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "ts/login.ts", "ts/download.ts", "ts/notify.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']

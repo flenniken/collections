@@ -122,6 +122,36 @@ function showHideAdminUI(pageId: string) {
   });
 }
 
+function setupIndexDescriptionEditing() {
+  // Let an admin tap an index description and edit it in place.
+  if (!isAdmin())
+    return
+
+  csjson.indexCollections.forEach((c) => {
+    const card = document.getElementById(`c${c.cNum}`)
+    if (!card)
+      return
+    const el = card.querySelector(".description") as HTMLElement | null
+    if (!el)
+      return
+    enablePlaintextEditing(el, () => c.indexDescription, async (text) => {
+      if (!isLocalhost()) {
+        c.indexDescription = text
+        log("Save on localhost to keep the change.")
+        return
+      }
+      try {
+        await saveDescription(c.cNum, "indexDescription", text)
+        c.indexDescription = text
+        log(`Index description for collection ${c.cNum} saved.`)
+      } catch (error) {
+        logError("Description save failed", error)
+      }
+    })
+  })
+  log("Admin index description editing is on.")
+}
+
 async function handleLoad() {
   log("Window load event")
 
@@ -136,6 +166,7 @@ async function handleLoad() {
 
   // Show the admin icons when an admin is logged in.
   showHideAdminUI("index")
+  setupIndexDescriptionEditing()
 
   // This fails when you are not logged in. Is it ever needed?
   // log("Download shared collection files.")

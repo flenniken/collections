@@ -6,7 +6,8 @@ How to create a new collection for the Collections project.
 * rename, convert, and make thumbnails
 * run the maker command to write `cN.json`
 * move the folder to `dist/images` and build
-* edit descriptions on the image page (admin) and set order on the maker page
+* edit descriptions in place on the index, thumbnails, and image pages
+* set order on the maker page
 * deploy, set zoom points, then publish
 
 [⬇](#Contents) (table of contents at the bottom)
@@ -173,10 +174,16 @@ g all
 
 # Edit Collection
 
-Write image descriptions on the image page while logged in as admin.
-Tap a description; a cursor appears so you can edit it. On localhost
-the change is saved when you tap away. On an iPhone, tap the download
-icon after editing, then air-drop the file if needed.
+Write descriptions in place while logged in as admin. Tap a
+description; a cursor appears so you can edit it. On localhost the
+change is merged into `dist/images/cN/cN.json` when you tap away, so
+edits from the index, thumbnails, and image pages do not overwrite
+each other. On an iPhone, tap the download icon on the image page
+after editing, then air-drop the file if needed.
+
+* index page -- the short description on each of the newest collections
+* thumbnails page -- the collection description under the thumbnails
+* image page -- each photo's description
 
 Use the maker page to set the photo order.
 
@@ -361,7 +368,7 @@ Steps to replacement an image with a new one:
 
 * [Create Folder](#create-folder) -- how to collect, rename, convert, and thumbnail images.
 * [Run Maker](#run-maker) -- how to write cN.json and move the folder to dist.
-* [Edit Collection](#edit-collection) -- how to edit descriptions on the image page and set order.
+* [Edit Collection](#edit-collection) -- how to edit descriptions in place and set order.
 * [Zoom Points](#zoom-points) -- how to set the collection zoom points.
 * [Remove DS Store Files](#remove-ds-store-files) -- remove the .DS_Store files.
 * [Deploy](#deploy) -- how to publish the collection to the world.

@@ -128,7 +128,11 @@ When making changes to the image page test them with these steps:
   * as admin on localhost, tap the download icon and verify it writes
     `dist/images/cN/cN.json` instead of downloading a file
   * as admin, tap an image description, edit it, tap away, and verify
-    the text stays and `cN.json` is saved on localhost
+    the text stays and only that description changes in `cN.json`
+  * as admin, tap an index description, edit it, tap away, and verify
+    `indexDescription` is updated in `cN.json`
+  * as admin, tap the thumbnails page description, edit it, tap away,
+    and verify `description` is updated in `cN.json`
 
 [⬇](#Contents)
 

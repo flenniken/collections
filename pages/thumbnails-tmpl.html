@@ -20,7 +20,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <link rel="stylesheet" href="/collections.css">
   <script src="/js/thumbnails.js"></script>
 </head>
-<body id="thumbnails">
+<!--$ nextline -->
+<body id="thumbnails" data-cnum="{s.cNum}">
   <div id="top-bar">
   </div>
   <div id="container">
@@ -38,7 +39,7 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 <!--$ : description = html(s.description, "body") -->
   <div>
     <h3 id="title">{g.title}</h3>
-    <p id="description">{description}</p>
+    <p id="description" class="description">{description}</p>
   </div>
 <!--$ endblock -->
   <div class="bottom-menu">

@@ -181,6 +181,7 @@
   font-size: 1.5em;
   margin-left: 13px;
   margin-right: 13px;
+  white-space: pre-line;
 }
 
 #index #about-box {
@@ -322,17 +323,17 @@
   white-space: pre-line;
 }
 
-#images .description.editable {
+.description.editable {
   cursor: text;
   border-radius: 4px;
   outline: none;
 }
 
-#images .description.editable:empty {
+.description.editable:empty {
   min-height: 2em;
 }
 
-#images .description.editable:focus {
+.description.editable:focus {
   outline: 2px solid #888;
   outline-offset: 4px;
 }

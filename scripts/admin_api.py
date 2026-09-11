@@ -29,6 +29,8 @@ ALLOWED_ORIGINS = (
   "http://localhost:8000",
   "http://127.0.0.1:8000",
 )
+SAVE_PATHS = ("/saveCollection", "/saveDescription")
+DESCRIPTION_FIELDS = ("description", "indexDescription", "imageDescription")
 
 class AdminApiException(Exception):
   """ An exception we plan for. """
@@ -61,11 +63,52 @@ def writeCollectionJson(collection, root=None):
   tmpPath.replace(path)
   return path
 
+def saveDescription(payload, root=None):
+  """
+  Merge one description into dist/images/cN/cN.json.
+  """
+  if not isinstance(payload, dict):
+    raise AdminApiException("Invalid JSON")
+  field = payload.get("field")
+  if field not in DESCRIPTION_FIELDS:
+    raise AdminApiException("Invalid field")
+  text = payload.get("text")
+  if not isinstance(text, str):
+    raise AdminApiException("Invalid text")
+
+  path = collectionJsonPath(payload, root=root)
+  if not path.is_file():
+    raise AdminApiException(f"Missing collection json: {path}")
+  try:
+    collection = json.loads(path.read_text(encoding="utf-8"))
+  except json.JSONDecodeError:
+    raise AdminApiException("Invalid collection json")
+  if not isinstance(collection, dict):
+    raise AdminApiException("Invalid collection json")
+  if collection.get("cNum") != payload.get("cNum"):
+    raise AdminApiException("cNum does not match file")
+
+  if field == "imageDescription":
+    imageIx = payload.get("imageIx")
+    if not isinstance(imageIx, int) or isinstance(imageIx, bool) or imageIx < 0:
+      raise AdminApiException("Invalid imageIx")
+    images = collection.get("images")
+    if not isinstance(images, list) or imageIx >= len(images):
+      raise AdminApiException("Invalid imageIx")
+    image = images[imageIx]
+    if not isinstance(image, dict):
+      raise AdminApiException("Invalid imageIx")
+    image["description"] = text
+  else:
+    collection[field] = text
+
+  return writeCollectionJson(collection, root=root)
+
 class ApiHandler(BaseHTTPRequestHandler):
   server_version = "CollectionsAdminAPI/1.0"
 
   def do_OPTIONS(self):
-    if self.path != "/saveCollection":
+    if self.path not in SAVE_PATHS:
       self.send_error(404)
       return
     self.send_response(204)
@@ -73,7 +116,7 @@ class ApiHandler(BaseHTTPRequestHandler):
     self.end_headers()
 
   def do_POST(self):
-    if self.path != "/saveCollection":
+    if self.path not in SAVE_PATHS:
       self.send_error(404)
       return
     try:
@@ -87,13 +130,16 @@ class ApiHandler(BaseHTTPRequestHandler):
 
     raw = self.rfile.read(length)
     try:
-      collection = json.loads(raw.decode("utf-8"))
+      payload = json.loads(raw.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError):
       self.sendJson(400, {"ok": False, "message": "Invalid JSON"})
       return
 
     try:
-      path = writeCollectionJson(collection, root=self.server.collectionsRoot)
+      if self.path == "/saveCollection":
+        path = writeCollectionJson(payload, root=self.server.collectionsRoot)
+      else:
+        path = saveDescription(payload, root=self.server.collectionsRoot)
     except AdminApiException as ex:
       self.sendJson(400, {"ok": False, "message": str(ex)})
       return
@@ -129,7 +175,7 @@ class AdminHTTPServer(HTTPServer):
     self.collectionsRoot = collectionsRoot
 
 def runServer(host=HOST, port=PORT, collectionsRoot=COLLECTIONS_ROOT):
-  print(f"Admin API listening on http://localhost:{port}/saveCollection",
+  print(f"Admin API listening on http://localhost:{port}",
     flush=True)
   server = AdminHTTPServer((host, port), ApiHandler, collectionsRoot)
   server.serve_forever()
@@ -214,6 +260,113 @@ class TestModule(unittest.TestCase):
       with self.assertRaises(HTTPError) as raised:
         urlopen(request)
       self.assertEqual(raised.exception.code, 404)
+    finally:
+      server.shutdown()
+      server.server_close()
+      thread.join(timeout=2)
+
+  def writeOriginalCollection(self):
+    collection = {
+      "cNum": 9,
+      "title": "Keep me",
+      "indexDescription": "old index",
+      "description": "old thumbs",
+      "images": [
+        {"description": "img0"},
+        {"description": "img1"},
+      ],
+    }
+    writeCollectionJson(collection, root=self.root)
+    return collection
+
+  def test_saveDescriptionIndex(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "indexDescription",
+      "text": "new index",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["title"], "Keep me")
+    self.assertEqual(saved["indexDescription"], "new index")
+    self.assertEqual(saved["description"], "old thumbs")
+    self.assertEqual(saved["images"][1]["description"], "img1")
+
+  def test_saveDescriptionThumbs(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "description",
+      "text": "new thumbs",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["description"], "new thumbs")
+    self.assertEqual(saved["indexDescription"], "old index")
+    self.assertEqual(saved["images"][0]["description"], "img0")
+
+  def test_saveDescriptionImage(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "imageDescription",
+      "imageIx": 1,
+      "text": "new img1",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["images"][0]["description"], "img0")
+    self.assertEqual(saved["images"][1]["description"], "new img1")
+    self.assertEqual(saved["title"], "Keep me")
+
+  def test_saveDescriptionInvalidField(self):
+    self.writeOriginalCollection()
+    with self.assertRaises(AdminApiException):
+      saveDescription({
+        "cNum": 9,
+        "field": "title",
+        "text": "nope",
+      }, root=self.root)
+
+  def test_saveDescriptionInvalidImageIx(self):
+    self.writeOriginalCollection()
+    for imageIx in (-1, 2, True, "1", None):
+      with self.assertRaises(AdminApiException):
+        saveDescription({
+          "cNum": 9,
+          "field": "imageDescription",
+          "imageIx": imageIx,
+          "text": "nope",
+        }, root=self.root)
+
+  def test_saveDescriptionPost(self):
+    self.writeOriginalCollection()
+    server = AdminHTTPServer(("127.0.0.1", 0), ApiHandler, self.root)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+      port = server.server_address[1]
+      body = json.dumps({
+        "cNum": 9,
+        "field": "indexDescription",
+        "text": "posted index",
+      }).encode("utf-8")
+      request = Request(
+        f"http://127.0.0.1:{port}/saveDescription",
+        data=body,
+        headers={
+          "Content-Type": "application/json",
+          "Origin": "http://localhost:8000",
+        },
+        method="POST",
+      )
+      with urlopen(request) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(response.status, 200)
+        self.assertEqual(response.headers["Access-Control-Allow-Origin"],
+          "http://localhost:8000")
+      self.assertTrue(payload["ok"])
+      saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+      self.assertEqual(saved["indexDescription"], "posted index")
+      self.assertEqual(saved["title"], "Keep me")
     finally:
       server.shutdown()
       server.server_close()

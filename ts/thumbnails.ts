@@ -1,5 +1,9 @@
 // Code for the thumbnails page.
 
+/// <reference path="./win.ts" />
+/// <reference path="./all.ts" />
+/// <reference path="./userInfo.ts" />
+
 // The available screen area.
 let availWidth = 0
 let availHeight = 0
@@ -42,6 +46,37 @@ function handleLoad() {
   log("load event")
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
+  setupThumbnailDescriptionEditing()
+}
+
+function setupThumbnailDescriptionEditing() {
+  // Let an admin tap the collection description and edit it in place.
+  if (!isAdmin())
+    return
+
+  const el = document.getElementById("description")
+  if (!el)
+    return
+  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  if (!(cNum > 0))
+    return
+
+  let current = editedTextFromElement(el)
+  enablePlaintextEditing(el, () => current, async (text) => {
+    if (!isLocalhost()) {
+      current = text
+      log("Save on localhost to keep the change.")
+      return
+    }
+    try {
+      await saveDescription(cNum, "description", text)
+      current = text
+      log("Collection description saved.")
+    } catch (error) {
+      logError("Description save failed", error)
+    }
+  })
+  log("Admin thumbnail description editing is on.")
 }
 
 function handleResize() {
