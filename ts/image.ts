@@ -96,6 +96,7 @@ async function handleLoad() {
 
   // Show the admin icons when an admin is logged in.
   showAdminIcons()
+  setupDescriptionEditing()
 
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
@@ -1043,6 +1044,9 @@ function handleTouchStart(event: TouchEvent) {
   // Log the current image. See handleContainerTouchStart for zoom
   // and pan.
 
+  if (isEditableTarget(event.target))
+    return
+
   log(`Touched image: ${imageIndex+1}`)
   preventSwipe(event)
 }
@@ -1546,6 +1550,57 @@ function showAdminIcons() {
     log("Admin content is now visible.");
   } else {
     log("User is not an admin, hiding admin content.");
+  }
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  return target instanceof HTMLElement && target.isContentEditable
+}
+
+function setupDescriptionEditing() {
+  // Let an admin tap a description and edit it in place.
+  if (!isAdmin())
+    return
+
+  const descriptions = area!.querySelectorAll(".description")
+  descriptions.forEach((el, ix) => {
+    const p = el as HTMLElement
+    p.setAttribute("contenteditable", "plaintext-only")
+    if (p.contentEditable !== "plaintext-only")
+      p.contentEditable = "true"
+    p.classList.add("editable")
+    p.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        p.textContent = cJson.images[ix].description
+        p.blur()
+      }
+    })
+    p.addEventListener("blur", () => {
+      void saveEditedDescription(ix, p)
+    })
+  })
+  log("Admin description editing is on.")
+}
+
+async function saveEditedDescription(imageIx: number, el: HTMLElement) {
+  // Write the description back to cJson and save on localhost.
+  const text = el.innerText.replace(/\r\n/g, "\n")
+  if (text === cJson.images[imageIx].description)
+    return
+
+  cJson.images[imageIx].description = text
+  log(`Description ${imageIx + 1} updated.`)
+
+  if (!isLocalhost()) {
+    log("Save with the download icon to keep the change.")
+    return
+  }
+
+  try {
+    await saveCollection(cJson)
+    log("Collection saved.")
+  } catch (error) {
+    logError("Collection save failed", error)
   }
 }
 

@@ -125,6 +125,8 @@ When making changes to the image page test them with these steps:
   * tap the share icon and verify the share sheet appears, or the photo downloads
   * as admin on localhost, tap the download icon and verify it writes
     `dist/images/cN/cN.json` instead of downloading a file
+  * as admin, tap an image description, edit it, tap away, and verify
+    the text stays and `cN.json` is saved on localhost
 
 [⬇](#Contents)
 

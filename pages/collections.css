@@ -327,6 +327,21 @@
   white-space: pre-line;
 }
 
+#images .description.editable {
+  cursor: text;
+  border-radius: 4px;
+  outline: none;
+}
+
+#images .description.editable:empty {
+  min-height: 2em;
+}
+
+#images .description.editable:focus {
+  outline: 2px solid #888;
+  outline-offset: 4px;
+}
+
 #images .taken {
   display: block;
   margin: -0.25em 1em 1em 1em;

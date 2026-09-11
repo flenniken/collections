@@ -8,7 +8,7 @@
   "images": [
     {
       "title": "",
-      "description": "Leanne dramatically playing the outdoor piano at Simon Fraser University.",
+      "description": "Leanne dramatically playing the outdoor piano at Simon Fraser University with her foot.",
       "iPreview": "c25-16-p.jpg",
       "iThumbnail": "c25-16-t.jpg",
       "width": 3024,
@@ -23,7 +23,7 @@
     },
     {
       "title": "",
-      "description": "On the way to Vancouver we stopped in Bellingham.  It was cold and Kathleen had fun with her warm coat and face mask.",
+      "description": "On the way to Vancouver we stopped in Bellingham.  It was cold and Kathleen had fun with her warm coat and face mask.  It was only a few months after Canada opened the border because of the pandemic. ",
       "iPreview": "c25-1-p.jpg",
       "iThumbnail": "c25-1-t.jpg",
       "width": 3024,
@@ -371,6 +371,88 @@
       {
         "scale": 0.23115079365079366,
         "tx": 0,
+        "ty": 0
+      }
+    ],
+    "430x932": [
+      {
+        "scale": 0.1421957671957672,
+        "tx": -2.842170943040401e-14,
+        "ty": 179.64058592354408
+      },
+      {
+        "scale": 0.22761141995129563,
+        "tx": -140.03417122257076,
+        "ty": 18.474576626775804
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.23640264639529235,
+        "tx": -135.0445328199833,
+        "ty": -6.252485846932108
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.23906057196877972,
+        "tx": -130.94321294257293,
+        "ty": -4.702612064741471
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.33669662625458324,
+        "tx": -470.2190974156909,
+        "ty": -56.804865943931205
+      },
+      {
+        "scale": 0.24802801072984385,
+        "tx": -160.23924612936182,
+        "ty": -5.613163137004187
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.30853174603174605,
+        "tx": -407,
         "ty": 0
       }
     ]
