@@ -106,6 +106,8 @@ When making changes to the image page test them with these steps:
 * v scroll and overscroll on both ends
 * zoom image small, go to thumbnails, tap the same image and verify image is at its zoom point
 * long press the description text to copy it then extend the selection
+* long press the GPS coordinates to copy them without opening the map,
+  then tap the map and verify it still opens Google Maps
 * press and hold a Live Photo and verify the video plays and keeps
   looping for more than five seconds, it used to stop after one second
   when the iOS drag gesture took over the touch

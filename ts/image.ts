@@ -156,17 +156,18 @@ function osmEmbedUrl(lat: number, lng: number): string {
   return `https://www.openstreetmap.org/export/embed.html?${params.toString()}`
 }
 
-function createLocationMap(lat: number, lng: number): HTMLAnchorElement {
-  // Return a tappable map with a pin that opens Google Maps.
+function createLocationMap(lat: number, lng: number): HTMLElement {
+  // Return a tappable map that opens Google Maps, with copyable
+  // coordinates under it.
+  const wrap = document.createElement("div")
+  wrap.className = "location"
+
   const link = document.createElement("a")
-  link.className = "location"
+  link.className = "location-map"
   link.href = googleMapsUrl(lat, lng)
   link.target = "_blank"
   link.rel = "noopener noreferrer"
   link.setAttribute("aria-label", "Open location in Google Maps")
-
-  const map = document.createElement("span")
-  map.className = "location-map"
 
   const iframe = document.createElement("iframe")
   iframe.src = osmEmbedUrl(lat, lng)
@@ -174,15 +175,15 @@ function createLocationMap(lat: number, lng: number): HTMLAnchorElement {
   iframe.setAttribute("loading", "lazy")
   iframe.setAttribute("aria-hidden", "true")
   iframe.referrerPolicy = "no-referrer"
-  map.appendChild(iframe)
+  link.appendChild(iframe)
 
   const coords = document.createElement("span")
   coords.className = "location-coords"
   coords.textContent = `${lat.toFixed(7)}, ${lng.toFixed(7)}`
 
-  link.appendChild(map)
-  link.appendChild(coords)
-  return link
+  wrap.appendChild(link)
+  wrap.appendChild(coords)
+  return wrap
 }
 
 function formatTaken(taken?: string): string {
