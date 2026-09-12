@@ -65,6 +65,20 @@
       "taken": "2022-03-12T13:02:58"
     },
     {
+      "description": "Student walking towards the meeting area.  School wasn't in session when we visited so not many people around.",
+      "iPreview": "c25-7-p.jpg",
+      "iThumbnail": "c25-7-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 1876256,
+      "sizet": 90066,
+      "iLiveVideo": "c25-7-v.mp4",
+      "liveSize": 2037070,
+      "liveDuration": 2.97,
+      "location": "49.2791333,-122.9182806",
+      "taken": "2022-03-12T13:43:13"
+    },
+    {
       "description": "Covered meeting place at Simon Fraser University.",
       "iPreview": "c25-5-p.jpg",
       "iThumbnail": "c25-5-t.jpg",
@@ -85,20 +99,6 @@
       "sizet": 102178,
       "location": "49.2791222,-122.9177333",
       "taken": "2022-03-12T13:42:08"
-    },
-    {
-      "description": "Student walking towards the meeting area.  School wasn't in session when we visited so not many people around.",
-      "iPreview": "c25-7-p.jpg",
-      "iThumbnail": "c25-7-t.jpg",
-      "width": 4032,
-      "height": 3024,
-      "size": 1876256,
-      "sizet": 90066,
-      "iLiveVideo": "c25-7-v.mp4",
-      "liveSize": 2037070,
-      "liveDuration": 2.97,
-      "location": "49.2791333,-122.9182806",
-      "taken": "2022-03-12T13:43:13"
     },
     {
       "description": "Leanne and Kathleen studying the architecture. ",
@@ -226,14 +226,14 @@
         "ty": 305.25
       },
       {
-        "scale": 0.23906057196877972,
-        "tx": -130.94321294257293,
-        "ty": -4.707657785840979
-      },
-      {
         "scale": 0.10664682539682539,
         "tx": 0,
         "ty": 305.25
+      },
+      {
+        "scale": 0.23906057196877972,
+        "tx": -130.94321294257293,
+        "ty": -4.707657785840979
       },
       {
         "scale": 0.10664682539682539,
@@ -303,6 +303,11 @@
         "ty": -143.4489939930064
       },
       {
+        "scale": 0.23489564337166005,
+        "tx": -11.636674394974364,
+        "ty": -165.21388512046283
+      },
+      {
         "scale": 0.2328825199198123,
         "tx": -7.0897465418585455,
         "ty": -76.63372858994833
@@ -311,11 +316,6 @@
         "scale": 0.2590194343844961,
         "tx": 78.33679311324835,
         "ty": -214.29077358605602
-      },
-      {
-        "scale": 0.23489564337166005,
-        "tx": -11.636674394974364,
-        "ty": -165.21388512046283
       },
       {
         "scale": 0.23140436376512968,
@@ -390,14 +390,14 @@
         "ty": 304.9228295819936
       },
       {
-        "scale": 0.23906057196877972,
-        "tx": -130.94321294257293,
-        "ty": -4.702612064741471
-      },
-      {
         "scale": 0.10664682539682539,
         "tx": 0,
         "ty": 304.9228295819936
+      },
+      {
+        "scale": 0.23906057196877972,
+        "tx": -130.94321294257293,
+        "ty": -4.702612064741471
       },
       {
         "scale": 0.10664682539682539,

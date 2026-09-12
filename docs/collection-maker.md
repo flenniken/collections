@@ -7,7 +7,7 @@ How to create a new collection for the Collections project.
 * run the maker command to write `cN.json`
 * move the folder to `dist/images` and build
 * edit descriptions in place on the index, thumbnails, and image pages
-* set order on the maker page
+* set order on the thumbnails page as localhost admin
 * set zoom points on localhost, then publish
 
 [⬇](#Contents) (table of contents at the bottom)
@@ -185,7 +185,10 @@ after editing, then air-drop the file if needed.
 * thumbnails page -- the collection description under the thumbnails
 * image page -- each photo's description
 
-Use the maker page to set the photo order.
+Use the maker page to set which photos are in the collection. On
+localhost as admin, long-press a thumbnail on the thumbnails page to
+drag it to a new place. The order is saved through the admin API.
+Run `g all` so the image page matches.
 
 Build first:
 

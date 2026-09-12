@@ -134,6 +134,23 @@ async function saveDescription(cNum: number, field: DescriptionField,
   return await response.json()
 }
 
+async function saveOrder(cNum: number, order: number[]) {
+  // Reorder images in the collection json on disk.
+  const response = await fetch(
+    "http://localhost:3001/saveOrder",
+    {
+      method: "POST",
+      headers:
+      {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ cNum, order })
+    })
+  if (!response.ok)
+    throw new Error(`Save failed: ${response.status}`)
+  return await response.json()
+}
+
 function editedTextFromElement(el: HTMLElement): string {
   return el.innerText.replace(/\r\n/g, "\n")
 }

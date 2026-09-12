@@ -29,7 +29,7 @@ ALLOWED_ORIGINS = (
   "http://localhost:8000",
   "http://127.0.0.1:8000",
 )
-SAVE_PATHS = ("/saveCollection", "/saveDescription")
+SAVE_PATHS = ("/saveCollection", "/saveDescription", "/saveOrder")
 DESCRIPTION_FIELDS = ("description", "indexDescription", "imageDescription")
 
 class AdminApiException(Exception):
@@ -104,6 +104,72 @@ def saveDescription(payload, root=None):
 
   return writeCollectionJson(collection, root=root)
 
+def validateOrderList(order, count):
+  """
+  Require a permutation of 0 .. count-1.
+  """
+  if not isinstance(order, list) or len(order) != count:
+    raise AdminApiException("Invalid order")
+  seen = set()
+  for imageIx in order:
+    if (not isinstance(imageIx, int) or isinstance(imageIx, bool)
+        or imageIx < 0 or imageIx >= count or imageIx in seen):
+      raise AdminApiException("Invalid order")
+    seen.add(imageIx)
+  if len(seen) != count:
+    raise AdminApiException("Invalid order")
+
+def applyOrder(items, order):
+  """
+  Return items in the given image-index order.
+  """
+  return [items[imageIx] for imageIx in order]
+
+def applyOrderToZoomPoints(zoomPoints, order):
+  """
+  Reorder each zoom-point list to match the image order.
+  """
+  if not isinstance(zoomPoints, dict):
+    raise AdminApiException("Invalid zoomPoints")
+  reordered = {}
+  for key, points in zoomPoints.items():
+    if not isinstance(points, list) or len(points) != len(order):
+      raise AdminApiException("Invalid zoomPoints")
+    reordered[key] = applyOrder(points, order)
+  return reordered
+
+def saveOrder(payload, root=None):
+  """
+  Reorder images in dist/images/cN/cN.json from an order list.
+  """
+  if not isinstance(payload, dict):
+    raise AdminApiException("Invalid JSON")
+  path = collectionJsonPath(payload, root=root)
+  if not path.is_file():
+    raise AdminApiException(f"Missing collection json: {path}")
+  try:
+    collection = json.loads(path.read_text(encoding="utf-8"))
+  except json.JSONDecodeError:
+    raise AdminApiException("Invalid collection json")
+  if not isinstance(collection, dict):
+    raise AdminApiException("Invalid collection json")
+  if collection.get("cNum") != payload.get("cNum"):
+    raise AdminApiException("cNum does not match file")
+  images = collection.get("images")
+  if not isinstance(images, list):
+    raise AdminApiException("Invalid images")
+  order = payload.get("order")
+  validateOrderList(order, len(images))
+  identity = list(range(len(images)))
+  if order == identity and "order" not in collection:
+    return path
+  collection["images"] = applyOrder(images, order)
+  if "zoomPoints" in collection:
+    collection["zoomPoints"] = applyOrderToZoomPoints(
+      collection["zoomPoints"], order)
+  collection.pop("order", None)
+  return writeCollectionJson(collection, root=root)
+
 class ApiHandler(BaseHTTPRequestHandler):
   server_version = "CollectionsAdminAPI/1.0"
 
@@ -138,8 +204,10 @@ class ApiHandler(BaseHTTPRequestHandler):
     try:
       if self.path == "/saveCollection":
         path = writeCollectionJson(payload, root=self.server.collectionsRoot)
-      else:
+      elif self.path == "/saveDescription":
         path = saveDescription(payload, root=self.server.collectionsRoot)
+      else:
+        path = saveOrder(payload, root=self.server.collectionsRoot)
     except AdminApiException as ex:
       self.sendJson(400, {"ok": False, "message": str(ex)})
       return
@@ -367,6 +435,103 @@ class TestModule(unittest.TestCase):
       saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
       self.assertEqual(saved["indexDescription"], "posted index")
       self.assertEqual(saved["title"], "Keep me")
+    finally:
+      server.shutdown()
+      server.server_close()
+      thread.join(timeout=2)
+
+  def writeCollectionWithOrder(self):
+    collection = {
+      "cNum": 9,
+      "title": "Keep me",
+      "images": [
+        {"description": "img0"},
+        {"description": "img1"},
+        {"description": "img2"},
+      ],
+      "zoomPoints": {
+        "430x933": [
+          {"scale": 1, "tx": 0, "ty": 0},
+          {"scale": 2, "tx": 1, "ty": 1},
+          {"scale": 3, "tx": 2, "ty": 2},
+        ],
+      },
+    }
+    writeCollectionJson(collection, root=self.root)
+    return collection
+
+  def test_saveOrder(self):
+    self.writeCollectionWithOrder()
+    saveOrder({
+      "cNum": 9,
+      "order": [2, 0, 1],
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["title"], "Keep me")
+    self.assertEqual([image["description"] for image in saved["images"]],
+      ["img2", "img0", "img1"])
+    self.assertEqual(
+      [point["scale"] for point in saved["zoomPoints"]["430x933"]],
+      [3, 1, 2])
+    self.assertNotIn("order", saved)
+
+  def test_saveOrderIdentity(self):
+    self.writeCollectionWithOrder()
+    path = saveOrder({
+      "cNum": 9,
+      "order": [0, 1, 2],
+    }, root=self.root)
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    self.assertEqual([image["description"] for image in saved["images"]],
+      ["img0", "img1", "img2"])
+
+  def test_saveOrderRemovesOrderField(self):
+    collection = self.writeCollectionWithOrder()
+    collection["order"] = [0, 1, 2]
+    writeCollectionJson(collection, root=self.root)
+    saveOrder({
+      "cNum": 9,
+      "order": [0, 1, 2],
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertNotIn("order", saved)
+
+  def test_saveOrderInvalid(self):
+    self.writeCollectionWithOrder()
+    for order in ([0, 1], [0, 1, 1], [0, 1, 3], [0, 1, "2"], None):
+      with self.assertRaises(AdminApiException):
+        saveOrder({
+          "cNum": 9,
+          "order": order,
+        }, root=self.root)
+
+  def test_saveOrderPost(self):
+    self.writeCollectionWithOrder()
+    server = AdminHTTPServer(("127.0.0.1", 0), ApiHandler, self.root)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+      port = server.server_address[1]
+      body = json.dumps({
+        "cNum": 9,
+        "order": [1, 2, 0],
+      }).encode("utf-8")
+      request = Request(
+        f"http://127.0.0.1:{port}/saveOrder",
+        data=body,
+        headers={
+          "Content-Type": "application/json",
+          "Origin": "http://localhost:8000",
+        },
+        method="POST",
+      )
+      with urlopen(request) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(response.status, 200)
+      self.assertTrue(payload["ok"])
+      saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+      self.assertEqual([image["description"] for image in saved["images"]],
+        ["img1", "img2", "img0"])
     finally:
       server.shutdown()
       server.server_close()

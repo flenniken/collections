@@ -135,6 +135,8 @@ When making changes to the image page test them with these steps:
     `indexDescription` is updated in `cN.json`
   * as admin, tap the thumbnails page description, edit it, tap away,
     and verify `description` is updated in `cN.json`
+  * as admin on localhost, long-press a thumbnail, drag it onto
+    another, drop, and verify the photos reorder in `cN.json`
 
 [⬇](#Contents)
 
