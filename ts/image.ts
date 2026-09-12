@@ -180,7 +180,38 @@ function createLocationMap(lat: number, lng: number): HTMLElement {
 
   wrap.appendChild(link)
   wrap.appendChild(coords)
+  enableMapTapOrScroll(link)
   return wrap
+}
+
+function enableMapTapOrScroll(link: HTMLElement) {
+  // Let a drag over the map scroll the page. A tap still opens
+  // Google Maps. The OSM iframe would otherwise eat the gesture.
+  const TAP_PX = 12
+  let startX = 0
+  let startY = 0
+  let dragged = false
+
+  link.addEventListener("touchstart", (event) => {
+    const touch = event.changedTouches[0]
+    startX = touch.clientX
+    startY = touch.clientY
+    dragged = false
+  }, { passive: true })
+
+  link.addEventListener("touchmove", (event) => {
+    const touch = event.changedTouches[0]
+    if (Math.abs(touch.clientX - startX) > TAP_PX ||
+        Math.abs(touch.clientY - startY) > TAP_PX)
+      dragged = true
+  }, { passive: true })
+
+  link.addEventListener("click", (event) => {
+    if (dragged) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  })
 }
 
 function loadLocationMap(link: HTMLElement) {
