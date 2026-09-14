@@ -205,7 +205,7 @@ function enablePlaintextEditing(el: HTMLElement, getOriginal: () => string,
 
 function enablePostedDateEditing(el: HTMLElement, getOriginal: () => string,
     onCommit: (text: string) => Promise<void>) {
-  // Replace the posted-date text with a date picker, like the maker page.
+  // Replace the posted-date text with a date picker.
   const input = document.createElement("input")
   input.type = "date"
   if (el.id)
@@ -238,7 +238,7 @@ function enablePostedDateEditing(el: HTMLElement, getOriginal: () => string,
 async function fetchCollectionJson(cNum: number): Promise<Record<string, unknown> | null> {
   // Read dist/images/cN/cN.json. Used to show title and posted date
   // that were saved after the last page rebuild. The timestamp keeps
-  // the request out of the browser cache, same as the maker page.
+  // the request out of the browser cache.
   try {
     const timestamp = Date.now()
     const response = await fetch(

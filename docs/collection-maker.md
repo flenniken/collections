@@ -195,51 +195,11 @@ to drag it to a new place. The admin API rearranges the `images` (and
 zoom points) in `cN.json`; it does not store a separate order list.
 Run `g all` so the image page matches.
 
-Build first:
-
-~~~
-g all
-~~~
-
-Open the Maker Page as an admin from the index about box. Select the
-collection from the dropdown. Before you name it, the list shows the
-collection number, like: "title (24)".
-
 Use the local site:
 
 ~~~
 http://localhost:8000/
 ~~~
-
-♫ Note: after building a new maker page, do a hard refresh
-(shift-cmd-R) so the photos appear in the correct location.
-
-__Saving Changes__
-
-Edits update the in-memory `cjson`. Save with the **Save** button.
-Refreshing or switching collections without saving discards changes.
-
-Save writes `dist/images/cN/cN.json` through the localhost admin API
-on port 3001. Then run `g all` and test on Chrome at localhost.
-
-__Maker Page UI__
-
-Below is a partial screenshot of the maker web page:
-
-[![Maker Page](maker.png)](#)
-
-The maker page includes the following elements:
-
-* __Left Panel__: A 2-column by 8-row table showing the collection images and their order. The first image is the index photo.
-* __Right Panel__: A table of 20 available images.
-* __Top Section__: Fields for entering the collection’s title and post date.
-* __Bottom Section__: Fields for entering descriptive text for the collection and its images.
-
-__Interactions__
-
-* Click an image in the right panel to add it to the next available collection box.
-* Click an image in the left panel to move it back to the available images.
-* Cmd-click a collection box to open or close an empty box.
 
 [⬇](#Contents)
 

@@ -88,9 +88,8 @@ namespace CJson {
     // The collection number. Collections are in sequential order.
     cNum: number;
 
-    // In-memory only for the maker page's 16 collection boxes. An
-    // index of -1 is an empty box. Not written to json: the images
-    // array is the collection order.
+    // Leftover field, stripped on read. The images array is the
+    // collection order.
     order?: number[];
 
     // The image array contains an element for each image in the
@@ -108,8 +107,8 @@ namespace CJson {
     // creates the flag when the collection is created.
     building?: boolean;
 
-    // The modified field is set by the maker page. It tells the build
-    // process that the collection has been modified or is new.  When
+    // The modified field tells the build process that the collection
+    // has been modified or is new.  When
     // true, the build process (the gulp modified task):
     // * copies the tin thumbnail file to the shared location
     // * removes the old tin thumbnail if it exists

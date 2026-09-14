@@ -29,23 +29,19 @@ let help = `
         t -- Compile thumbnails.ts
         x -- Compile index.ts
        sw -- Compile sw.ts
-       cm -- Compile maker.ts
 
 * pages: Create all the pages from templates.
 
     index -- Create the main index page.
-    maker -- Create the collection maker page.
     ready -- Create the images and thumbnails pages for all collections.
  modified -- Update index thumbnails, remove unused images for modified collections and
              remove leftover order from the json.
       css -- Minimize the collection.css file.
-    m-css -- Minimize the maker.css file.
     tsync -- Update the template's replace blocks in sync with the header.tea content.
 
 * vpages: Validate all the html files.
 
    vindex -- Validate index html
-   vmaker -- Validate maker html.
    vready -- Validate images and thumbnails pages for all collections.
    vsize  -- Validate json images width, height and size match on disk values.
 
@@ -108,9 +104,6 @@ const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/userInfo.ts", "ts/thumbnail
 const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "ts/login.ts", "ts/download.ts", "ts/notify.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
-let maker_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/maker.ts"]
-if (!minimize)
-  maker_ts.push("ts/test-maker.ts");
 
 // image page
 gulp.task('i', function () {
@@ -141,12 +134,7 @@ gulp.task('sw', function () {
   return ts2js(sw_ts, 'sw.js', "dist", options)
 });
 
-// Compile maker ts
-gulp.task('cm', function () {
-  return ts2js(maker_ts, 'maker.js', "dist", null)
-});
-
-gulp.task("ts", gulp.parallel(["i", "t", "x", "sw", "cm"]))
+gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
 
 function validateHtml(filename: string) {
   // Validate an html file.
@@ -198,13 +186,7 @@ gulp.task("vready", function (cb) {
   cb()
 })
 
-gulp.task("vmaker", function (cb) {
-  // Validate the maker html file.
-  validateHtml("dist/maker.html")
-  cb()
-})
-
-gulp.task("vpages", gulp.parallel("vindex", "vmaker", "vready"));
+gulp.task("vpages", gulp.parallel("vindex", "vready"));
 
 function runStaticteaTask(parameters: string[], tmpFilename: string,
   distFilename: string, cb: TaskCallback) {
@@ -316,47 +298,18 @@ statictea \
   runStaticteaTask(parameters, tmpFilename, distFilename, cb)
 }
 
-gulp.task("maker", function (cb) {
-  // Create the maker page.
-
-/*
-statictea \
-  -t pages/maker-tmpl.html \
-  -s pages/collections.json \
-  -o pages/header.tea \
-  -r dist/maker.html
-*/
-
-  fancyLog('Compiling the maker template')
-  generateCollectionsJsonOnce()
-  const tmpFilename = 'tmp/maker.html'
-  const distFilename = 'dist/maker.html'
-  const parameters = [
-    "-t", "pages/maker-tmpl.html",
-    "-s", `pages/collections.json`,
-    "-o", "pages/header.tea",
-    "-r", tmpFilename,
-  ]
-  // Compile maker-tmpl.html into the tmp dir then copy it to the dist
-  // dir.
-  runStaticteaTask(parameters, tmpFilename, distFilename, cb)
-
-})
-
 gulp.task("tsync", function (cb) {
   // Syncronize index template's replace blocks with header.tea.
 /*
 statictea -u -o pages/header.tea -t pages/index-tmpl.html
 statictea -u -o pages/header.tea -t pages/image-tmpl.html
 statictea -u -o pages/header.tea -t pages/thumbnails-tmpl.html
-statictea -u -o pages/header.tea -t pages/maker-tmpl.html
 */
   fancyLog("Syncronize all templates with header.tea.")
   const commands = [
     ["-u", "-o", "pages/header.tea", "-t", "pages/index-tmpl.html"],
     ["-u", "-o", "pages/header.tea", "-t", "pages/image-tmpl.html"],
     ["-u", "-o", "pages/header.tea", "-t", "pages/thumbnails-tmpl.html"],
-    ["-u", "-o", "pages/header.tea", "-t", "pages/maker-tmpl.html"],
   ]
   commands.forEach((parameters, ix) => {
     child_process.spawn("statictea", parameters, {stdio: "inherit"});
@@ -366,14 +319,6 @@ statictea -u -o pages/header.tea -t pages/maker-tmpl.html
 
 gulp.task("css", function (cb) {
   return gulp.src(["pages/collections.css"])
-    .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
-    .pipe(cleanCSS({compatibility: "ie8"}))
-    .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
-    .pipe(gulp.dest("dist/"));
-})
-
-gulp.task("m-css", function (cb) {
-  return gulp.src(["pages/maker.css"])
     .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
     .pipe(cleanCSS({compatibility: "ie8"}))
     .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
@@ -408,8 +353,7 @@ gulp.task("modified", function (cb) {
   return cb()
 });
 
-gulp.task("pages", gulp.parallel("index", "maker", "ready", "modified",
-  "css", "m-css"));
+gulp.task("pages", gulp.parallel("index", "ready", "modified", "css"));
 
 gulp.task('readme', function () {
   const parameters = [
@@ -462,7 +406,7 @@ gulp.task("vsize", function (cb) {
 })
 
 gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
-  ["ts", "pages", "css", "m-css"])]));
+  ["ts", "pages", "css"])]));
 
 
 let builtOnce = false

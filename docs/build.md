@@ -220,9 +220,6 @@ dist
 |   |-- image.js
 |   |-- index.js
 |   `-- thumbnails.js
-|-- maker.css
-|-- maker.html
-|-- maker.js
 |-- sw.js
 `-- tin
     |-- c1-3-t.jpg
