@@ -1,9 +1,37 @@
 {
   "indexCollections": [
     {
+      "cNum": 26,
+      "building": false,
+      "title": "Jaclyn Pole Climb",
+      "modified": false,
+      "indexDescription": "Jaclyn climbing a pole on Manzanita beach.",
+      "iThumbnail": "c26-1-t.jpg",
+      "posted": "2026-09-13",
+      "iCount": 16,
+      "totalSize": 65870628,
+      "iNumList": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16
+      ]
+    },
+    {
       "cNum": 25,
       "building": false,
-      "ready": true,
       "title": "Simon Fraser University",
       "modified": false,
       "indexDescription": "Simon Fraser University",
@@ -38,7 +66,6 @@
     {
       "cNum": 24,
       "building": false,
-      "ready": true,
       "title": "Hood River Ski Trip",
       "modified": false,
       "indexDescription": "Weekend ski trip from Hood River.",
@@ -66,7 +93,6 @@
     {
       "cNum": 23,
       "building": false,
-      "ready": true,
       "title": "Jaclyn's School",
       "modified": false,
       "indexDescription": "Jaclyn teaching class at an early age.",
@@ -88,7 +114,6 @@
     {
       "cNum": 22,
       "building": false,
-      "ready": true,
       "title": "Florence Doors",
       "modified": false,
       "indexDescription": "Florence doors from a random street.",
@@ -116,7 +141,6 @@
     {
       "cNum": 21,
       "building": false,
-      "ready": true,
       "title": "Portland Bridge Ride",
       "modified": false,
       "indexDescription": "Portland Bridges bike ride with Garret, Doug, and Jaclyn.",
@@ -161,7 +185,6 @@
     {
       "cNum": 20,
       "building": false,
-      "ready": true,
       "title": "Hawaiian Gates",
       "modified": false,
       "indexDescription": "A collection of fancy house gates in Kihie Maui.",
@@ -189,7 +212,6 @@
     {
       "cNum": 19,
       "building": false,
-      "ready": true,
       "title": "Taipei",
       "modified": false,
       "indexDescription": "Trip to Taipei with Alex and Agatha",
@@ -219,7 +241,6 @@
     {
       "cNum": 18,
       "building": false,
-      "ready": true,
       "title": "Kentucky",
       "modified": false,
       "indexDescription": "Kentucky trip to Ken and Dianne's place.",
@@ -248,7 +269,6 @@
     {
       "cNum": 17,
       "building": false,
-      "ready": true,
       "title": "B Reactor Concert",
       "modified": false,
       "indexDescription": "First concert at the B Reactor.",
@@ -270,7 +290,6 @@
     {
       "cNum": 16,
       "building": false,
-      "ready": true,
       "title": "Seahawks Parade",
       "modified": false,
       "indexDescription": "Seahawk's Superbowl parade.",
@@ -302,7 +321,6 @@
     {
       "cNum": 15,
       "building": false,
-      "ready": true,
       "title": "C. C. Stern Foundry",
       "modified": false,
       "indexDescription": "C. C. Stern Type Foundry",
@@ -332,11 +350,10 @@
     {
       "cNum": 14,
       "building": false,
-      "ready": true,
       "title": "Manhole Covers",
       "modified": false,
       "indexDescription": "Seattle Manhole Collection",
-      "iThumbnail": "c14-1-t.jpg",
+      "iThumbnail": "c14-5-t.jpg",
       "posted": "2026-08-24",
       "iCount": 12,
       "totalSize": 53471417,
@@ -358,7 +375,6 @@
     {
       "cNum": 13,
       "building": false,
-      "ready": true,
       "title": "Portafino",
       "modified": false,
       "indexDescription": "In 2017 we spent a day in Portafino Italy, \na photogenic old fishing village on the Italian Riviera. ",
@@ -384,7 +400,6 @@
     {
       "cNum": 12,
       "building": false,
-      "ready": true,
       "title": "Manzanita 2026",
       "modified": false,
       "indexDescription": "Manzanita 2026 July beach vacation at the house with the big back yard.",
@@ -414,7 +429,6 @@
     {
       "cNum": 11,
       "building": false,
-      "ready": true,
       "title": "Seaplane Tours",
       "modified": false,
       "indexDescription": "When walking around Lake Union you happen upon a little float plane airport at the south end of the lake.",
@@ -436,11 +450,10 @@
     {
       "cNum": 10,
       "building": false,
-      "ready": true,
       "title": "Tokyo",
       "modified": false,
       "indexDescription": "Trip to Tokyo with Alex and Agatha in fall 2014.",
-      "iThumbnail": "c10-8-t.jpg",
+      "iThumbnail": "c10-4-t.jpg",
       "posted": "2026-06-08",
       "iCount": 16,
       "totalSize": 37711716,
@@ -466,7 +479,6 @@
     {
       "cNum": 9,
       "building": false,
-      "ready": true,
       "title": "Pantheon",
       "modified": false,
       "indexDescription": "Trip to the Pantheon 2017 and 2019.",
@@ -490,7 +502,6 @@
     {
       "cNum": 8,
       "building": false,
-      "ready": true,
       "title": "Eleanor Two Months",
       "modified": false,
       "indexDescription": "Eleanor photos, newborn to two months.",
@@ -520,7 +531,6 @@
     {
       "cNum": 7,
       "building": false,
-      "ready": true,
       "title": "Manzanita Dog House",
       "modified": false,
       "indexDescription": "Our annual 2025 trip to Manzanita with the Bovees. ",
@@ -550,7 +560,6 @@
     {
       "cNum": 6,
       "building": false,
-      "ready": true,
       "title": "Ferns at Rockport State Park",
       "modified": false,
       "indexDescription": "Common ferns of the Puget Sound region.",
@@ -578,7 +587,6 @@
     {
       "cNum": 5,
       "building": false,
-      "ready": true,
       "title": "Hawaii",
       "modified": false,
       "indexDescription": "In January Steve, Kathleen and Elisabeth vacationed in Hawaii.\n",
@@ -608,7 +616,6 @@
     {
       "cNum": 4,
       "building": false,
-      "ready": true,
       "title": "Santa Fe",
       "modified": false,
       "indexDescription": "We vacationed in Santa Fe, New Mexico with Ken and Dianne from June 4th to the June 11th.",
@@ -638,7 +645,6 @@
     {
       "cNum": 3,
       "building": false,
-      "ready": true,
       "title": "Brooklyn Bridge",
       "modified": false,
       "indexDescription": "We walked the Brooklyn Bridge with Alex and Agatha.",
@@ -664,7 +670,6 @@
     {
       "cNum": 2,
       "building": false,
-      "ready": true,
       "title": "Manzanita 2023",
       "modified": false,
       "indexDescription": "2023 Summer vacation in Manzanita Oregon.",
@@ -694,7 +699,6 @@
     {
       "cNum": 1,
       "building": false,
-      "ready": true,
       "title": "Many Glaciers Lodge",
       "modified": false,
       "indexDescription": "Photos from Glacier National Park & Many Glaciers lodge.",

@@ -2,7 +2,6 @@
   "title": "Seaplane Tours",
   "indexDescription": "When walking around Lake Union you happen upon a little float plane airport at the south end of the lake.",
   "description": "Lake Union seaplane tours and vicinity.",
-  "indexThumbnail": "c11-2-t.jpg",
   "cNum": 11,
   "posted": "2026-07-20",
   "images": [
@@ -95,7 +94,6 @@
       "taken": "2026-07-20T11:18:12"
     }
   ],
-  "ready": true,
   "zoomPoints": {
     "430x933": [
       {

@@ -1801,7 +1801,8 @@ function setupDescriptionEditing() {
   descriptions.forEach((el, ix) => {
     enablePlaintextEditing(el as HTMLElement,
       () => cJson.images[ix].description,
-      (text) => saveEditedDescription(ix, text))
+      (text) => saveEditedDescription(ix, text),
+      { placeholder: "Description" })
   })
   log("Admin description editing is on.")
 }
@@ -1837,7 +1838,9 @@ async function downloadCjson() {
   }
 
   // Convert collection info to a json string.
-  const cjson = JSON.stringify(cJson, null, 2)
+  const toWrite = { ...cJson }
+  delete toWrite.order
+  const cjson = JSON.stringify(toWrite, null, 2)
 
   const blob = new Blob([cjson], { type: 'application/json' })
   const url = URL.createObjectURL(blob)

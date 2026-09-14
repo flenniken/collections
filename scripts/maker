@@ -236,10 +236,10 @@ def validateCollectionFolder(num, ftg):
   if numPreviews != len(ftg.thumbnails):
     raise MakerException(
       f"Error: mismatch: {numPreviews} previews != {numThumbnails} thumbnails.")
-  if numThumbnails < 8:
-    raise MakerException(f"Error: {numThumbnails} images, you need at least 8.")
-  if numThumbnails > 20:
-    raise MakerException(f"Error: {numThumbnails} images, you are limited to 20.")
+  allowedCounts = (8, 10, 12, 14, 16)
+  if numThumbnails not in allowedCounts:
+    raise MakerException(
+      f"Error: {numThumbnails} images, collections must have 8, 10, 12, 14, or 16.")
   if numLiveVideos > numPreviews:
     raise MakerException(
       f"Error: {numLiveVideos} live videos, expected at most {numPreviews}.")
@@ -320,10 +320,6 @@ def createCollectionCinfo(num, ftg, previewImageInfoList, folder):
     for fileInfo, info in zip(ftg.previews, previewImageInfoList)}
 
   images = []
-  order = []
-
-  for ix in range(16):
-    order.append(-1)
 
   for fileInfo in previews:
     stem = pairingStem(fileInfo.basename, "-p.jpg")
@@ -353,18 +349,16 @@ def createCollectionCinfo(num, ftg, previewImageInfoList, folder):
         collectionImage['liveDuration'] = round(duration, 3)
     images.append(collectionImage)
 
-  # Create the collection info (cinfo).
+  # Create the collection info (cinfo). Disk order is the collection
+  # order. Empty text is filled in later in place.
   cinfo = {
-    "title": "title",
+    "title": "",
     "indexDescription": "",
     "description": "",
-    "indexThumbnail": "",
     "cNum": num,
     "posted": "",
-    "order": order,
     "images": images,
     "building": True,
-    "ready": False,
     "zoomPoints": {},
   }
   return cinfo
@@ -989,12 +983,22 @@ class TestMaker(unittest.TestCase):
       imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
 
   def test_validateFolder7(self):
-    eMsg = "Error: 7 images, you need at least 8."
+    eMsg = "Error: 7 images, collections must have 8, 10, 12, 14, or 16."
     testValidateFolderError(4, previews=7, thumbnails=7, cjson=0,
       imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
 
+  def test_validateFolder9(self):
+    eMsg = "Error: 9 images, collections must have 8, 10, 12, 14, or 16."
+    testValidateFolderError(4, previews=9, thumbnails=9, cjson=0,
+      imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
+
+  def test_validateFolder20(self):
+    eMsg = "Error: 20 images, collections must have 8, 10, 12, 14, or 16."
+    testValidateFolderError(4, previews=20, thumbnails=20, cjson=0,
+      imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
+
   def test_validateFolder21(self):
-    eMsg = "Error: 21 images, you are limited to 20."
+    eMsg = "Error: 21 images, collections must have 8, 10, 12, 14, or 16."
     testValidateFolderError(4, previews=21, thumbnails=21, cjson=0,
       imageHtml=0, thumbnailHtml=0, eMsg=eMsg)
 
@@ -1049,13 +1053,12 @@ class TestMaker(unittest.TestCase):
       cjson = json.dumps(cinfo, indent=2)
       # print(cjson)
 
-      gotExpected(cinfo['title'], "title")
+      gotExpected(cinfo['title'], "")
       gotExpected(cinfo['indexDescription'], "")
       gotExpected(cinfo['cNum'], num)
       gotExpected(cinfo['building'], True)
-      gotExpected(cinfo['ready'], False)
-      # gotExpected(len(cinfo['order']), 0)
-      # gotExpected(len(cinfo['images']), 8)
+      gotExpected("ready" in cinfo, False)
+      gotExpected("order" in cinfo, False)
       previews = sorted(ftg.previews, key=lambda item: naturalKey(item.basename))
       for ix, image in enumerate(cinfo['images']):
         preview = previews[ix]
@@ -1076,7 +1079,7 @@ class TestMaker(unittest.TestCase):
     """
     num = 4
     try:
-      folder = makeTestFolder(num, previews=20, thumbnails=20,
+      folder = makeTestFolder(num, previews=16, thumbnails=16,
         cjson=0, imageHtml=0, thumbnailHtml=0, others=0)
       fileInfoList = getFileInfoList(folder)
 

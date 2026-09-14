@@ -35,9 +35,9 @@ let help = `
 
     index -- Create the main index page.
     maker -- Create the collection maker page.
-    ready -- Create the images and thumbnails pages for ready collections.
+    ready -- Create the images and thumbnails pages for all collections.
  modified -- Update index thumbnails, remove unused images for modified collections and
-             remove the in order order list.
+             remove leftover order from the json.
       css -- Minimize the collection.css file.
     m-css -- Minimize the maker.css file.
     tsync -- Update the template's replace blocks in sync with the header.tea content.
@@ -46,7 +46,7 @@ let help = `
 
    vindex -- Validate index html
    vmaker -- Validate maker html.
-   vready -- Validate images and thumbnails pages for the ready collections.
+   vready -- Validate images and thumbnails pages for all collections.
    vsize  -- Validate json images width, height and size match on disk values.
 
 * all: Compile most everything in parallel: ts, pages (not tsync, vpages).
@@ -186,11 +186,11 @@ gulp.task("vindex", function (cb) {
 })
 
 gulp.task("vready", function (cb) {
-  // Validate the ready collection thumbnails and images pages.
-  const readyCollections = getReadyCollections()
-  fancyLog(`${readyCollections.length} ready collections`)
-  for (let ix = 0; ix < readyCollections.length; ix++) {
-    const cNum = readyCollections[ix].cNum
+  // Validate the collection thumbnails and images pages.
+  const collections = getReadyCollections()
+  fancyLog(`${collections.length} collections`)
+  for (let ix = 0; ix < collections.length; ix++) {
+    const cNum = collections[ix].cNum
     fancyLog(`Validate: ${cNum}`)
     validateHtml(`dist/images/c${cNum}/image-${cNum}.html`)
     validateHtml(`dist/images/c${cNum}/thumbnails-${cNum}.html`)
@@ -256,15 +256,14 @@ statictea \
 })
 
 gulp.task("ready", function (cb) {
-  // Create the thumbnails and image pages for the ready collections.
-  const readyCollections = getReadyCollections()
-  const numReady = readyCollections.length
-  fancyLog(`${numReady} ready collections`)
-  if (numReady == 0)
+  // Create the thumbnails and image pages for all collections.
+  const collections = getReadyCollections()
+  const numCollections = collections.length
+  fancyLog(`${numCollections} collections`)
+  if (numCollections == 0)
     return cb()
-  for (let ix = 0; ix < numReady; ix++) {
-    const cNum = readyCollections[ix].cNum
-    // log(`collection number: ${cNum}`)
+  for (let ix = 0; ix < numCollections; ix++) {
+    const cNum = collections[ix].cNum
     thumbnailsPage(cNum, ()=>{})
     imagePage(cNum, ()=>{})
   }
@@ -382,16 +381,18 @@ gulp.task("m-css", function (cb) {
 })
 
 gulp.task("modified", function (cb) {
-  // Update index thumbnails and remove unused images for ready and
-  // modified collections. Remove the modified flag when done.
+  // Update index thumbnails and remove unused images for modified
+  // collections. Remove the modified flag when done.
 
-  const readyCollections = getReadyCollections()
+  const collections = getReadyCollections()
 
-  for (let ix = 0; ix < readyCollections.length; ix++) {
-    const indexCollection = readyCollections[ix]
-    if (!("modified" in indexCollection))
-      continue
+  for (let ix = 0; ix < collections.length; ix++) {
+    const indexCollection = collections[ix]
     const cNum = indexCollection.cNum
+    syncIndexThumbnail(cNum, indexCollection.iThumbnail)
+
+    if (!indexCollection.modified)
+      continue
 
     fancyLog(`Clean up modified collection: ${cNum}`)
 
@@ -400,28 +401,6 @@ gulp.task("modified", function (cb) {
       let msg: string
       fancyLog(`Removed: ${path}`)
     })
-
-    // Copy the collection's index thumbnail when missing.
-    const thumbnailBasename = indexCollection.iThumbnail
-    const destFilename = path.join("dist/tin", thumbnailBasename)
-    if (!fs.existsSync(destFilename)) {
-      const srcFilename = path.join(`dist/images/c${cNum}`, thumbnailBasename)
-      fs.copyFile(srcFilename, destFilename, (err) => {
-        if (err)
-          throw err
-        fancyLog(`Copied ${thumbnailBasename} to tin folder.`)
-      })
-    }
-
-    // Remove the old collection's index thumbnail if it exists.
-    const tinFolder = path.join("dist/tin")
-    fs.readdirSync(tinFolder).filter(file => {
-      if (file.startsWith(`c${cNum}-`) && file != thumbnailBasename) {
-        const fullPath = path.join(tinFolder, file)
-        fs.unlinkSync(fullPath);
-        fancyLog(`Removed old ${fullPath} from the tin folder.`)
-      }
-    });
 
     // Remove the modified and order field from the cjson.
     removeModifiedAndOrder(cNum)
@@ -455,11 +434,10 @@ gulp.task("csjson", function (cb) {
 
 gulp.task("vsize", function (cb) {
   // Validate the width, height and size of images on disk match what the json file says.
-  // Validate the ready collections.
-  const readyCollections = getReadyCollections()
-  fancyLog(`${readyCollections.length} ready collections`)
-  for (let ix = 0; ix < readyCollections.length; ix++) {
-    const cNum = readyCollections[ix].cNum
+  const collections = getReadyCollections()
+  fancyLog(`${collections.length} collections`)
+  for (let ix = 0; ix < collections.length; ix++) {
+    const cNum = collections[ix].cNum
     fancyLog(`${cNum}`)
 
     const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`
@@ -635,6 +613,17 @@ function readAndValidateCjson(cjsonFile: string): CJson.Collection {
     throw new Error(`Error: Missing cjson: ${cjsonFile}`);
 
   let cinfo = readCJsonFile(cjsonFile)
+  let stripped = false
+  if ("ready" in cinfo) {
+    delete (cinfo as { ready?: boolean }).ready
+    stripped = true
+  }
+  if ("order" in cinfo) {
+    delete cinfo.order
+    stripped = true
+  }
+  if (stripped)
+    fs.writeFileSync(cjsonFile, JSON.stringify(cinfo, null, 2), "utf8")
   const basename = path.basename(cjsonFile)
   const folderCNum = parseInt(basename.match(/^c(\d+)\.json$/)?.[1] ?? "")
   validateCinfo(folderCNum, cinfo)
@@ -718,46 +707,16 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   // in the collection interface.
   const requiredFields = [
     "title", "description", "indexDescription", "posted",
-    "indexThumbnail", "cNum", "ready", "images", "zoomPoints"
+    "cNum", "images", "zoomPoints"
   ]
   const optionalFields = [
-    "order", "building", "modified",
+    "building", "modified",
   ]
   validateFields(cNum, cinfo, requiredFields, optionalFields)
 
   // Check that the cNum number matches the folder cNum.
   if (cinfo.cNum !== cNum)
     throw new Error(`Collection ${cinfo.cNum} does not match folder number ${cNum}.`)
-
-  // Check that ready collections have non-empty text fields.
-  const nonEmptyFields = ["title", "description",
-    "indexDescription", "posted"]
-  if (cinfo.ready) {
-    let emptyFields: string[] = []
-    nonEmptyFields.forEach(field => {
-      if (cinfo[field as keyof CJson.Collection] === "") {
-        emptyFields.push(field)
-      }
-    })
-    if (emptyFields.length > 0) {
-      throw new Error(`The ready collection ${cinfo.cNum} has \
-empty fields: ${emptyFields.join(", ")}.`)
-    }
-  }
-
-  // Validate the images field.
-  validateCinfoImages(cNum, cinfo, cinfo.ready)
-
-  // The zoom points must exist when the collection is ready and not building.
-  const zpKeyCount = Object.keys(cinfo.zoomPoints).length
-  if (cinfo.ready && zpKeyCount == 0 && !("building" in cinfo)) {
-    throw new Error(`The collection ${cinfo.cNum} zoomPoints are \
-required for non-building, ready collections.`)
-  }
-  // Validate the zoomPoints when they exist.
-  if (zpKeyCount > 0) {
-    validateCinfoZoomPoints(cinfo.images.length, cinfo.zoomPoints);
-  }
 
   // If building exists, it should be true.
   if ("building" in cinfo && cinfo.building !== true) {
@@ -770,20 +729,37 @@ must be true when it exists.`)
 must be true when it exists.`)
   }
 
-  // Ready not building collections must not have an order field.
-  if (cinfo.ready && !("building" in cinfo) && ("order" in cinfo)) {
-    throw new Error(`The collection ${cinfo.cNum} order field is not allowed \
-for non-building ready collections.`)
+  const building = cinfo.building === true
+
+  // Published collections (not building) must have non-empty text.
+  const nonEmptyFields = ["title", "description",
+    "indexDescription", "posted"]
+  if (!building) {
+    let emptyFields: string[] = []
+    nonEmptyFields.forEach(field => {
+      if (cinfo[field as keyof CJson.Collection] === "") {
+        emptyFields.push(field)
+      }
+    })
+    if (emptyFields.length > 0) {
+      throw new Error(`The collection ${cinfo.cNum} has \
+empty fields: ${emptyFields.join(", ")}.`)
+    }
   }
 
-  // If order exists, validate it.
-  if ("order" in cinfo)
-    validateOrder(cinfo.order!, cinfo.images)
-}
+  // Validate the images field.
+  validateCinfoImages(cNum, cinfo, !building)
 
-function validateOrder(order: number[], images: CJson.Image[]) {
-  // Validate the order field.
-  // todo: implement validateOrder
+  // Zoom points are required when the collection is not building.
+  const zpKeyCount = Object.keys(cinfo.zoomPoints).length
+  if (!building && zpKeyCount == 0) {
+    throw new Error(`The collection ${cinfo.cNum} zoomPoints are \
+required when not building.`)
+  }
+  // Validate the zoomPoints when they exist.
+  if (zpKeyCount > 0) {
+    validateCinfoZoomPoints(cinfo.images.length, cinfo.zoomPoints);
+  }
 }
 
 function validateCinfoZoomPoints(numImages: number,
@@ -824,7 +800,7 @@ function validateCinfoZoomPoints(numImages: number,
 // Make sure the tin thumbnail exists.
 
 function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
-  ready: boolean) {
+  requireDescriptions: boolean) {
   // Validate the images field of the cinfo.
 
   if (cinfo.images.length == 0) {
@@ -844,7 +820,7 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
   });
 
   cinfo.images.forEach((image, ix) => {
-    validateCinfoImage(cNum, ix, cinfo.ready, image)
+    validateCinfoImage(cNum, ix, requireDescriptions, image)
   });
 }
 
@@ -979,7 +955,7 @@ got: ${nameObj.cNum} expected: ${cNum}.`);
 }
 
 export function validateCinfoImage(cNum: number, ix: number,
-  ready: boolean, image: CJson.Image) {
+  requireDescriptions: boolean, image: CJson.Image) {
   // Validate a single image in the cinfo.
 
   validateImageName(cNum, ix, "p", image.iPreview)
@@ -1022,15 +998,42 @@ got: ${image.width}.`)
 got: ${image.height}.`)
   }
 
-  if (ready && (image.description == "")) {
+  if (requireDescriptions && (image.description == "")) {
     throw new Error(`Collection ${cNum} image ${ix}: description is required \
-for ready collections.`)
+when not building.`)
   }
 }
 
 // Check that zoomPoints has at least two fields.
 // Check that zoomPoints fields have wxh format.
 // Check that zoomPoints list have the same number of elements as the collection.
+
+function indexThumbnailName(cinfo: CJson.Collection): string {
+  // The index page uses the first photo in the collection.
+  if (cinfo.images.length > 0)
+    return cinfo.images[0].iThumbnail
+  return ""
+}
+
+function syncIndexThumbnail(cNum: number, thumbnailBasename: string) {
+  // Copy the first-photo thumbnail to dist/tin and remove leftovers.
+  if (!thumbnailBasename)
+    return
+  const destFilename = path.join("dist/tin", thumbnailBasename)
+  if (!fs.existsSync(destFilename)) {
+    const srcFilename = path.join(`dist/images/c${cNum}`, thumbnailBasename)
+    fs.copyFileSync(srcFilename, destFilename)
+    fancyLog(`Copied ${thumbnailBasename} to tin folder.`)
+  }
+  const tinFolder = path.join("dist/tin")
+  fs.readdirSync(tinFolder).forEach((file) => {
+    if (file.startsWith(`c${cNum}-`) && file != thumbnailBasename) {
+      const fullPath = path.join(tinFolder, file)
+      fs.unlinkSync(fullPath)
+      fancyLog(`Removed old ${fullPath} from the tin folder.`)
+    }
+  })
+}
 
 function generateCollectionsJson() {
   // Generate the pages/collections.json file from the cjson files.
@@ -1077,11 +1080,10 @@ function generateCollectionsJson() {
     const indexCollection: CJson.IndexCollection = {
       cNum: cinfo.cNum,
       building: cinfo.building ?? false,
-      ready: cinfo.ready,
       title: cinfo.title,
       modified: cinfo.modified ?? false,
       indexDescription: cinfo.indexDescription,
-      iThumbnail: cinfo.indexThumbnail,
+      iThumbnail: indexThumbnailName(cinfo),
       posted: cinfo.posted,
       iCount: cinfo.images.length,
       totalSize: totalSize,
@@ -1096,24 +1098,24 @@ function generateCollectionsJson() {
 }
 
 function getReadyCollections(): CJson.IndexCollection[] {
-  // Return a list of the ready collections by reading the collections.json file.
+  // Return collections that have images. Pages are built for all of
+  // them; building is the draft/admin-only flag.
 
   // Create pages/collections.json.
   generateCollectionsJsonOnce()
   const filename = "pages/collections.json"
 
-  // Read the collections.json file and find all the ready collection numbers.
   const csjson: CJson.Csjson = readJsonFile(filename)
   if (! ("indexCollections" in csjson) ) {
     throw new Error(`indexCollections field missing from ${filename}`)
   }
-  let readyCollections: CJson.IndexCollection[] = [];
+  let collections: CJson.IndexCollection[] = [];
   csjson.indexCollections.forEach(indexCollection => {
-    if (indexCollection.ready) {
-      readyCollections.push(indexCollection);
+    if (indexCollection.iCount > 0) {
+      collections.push(indexCollection);
     }
   });
-  return readyCollections;
+  return collections;
 }
 
 function compareContents(sourceFilename: string, destFilename: string) {
@@ -1144,27 +1146,13 @@ function compareContentsLog(srcPath: string, destPath: string): boolean {
 }
 
 function removeModifiedAndOrder(cNum: number) {
-  // Remove the modified flag and order list from the cjson file.
+  // Remove the modified flag and leftover order list from the cjson file.
 
   const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`;
   const cjson: CJson.Collection = readJsonFile(cjsonFilename);
   delete cjson.modified;
-
-  // Remove the order list when it is in order (ignore the ending -1
-  // values if they exist).
-  if ("order" in cjson) {
-    const order = cjson.order!;
-
-    // Remove trailing -1 values from the order list.
-    const trimmedOrder = order.filter((value) => value !== -1);
-
-    // Check if the trimmed order matches the default order (0, 1, 2, ..., n-1).
-    const isInOrder = trimmedOrder.every((value, index) => value === index);
-
-    if (isInOrder) {
-      delete cjson.order;
-    }
-  }
+  delete cjson.order;
+  delete (cjson as { ready?: boolean }).ready;
 
   fs.writeFileSync(cjsonFilename, JSON.stringify(cjson, null, 2), "utf8");
 }

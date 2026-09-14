@@ -2,7 +2,6 @@
   "title": "Simon Fraser University",
   "indexDescription": "Simon Fraser University",
   "description": "We visited Ryan and Leanne in Vancouver BC.  We took a trip to Simon Fraser University.  We parked at Kushiro Park, took in the view, then walked the wooded trail to the University. The architecture is very interesting.",
-  "indexThumbnail": "c25-16-t.jpg",
   "cNum": 25,
   "posted": "2026-09-10",
   "images": [
@@ -192,7 +191,6 @@
       "taken": "2022-03-12T13:59:38"
     }
   ],
-  "ready": true,
   "zoomPoints": {
     "430x933": [
       {

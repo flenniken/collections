@@ -198,7 +198,6 @@ interface CinfoOptions {
   order?: number[];
   building?: boolean;
   modified?: boolean;
-  ready?: boolean;
 }
   // Create a valid test cinfo object for the given collection number.
   // * cNum is the collection number.
@@ -214,10 +213,8 @@ function createTestCinfo(options?: CinfoOptions): CJson.Collection {
     title: `Collection ${cNum} Title`,
     description: "Full description.",
     indexDescription: "Index description.",
-    indexThumbnail: `c${cNum}-1-t.jpg`,
     posted: "2025-07-12",
     cNum: cNum,
-    ready: true,
     images: [],
     zoomPoints: {}
   }
@@ -241,8 +238,6 @@ function createTestCinfo(options?: CinfoOptions): CJson.Collection {
     })
   }
 
-  if (options?.ready !== undefined)
-    cinfo.ready = options.ready
   if (options?.building !== undefined)
     cinfo.building = options.building
   if (options?.modified !== undefined)
@@ -346,7 +341,7 @@ function validateCinfoImageSuite() {
   image = createTestImage(4, 2)
   image.description = ""
   test(fn, 4, 2, false, image)
-  testThrow("Collection 4 image 2: description is required for ready collections.", fn, 4, 2, true, image)
+  testThrow("Collection 4 image 2: description is required when not building.", fn, 4, 2, true, image)
 
   image = createTestImage(4, 2)
   image.width = 0
@@ -415,14 +410,14 @@ function validateCinfoNoReadingSuite() {
   testThrow(message, fn, 4, 8)
 
   message = "The collection 4 is missing required fields: title, description, \
-indexDescription, posted, indexThumbnail, cNum, ready, images, zoomPoints."
+indexDescription, posted, cNum, images, zoomPoints."
   testThrow(message, fn, 4, {})
 
   message = "The collection 4 is missing required fields: description, \
-indexThumbnail, zoomPoints."
+zoomPoints."
   testThrow(message, fn, 4,
     {cNum: 4, title: "Title", indexDescription: "Desc",
-    posted: true, ready: true, images: []})
+    posted: true, images: []})
 
   message = "Collection 4 has extra fields: bogus."
   testThrow(message, fn, 4, {bogus: 1})
@@ -441,12 +436,12 @@ indexThumbnail, zoomPoints."
   delete (cinfo.images[0] as any).iPreview
   testThrow(message, fn, 4, cinfo)
 
-  message = "The ready collection 4 has empty fields: title."
+  message = "The collection 4 has empty fields: title."
   cinfo = createTestCinfo({numImages: 1})
   cinfo.title = ""
   testThrow(message, fn, 4, cinfo)
 
-  message = "The ready collection 4 has empty fields: title, description, \
+  message = "The collection 4 has empty fields: title, description, \
 indexDescription, posted."
   cinfo = createTestCinfo({numImages: 1})
   cinfo.title = ""
@@ -454,6 +449,18 @@ indexDescription, posted."
   cinfo.indexDescription = ""
   cinfo.posted = ""
   testThrow(message, fn, 4, cinfo)
+
+  // Building collections may have empty text and image descriptions.
+  cinfo = createTestCinfo({numImages: 1, building: true})
+  cinfo.title = ""
+  cinfo.description = ""
+  cinfo.indexDescription = ""
+  cinfo.posted = ""
+  cinfo.images[0].description = ""
+  test(fn, 4, cinfo)
+
+  message = "The collection 4 zoomPoints are required when not building."
+  testThrow(message, fn, 4, createTestCinfo({numImages: 1}))
 
   // The building field must be true when it exists.
   message = "The collection 4 building field must be true when it exists."
@@ -465,8 +472,8 @@ indexDescription, posted."
   cinfo = createTestCinfo({numImages: 1, building: true, modified: false})
   testThrow(message, fn, 4, cinfo)
 
-  // Non-modified ready collections must not have an order field.
-  message = "The collection 4 order field is not allowed for non-building ready collections."
+  // Order is not persisted on disk.
+  message = "Collection 4 has extra fields: order."
   cinfo = createTestCinfo({numImages: 1, order: [0],
     zoomPointKeys: ["933x432", "432x933"]})
   testThrow(message, fn, 4, cinfo)

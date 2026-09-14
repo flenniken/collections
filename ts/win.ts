@@ -103,14 +103,15 @@ async function saveCollection(collection: { cNum: number }) {
   return await response.json()
 }
 
-type DescriptionField = "description" | "indexDescription" | "imageDescription"
+type TextField = "description" | "indexDescription" | "imageDescription" |
+  "title" | "posted"
 
-async function saveDescription(cNum: number, field: DescriptionField,
+async function saveDescription(cNum: number, field: TextField,
     text: string, imageIx?: number) {
-  // Merge one description into the collection json on disk.
+  // Merge one text field into the collection json on disk.
   const payload: {
     cNum: number
-    field: DescriptionField
+    field: TextField
     text: string
     imageIx?: number
   } = { cNum, field, text }
@@ -127,7 +128,10 @@ async function saveDescription(cNum: number, field: DescriptionField,
       {
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      // Keep the save alive if the admin clicks through to another
+      // page before the POST finishes.
+      keepalive: true
     })
   if (!response.ok)
     throw new Error(`Save failed: ${response.status}`)
@@ -155,23 +159,99 @@ function editedTextFromElement(el: HTMLElement): string {
   return el.innerText.replace(/\r\n/g, "\n")
 }
 
+interface EditingOptions {
+  placeholder?: string
+  singleLine?: boolean
+}
+
 function enablePlaintextEditing(el: HTMLElement, getOriginal: () => string,
-    onCommit: (text: string) => Promise<void>) {
+    onCommit: (text: string) => Promise<void>, options?: EditingOptions) {
   // Let an admin tap the element and edit it in place.
   el.setAttribute("contenteditable", "plaintext-only")
   if (el.contentEditable !== "plaintext-only")
     el.contentEditable = "true"
   el.classList.add("editable")
+  if (options?.placeholder)
+    el.dataset.placeholder = options.placeholder
+  // Use textContent, not innerText. innerText is empty while the page
+  // is visibility:hidden, which would wipe real titles and dates.
+  if (/^\n*$/.test(el.textContent ?? ""))
+    el.textContent = ""
   el.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       el.textContent = getOriginal()
       el.blur()
     }
+    if (options?.singleLine && event.key === "Enter") {
+      event.preventDefault()
+      el.blur()
+    }
   })
   el.addEventListener("blur", () => {
-    const text = editedTextFromElement(el)
+    let text = editedTextFromElement(el)
+    if (options?.singleLine)
+      text = text.replace(/\n/g, "").trim()
+    else if (/^\n*$/.test(text))
+      text = ""
+    if (text === "")
+      el.textContent = ""
+    else if (options?.singleLine)
+      el.textContent = text
     if (text === getOriginal())
       return
     void onCommit(text)
   })
+}
+
+function enablePostedDateEditing(el: HTMLElement, getOriginal: () => string,
+    onCommit: (text: string) => Promise<void>) {
+  // Replace the posted-date text with a date picker, like the maker page.
+  const input = document.createElement("input")
+  input.type = "date"
+  if (el.id)
+    input.id = el.id
+  input.className = el.className
+  input.setAttribute("aria-label", "Posted date")
+  const current = getOriginal()
+  if (/^\d{4}-\d{2}-\d{2}$/.test(current))
+    input.value = current
+  el.replaceWith(input)
+
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      const original = getOriginal()
+      input.value = /^\d{4}-\d{2}-\d{2}$/.test(original) ? original : ""
+      input.blur()
+    }
+  })
+  input.addEventListener("change", commitIfChanged)
+  input.addEventListener("blur", commitIfChanged)
+
+  function commitIfChanged() {
+    const text = input.value
+    if (text === getOriginal())
+      return
+    void onCommit(text)
+  }
+}
+
+async function fetchCollectionJson(cNum: number): Promise<Record<string, unknown> | null> {
+  // Read dist/images/cN/cN.json. Used to show title and posted date
+  // that were saved after the last page rebuild. The timestamp keeps
+  // the request out of the browser cache, same as the maker page.
+  try {
+    const timestamp = Date.now()
+    const response = await fetch(
+      `/images/c${cNum}/c${cNum}.json?t=${timestamp}`,
+      { cache: "no-store" }
+    )
+    if (!response.ok)
+      return null
+    const cinfo = await response.json()
+    if (cinfo == null || typeof cinfo !== "object")
+      return null
+    return cinfo as Record<string, unknown>
+  } catch {
+    return null
+  }
 }

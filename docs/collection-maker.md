@@ -21,13 +21,13 @@ Create a tmp folder named with the collection prefix. List
 mkdir tmp/c24
 ~~~
 
-Put 8, 10, 12 or 16 of your best photos in the folder. Export unmodified
-originals from Apple Photos, or copy files from Adobe Bridge.
+Put 8, 10, 12, 14, or 16 of your best photos in the folder. Export unmodified
+originals from Apple Photos, or copy or export files from Adobe Bridge
 
 __Mac Photos__
 
 * create an album with all the photos for the topic
-* mark 8 to 20 favorites
+* mark 8, 10, 12, 14, or 16 favorites
 * filter by favorites, select all
 * File > Export > Export Unmodified Originals
 * uncheck "Export IPTC as XMP"
@@ -153,9 +153,10 @@ scripts/maker tmp/c24
 Wrote tmp/c24/c24.json
 ~~~
 
-The json has empty descriptions and the order isn't set.
-You fill those in later. Collections start in
-building state, so only admins see them.
+The json includes every photo in disk order. Titles and descriptions
+are empty. There is no `order` or `ready` field. Collections start
+`building`, so only admins see them. `g all` builds the image and
+thumbnails pages right away so you can edit in place.
 
 Add GPS locations and capture times:
 
@@ -174,20 +175,24 @@ g all
 
 # Edit Collection
 
-Write descriptions in place while logged in as admin. Tap a
-description; a cursor appears so you can edit it. On localhost the
-change is merged into `dist/images/cN/cN.json` when you tap away, so
-edits from the index, thumbnails, and image pages do not overwrite
-each other. On an iPhone, tap the download icon on the image page
-after editing, then air-drop the file if needed.
+Write titles, posted dates, and descriptions in place while logged in
+as admin. Empty fields show a placeholder so you can tap them. On
+localhost the change is merged into `dist/images/cN/cN.json` when you
+tap away, so edits from the index, thumbnails, and image pages do not
+overwrite each other. On an iPhone, tap the download icon on the image
+page after editing, then air-drop the file if needed and copy to the
+the dist folder.
 
-* index page -- the short description on each of the newest collections
-* thumbnails page -- the collection description under the thumbnails
+* index page -- title on every collection, posted date (date picker)
+  and short description on each of the newest collections
+* thumbnails page -- collection description. Title and posted date are
+  shown here but edited on the index. The page reads them from the
+  collection json so they stay current without `g all`.
 * image page -- each photo's description
 
-Use the maker page to set which photos are in the collection. On
-localhost as admin, long-press a thumbnail on the thumbnails page to
-drag it to a new place. The order is saved through the admin API.
+On localhost as admin, long-press a thumbnail on the thumbnails page
+to drag it to a new place. The admin API rearranges the `images` (and
+zoom points) in `cN.json`; it does not store a separate order list.
 Run `g all` so the image page matches.
 
 Build first:
@@ -225,7 +230,7 @@ Below is a partial screenshot of the maker web page:
 
 The maker page includes the following elements:
 
-* __Left Panel__: A 2-column by 8-row table showing the collection images and their order.
+* __Left Panel__: A 2-column by 8-row table showing the collection images and their order. The first image is the index photo.
 * __Right Panel__: A table of 20 available images.
 * __Top Section__: Fields for entering the collection’s title and post date.
 * __Bottom Section__: Fields for entering descriptive text for the collection and its images.

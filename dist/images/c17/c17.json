@@ -2,7 +2,6 @@
   "title": "B Reactor Concert",
   "indexDescription": "First concert at the B Reactor.",
   "description": "The B Reactor is the first nuclear reactor. It is 1940's high tech. We took a bus here from Richland.  The B Reactor is now part of a public park.",
-  "indexThumbnail": "c17-9-t.jpg",
   "cNum": 17,
   "posted": "2026-08-27",
   "images": [
@@ -95,7 +94,6 @@
       "taken": "2016-09-30T21:22:04"
     }
   ],
-  "ready": true,
   "zoomPoints": {
     "430x933": [
       {

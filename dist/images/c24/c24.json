@@ -2,7 +2,6 @@
   "title": "Hood River Ski Trip",
   "indexDescription": "Weekend ski trip from Hood River.",
   "description": "We meet the Bovee’s at Hood River for a weekend ski trip on Mount Hood. ",
-  "indexThumbnail": "c24-5-t.jpg",
   "cNum": 24,
   "posted": "2026-09-09",
   "images": [
@@ -161,7 +160,6 @@
       "taken": "2002-02-17T11:18:48"
     }
   ],
-  "ready": true,
   "zoomPoints": {
     "430x933": [
       {

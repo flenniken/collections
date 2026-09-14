@@ -6,9 +6,8 @@
 // service worker currently controlling the client and the new (from
 // your server) version of the same file are byte-different.
 //
-// The user needs to close or navigate away from all tabs and windows
-// using the current service worker and then navigate back. Only then
-// will the new service worker take control.
+// This worker calls skipWaiting and clients.claim so a new version
+// takes over on the next navigation without closing every tab.
 //
 // If not already running, a service worker will start whenever a
 // network request in its scope is asked for, or when a triggering
@@ -37,6 +36,9 @@ async function setPushAppBadge() {
 
 self.addEventListener("install", (event: Event) => {
   logsw("Install service worker.");
+  // Take over on this navigation so localhost json bypass applies
+  // without closing every tab.
+  (event as ExtendableEvent).waitUntil((self as unknown as ServiceWorkerGlobalScope).skipWaiting())
 })
 
 async function openCreateCache(): Promise<Cache> {
@@ -55,13 +57,12 @@ self.addEventListener("activate", event => {
   // https://web.dev/learn/pwa/service-workers:
   //
   // When the service worker is ready to control its clients, the
-  // activate event will fire. This doesn't mean, though, that the page
-  // that registered the service worker will be managed. By default, the
-  // service worker will not take control until the next time you
-  // navigate to that page, either due to reloading the page or
-  // re-opening the PWA.
+  // activate event will fire. Claim existing pages so a new worker
+  // starts handling fetches without waiting for every tab to close.
 
    logsw("Activate service worker.");
+   (event as ExtendableEvent).waitUntil(
+     (self as unknown as ServiceWorkerGlobalScope).clients.claim())
 })
 
 self.addEventListener("push", (event: Event) => {
@@ -214,6 +215,15 @@ self.addEventListener("fetch", (event: Event) => {
     return
 
   if (url.includes('execute-api.') && url.includes('amazonaws.com'))
+    return
+
+  // Collection json is edited in place on localhost. Let the page
+  // fetch it with cache: "no-store" so a save is visible without a
+  // rebuild. A 304 from no-cache would otherwise look like a failure
+  // and the worker would serve the old cached json. Production still
+  // caches json for offline.
+  if (url.includes(".json") &&
+      (url.includes("localhost") || url.includes("127.0.0.1")))
     return
 
   // Cache http and https only, skip unsupported chrome-extension:// and file://...

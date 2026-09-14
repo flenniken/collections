@@ -280,31 +280,6 @@ function createTestImages(count: number): CJson.Image[] {
   return images
 }
 
-function testFindThumbnailIx(order: number[], images: CJson.Image[],
-    url: string, eIndex: number) {
-  const index = findThumbnailIx(order, images, url)
-  gotExpected(index, eIndex)
-}
-
-function findThumbnailIxSuite() {
-  const fn = testFindThumbnailIx
-  let order = [0, 2]
-  const images = createTestImages(3)
-  test(fn, order, images, "thumbnail 0", 0)
-  test(fn, order, images, "thumbnail 1", -1)
-  test(fn, order, images, "thumbnail 2", 2)
-
-  order = [-1, 0]
-  test(fn, order, images, "thumbnail 0", 0)
-  test(fn, order, images, "thumbnail 1", -1)
-  test(fn, order, images, "thumbnail 2", -1)
-
-  order = [-1, -1]
-  test(fn, order, images, "thumbnail 0", -1)
-  test(fn, order, images, "thumbnail 1", -1)
-  test(fn, order, images, "thumbnail 2", -1)
-}
-
 function testCreateCollectionOrder(order: number[], availableCount: number, eOrder: number[]) {
   const gotOrder = createCollectionOrder(order, 3, availableCount)
   const msg = `order: ${order}, availableCount: ${availableCount}`
@@ -389,7 +364,6 @@ function setRequiredSuite() {
     "collection-title-required",
     "post-date-required",
     "description-required",
-    "index-thumbnail-required",
     "index-description-required",
     "image-details-required",
     "image-description-required",
@@ -607,7 +581,6 @@ function testMaker() {
   runSuite(testBoxes99Suite)
   runSuite(isRequireSuite)
   runSuite(createTestImageSuite)
-  runSuite(findThumbnailIxSuite)
   runSuite(createCollectionOrderSuite)
   runSuite(parseNonNegativeIntSuite)
   runSuite(setRequiredSuite)

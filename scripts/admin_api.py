@@ -30,7 +30,9 @@ ALLOWED_ORIGINS = (
   "http://127.0.0.1:8000",
 )
 SAVE_PATHS = ("/saveCollection", "/saveDescription", "/saveOrder")
-DESCRIPTION_FIELDS = ("description", "indexDescription", "imageDescription")
+TEXT_FIELDS = (
+  "description", "indexDescription", "imageDescription", "title", "posted",
+)
 
 class AdminApiException(Exception):
   """ An exception we plan for. """
@@ -54,9 +56,13 @@ def collectionJsonPath(collection, root=None):
 def writeCollectionJson(collection, root=None):
   """
   Write the collection JSON to dist/images/cN/cN.json.
+  The images array is the collection order; do not persist order.
   """
   path = collectionJsonPath(collection, root=root)
-  text = json.dumps(collection, indent=2, ensure_ascii=False) + "\n"
+  toWrite = dict(collection)
+  toWrite.pop("order", None)
+  toWrite.pop("ready", None)
+  text = json.dumps(toWrite, indent=2, ensure_ascii=False) + "\n"
   tmpPath = path.with_suffix(".json.tmp")
   with tmpPath.open("w", encoding="utf-8") as fh:
     fh.write(text)
@@ -65,12 +71,12 @@ def writeCollectionJson(collection, root=None):
 
 def saveDescription(payload, root=None):
   """
-  Merge one description into dist/images/cN/cN.json.
+  Merge one text field into dist/images/cN/cN.json.
   """
   if not isinstance(payload, dict):
     raise AdminApiException("Invalid JSON")
   field = payload.get("field")
-  if field not in DESCRIPTION_FIELDS:
+  if field not in TEXT_FIELDS:
     raise AdminApiException("Invalid field")
   text = payload.get("text")
   if not isinstance(text, str):
@@ -283,6 +289,19 @@ class TestModule(unittest.TestCase):
     self.assertEqual(saved["title"], "Jaclyn’s School")
     self.assertTrue(path.read_text(encoding="utf-8").endswith("\n"))
 
+  def test_writeCollectionJsonOmitsOrder(self):
+    collection = {
+      "cNum": 9,
+      "title": "Jaclyn’s School",
+      "order": [1, 0],
+      "ready": True,
+    }
+    path = writeCollectionJson(collection, root=self.root)
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    self.assertEqual(saved["title"], "Jaclyn’s School")
+    self.assertNotIn("order", saved)
+    self.assertNotIn("ready", saved)
+
   def test_saveCollectionPost(self):
     server = AdminHTTPServer(("127.0.0.1", 0), ApiHandler, self.root)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -337,6 +356,7 @@ class TestModule(unittest.TestCase):
     collection = {
       "cNum": 9,
       "title": "Keep me",
+      "posted": "2020-01-01",
       "indexDescription": "old index",
       "description": "old thumbs",
       "images": [
@@ -385,12 +405,35 @@ class TestModule(unittest.TestCase):
     self.assertEqual(saved["images"][1]["description"], "new img1")
     self.assertEqual(saved["title"], "Keep me")
 
+  def test_saveTitle(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "title",
+      "text": "New title",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["title"], "New title")
+    self.assertEqual(saved["posted"], "2020-01-01")
+    self.assertEqual(saved["indexDescription"], "old index")
+
+  def test_savePosted(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "posted",
+      "text": "2026-09-13",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["posted"], "2026-09-13")
+    self.assertEqual(saved["title"], "Keep me")
+
   def test_saveDescriptionInvalidField(self):
     self.writeOriginalCollection()
     with self.assertRaises(AdminApiException):
       saveDescription({
         "cNum": 9,
-        "field": "title",
+        "field": "bogus",
         "text": "nope",
       }, root=self.root)
 

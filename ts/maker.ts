@@ -17,9 +17,6 @@ type ListenerFunction = (this: HTMLElement, ev: MouseEvent) => void
 // collection to edit.
 let cinfo: OptionalCinfo = null;
 
-// The current index thumbnail. It is an index into the image list.
-let currentThumbnailIx: number = 0;
-
 // The current image thumbnail. It is an index into the image list.
 let currentImageIx: number = 0;
 
@@ -36,8 +33,6 @@ addBlurListener("post-date", "posted", "post-date-required")
 addBlurImageTextListener("image-description", "description", "image-description-required")
 addClickListener("previous-image", previousImage)
 addClickListener("next-image", nextImage)
-addClickListener("index-previous-image", indexPreviousImage)
-addClickListener("index-next-image", indexNextImage)
 
 // Add click event handlers for the collection images.
 for (let ix = 0; ix < 16; ix++) {
@@ -238,7 +233,6 @@ async function selectCollection(event: Event) {
   cinfo = result.cinfo
   cinfo.order = result.order
   currentImageIx = result.imageIx
-  currentThumbnailIx = result.thumbnailIx
   log("Populated page with cinfo: ", cinfo)
 }
 
@@ -312,13 +306,12 @@ function createCollectionOrder(order: number[], max: number, availableCount: num
 type PopulateResult = {
   cinfo: CJson.Collection,
   order: number[],
-  imageIx: number,
-  thumbnailIx: number
+  imageIx: number
 }
 
 function populateCollection(newCinfo: CJson.Collection): PopulateResult {
   // Populate the page with the given collection info. Return the
-  // cinfo, current image index and current thumbnail index.
+  // cinfo and current image index.
 
   setText("collection-title", "collection-title-required", newCinfo.title)
   setText("post-date", "post-date-required", newCinfo.posted)
@@ -375,20 +368,6 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
     }
   }
 
-  // Set the index thumbnail image to the one specified in the cinfo
-  // if it is part of the collection, else set it to the first image.
-  let thumbnailIndex = findThumbnailIx(newOrder, newCinfo.images,
-    newCinfo.indexThumbnail)
-  if (thumbnailIndex == -1) {
-    thumbnailIndex = 0
-    newCinfo.indexThumbnail = newCinfo.images[thumbnailIndex].iThumbnail
-  }
-  currentThumbnailIx = thumbnailIndex
-  setImage(newCinfo.cNum, newCinfo.images, "index-thumbnail", "index-thumbnail-required", thumbnailIndex)
-  log(`thumbnailIndex: ${thumbnailIndex}`)
-  const thumbnailImg = get("index-thumbnail") as HTMLImageElement
-  log(thumbnailImg)
-
   // Set the image details section with the first image in the
   // collection or if blank, set it to the first available image.
   let imageIndex = newOrder[0]
@@ -408,15 +387,14 @@ function populateCollection(newCinfo: CJson.Collection): PopulateResult {
   const populateResult = {
     cinfo: newCinfo,
     order: newOrder,
-    imageIx: imageIndex,
-    thumbnailIx: thumbnailIndex
+    imageIx: imageIndex
   }
   return populateResult
 }
 
 function updateStatusMessage(cjsoninfo: CJson.Collection) {
-  // Show the status of the collection and update its ready flag.
-  // Maintain the status icon, message and used image button.
+  // Show the status of the collection. Maintain the status icon,
+  // message and used image button.
 
   // Count the number of used images.
   let usedImageCount = 0
@@ -441,7 +419,6 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
     statusMessage.textContent = "Please fill in the required fields."
     requiredIcon.src = "icons/red-circle.svg"
     optimizeButton.style.display = "none"
-    cjsoninfo.ready = false
   }
   else {
     // No required fields, show the good message or the optimize message.
@@ -454,35 +431,15 @@ function updateStatusMessage(cjsoninfo: CJson.Collection) {
       statusMessage.textContent = "All required fields are filled in, optimize internals."
       requiredIcon.src = "icons/red-circle.svg"
       optimizeButton.style.display = "block"
-      cjsoninfo.ready = false
     }
     else {
       statusMessage.textContent = "All required fields are filled in, save the collection."
       requiredIcon.src = "icons/green-circle.svg"
       optimizeButton.style.display = "none"
-      cjsoninfo.ready = true
       cjsoninfo.modified = true
     }
   }
   // log(statusMessage.textContent)
-}
-
-function findThumbnailIx(order: number[], images: CJson.Image[],
-  indexThumbnail: string) {
-  // Return the image index of the thumbnail image if it is part of
-  // the collection, else -1.
-  let thumbnailIx = -1
-  for (let ix = 0; ix < order.length; ix++) {
-    const imageIx = order[ix]
-    if (imageIx == -1)
-      continue
-    const image = images[imageIx]
-    if (image.iThumbnail == indexThumbnail) {
-      thumbnailIx = imageIx
-      break
-    }
-  }
-  return thumbnailIx
 }
 
 function setImgDetails(cNum: number, images: CJson.Image[], currentImageIx: number) {
@@ -629,7 +586,6 @@ function optimizeCollection(cjsoninfo: CJson.Collection) {
   cinfo = result.cinfo
   cinfo.order = result.order
   currentImageIx = result.imageIx
-  currentThumbnailIx = result.thumbnailIx
 
   log("Populated page with cinfo: ", result.cinfo)
 }
@@ -740,37 +696,6 @@ function nextImage() {
   setImage(cinfo.cNum, cinfo.images, "image-details", "image-details-required",
     currentImageIx)
   setImgDetails(cinfo.cNum, cinfo.images, currentImageIx)
-}
-
-function storeThumbnailImage(thumbnailIndex: number) {
-  // Store the index thumbnail image in the collection info.
-  if (!cinfo)
-    return
-  cinfo.indexThumbnail = cinfo.images[thumbnailIndex].iThumbnail
-  const thumbnailImg = get("index-thumbnail") as HTMLImageElement
-  log("Stored thumbnail image:")
-  log(thumbnailImg)
-}
-
-function indexPreviousImage() {
-  // Set the index thumbnail to the previous collection image.
-  if (!cinfo || !cinfo.order)
-    return
-  currentThumbnailIx = goPreviousNext(cinfo.order, currentThumbnailIx,
-    false)
-  setImage(cinfo.cNum, cinfo.images, "index-thumbnail", "index-thumbnail-required",
-    currentThumbnailIx)
-  storeThumbnailImage(currentThumbnailIx)
-}
-
-function indexNextImage() {
-  // Set the index thumbnail to the next collection image.
-  if (!cinfo || !cinfo.order)
-    return
-  currentThumbnailIx = goPreviousNext(cinfo.order, currentThumbnailIx, true)
-  setImage(cinfo.cNum, cinfo.images, "index-thumbnail", "index-thumbnail-required",
-    currentThumbnailIx)
-  storeThumbnailImage(currentThumbnailIx)
 }
 
 function setRequired(requiredId: RequiredIdType, status: boolean) {

@@ -46,23 +46,49 @@ function handleLoad() {
   log("load event")
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
-  setupThumbnailDescriptionEditing()
+  void refreshThumbnailHeading()
+  setupThumbnailTextEditing()
   setupThumbnailReorder()
 }
 
-function setupThumbnailDescriptionEditing() {
-  // Let an admin tap the collection description and edit it in place.
+async function refreshThumbnailHeading() {
+  // Show title and posted date from the collection json so they match
+  // in-place edits on the index without a rebuild.
+  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  if (!(cNum > 0))
+    return
+  const cinfo = await fetchCollectionJson(cNum)
+  if (!cinfo)
+    return
+  const titleEl = document.getElementById("title")
+  if (titleEl && typeof cinfo.title === "string") {
+    titleEl.textContent = cinfo.title
+    document.title = cinfo.title
+  }
+  const postedEl = document.getElementById("posted")
+  if (postedEl && typeof cinfo.posted === "string")
+    postedEl.textContent = cinfo.posted
+  log(`Thumbnail heading from json: "${cinfo.title}" ${cinfo.posted}`)
+}
+
+function setupThumbnailTextEditing() {
+  // Title and posted date are edited on the index. Admins can edit
+  // the collection description here.
   if (!isAdmin())
+    return
+
+  const hint = document.getElementById("heading-edit-hint")
+  if (hint)
+    hint.classList.add("visible")
+
+  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  if (!(cNum > 0))
     return
 
   const el = document.getElementById("description")
   if (!el)
     return
-  const cNum = parseInt(document.body.dataset.cnum || "", 10)
-  if (!(cNum > 0))
-    return
-
-  let current = editedTextFromElement(el)
+  let current = ""
   enablePlaintextEditing(el, () => current, async (text) => {
     if (!isLocalhost()) {
       current = text
@@ -76,8 +102,9 @@ function setupThumbnailDescriptionEditing() {
     } catch (error) {
       logError("Description save failed", error)
     }
-  })
-  log("Admin thumbnail description editing is on.")
+  }, { placeholder: "Description" })
+  current = editedTextFromElement(el)
+  log("Admin thumbnail editing is on.")
 }
 
 const THUMB_HOLD_MS = 400

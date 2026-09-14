@@ -2,7 +2,6 @@
   "title": "Seahawks Parade",
   "indexDescription": "Seahawk's Superbowl parade.",
   "description": "This is the second Seahawks parade for us.  This one was easy compared to the first -- free parking, easy access.  This time the parade started at the stadium instead of the Seattle Center.  It was more on time.",
-  "indexThumbnail": "c16-1-t.jpg",
   "cNum": 16,
   "posted": "2026-08-26",
   "images": [
@@ -119,7 +118,6 @@
       "taken": ""
     }
   ],
-  "ready": true,
   "zoomPoints": {
     "430x933": [
       {

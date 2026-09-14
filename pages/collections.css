@@ -104,6 +104,17 @@
   text-align: center;
 }
 
+#index input.posted {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
 #index .parent {
   position: relative;
 }
@@ -158,6 +169,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+#index .collection.compact .title.editable:focus {
+  overflow: visible;
+  text-overflow: clip;
 }
 
 #index .collection.compact .line-icons {
@@ -278,8 +294,21 @@ body.thumb-reordering {
 }
 
 #thumbnails #posted {
-  margin: 0 1em 1em 1em;
-  font-size: 1.5em;
+  margin: 0 auto 0.5em auto;
+  font-size: 0.8em;
+  text-align: center;
+}
+
+#thumbnails #heading-edit-hint {
+  display: none;
+  font-size: 0.75em;
+  color: #888;
+  text-align: center;
+  margin: 0 1em 0.75em;
+}
+
+#thumbnails #heading-edit-hint.visible {
+  display: block;
 }
 
 #images {
@@ -383,17 +412,27 @@ body.thumb-reordering {
   white-space: pre-line;
 }
 
-.description.editable {
+.editable {
   cursor: text;
   border-radius: 4px;
   outline: none;
+}
+
+.editable:empty {
+  min-height: 1.2em;
 }
 
 .description.editable:empty {
   min-height: 2em;
 }
 
-.description.editable:focus {
+.editable:empty:not(:focus)::before {
+  content: attr(data-placeholder);
+  color: #888;
+  pointer-events: none;
+}
+
+.editable:focus {
   outline: 2px solid #888;
   outline-offset: 4px;
 }

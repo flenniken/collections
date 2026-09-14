@@ -1,17 +1,14 @@
 # The index tea file.
 
 index-collections = func(ix: int, value: dict, collections: list) bool
-  ## Append the ready collections that should appear in the index.
-  collections &= if( (value.ready), value)
+  ## Append every collection. Building collections are admin-only in
+  ## the HTML.
+  collections &= value
   return(false)
 
-# Filter out the non-ready collections that are under construction.
 indexCollections = []
 loop(s.indexCollections, indexCollections, index-collections)
 
 o.csjson = dict()
 o.csjson.indexCollections = indexCollections
-# readyCollections = len(collections)
-# echo(format("There are {readyCollections} ready collections."))
 
-  

@@ -145,8 +145,39 @@ function showHideAdminUI(pageId: string) {
   });
 }
 
+async function refreshIndexFieldsFromJson() {
+  // Pull title, posted date, and index description from each
+  // collection json so a reload matches in-place edits without g all.
+  await Promise.all(csjson.indexCollections.map(async (c) => {
+    const cinfo = await fetchCollectionJson(c.cNum)
+    if (!cinfo)
+      return
+    if (typeof cinfo.title === "string")
+      c.title = cinfo.title
+    if (typeof cinfo.posted === "string")
+      c.posted = cinfo.posted
+    if (typeof cinfo.indexDescription === "string")
+      c.indexDescription = cinfo.indexDescription
+    const card = document.getElementById(`c${c.cNum}`)
+    if (!card)
+      return
+    const titleEl = card.querySelector(".title")
+    if (titleEl)
+      titleEl.textContent = c.title
+    const img = card.querySelector(".thumbnail, .line-thumb") as HTMLImageElement | null
+    if (img)
+      img.alt = c.title
+    const postedEl = card.querySelector(".posted")
+    if (postedEl)
+      postedEl.textContent = c.posted
+    const descEl = card.querySelector(".description")
+    if (descEl)
+      descEl.textContent = c.indexDescription
+  }))
+}
+
 function setupIndexDescriptionEditing() {
-  // Let an admin tap an index description and edit it in place.
+  // Let an admin tap title, posted date, and descriptions in place.
   if (!isAdmin())
     return
 
@@ -154,6 +185,46 @@ function setupIndexDescriptionEditing() {
     const card = document.getElementById(`c${c.cNum}`)
     if (!card)
       return
+
+    const titleEl = card.querySelector(".title") as HTMLElement | null
+    if (titleEl) {
+      enablePlaintextEditing(titleEl, () => c.title, async (text) => {
+        if (!isLocalhost()) {
+          c.title = text
+          log("Save on localhost to keep the change.")
+          return
+        }
+        try {
+          await saveDescription(c.cNum, "title", text)
+          c.title = text
+          const img = card.querySelector(".thumbnail, .line-thumb") as HTMLImageElement | null
+          if (img)
+            img.alt = text
+          log(`Title for collection ${c.cNum} saved.`)
+        } catch (error) {
+          logError("Title save failed", error)
+        }
+      }, { placeholder: "Title", singleLine: true })
+    }
+
+    const postedEl = card.querySelector(".posted") as HTMLElement | null
+    if (postedEl) {
+      enablePostedDateEditing(postedEl, () => c.posted, async (text) => {
+        if (!isLocalhost()) {
+          c.posted = text
+          log("Save on localhost to keep the change.")
+          return
+        }
+        try {
+          await saveDescription(c.cNum, "posted", text)
+          c.posted = text
+          log(`Posted date for collection ${c.cNum} saved.`)
+        } catch (error) {
+          logError("Posted date save failed", error)
+        }
+      })
+    }
+
     const el = card.querySelector(".description") as HTMLElement | null
     if (!el)
       return
@@ -170,9 +241,9 @@ function setupIndexDescriptionEditing() {
       } catch (error) {
         logError("Description save failed", error)
       }
-    })
+    }, { placeholder: "Description" })
   })
-  log("Admin index description editing is on.")
+  log("Admin index editing is on.")
 }
 
 async function handleLoad() {
@@ -189,6 +260,8 @@ async function handleLoad() {
 
   // Show the admin icons when an admin is logged in.
   showHideAdminUI("index")
+  if (isLocalhost())
+    await refreshIndexFieldsFromJson()
   setupIndexDescriptionEditing()
 
   // This fails when you are not logged in. Is it ever needed?

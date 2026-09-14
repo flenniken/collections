@@ -13,8 +13,8 @@ namespace CJson {
     // e.g. c2-1-t.jpg. Thumbnails are 480 x 480 pixels.
     iThumbnail: string;
 
-    // The required image description. Once the collection is ready,
-    // the description cannot be blank.
+    // The required image description. Empty is allowed while the
+    // collection is building. Required when published.
     description: string;
 
     // Width and height of the preview image in pixels. A preview's
@@ -70,45 +70,35 @@ namespace CJson {
   }
 
   export interface Collection {
-    // The collection title. Required for ready collections.
+    // The collection title. Empty is allowed while building.
     title: string;
 
     // Short description of the collection for the index page.
-    // Required for ready collections.
+    // Empty is allowed while building.
     indexDescription: string;
 
     // Full desciption of the collection for the thumbnails page.
-    // Required for ready collections.
+    // Empty is allowed while building.
     description: string;
 
-    // The base name of the collection's thumbnail image for the index
-    // page e.g. c4-12-t.jpg. The tin folder images are publicly
-    // visible, unlike the other image files.
-    // Required for ready collections.
-    indexThumbnail: string;
-
     // The date the collection was posted on the internet.
-    // Required for ready collections.
+    // Empty is allowed while building.
     posted: string;
 
     // The collection number. Collections are in sequential order.
     cNum: number;
 
-    // The optional order variable is a list of 16 image indexes.  It
-    // defines which images are in the collection and their order. An
-    // index of -1 indicates the collection box is empty. It’s used by
-    // the maker page while building the collection. When you click
-    // the optimize button on the maker page, the image list is
-    // rewritten to match the order list. When you run the gulp task
-    // "modified", it removes the order list when it is in sequence.
+    // In-memory only for the maker page's 16 collection boxes. An
+    // index of -1 is an empty box. Not written to json: the images
+    // array is the collection order.
     order?: number[];
 
     // The image array contains an element for each image in the
-    // collection. Required for ready collections.
+    // collection.
     images: Image[];
 
-    // A dictionary of zoom points. Required for ready and
-    // not building collections.
+    // A dictionary of zoom points. Required when the collection is
+    // not building.
     zoomPoints: ZoomPoints;
 
     // The building field determines who can see the collection. When
@@ -117,13 +107,6 @@ namespace CJson {
     // opening the collection for everyone to see. The maker command
     // creates the flag when the collection is created.
     building?: boolean;
-
-    // The ready field when true means the collection has met all the
-    // maker page requirements. The build process builds the ready
-    // collections and adds them to the index. Whether they are
-    // visible by everyone or just by admins is dependent on the
-    // building flag.  The ready flag is set by the maker page.
-    ready: boolean;
 
     // The modified field is set by the maker page. It tells the build
     // process that the collection has been modified or is new.  When
@@ -142,11 +125,11 @@ namespace CJson {
     // derived from it.
     cNum: number,
     building: boolean;
-    ready: boolean,
     modified: boolean,
     title: string,
     indexDescription: string,
-    // The collection's thumbnail used in the index.
+    // The collection's thumbnail used in the index. Copied from the
+    // first collection photo.
     iThumbnail: string,
     posted: string,
     // The number of previews in the collection.
