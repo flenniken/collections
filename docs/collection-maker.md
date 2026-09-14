@@ -6,9 +6,9 @@ How to create a new collection for the Collections project.
 * rename, convert, and make thumbnails
 * run the maker command to write `cN.json`
 * move the folder to `dist/images` and build
-* edit descriptions in place on the index, thumbnails, and image pages
+* on localhost as admin edit descriptions in place on the index, thumbnails, and image pages
 * set order on the thumbnails page as localhost admin
-* set zoom points on localhost, then publish
+* set zoom points on localhost admin, then publish
 
 [⬇](#Contents) (table of contents at the bottom)
 
@@ -154,9 +154,9 @@ Wrote tmp/c24/c24.json
 ~~~
 
 The json includes every photo in disk order. Titles and descriptions
-are empty. There is no `order` or `ready` field. Collections start
-`building`, so only admins see them. `g all` builds the image and
-thumbnails pages right away so you can edit in place.
+are empty. Collections start with the `building` flag, so only admins
+see them. `g all` builds the image and thumbnails pages right away so
+you can edit in place.
 
 Add GPS locations and capture times:
 
@@ -175,31 +175,40 @@ g all
 
 # Edit Collection
 
-Write titles, posted dates, and descriptions in place while logged in
-as admin. Empty fields show a placeholder so you can tap them. On
-localhost the change is merged into `dist/images/cN/cN.json` when you
-tap away, so edits from the index, thumbnails, and image pages do not
-overwrite each other. On an iPhone, tap the download icon on the image
-page after editing, then air-drop the file if needed and copy to the
-the dist folder.
-
-* index page -- title on every collection, posted date (date picker)
-  and short description on each of the newest collections
-* thumbnails page -- collection description. Title and posted date are
-  shown here but edited on the index. The page reads them from the
-  collection json so they stay current without `g all`.
-* image page -- each photo's description
-
-On localhost as admin, long-press a thumbnail on the thumbnails page
-to drag it to a new place. The admin API rearranges the `images` (and
-zoom points) in `cN.json`; it does not store a separate order list.
-Run `g all` so the image page matches.
-
-Use the local site:
+Use Chrome and the local site for editing:
 
 ~~~
 http://localhost:8000/
 ~~~
+
+Edit titles, posted dates, and descriptions in place while logged in
+as admin. Empty fields show a placeholder so you can tap them. On
+localhost the change is automatically merged into
+`dist/images/cN/cN.json` when you tap away.
+
+On an iPhone, tap the download icon on the image page after editing,
+then air-drop the file if needed and copy to the the dist folder.
+
+~~~
+# from container
+cp ~/Download/c26.json dist/images/c26/
+~~~
+
+* index page -- edit title and posted date with date picker,
+  and the short description for the newest collections.
+  
+* thumbnails page -- edit collection description and set the image
+  order with drag and drop. Title and posted date are shown here but
+  edited on the index. The page reads them from the collection json so
+  they stay current without `g all`.
+
+  To set the image order use localhost as admin, long-press a thumbnail on the thumbnails page
+  then drag it to a new place. The admin API rearranges the `images` (and
+  zoom points) in `cN.json`. Run `g all` so the image page matches.
+
+* image page -- edit each photo's description
+
+
 
 [⬇](#Contents)
 
@@ -218,10 +227,12 @@ smaller zoom steps.
 Use the same phone viewport you test on an iPhone, for example
 iPhone 14 Pro Max at 430 x 933 and 932 x 430.
 
-You can still set zoom points on an iPhone with pinch and pan, then
-tap the download icon and air-drop the `cjson` to your desktop.
+Save your zoom points with the download icon. On localhost the
+download icon writes `cjson` directly. 
 
-On localhost the download icon writes that file directly.
+You can still set zoom points on an iPhone with pinch and pan, then
+tap the download icon and air-drop the `cjson` to your desktop and
+copy it to the dist folder.
 
 ♫ Note: air-drop doesn't work when your iphone is plugged into your
 mac.
@@ -246,6 +257,46 @@ doesn’t feel the need to see what’s missing.
   often better to zoom all the way out and show the full frame.
 * Show background – Leave hints of background when it helps tell the
   bounds.
+
+[⬇](#Contents)
+
+# Deploy
+
+The deploy command copies the files to S3 and updates Cloudfront. The
+collections in "building" state are only visible to admins.  This
+allows admins to set zoom points and test the collection before
+publishing.
+
+Once the collection looks good, you remove the "building" field from
+the cjson, build all, then deploy again.  This publishes it to the
+world.
+
+ ~~"building": true,~~
+
+~~~
+g all
+scripts/deploy -s
+~~~
+
+Test by logging out of admin and logging back in as a regular user.
+On the iPhone, confirm the new collection appears in the index.
+
+[⬇](#Contents)
+
+# Notifiy
+
+Get your cognito user id then send a notification to yourself to test.
+
+~~~
+scripts/cognito -l
+scripts/notification --publish xxxx "Manzantia 2026"
+~~~
+
+Send a notification to all users.
+
+~~~
+scripts/notification --publish all "Manzantia 2026"
+~~~
 
 [⬇](#Contents)
 
@@ -281,46 +332,6 @@ aws s3 rm s3://sflennikco/images/c4/.DS_Store
 
 [⬇](#Contents)
 
-# Deploy
-
-The deploy command copies the files to S3 and updates Cloudfront. The
-collections in "building" state are only visible to admins.  This
-allows admins to set zoom points and test the collection.
-
-Once the collection looks good, you remove the "building" field from
-the cjson, build all, then deploy again.  This publishes it to the
-world.
-
-
- ~~"building": true,~~
-
-~~~
-g all
-scripts/deploy -s
-~~~
-
-Test by logging out of admin and logging back in as a regular user.
-On the iPhone, confirm the new collection appears in the index.
-
-[⬇](#Contents)
-
-# Notifiy
-
-Get your cognito user id then send a notification to yourself to test.
-
-~~~
-scripts/cognito -l
-scripts/notification --publish xxxx "Manzantia 2026"
-~~~
-
-Send a notification to all users.
-
-~~~
-scripts/notification --publish all "Manzantia 2026"
-~~~
-
-[⬇](#Contents)
-
 # Replace Image
 
 Steps to replacement an image with a new one:
@@ -342,7 +353,7 @@ Steps to replacement an image with a new one:
 * [Run Maker](#run-maker) -- how to write cN.json and move the folder to dist.
 * [Edit Collection](#edit-collection) -- how to edit descriptions in place and set order.
 * [Zoom Points](#zoom-points) -- how to set the collection zoom points.
-* [Remove DS Store Files](#remove-ds-store-files) -- remove the .DS_Store files.
 * [Deploy](#deploy) -- how to publish the collection to the world.
 * [Notify](#notify) -- how to notify users of the new collection.
+* [Remove DS Store Files](#remove-ds-store-files) -- how to remove the .DS_Store files.
 * [Replace Image](#replace-image) -- how to replace an image.
