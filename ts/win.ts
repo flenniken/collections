@@ -126,11 +126,11 @@ async function saveDescription(cNum: number, field: TextField,
       method: "POST",
       headers:
       {
-        "Content-Type": "application/json"
+        // text/plain keeps this a simple CORS request so keepalive
+        // still runs when the admin refreshes or leaves the page.
+        "Content-Type": "text/plain"
       },
       body: JSON.stringify(payload),
-      // Keep the save alive if the admin clicks through to another
-      // page before the POST finishes.
       keepalive: true
     })
   if (!response.ok)
@@ -156,7 +156,9 @@ async function saveOrder(cNum: number, order: number[]) {
 }
 
 function editedTextFromElement(el: HTMLElement): string {
-  return el.innerText.replace(/\r\n/g, "\n")
+  // textContent, not innerText. innerText is empty while the page is
+  // visibility:hidden, which would save blank titles and descriptions.
+  return (el.textContent ?? "").replace(/\r\n/g, "\n")
 }
 
 interface EditingOptions {

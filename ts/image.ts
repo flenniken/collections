@@ -96,6 +96,8 @@ async function handleLoad() {
 
   // Show the admin icons when an admin is logged in.
   showAdminIcons()
+  if (isLocalhost())
+    await refreshImageFieldsFromJson()
   setupDescriptionEditing()
   setupZoomPad()
 
@@ -1790,6 +1792,54 @@ function adjustCurrentZoom(scaleFactor: number, panX: number, panY: number) {
 
 function isEditableTarget(target: EventTarget | null): boolean {
   return target instanceof HTMLElement && target.isContentEditable
+}
+
+async function refreshImageFieldsFromJson() {
+  // Pull text fields from the collection json so a reload matches
+  // in-place edits without g all.
+  const cinfo = await fetchCollectionJson(cJson.cNum)
+  if (!cinfo)
+    return
+  applyFetchedCollectionText(cJson, cJsonOriginal, cinfo)
+  const descriptions = area!.querySelectorAll(".description")
+  cJson.images.forEach((image, ix) => {
+    const el = descriptions[ix]
+    if (el)
+      el.textContent = image.description
+  })
+}
+
+function applyFetchedCollectionText(collection: CJson.Collection,
+    original: CJson.Collection, cinfo: Record<string, unknown>) {
+  const keys = ["title", "description", "indexDescription", "posted"] as const
+  for (const key of keys) {
+    const value = cinfo[key]
+    if (typeof value === "string") {
+      collection[key] = value
+      original[key] = value
+    }
+  }
+  const fetchedImages = cinfo.images
+  if (!Array.isArray(fetchedImages))
+    return
+  const byPreview = new Map<string, string>()
+  for (const item of fetchedImages) {
+    if (item == null || typeof item !== "object")
+      continue
+    const image = item as Record<string, unknown>
+    if (typeof image.iPreview === "string" &&
+        typeof image.description === "string")
+      byPreview.set(image.iPreview, image.description)
+  }
+  collection.images.forEach((image, ix) => {
+    const description = byPreview.get(image.iPreview)
+    if (description === undefined)
+      return
+    image.description = description
+    const orig = original.images[ix]
+    if (orig && orig.iPreview === image.iPreview)
+      orig.description = description
+  })
 }
 
 function setupDescriptionEditing() {

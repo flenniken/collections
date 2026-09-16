@@ -42,11 +42,12 @@ function handleDOMContentLoaded() {
   }
 }
 
-function handleLoad() {
+async function handleLoad() {
   log("load event")
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
-  void refreshThumbnailHeading()
+  if (isLocalhost())
+    await refreshThumbnailHeading()
   setupThumbnailTextEditing()
   setupThumbnailReorder()
 }
@@ -68,6 +69,9 @@ async function refreshThumbnailHeading() {
   const postedEl = document.getElementById("posted")
   if (postedEl && typeof cinfo.posted === "string")
     postedEl.textContent = cinfo.posted
+  const descEl = document.getElementById("description")
+  if (descEl && typeof cinfo.description === "string")
+    descEl.textContent = cinfo.description
   log(`Thumbnail heading from json: "${cinfo.title}" ${cinfo.posted}`)
 }
 
