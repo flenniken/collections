@@ -1,0 +1,291 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+
+"""
+Make 480 x 480 center-crop thumbnails from preview files.
+
+For each cN-M-p.jpg in the folder, write cN-M-t.jpg when that
+thumbnail is missing. Existing thumbnails are left alone so you can
+remake a bad crop in Photoshop and run the script again for new
+previews only.
+
+Example:
+  scripts/make-thumbnails tmp/c27
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+cwd = os.getcwd()
+if not cwd.endswith("collections"):
+  print(f"""\
+Run from the collections folder:
+cd ~/collections
+scripts/make-thumbnails tmp/c27
+""")
+  exit(1)
+
+import sys
+import argparse
+import traceback
+import signal
+import unittest
+import tempfile
+import shutil
+import re
+import textwrap
+from PIL import Image, ImageOps, ImageDraw
+
+class ThumbnailException(Exception):
+  """ An exception we plan for. """
+  pass
+
+THUMB_SIZE = 480
+JPEG_QUALITY = 80
+COLLECTION_RE = re.compile(r"^c\d+$")
+PREVIEW_RE = re.compile(r"^(c\d+)-(\d+)-p\.jpg$", re.IGNORECASE)
+DIGITS_RE = re.compile(r"(\d+)")
+
+def collectionPrefix(folder):
+  """
+  Return the collection prefix from the folder name, e.g. c27.
+  """
+  name = os.path.basename(os.path.abspath(folder))
+  if not COLLECTION_RE.fullmatch(name):
+    raise ThumbnailException(
+      f"Folder name must be a collection like c27, got: {name}")
+  return name
+
+def naturalKey(text):
+  """
+  Return a sort key that orders 2 before 10.
+  """
+  parts = DIGITS_RE.split(text)
+  key = []
+  for part in parts:
+    if part.isdigit():
+      key.append((1, int(part)))
+    else:
+      key.append((0, part.lower()))
+  return key
+
+def previewFiles(folder, prefix):
+  """
+  Return the preview basenames in the folder for this collection.
+  """
+  names = []
+  for name in os.listdir(folder):
+    path = os.path.join(folder, name)
+    if not os.path.isfile(path):
+      continue
+    match = PREVIEW_RE.fullmatch(name)
+    if not match:
+      continue
+    filePrefix, _number = match.groups()
+    if filePrefix != prefix:
+      continue
+    names.append(name)
+  names.sort(key=naturalKey)
+  return names
+
+def thumbnailName(previewName):
+  """
+  Return the standard thumbnail name for a preview, e.g.
+  c27-3-p.jpg -> c27-3-t.jpg.
+  """
+  match = PREVIEW_RE.fullmatch(previewName)
+  if not match:
+    raise ThumbnailException(f"Not a preview file: {previewName}")
+  prefix, number = match.groups()
+  return f"{prefix}-{number}-t.jpg"
+
+def centerSquare(image):
+  """
+  Return a square crop from the center of the image.
+  """
+  width, height = image.size
+  side = min(width, height)
+  left = (width - side) // 2
+  top = (height - side) // 2
+  return image.crop((left, top, left + side, top + side))
+
+def writeThumbnail(previewPath, thumbPath):
+  """
+  Write a 480 x 480 JPEG thumbnail from the center of the preview.
+  """
+  with Image.open(previewPath) as img:
+    rgb = ImageOps.exif_transpose(img).convert("RGB")
+    square = centerSquare(rgb)
+    thumb = square.resize((THUMB_SIZE, THUMB_SIZE), Image.Resampling.LANCZOS)
+    thumb.save(
+      thumbPath,
+      format="JPEG",
+      quality=JPEG_QUALITY,
+      optimize=True,
+    )
+
+def makeThumbnails(folder):
+  """
+  Create missing thumbnails for the preview files in the folder.
+  """
+  if not os.path.isdir(folder):
+    raise ThumbnailException(f"Error: not a directory: {folder}")
+
+  prefix = collectionPrefix(folder)
+  previews = previewFiles(folder, prefix)
+  if not previews:
+    print(f"No preview files in {folder}")
+    return
+
+  for preview in previews:
+    thumb = thumbnailName(preview)
+    thumbPath = os.path.join(folder, thumb)
+    if os.path.exists(thumbPath):
+      print(f"skip (exists): {thumb}")
+      continue
+    writeThumbnail(os.path.join(folder, preview), thumbPath)
+    print(f"make: {thumb}")
+
+def parseCommandLine():
+  if len(sys.argv) == 1:
+    print("Specify a collection folder, e.g. tmp/c27. Use -h for help.")
+    sys.exit(1)
+  else:
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ["-t", "--test"]:
+        sys.argv.pop(ix + 1)
+        args = argparse.Namespace(test=True)
+        return args
+
+  parser = argparse.ArgumentParser(
+    prog="make-thumbnails",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=textwrap.dedent(__doc__))
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests")
+  parser.add_argument("folder",
+    help="collection folder, e.g. tmp/c27")
+  return parser.parse_args(sys.argv[1:])
+
+def main(args):
+  def signalHandler(sig, frame):
+    """ Handle ctrl-C """
+    sys.exit(1)
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    makeThumbnails(args.folder)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except ThumbnailException as ex:
+    print(str(ex))
+    return 1
+  except Exception:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0
+
+def gotExpected(got, expected):
+  if got != expected:
+    msg = f"""
+---
+     got: {got}
+expected: {expected}
+---
+"""
+    assert False, msg
+
+def writeJpeg(path, width, height, color, mark=None):
+  """
+  Write a solid JPEG. mark is (box, color) painted on top.
+  """
+  img = Image.new("RGB", (width, height), color)
+  if mark is not None:
+    box, markColor = mark
+    draw = ImageDraw.Draw(img)
+    draw.rectangle(box, fill=markColor)
+  img.save(path, format="JPEG", quality=90)
+
+class TestMakeThumbnails(unittest.TestCase):
+
+  def setUp(self):
+    self.folder = tempfile.mkdtemp()
+
+  def tearDown(self):
+    shutil.rmtree(self.folder)
+
+  def folderNamed(self, name):
+    path = os.path.join(self.folder, name)
+    os.mkdir(path)
+    return path
+
+  def test_collectionPrefix(self):
+    path = self.folderNamed("c27")
+    gotExpected(collectionPrefix(path), "c27")
+
+  def test_collectionPrefix_bad(self):
+    path = self.folderNamed("27")
+    with self.assertRaises(ThumbnailException):
+      collectionPrefix(path)
+
+  def test_thumbnailName(self):
+    gotExpected(thumbnailName("c27-3-p.jpg"), "c27-3-t.jpg")
+    gotExpected(thumbnailName("c4-10-p.JPG"), "c4-10-t.jpg")
+
+  def test_make_missing_skip_existing(self):
+    path = self.folderNamed("c27")
+    writeJpeg(os.path.join(path, "c27-1-p.jpg"), 1000, 800, (0, 0, 255))
+    writeJpeg(os.path.join(path, "c27-2-p.jpg"), 800, 1000, (0, 255, 0))
+    existing = os.path.join(path, "c27-1-t.jpg")
+    writeJpeg(existing, 480, 480, (255, 0, 0))
+    before = os.path.getmtime(existing)
+
+    makeThumbnails(path)
+
+    names = sorted(os.listdir(path))
+    gotExpected(names, [
+      "c27-1-p.jpg", "c27-1-t.jpg",
+      "c27-2-p.jpg", "c27-2-t.jpg",
+    ])
+    gotExpected(os.path.getmtime(existing), before)
+    with Image.open(os.path.join(path, "c27-2-t.jpg")) as thumb:
+      gotExpected(thumb.size, (480, 480))
+
+  def test_center_crop(self):
+    path = self.folderNamed("c27")
+    preview = os.path.join(path, "c27-3-p.jpg")
+    # 1000x600 landscape. Center 200x200 is red; the rest is blue.
+    writeJpeg(
+      preview, 1000, 600, (0, 0, 255),
+      mark=((400, 200, 600, 400), (255, 0, 0)))
+    makeThumbnails(path)
+    with Image.open(os.path.join(path, "c27-3-t.jpg")) as thumb:
+      gotExpected(thumb.size, (480, 480))
+      center = thumb.getpixel((240, 240))
+      self.assertGreater(center[0], 240)
+      self.assertLess(center[1], 20)
+      self.assertLess(center[2], 20)
+      corner = thumb.getpixel((10, 10))
+      self.assertLess(corner[0], 20)
+      self.assertLess(corner[1], 20)
+      self.assertGreater(corner[2], 240)
+
+  def test_no_previews(self):
+    path = self.folderNamed("c27")
+    makeThumbnails(path)
+    gotExpected(os.listdir(path), [])
+
+  def test_missing_folder(self):
+    with self.assertRaises(ThumbnailException):
+      makeThumbnails(os.path.join(self.folder, "missing"))
+
+if __name__ == "__main__":
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)

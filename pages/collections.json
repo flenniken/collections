@@ -1,6 +1,33 @@
 {
   "indexCollections": [
     {
+      "cNum": 28,
+      "building": true,
+      "title": "Mazanita Evening",
+      "modified": false,
+      "indexDescription": "The evening of July 13, 2019 on Manzanita beach.",
+      "iThumbnail": "c28-1-t.jpg",
+      "posted": "2026-09-16",
+      "iCount": 14,
+      "totalSize": 48343888,
+      "iNumList": [
+        1,
+        2,
+        3,
+        4,
+        7,
+        5,
+        6,
+        8,
+        9,
+        10,
+        12,
+        11,
+        14,
+        13
+      ]
+    },
+    {
       "cNum": 27,
       "building": false,
       "title": "North Lake Union",

@@ -117,16 +117,19 @@ files are not supported.
 
 __Thumbnails__
 
-Copy each preview to a thumbnail file:
+Make 480 x 480 center-crop thumbnails from the preview files. Existing
+`-t.jpg` files are left alone, so you can remake a bad crop in
+Photoshop and run the script again for new previews only.
 
 ~~~
-# from the collections folder
-for file in tmp/$cnum/*-p.jpg; do
-  cp "$file" "${file/-p.jpg/-t.jpg}"
-done
+# from container
+scripts/make-thumbnails tmp/$cnum
 ~~~
 
-Open the `-t` files in Photoshop and crop them square 480 x 480.
+Check the thumbnails in the finder.
+
+If a thumbnail does not look good, crop it square 480 x 480 in
+Photoshop and save over the `-t.jpg` file.
 
 * use the crop tool
 * use the Image Size dialog (option+command i)
@@ -186,14 +189,6 @@ as admin. Empty fields show a placeholder so you can tap them. On
 localhost the change is automatically merged into
 `dist/images/cN/cN.json` when you tap away.
 
-On an iPhone, tap the download icon on the image page after editing,
-then air-drop the file if needed and copy to the the dist folder.
-
-~~~
-# from container
-cp ~/Download/c26.json dist/images/c26/
-~~~
-
 * index page -- edit title and posted date with date picker,
   and the short description for the newest collections.
   
@@ -207,6 +202,14 @@ cp ~/Download/c26.json dist/images/c26/
   zoom points) in `cN.json`. Run `g all` so the image page matches.
 
 * image page -- edit each photo's description
+
+On an iPhone, tap the download icon on the image page after editing,
+then air-drop the file if needed and copy to the the dist folder.
+
+~~~
+# from container
+cp ~/Download/c26.json dist/images/c26/
+~~~
 
 [⬇](#Contents)
 
