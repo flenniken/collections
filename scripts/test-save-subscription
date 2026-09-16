@@ -123,13 +123,23 @@ expected: ${expected}
   class MockDocClient {
     constructor(error) {
       this.item = null
+      this.deleted = []
+      this.scanItems = []
       this.error = error || null
     }
 
     async send(command) {
       if (this.error)
         throw this.error
-      this.item = command.input.Item
+      if (command.input && command.input.Item) {
+        this.item = command.input.Item
+        return {}
+      }
+      if (command.input && command.input.Key) {
+        this.deleted.push(command.input.Key)
+        return {}
+      }
+      return { Items: this.scanItems }
     }
   }
 
@@ -310,6 +320,22 @@ expected: ${expected}
     500,
     'Failed to save subscription.',
   )
+
+  logProgress('Test saveSubscription removes other users with the same endpoint.');
+  const saveDuplicateClient = new MockDocClient()
+  saveDuplicateClient.scanItems = [
+    { userId: 'other-user', endpoint: subscription.endpoint },
+  ]
+  await testSaveSubscription(
+    subscription,
+    claims,
+    saveDuplicateClient,
+    200,
+    'Subscription saved.',
+  )
+  gotExpected(saveDuplicateClient.deleted.length, 1)
+  gotExpected(saveDuplicateClient.deleted[0].userId, 'other-user')
+  gotExpected(saveDuplicateClient.deleted[0].endpoint, subscription.endpoint)
 
   logProgress('Test handler with wrong region.');
   const savedRegion = process.env.AWS_REGION

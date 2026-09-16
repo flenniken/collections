@@ -18,7 +18,8 @@ Create a tmp folder named with the collection prefix. List
 `dist/images` to find the next number. For collection 24:
 
 ~~~
-mkdir tmp/c24
+cnum=c24 # variable
+mkdir tmp/$cnum
 ~~~
 
 Put 8, 10, 12, 14, or 16 of your best photos in the folder. Export unmodified
@@ -47,7 +48,7 @@ highest number in the folder. Gaps are kept.
 
 ~~~
 # from container
-scripts/standard-rename tmp/c24
+scripts/standard-rename tmp/$cnum
 ~~~
 
 Examples:
@@ -67,7 +68,7 @@ __Convert HEIC and MOV__
 Convert remaining HEIC stills to jpg. The basename stays the same:
 
 ~~~
-scripts/convert-heic-previews tmp/c24
+scripts/convert-heic-previews tmp/$cnum
 
 convert: c24-1-p.HEIC -> c24-1-p.jpg
 ~~~
@@ -80,7 +81,7 @@ Browsers play mp4 more reliably. The conversion keeps the Live Photo
 soundtrack.
 
 ~~~
-scripts/convert-live-videos tmp/c24
+scripts/convert-live-videos tmp/$cnum
 
 convert: c24-1-v.mov -> c24-1-v.mp4
 ~~~
@@ -120,8 +121,7 @@ Copy each preview to a thumbnail file:
 
 ~~~
 # from the collections folder
-folder=c24 # variable
-for file in tmp/$folder/*-p.jpg; do
+for file in tmp/$cnum/*-p.jpg; do
   cp "$file" "${file/-p.jpg/-t.jpg}"
 done
 ~~~
@@ -148,7 +148,7 @@ leaves the folder in place.
 
 ~~~
 # from container
-scripts/maker tmp/c24
+scripts/maker tmp/$cnum
 
 Wrote tmp/c24/c24.json
 ~~~
@@ -161,13 +161,13 @@ you can edit in place.
 Add GPS locations and capture times:
 
 ~~~
-scripts/add-locations tmp/c24/c24.json
+scripts/add-locations tmp/$cnum/$cnum.json
 ~~~
 
 Move the folder into dist, then build:
 
 ~~~
-mv tmp/c24 dist/images/
+mv tmp/$cnum dist/images/
 g all
 ~~~
 
@@ -207,8 +207,6 @@ cp ~/Download/c26.json dist/images/c26/
   zoom points) in `cN.json`. Run `g all` so the image page matches.
 
 * image page -- edit each photo's description
-
-
 
 [⬇](#Contents)
 

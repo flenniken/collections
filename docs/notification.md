@@ -282,7 +282,9 @@ record in the DB.
 
 The function receives the JSON body described above and it refreshes
 existing record or it creates a new subscription record when the
-(userId, endpoint) doesn't exist.
+(userId, endpoint) doesn't exist. If another user already has that
+same device endpoint, that other row is removed so one phone does not
+get two notifications.
 
 Test the function with:
 
@@ -310,6 +312,7 @@ node scripts/testSaveSubscription.js
 Saved subscription for user 0861d3e0-00a1-7058-ad19-4d7b1880d276.
 * Test saveSubscription with DynamoDB error.
 DynamoDB PutItem: test failure
+* Test saveSubscription removes other users with the same endpoint.
 * Test handler with wrong region.
 Wrong AWS region: expected us-west-2, got us-east-1.
 * Test handler with invalid JSON body.
@@ -401,14 +404,19 @@ scripts/notification --publish <user-id> "New Tokyo collection"
 scripts/notification --publish all "New Tokyo collection"
 ~~~
 
-The command scans DynamoDB and sends a push notification to each
-matching subscription. Use "all" to notify every subscriber, or pass
-a Cognito user id to test with one user. Add a subject line to the
-[VAPID] section of ~/.aws/vapid (contact email for web-push).
+The command scans DynamoDB and sends one push per device endpoint.
+The same iPhone can be stored under more than one Cognito user;
+duplicate endpoints are skipped so the phone gets one notification.
+Use "all" to notify every subscriber, or pass a Cognito user id to
+test with one user. Add a subject line to the [VAPID] section of
+~/.aws/vapid (contact email for web-push).
 
 When a push endpoint returns 410 Gone, 404 Not Found, or Apple's 400
 `VapidPkHashMismatch` (subscription created with an old VAPID public
-key), the subscription is removed from DynamoDB automatically.
+key), every DynamoDB row for that endpoint is removed. That is how
+invalid subscriptions are deleted. iPhone notification permission is
+per app, not per logged-in user, so turning notifications off in
+Settings does not delete rows by user id.
 
 ## List Subscriptions
 

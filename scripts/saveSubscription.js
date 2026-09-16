@@ -19,8 +19,19 @@ function checkRegion() {
 function dynamoSdk() {
   // Load AWS SDK modules when DynamoDB access is needed.
   const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-  const { DynamoDBDocumentClient, PutCommand } = require('@aws-sdk/lib-dynamodb');
-  return { DynamoDBClient, DynamoDBDocumentClient, PutCommand };
+  const {
+    DynamoDBDocumentClient,
+    PutCommand,
+    DeleteCommand,
+    ScanCommand,
+  } = require('@aws-sdk/lib-dynamodb');
+  return {
+    DynamoDBClient,
+    DynamoDBDocumentClient,
+    PutCommand,
+    DeleteCommand,
+    ScanCommand,
+  };
 }
 
 function getDocClient() {
@@ -123,6 +134,37 @@ async function putSubscription(item, client) {
   }));
 }
 
+async function deleteSubscriptionItem(userId, endpoint, client) {
+  // Remove one push subscription from DynamoDB.
+  const { DeleteCommand } = dynamoSdk();
+  const db = client || getDocClient();
+  await db.send(new DeleteCommand({
+    TableName: TABLE_NAME,
+    Key: { userId, endpoint },
+  }));
+}
+
+async function scanSubscriptionsForEndpoint(endpoint, client) {
+  // Return stored subscriptions that use this push endpoint.
+  const { ScanCommand } = dynamoSdk();
+  const db = client || getDocClient();
+  const response = await db.send(new ScanCommand({
+    TableName: TABLE_NAME,
+    FilterExpression: 'endpoint = :endpoint',
+    ExpressionAttributeValues: { ':endpoint': endpoint },
+  }));
+  return response.Items || [];
+}
+
+async function deleteOtherSubscriptionsForEndpoint(endpoint, userId, client) {
+  // Remove other users' rows for this device endpoint.
+  const items = await scanSubscriptionsForEndpoint(endpoint, client);
+  for (const item of items) {
+    if (item.userId && item.endpoint && item.userId !== userId)
+      await deleteSubscriptionItem(item.userId, item.endpoint, client);
+  }
+}
+
 async function saveSubscription(subscription, claims, client, event) {
   // Validate the subscription, check authorization, and save it.
   const error = validateSubscription(subscription);
@@ -138,6 +180,12 @@ async function saveSubscription(subscription, claims, client, event) {
   } catch (err) {
     console.error(`DynamoDB PutItem: ${err.message}`);
     return apiResponse(500, { ok: false, message: 'Failed to save subscription.' }, event);
+  }
+
+  try {
+    await deleteOtherSubscriptionsForEndpoint(item.endpoint, item.userId, client);
+  } catch (err) {
+    console.error(`Failed to remove duplicate endpoint subscriptions: ${err.message}`);
   }
 
   console.log(`Saved subscription for user ${subscription.userId}.`);
@@ -174,6 +222,9 @@ module.exports = {
   userIdsMatch,
   subscriptionItem,
   putSubscription,
+  deleteSubscriptionItem,
+  scanSubscriptionsForEndpoint,
+  deleteOtherSubscriptionsForEndpoint,
   saveSubscription,
   apiResponse,
   corsHeaders,

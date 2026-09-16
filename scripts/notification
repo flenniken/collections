@@ -418,11 +418,22 @@ async function deleteSubscription(userId, endpoint) {
 }
 
 async function removeExpiredSubscription(userId, endpoint) {
-  // Delete a stale subscription after a 410, 404, or VAPID mismatch.
-  await deleteSubscription(userId, endpoint)
+  // Delete every row for this push endpoint after a 410, 404, or
+  // VAPID mismatch. One phone can be stored under more than one user
+  // id; the endpoint is what failed.
+  const items = await scanSubscriptions()
+  let removed = 0
+  for (const item of items) {
+    if (item.endpoint === endpoint) {
+      await deleteSubscription(item.userId, item.endpoint)
+      removed += 1
+    }
+  }
   console.log(
-    `Removed expired subscription for ${userId} ${shortEndpoint(endpoint)}`
+    `Removed expired subscription for ${shortEndpoint(endpoint)}` +
+    (removed ? ` (${removed} row${removed === 1 ? '' : 's'})` : '')
   )
+  return removed
 }
 
 async function waitForTableActive(client, tableName) {
@@ -922,6 +933,18 @@ function subscriptionsForUser(items, user) {
   return items.filter(item => item.userId === user)
 }
 
+function uniqueEndpointSubscriptions(items) {
+  // One push per device endpoint. The same iPhone can be stored under
+  // more than one Cognito user; sending twice would show two banners.
+  const byEndpoint = new Map()
+  for (const item of items) {
+    if (!item.endpoint || byEndpoint.has(item.endpoint))
+      continue
+    byEndpoint.set(item.endpoint, item)
+  }
+  return [...byEndpoint.values()]
+}
+
 async function publishNotifications(user, title) {
   // Send a collection publish notification to one user or all subscribers.
   errorExit(!user, '--publish requires a user id or all.')
@@ -929,7 +952,8 @@ async function publishNotifications(user, title) {
 
   const subject = loadVapidSubject()
   const items = await scanSubscriptions()
-  const targets = subscriptionsForUser(items, user)
+  const matching = subscriptionsForUser(items, user)
+  const targets = uniqueEndpointSubscriptions(matching)
 
   if (user === 'all') {
     errorExit(targets.length === 0, 'No push subscriptions found.')
@@ -937,7 +961,9 @@ async function publishNotifications(user, title) {
     errorExit(targets.length === 0, `No push subscriptions for user ${user}.`)
   }
 
-  console.log(`Sending "${title}" to ${targets.length} subscription(s).`)
+  const skipped = matching.length - targets.length
+  console.log(`Sending "${title}" to ${targets.length} subscription(s).` +
+    (skipped ? ` Skipping ${skipped} duplicate endpoint(s).` : ''))
 
   let sent = 0
   let failed = 0
@@ -954,8 +980,7 @@ async function publishNotifications(user, title) {
     } catch (error) {
       failed += 1
       if (isExpiredSubscriptionError(error)) {
-        await removeExpiredSubscription(item.userId, item.endpoint)
-        removed += 1
+        removed += await removeExpiredSubscription(item.userId, item.endpoint)
       }
       console.error(
         `Failed for ${item.userId} ${shortEndpoint(item.endpoint)}: ` +
