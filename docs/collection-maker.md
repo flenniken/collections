@@ -39,6 +39,18 @@ Live Photos export as paired `.HEIC` and `.mov` files.
 
 [![Tmp Folder](tmp-listing.png)](#)
 
+__Adobe Bridge Photos__
+
+You can create a folder of collection files from DNG files using Adobe Bridge.
+
+* Open Adobe Bridge
+* Find a folder of images you want to select from to make a collection
+* Mark the images you want with stars
+* Select the martini shaped icon and select the menu to show your files, e.g. "Show 3 or more stars"
+* Edit the originals now if you want
+* select all then export the files as jpg files to the collection folder, e.g. tmp/c28.  File > Export to > Custom export.   Choose Save to > Specific folder and browse to tmp/c28.  Extension .jpg, Image Quality 8,  Scale image > 100%, Include metadata
+* Use the Finder to check at the folder of files
+
 __Standard Rename__
 
 Rename camera JPEGs or HEIC/mov pairs to the standard collection
@@ -281,6 +293,10 @@ scripts/deploy -s
 
 Test by logging out of admin and logging back in as a regular user.
 On the iPhone, confirm the new collection appears in the index.
+
+♫ Note: If you edit your photos after deploying them, the iPhone will
+continue to use the photos it has cached.  To see the new ones, delete
+the collection and download them again.
 
 [⬇](#Contents)
 
