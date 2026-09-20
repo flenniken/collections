@@ -1,0 +1,225 @@
+{
+  "title": "Magnuson Park",
+  "indexDescription": "Magnuson Park in January 2008.",
+  "description": "I walked down to Magnuson Park in January 2008 and took some artistic photos.  It was cold and icy.",
+  "cNum": 32,
+  "posted": "2026-09-20",
+  "images": [
+    {
+      "description": "The Straight Shot art piece.  The rock blocks are lined up where surveyors calibrate their distance measuring devices.  It was newly installed at the time this photo was taken.  The blocks start closely spaced then get farther and farther apart, following a fibonacci sequence spacing.  The line spans the whole park.  One block wasn't installed until years later because it was in a marsh.  \n\nIn the background you can see where they keep the trees cut for a clear view through the park.\n",
+      "iPreview": "c32-1-p.jpg",
+      "iThumbnail": "c32-1-t.jpg",
+      "width": 2336,
+      "height": 3504,
+      "size": 1749061,
+      "sizet": 54370,
+      "location": "",
+      "taken": "2008-01-21T09:58:22"
+    },
+    {
+      "description": "Today to get to the first few blocks you go down a narrow path cut into over grown bushes and blackberries.\n\nYou can look though the holes but for only a few;  they aren't lined up that well.",
+      "iPreview": "c32-2-p.jpg",
+      "iThumbnail": "c32-2-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1866216,
+      "sizet": 54276,
+      "location": "",
+      "taken": "2008-01-21T10:00:12"
+    },
+    {
+      "description": "View over Lake Washington looking at the snow covered Cascade mountains.",
+      "iPreview": "c32-3-p.jpg",
+      "iThumbnail": "c32-3-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1082462,
+      "sizet": 39371,
+      "location": "",
+      "taken": "2008-01-21T10:02:45"
+    },
+    {
+      "description": "Leaves under ice.",
+      "iPreview": "c32-4-p.jpg",
+      "iThumbnail": "c32-4-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1598687,
+      "sizet": 65971,
+      "location": "",
+      "taken": "2008-01-21T10:04:06"
+    },
+    {
+      "description": "Close up of leaves under ice.",
+      "iPreview": "c32-5-p.jpg",
+      "iThumbnail": "c32-5-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1932549,
+      "sizet": 82558,
+      "location": "",
+      "taken": "2008-01-21T10:05:34"
+    },
+    {
+      "description": "A frozen pond.",
+      "iPreview": "c32-6-p.jpg",
+      "iThumbnail": "c32-6-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 824415,
+      "sizet": 25635,
+      "location": "",
+      "taken": "2008-01-21T10:06:45"
+    },
+    {
+      "description": "A Douglas Fir branch covered with pinecones.",
+      "iPreview": "c32-7-p.jpg",
+      "iThumbnail": "c32-7-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 2018981,
+      "sizet": 64870,
+      "location": "",
+      "taken": "2008-01-21T10:09:23"
+    },
+    {
+      "description": "Brown scrubs along a path.",
+      "iPreview": "c32-8-p.jpg",
+      "iThumbnail": "c32-8-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 2218331,
+      "sizet": 74861,
+      "location": "",
+      "taken": "2008-01-21T10:28:00"
+    },
+    {
+      "description": "A flock of flying ducks.",
+      "iPreview": "c32-9-p.jpg",
+      "iThumbnail": "c32-9-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 830181,
+      "sizet": 18585,
+      "location": "",
+      "taken": "2008-01-21T10:32:17"
+    },
+    {
+      "description": "The fin art is called \"The Fin Project: From Swords into Plowshares\"\n\nThe fins come from old decommissioned nuclear attack submarines",
+      "iPreview": "c32-10-p.jpg",
+      "iThumbnail": "c32-10-t.jpg",
+      "width": 3388,
+      "height": 2259,
+      "size": 1614930,
+      "sizet": 43606,
+      "location": "",
+      "taken": "2008-01-21T10:44:56"
+    }
+  ],
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.27935963958513593,
+        "tx": -185.66992307894054,
+        "ty": -28.082242813778294
+      },
+      {
+        "scale": 0.12271689497716895,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.4268041870916951,
+        "tx": -395.0340450377122,
+        "ty": -21.05256689356372
+      },
+      {
+        "scale": 0.4120836866030529,
+        "tx": -484.72255042891516,
+        "ty": -15.980341338200049
+      },
+      {
+        "scale": 0.43182001424998306,
+        "tx": -871.3877244568165,
+        "ty": -7.252790644930144
+      },
+      {
+        "scale": 0.4118811938891387,
+        "tx": -391.60033009315885,
+        "ty": -27.40981042404229
+      },
+      {
+        "scale": 0.4091595848401475,
+        "tx": -491.37509765700224,
+        "ty": 2.2552280729757967
+      },
+      {
+        "scale": 0.4367707955101071,
+        "tx": -302.69951676403616,
+        "ty": -6.294699074640562
+      },
+      {
+        "scale": 0.42857559376507937,
+        "tx": -261.45632272842744,
+        "ty": -18.734669576001238
+      },
+      {
+        "scale": 0.43912502551278254,
+        "tx": -460.97627217879716,
+        "ty": 2.6523594223722284
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.4717507924206802,
+        "tx": -23.14182444714217,
+        "ty": -578.8188545385441
+      },
+      {
+        "scale": 0.26666718096520664,
+        "tx": 1.4734235722282278,
+        "ty": -84.39907475094492
+      },
+      {
+        "scale": 0.2729896838924874,
+        "tx": -1.4555315899760046,
+        "ty": -149.05903330618463
+      },
+      {
+        "scale": 0.27858334899629505,
+        "tx": -14.9005539263527,
+        "ty": -92.76745670571947
+      },
+      {
+        "scale": 0.2659817351598174,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2659817351598174,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.2705621192537937,
+        "tx": -12.155721887183716,
+        "ty": -69.46856408663234
+      },
+      {
+        "scale": 0.2890574626892505,
+        "tx": -46.722153851295275,
+        "ty": -114.36096042789467
+      },
+      {
+        "scale": 0.27575324592281764,
+        "tx": -5.379768262030154,
+        "ty": -101.76657587567962
+      },
+      {
+        "scale": 0.28558024739677185,
+        "tx": -9.2439159821526,
+        "ty": -160.6255575278363
+      }
+    ]
+  }
+}

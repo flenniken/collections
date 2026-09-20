@@ -1,6 +1,29 @@
 {
   "indexCollections": [
     {
+      "cNum": 32,
+      "building": false,
+      "title": "Magnuson Park",
+      "modified": false,
+      "indexDescription": "Magnuson Park in January 2008.",
+      "iThumbnail": "c32-1-t.jpg",
+      "posted": "2026-09-20",
+      "iCount": 10,
+      "totalSize": 16259916,
+      "iNumList": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    {
       "cNum": 31,
       "building": false,
       "title": "Lake Crescent",

@@ -16,9 +16,10 @@ How to create a new collection for the Collections project.
 
 Create a tmp folder named with the next collection prefix. List
 `dist/images` to find the next number. For the example below, create
-c29. Create the cnum variable it will be used in multiple commands.
+c29. Create the cnum variable, it will be used in multiple commands.
 
 ~~~
+# from container
 printf '%s\n' dist/images/c*/ | sort -V | tail -3
 
 dist/images/c26/
