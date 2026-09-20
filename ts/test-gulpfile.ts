@@ -344,6 +344,10 @@ function validateCinfoImageSuite() {
   testThrow("Collection 4 image 2: description is required when not building.", fn, 4, 2, true, image)
 
   image = createTestImage(4, 2)
+  image.description = "  \n"
+  testThrow("Collection 4 image 2: description is required when not building.", fn, 4, 2, true, image)
+
+  image = createTestImage(4, 2)
   image.width = 0
   testThrow("Collection 4 image 2: preview width must be >= 933: got: 0.", fn, 4, 2, true, image)
 
@@ -441,8 +445,16 @@ zoomPoints."
   cinfo.title = ""
   testThrow(message, fn, 4, cinfo)
 
-  message = "The collection 4 has empty fields: title, description, \
-indexDescription, posted."
+  message = "The collection 4 has empty fields: description (thumbnails page)."
+  cinfo = createTestCinfo({numImages: 1})
+  cinfo.description = ""
+  testThrow(message, fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1})
+  cinfo.description = "  \n"
+  testThrow(message, fn, 4, cinfo)
+
+  message = "The collection 4 has empty fields: title, description (thumbnails page), indexDescription, posted."
   cinfo = createTestCinfo({numImages: 1})
   cinfo.title = ""
   cinfo.description = ""

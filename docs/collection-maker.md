@@ -14,18 +14,25 @@ How to create a new collection for the Collections project.
 
 # Create Folder
 
-Create a tmp folder named with the collection prefix. List
-`dist/images` to find the next number. For collection 24:
+Create a tmp folder named with the next collection prefix. List
+`dist/images` to find the next number. For the example below, create
+c29. Create the cnum variable it will be used in multiple commands.
 
 ~~~
-cnum=c24 # variable
+printf '%s\n' dist/images/c*/ | sort -V | tail -3
+
+dist/images/c26/
+dist/images/c27/
+dist/images/c28/
+
+cnum=c29 # variable
 mkdir tmp/$cnum
 ~~~
 
 Put 8, 10, 12, 14, or 16 of your best photos in the folder. Export unmodified
 originals from Apple Photos, or copy or export files from Adobe Bridge
 
-__Mac Photos__
+__Apple Photos__
 
 * create an album with all the photos for the topic
 * mark 8, 10, 12, 14, or 16 favorites
@@ -33,7 +40,8 @@ __Mac Photos__
 * File > Export > Export Unmodified Originals
 * uncheck "Export IPTC as XMP"
 * filename: Sequential, no prefix, no subfolder
-* export into the empty `tmp/c24` folder
+* export into the empty `tmp/cN` folder
+* check the files in the cN folder with the finder
 
 Live Photos export as paired `.HEIC` and `.mov` files.
 
@@ -61,49 +69,59 @@ highest number in the folder. Gaps are kept.
 ~~~
 # from container
 scripts/standard-rename tmp/$cnum
+
+rename: 1.HEIC -> c29-1-p.HEIC
+rename: 1.mov -> c29-1-v.mov
+rename: 2.HEIC -> c29-2-p.HEIC
+rename: 2.mov -> c29-2-v.mov
+rename: 3.HEIC -> c29-3-p.HEIC
+...
 ~~~
-
-Examples:
-
-~~~
-DSCN1888.JPG  ->  c24-1-p.jpg
-DSCN1889.JPEG ->  c24-2-p.jpg
-
-1.HEIC  1.mov  ->  c24-1-p.HEIC  c24-1-v.mov
-2.HEIC  2.mov  ->  c24-2-p.HEIC  c24-2-v.mov
-~~~
-
-Delete any `.mov` files you do not want to keep.
 
 __Convert HEIC and MOV__
 
-Convert remaining HEIC stills to jpg. The basename stays the same:
+Live videos are optional. Delete any `.mov` files you do not want to
+keep. Look at them in the finder and drag the ones you don't want to
+the trash.
+
+Convert the remaining HEIC files to jpg.
 
 ~~~
 scripts/convert-heic-previews tmp/$cnum
 
-convert: c24-1-p.HEIC -> c24-1-p.jpg
+convert: c29-1-p.HEIC -> c29-1-p.jpg
+File contains 1 image
+Written to tmp/c29/c29-1-p.jpg
+remove: c29-1-p.HEIC
+convert: c29-10-p.HEIC -> c29-10-p.jpg
+File contains 1 image
+Written to tmp/c29/c29-10-p.jpg
+remove: c29-10-p.HEIC
+...
 ~~~
 
 If you only have a video, make a jpg preview by extracting a frame
-with the free Frame Grabber application.
+with the free Frame Grabber application on the iPhone.
 
-Convert remaining `.mov` files to `.mp4`. The basename stays the same.
-Browsers play mp4 more reliably. The conversion keeps the Live Photo
-soundtrack.
+Convert the remaining `.mov` files to `.mp4`.  Browsers play mp4 more
+reliably. The conversion keeps the Live Photo soundtrack.
 
 ~~~
 scripts/convert-live-videos tmp/$cnum
 
-convert: c24-1-v.mov -> c24-1-v.mp4
+convert: c29-1-v.mov -> c29-1-v.mp4
+remove: c29-1-v.mov
+convert: c29-10-v.mov -> c29-10-v.mp4
+remove: c29-10-v.mov
+...
 ~~~
 
-Live videos are optional. The maker pairs each video with the preview
-that shares a stem: `c24-10-v.mp4` goes with `c24-10-p.jpg`. Live
-Photos play on press-and-hold. Longer clips show a play button
-instead of the LIVE badge.
+The maker pairs each video with the preview that shares a stem:
+`c24-10-v.mp4` goes with `c24-10-p.jpg`. Live Photos play on
+press-and-hold. Longer clips show a play button instead of the LIVE
+badge.
 
-You can also convert HEIC in Photoshop:
+Optionally you can convert HEIC files to jpg in Photoshop:
 
 * Open the HEIC files in Photoshop
 * edit then flatten if necessary
@@ -136,6 +154,12 @@ Photoshop and run the script again for new previews only.
 ~~~
 # from container
 scripts/make-thumbnails tmp/$cnum
+
+make: c29-1-t.jpg
+make: c29-2-t.jpg
+make: c29-3-t.jpg
+make: c29-4-t.jpg
+...
 ~~~
 
 Check the thumbnails in the finder.
@@ -177,6 +201,13 @@ Add GPS locations and capture times:
 
 ~~~
 scripts/add-locations tmp/$cnum/$cnum.json
+
+Wrote 16 images (16 with GPS, 16 with time) to tmp/c29/c29.json
+  c29-1-p.jpg  45.7080917,-123.9392083  2019-07-11T19:25:12
+  c29-2-p.jpg  45.7081861,-123.9393167  2019-07-11T19:45:14
+  c29-3-p.jpg  45.7080944,-123.9391333  2019-07-13T18:58:55
+  c29-4-p.jpg  45.7080528,-123.9415139  2019-07-14T13:37:13
+  c29-5-p.jpg  45.7080000,-123.9393306  2019-07-14T18:55:24
 ~~~
 
 Move the folder into dist, then build:

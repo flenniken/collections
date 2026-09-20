@@ -1,0 +1,328 @@
+{
+  "title": "Eleanor Growing",
+  "indexDescription": "More pictures of Eleanor.",
+  "description": "Recent cute photos of Eleanor that we have been sharing around in chats.  I think I only took a couple.",
+  "cNum": 30,
+  "posted": "2026-09-18",
+  "images": [
+    {
+      "description": "Beautiful Christmas dress",
+      "iPreview": "c30-2-p.jpg",
+      "iThumbnail": "c30-2-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 1910634,
+      "sizet": 32307,
+      "location": "47.6760778,-122.2685389",
+      "taken": "2025-12-25T14:58:02"
+    },
+    {
+      "description": "Tom, Eleanor and Anna on the deck.",
+      "iPreview": "c30-3-p.jpg",
+      "iThumbnail": "c30-3-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 1324298,
+      "sizet": 50559,
+      "iLiveVideo": "c30-3-v.mp4",
+      "liveSize": 2099895,
+      "liveDuration": 2.968,
+      "location": "47.6761056,-122.2684944",
+      "taken": "2026-04-19T15:51:07"
+    },
+    {
+      "description": "Jaclyn, Sadie, Tom and Eleanor at Christmas.",
+      "iPreview": "c30-1-p.jpg",
+      "iThumbnail": "c30-1-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2869891,
+      "sizet": 48291,
+      "iLiveVideo": "c30-1-v.mp4",
+      "liveSize": 5124675,
+      "liveDuration": 2.799,
+      "location": "47.6761778,-122.2686083",
+      "taken": "2025-12-25T11:36:37"
+    },
+    {
+      "description": "Playing in the remodeled basement.",
+      "iPreview": "c30-4-p.jpg",
+      "iThumbnail": "c30-4-t.jpg",
+      "width": 3649,
+      "height": 3978,
+      "size": 1257157,
+      "sizet": 38546,
+      "location": "",
+      "taken": "2026-06-02T08:38:53"
+    },
+    {
+      "description": "First Manzanita sand.",
+      "iPreview": "c30-6-p.jpg",
+      "iThumbnail": "c30-6-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 1722931,
+      "sizet": 41290,
+      "location": "45.7300417,-123.9456472",
+      "taken": "2026-07-21T11:27:04"
+    },
+    {
+      "description": "Playing in the sand with dad.",
+      "iPreview": "c30-5-p.jpg",
+      "iThumbnail": "c30-5-t.jpg",
+      "width": 1920,
+      "height": 1440,
+      "size": 882481,
+      "sizet": 43146,
+      "iLiveVideo": "c30-5-v.mp4",
+      "liveSize": 28354219,
+      "liveDuration": 11.21,
+      "location": "",
+      "taken": ""
+    },
+    {
+      "description": "Cruising the furniture in Manzanita.",
+      "iPreview": "c30-7-p.jpg",
+      "iThumbnail": "c30-7-t.jpg",
+      "width": 2570,
+      "height": 3480,
+      "size": 2696044,
+      "sizet": 49453,
+      "location": "45.7304139,-123.9433361",
+      "taken": "2026-07-21T17:36:20"
+    },
+    {
+      "description": "Cool hoody look.",
+      "iPreview": "c30-9-p.jpg",
+      "iThumbnail": "c30-9-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 1344215,
+      "sizet": 42067,
+      "location": "",
+      "taken": "2026-08-13T09:16:25"
+    },
+    {
+      "description": "Making noise.",
+      "iPreview": "c30-8-p.jpg",
+      "iThumbnail": "c30-8-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 654046,
+      "sizet": 36875,
+      "iLiveVideo": "c30-8-v.mp4",
+      "liveSize": 1864658,
+      "liveDuration": 2.48,
+      "location": "",
+      "taken": "2026-08-13T08:08:12"
+    },
+    {
+      "description": "Going on a hike at Discovery park.",
+      "iPreview": "c30-10-p.jpg",
+      "iThumbnail": "c30-10-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 2566050,
+      "sizet": 85516,
+      "iLiveVideo": "c30-10-v.mp4",
+      "liveSize": 2813241,
+      "liveDuration": 2.627,
+      "location": "",
+      "taken": "2026-08-15T14:11:00"
+    },
+    {
+      "description": "Elli with Elli pillow, a gift from Agatha.",
+      "iPreview": "c30-11-p.jpg",
+      "iThumbnail": "c30-11-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 3214695,
+      "sizet": 46354,
+      "location": "45.7302972,-123.9433361",
+      "taken": "2026-07-22T07:07:20"
+    },
+    {
+      "description": "😀",
+      "iPreview": "c30-12-p.jpg",
+      "iThumbnail": "c30-12-t.jpg",
+      "width": 2747,
+      "height": 3031,
+      "size": 966736,
+      "sizet": 48897,
+      "location": "",
+      "taken": "2026-08-19T14:46:49"
+    },
+    {
+      "description": "Cheese the day.",
+      "iPreview": "c30-13-p.jpg",
+      "iThumbnail": "c30-13-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 905724,
+      "sizet": 28738,
+      "location": "",
+      "taken": "2026-08-19T16:19:01"
+    },
+    {
+      "description": "Walking!",
+      "iPreview": "c30-15-p.jpg",
+      "iThumbnail": "c30-15-t.jpg",
+      "width": 1080,
+      "height": 1920,
+      "size": 400930,
+      "sizet": 44162,
+      "iLiveVideo": "c30-15-v.mp4",
+      "liveSize": 7576154,
+      "liveDuration": 7.208,
+      "location": "",
+      "taken": "2026-09-18T12:44:36"
+    }
+  ],
+  "building": true,
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.19104677804286335,
+        "tx": -39.922253218543744,
+        "ty": 88.41659528886163
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.1337777777777778,
+        "tx": -62.696000000000026,
+        "ty": 264.22799999999995
+      },
+      {
+        "scale": 0.10521473593548133,
+        "tx": 23.035714285714306,
+        "ty": 257.22789022432755
+      },
+      {
+        "scale": 0.21050192327111125,
+        "tx": -209.3718773145602,
+        "ty": 148.22109201407983
+      },
+      {
+        "scale": 0.22395833333333334,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.1873929961089494,
+        "tx": 6.200000000000017,
+        "ty": 140.43618677042798
+      },
+      {
+        "scale": 0.17837037037037043,
+        "tx": -11.83885714285725,
+        "ty": 106.90533333333326
+      },
+      {
+        "scale": 0.17837037037037043,
+        "tx": 0.3039999999999168,
+        "ty": 106.90533333333326
+      },
+      {
+        "scale": 0.17837037037037043,
+        "tx": -102.69600000000008,
+        "ty": 106.90533333333326
+      },
+      {
+        "scale": 0.17837037037037043,
+        "tx": -72.45600000000013,
+        "ty": 106.90533333333326
+      },
+      {
+        "scale": 0.21991956315981076,
+        "tx": -20.299520000000058,
+        "ty": 133.21190203130686
+      },
+      {
+        "scale": 0.1421957671957672,
+        "tx": -2.842170943040401e-14,
+        "ty": 179.83333333333331
+      },
+      {
+        "scale": 0.39814814814814814,
+        "tx": 0,
+        "ty": 84.27777777777777
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.1597981852375366,
+        "tx": 222.12623024610406,
+        "ty": -145.8311011749725
+      },
+      {
+        "scale": 0.1421957671957672,
+        "tx": 179.33333333333331,
+        "ty": -2.842170943040401e-14
+      },
+      {
+        "scale": 0.18675768713274432,
+        "tx": 99.10434777120446,
+        "ty": -127.38758293802687
+      },
+      {
+        "scale": 0.10809451985922575,
+        "tx": 268.78154851684263,
+        "ty": 0
+      },
+      {
+        "scale": 0.20682609403401656,
+        "tx": 52.17053334874325,
+        "ty": -116.18703910731409
+      },
+      {
+        "scale": 0.2986111111111111,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.1235632183908046,
+        "tx": 307.22126436781605,
+        "ty": 0
+      },
+      {
+        "scale": 0.14989672058915018,
+        "tx": 264.9774368142383,
+        "ty": -145.05708682568124
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 304.75,
+        "ty": 0
+      },
+      {
+        "scale": 0.16781421734132504,
+        "tx": 209.91469504013713,
+        "ty": -133.54203260818838
+      },
+      {
+        "scale": 0.12775884833578563,
+        "tx": 284.57387610986405,
+        "ty": -75.91505837968117
+      },
+      {
+        "scale": 0.1418673705047839,
+        "tx": 271.1451666116793,
+        "ty": 0
+      },
+      {
+        "scale": 0.10664682539682539,
+        "tx": 304.75,
+        "ty": 0
+      },
+      {
+        "scale": 0.2892741004209337,
+        "tx": 304.2732222447552,
+        "ty": -59.34934439977002
+      }
+    ]
+  }
+}

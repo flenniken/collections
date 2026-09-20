@@ -676,13 +676,20 @@ must be true when it exists.`)
   const building = cinfo.building === true
 
   // Published collections (not building) must have non-empty text.
-  const nonEmptyFields = ["title", "description",
-    "indexDescription", "posted"]
+  // description is the thumbnails-page collection text.
+  const nonEmptyFields: {key: "title" | "description" | "indexDescription" |
+    "posted", label: string}[] = [
+    {key: "title", label: "title"},
+    {key: "description", label: "description (thumbnails page)"},
+    {key: "indexDescription", label: "indexDescription"},
+    {key: "posted", label: "posted"},
+  ]
   if (!building) {
     let emptyFields: string[] = []
-    nonEmptyFields.forEach(field => {
-      if (cinfo[field as keyof CJson.Collection] === "") {
-        emptyFields.push(field)
+    nonEmptyFields.forEach(({key, label}) => {
+      const value = cinfo[key]
+      if (typeof value !== "string" || value.trim() === "") {
+        emptyFields.push(label)
       }
     })
     if (emptyFields.length > 0) {
@@ -942,7 +949,9 @@ got: ${image.width}.`)
 got: ${image.height}.`)
   }
 
-  if (requireDescriptions && (image.description == "")) {
+  if (requireDescriptions &&
+      (typeof image.description !== "string" ||
+        image.description.trim() === "")) {
     throw new Error(`Collection ${cNum} image ${ix}: description is required \
 when not building.`)
   }
