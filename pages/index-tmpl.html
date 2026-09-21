@@ -134,9 +134,11 @@ view photos only after you open it from that icon.
 <!--$ : posted = html(c.posted, "body") -->
 <!--$ : indexDescription = html(c.indexDescription, "body") -->
 <!--$ : building = if( (c.building), " admin", "") -->
+<!--$ : buildingMark = if( (c.building), "Admin", "") -->
     <div class="collection{building}" id="{cid}">
       <p class="title">{title}</p>
       <p class="posted">{posted}</p>
+      <p class="building-mark">{buildingMark}</p>
       <div class="parent">
         <div class="needs withoutImages">images need downloading</div>
         <img class="thumbnail" src="{tinUrl}" alt="{titleAttr}">

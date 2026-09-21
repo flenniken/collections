@@ -1,0 +1,183 @@
+{
+  "title": "Eugene Party",
+  "indexDescription": "Party at Doug's house in 2009.",
+  "description": "In July 2009 Doug and Sally threw an engagement party at their house in Eugene.  It was well attended and the weather was great.",
+  "cNum": 33,
+  "posted": "2026-09-21",
+  "images": [
+    {
+      "description": "What great looking kids: Alex, Jaclyn, Raya, Aria, Elisabeth, Tom.",
+      "iPreview": "c33-11-p.jpg",
+      "iThumbnail": "c33-11-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1295666,
+      "sizet": 103364,
+      "location": "",
+      "taken": "2009-07-11T15:20:23"
+    },
+    {
+      "description": "😀",
+      "iPreview": "c33-1-p.jpg",
+      "iThumbnail": "c33-1-t.jpg",
+      "width": 3209,
+      "height": 2139,
+      "size": 1019968,
+      "sizet": 43403,
+      "location": "",
+      "taken": "2009-07-11T15:20:26"
+    },
+    {
+      "description": "Kathleen and Tom looking at a photo album.",
+      "iPreview": "c33-2-p.jpg",
+      "iThumbnail": "c33-2-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1903361,
+      "sizet": 50459,
+      "location": "",
+      "taken": "2009-07-11T12:54:09"
+    },
+    {
+      "description": "Jaclyn and Doug conversing in the kitchen.",
+      "iPreview": "c33-5-p.jpg",
+      "iThumbnail": "c33-5-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1873976,
+      "sizet": 93953,
+      "location": "",
+      "taken": "2009-07-11T12:57:15"
+    },
+    {
+      "description": "😀",
+      "iPreview": "c33-9-p.jpg",
+      "iThumbnail": "c33-9-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 951281,
+      "sizet": 36414,
+      "location": "",
+      "taken": "2009-07-11T15:19:52"
+    },
+    {
+      "description": "😀",
+      "iPreview": "c33-10-p.jpg",
+      "iThumbnail": "c33-10-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1001628,
+      "sizet": 38792,
+      "location": "",
+      "taken": "2009-07-11T15:19:54"
+    },
+    {
+      "description": "Naomi and Dorie (Doug's mom)",
+      "iPreview": "c33-14-p.jpg",
+      "iThumbnail": "c33-14-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 1023596,
+      "sizet": 44144,
+      "location": "",
+      "taken": "2009-07-11T15:30:57"
+    },
+    {
+      "description": "Jaclyn and Naomi with Doug in the background with a big smile.",
+      "iPreview": "c33-15-p.jpg",
+      "iThumbnail": "c33-15-t.jpg",
+      "width": 3504,
+      "height": 2336,
+      "size": 992662,
+      "sizet": 38507,
+      "location": "",
+      "taken": "2009-07-11T15:31:55"
+    }
+  ],
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.15393607305936075,
+        "tx": -34.696000000000026,
+        "ty": 286.7026666666666
+      },
+      {
+        "scale": 0.13399813025864754,
+        "tx": 2.842170943040401e-14,
+        "ty": 323.18899968837644
+      },
+      {
+        "scale": 0.15393607305936075,
+        "tx": -49.696000000000026,
+        "ty": 286.7026666666666
+      },
+      {
+        "scale": 0.15393607305936075,
+        "tx": -6.696000000000026,
+        "ty": 286.7026666666666
+      },
+      {
+        "scale": 0.13744292237442923,
+        "tx": -52.80000000000001,
+        "ty": 305.9666666666666
+      },
+      {
+        "scale": 0.12271689497716895,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.12271689497716895,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.15393607305936075,
+        "tx": -43.696000000000026,
+        "ty": 286.7026666666666
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.2230819736258907,
+        "tx": 81.7328615114476,
+        "ty": -87.36612666532523
+      },
+      {
+        "scale": 0.2943444790353435,
+        "tx": -2.413595536495478,
+        "ty": -56.70824668287099
+      },
+      {
+        "scale": 0.2659817351598174,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.30905553443781797,
+        "tx": -6.7306309462181275,
+        "ty": -44.91547828609504
+      },
+      {
+        "scale": 0.1840753424657534,
+        "tx": 143.5,
+        "ty": 2.842170943040401e-14
+      },
+      {
+        "scale": 0.1840753424657534,
+        "tx": 143.5,
+        "ty": 2.842170943040401e-14
+      },
+      {
+        "scale": 0.1840753424657534,
+        "tx": 143.5,
+        "ty": 2.842170943040401e-14
+      },
+      {
+        "scale": 0.16850574659510406,
+        "tx": 161.4637605480484,
+        "ty": 15.07315619618484
+      }
+    ]
+  }
+}

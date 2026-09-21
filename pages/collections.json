@@ -1,6 +1,27 @@
 {
   "indexCollections": [
     {
+      "cNum": 33,
+      "building": false,
+      "title": "Eugene Party",
+      "modified": false,
+      "indexDescription": "Party at Doug's house in 2009.",
+      "iThumbnail": "c33-11-t.jpg",
+      "posted": "2026-09-21",
+      "iCount": 8,
+      "totalSize": 10511174,
+      "iNumList": [
+        11,
+        1,
+        2,
+        5,
+        9,
+        10,
+        14,
+        15
+      ]
+    },
+    {
       "cNum": 32,
       "building": false,
       "title": "Magnuson Park",
@@ -50,7 +71,7 @@
     },
     {
       "cNum": 30,
-      "building": true,
+      "building": false,
       "title": "Eleanor Growing",
       "modified": false,
       "indexDescription": "More pictures of Eleanor.",

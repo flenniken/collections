@@ -104,6 +104,18 @@
   text-align: center;
 }
 
+#index .collection:not(.compact) .building-mark {
+  display: block;
+  margin: 8px 5px 4px 5px;
+  font-size: 1.5em;
+  color: #CC0000;
+  text-align: left;
+}
+
+#index .collection .building-mark:empty {
+  display: none;
+}
+
 #index input.posted {
   display: block;
   margin-left: auto;
