@@ -246,6 +246,24 @@ function setupIndexDescriptionEditing() {
   log("Admin index editing is on.")
 }
 
+function isIndexCollectionImage(target: EventTarget | null): boolean {
+  return target instanceof Element &&
+    !!(target.closest(".thumbnail") || target.closest(".line-thumb"))
+}
+
+function setupIndexImageDragGuard() {
+  // Stop the iOS long-press drag and the image context/share menu on
+  // collection thumbnails. Titles and descriptions stay selectable.
+  document.addEventListener("contextmenu", (event) => {
+    if (isIndexCollectionImage(event.target))
+      event.preventDefault()
+  }, true)
+  document.addEventListener("dragstart", (event) => {
+    if (isIndexCollectionImage(event.target))
+      event.preventDefault()
+  })
+}
+
 async function handleLoad() {
   log("Window load event")
 
@@ -263,6 +281,7 @@ async function handleLoad() {
   if (isLocalhost())
     await refreshIndexFieldsFromJson()
   setupIndexDescriptionEditing()
+  setupIndexImageDragGuard()
 
   // This fails when you are not logged in. Is it ever needed?
   // log("Download shared collection files.")

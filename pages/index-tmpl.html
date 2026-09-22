@@ -141,7 +141,8 @@ view photos only after you open it from that icon.
       <p class="building-mark">{buildingMark}</p>
       <div class="parent">
         <div class="needs withoutImages">images need downloading</div>
-        <img class="thumbnail" src="{tinUrl}" alt="{titleAttr}">
+        <img class="thumbnail" src="{tinUrl}" alt="{titleAttr}"
+          draggable="false">
       </div>
       <p class="description">{indexDescription}</p>
       <div class="bottom-menu">
@@ -170,7 +171,8 @@ view photos only after you open it from that icon.
 <!--$ : building = if( (c.building), " admin", "") -->
     <div class="collection compact{building}" id="{cid}">
       <img class="line-thumb" src="{tinUrl}" alt="{titleAttr}"
-        width="32" height="32" onclick="viewCollection({num})">
+        width="32" height="32" draggable="false"
+        onclick="viewCollection({num})">
       <p class="title">{title}</p>
       <div class="line-icons">
         <img class="icon withoutImages" src="icons/download.svg"
