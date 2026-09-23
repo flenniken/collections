@@ -21,7 +21,8 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <script src="/js/thumbnails.js"></script>
 </head>
 <!--$ nextline -->
-<body id="thumbnails" data-cnum="{s.cNum}">
+<!--$ : locationAttr = html(if(exists(s, "location"), s.location, ""), "attribute") -->
+<body id="thumbnails" data-cnum="{s.cNum}" data-location="{locationAttr}">
   <div id="top-bar">
   </div>
   <div id="container">

@@ -46,21 +46,26 @@ async function handleLoad() {
   log("load event")
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
-  if (isLocalhost())
-    await refreshThumbnailHeading()
+  let location = document.body.dataset.location || ""
+  if (isLocalhost()) {
+    const cinfo = await refreshThumbnailHeading()
+    if (cinfo && typeof cinfo.location === "string")
+      location = cinfo.location
+  }
+  setupCollectionMap(location)
   setupThumbnailTextEditing()
   setupThumbnailReorder()
 }
 
-async function refreshThumbnailHeading() {
+async function refreshThumbnailHeading(): Promise<Record<string, unknown> | null> {
   // Show title and posted date from the collection json so they match
   // in-place edits on the index without a rebuild.
   const cNum = parseInt(document.body.dataset.cnum || "", 10)
   if (!(cNum > 0))
-    return
+    return null
   const cinfo = await fetchCollectionJson(cNum)
   if (!cinfo)
-    return
+    return null
   const titleEl = document.getElementById("title")
   if (titleEl && typeof cinfo.title === "string") {
     titleEl.textContent = cinfo.title
@@ -73,6 +78,20 @@ async function refreshThumbnailHeading() {
   if (descEl && typeof cinfo.description === "string")
     descEl.textContent = cinfo.description
   log(`Thumbnail heading from json: "${cinfo.title}" ${cinfo.posted}`)
+  return cinfo
+}
+
+function setupCollectionMap(location: string) {
+  // Show a collection map under the description when location is set.
+  document.querySelector("#thumbnails .location")?.remove()
+  const parsed = parseLocation(location)
+  if (!parsed)
+    return
+  const desc = document.getElementById("description")
+  if (!desc)
+    return
+  desc.after(createLocationMap(parsed.lat, parsed.lng))
+  observeLocationMaps()
 }
 
 function setupThumbnailTextEditing() {

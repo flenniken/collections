@@ -81,6 +81,11 @@ namespace CJson {
     // Empty is allowed while building.
     description: string;
 
+    // Optional Google Maps decimal-degree coordinates for the
+    // thumbnails page, e.g. "45.6868445,-121.3035183". Empty or
+    // omitted means no collection map.
+    location?: string;
+
     // The date the collection was posted on the internet.
     // Empty is allowed while building.
     posted: string;

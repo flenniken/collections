@@ -394,6 +394,21 @@ function validateCinfoNoReadingSuite() {
 
   cinfo = createTestCinfo({numImages: 1,
     zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.location = "45.6868445, -121.3035183"
+  test(fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.location = ""
+  test(fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.location = "not-a-location"
+  testThrow("The collection 4 location is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
   cinfo.images[0].taken = "2023-06-04T19:04:44"
   test(fn, 4, cinfo)
 

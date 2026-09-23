@@ -639,6 +639,17 @@ ${missingFields.join(", ")}.`)
   }
 }
 
+export function validLocationString(value: string): boolean {
+  // Return true when value is "lat,lng" in decimal degrees.
+  const parts = value.split(",")
+  if (parts.length != 2)
+    return false
+  const lat = parseFloat(parts[0].trim())
+  const lng = parseFloat(parts[1].trim())
+  return isFinite(lat) && isFinite(lng) &&
+    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+}
+
 export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   // Validate the collection information without reading files on disk.
   // The cNum parameter is the expected collection number. The cinfo
@@ -654,7 +665,7 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
     "cNum", "images", "zoomPoints"
   ]
   const optionalFields = [
-    "building", "modified",
+    "building", "modified", "location",
   ]
   validateFields(cNum, cinfo, requiredFields, optionalFields)
 
@@ -671,6 +682,14 @@ must be true when it exists.`)
   if ("modified" in cinfo && cinfo.modified !== true) {
     throw new Error(`The collection ${cinfo.cNum} modified field \
 must be true when it exists.`)
+  }
+  if ("location" in cinfo) {
+    if (typeof cinfo.location !== "string") {
+      throw new Error(`The collection ${cinfo.cNum} location must be a string.`)
+    }
+    if (cinfo.location.trim() !== "" && !validLocationString(cinfo.location)) {
+      throw new Error(`The collection ${cinfo.cNum} location is invalid.`)
+    }
   }
 
   const building = cinfo.building === true

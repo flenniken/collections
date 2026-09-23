@@ -464,12 +464,14 @@ body.thumb-reordering {
   color: #555;
 }
 
-#images .location {
+#images .location,
+#thumbnails .location {
   display: block;
   margin: 0 1em 1.5em 1em;
 }
 
-#images .location-map {
+#images .location-map,
+#thumbnails .location-map {
   display: block;
   position: relative;
   aspect-ratio: 1 / 1;
@@ -483,14 +485,16 @@ body.thumb-reordering {
   -webkit-touch-callout: none;
 }
 
-#images .location-map::after {
+#images .location-map::after,
+#thumbnails .location-map::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
 }
 
-#images .location-map iframe {
+#images .location-map iframe,
+#thumbnails .location-map iframe {
   position: absolute;
   left: 0;
   top: 0;
@@ -500,7 +504,8 @@ body.thumb-reordering {
   pointer-events: none;
 }
 
-#images .location-coords {
+#images .location-coords,
+#thumbnails .location-coords {
   display: block;
   margin-top: 0.45em;
   font-size: 0.9em;

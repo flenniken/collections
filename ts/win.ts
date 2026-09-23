@@ -257,3 +257,124 @@ async function fetchCollectionJson(cNum: number): Promise<Record<string, unknown
     return null
   }
 }
+
+function parseLocation(location?: string): {lat: number, lng: number} | null {
+  // Return lat and lng from a collection location string, or null
+  // when there is no GPS.
+  if (!location)
+    return null
+  const parts = location.split(",")
+  if (parts.length != 2)
+    return null
+  const lat = parseFloat(parts[0].trim())
+  const lng = parseFloat(parts[1].trim())
+  if (!isFinite(lat) || !isFinite(lng))
+    return null
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180)
+    return null
+  return {lat, lng}
+}
+
+function googleMapsUrl(lat: number, lng: number): string {
+  // Return a Google Maps URL for the given coordinates.
+  return `https://www.google.com/maps?q=${lat},${lng}`
+}
+
+function osmEmbedUrl(lat: number, lng: number): string {
+  // Return an OpenStreetMap embed URL centered on the pin.
+  const dLat = 0.008
+  const dLng = dLat / Math.max(Math.cos(lat * Math.PI / 180), 0.2)
+  const bbox = [lng - dLng, lat - dLat, lng + dLng, lat + dLat].join(",")
+  const params = new URLSearchParams({
+    bbox: bbox,
+    layer: "mapnik",
+    marker: `${lat},${lng}`,
+  })
+  return `https://www.openstreetmap.org/export/embed.html?${params.toString()}`
+}
+
+function createLocationMap(lat: number, lng: number): HTMLElement {
+  // Return a tappable map that opens Google Maps, with copyable
+  // coordinates under it. The iframe src is set later, when the map
+  // is near the viewport, so OpenStreetMap does not block page load.
+  const wrap = document.createElement("div")
+  wrap.className = "location"
+
+  const link = document.createElement("a")
+  link.className = "location-map"
+  link.href = googleMapsUrl(lat, lng)
+  link.target = "_blank"
+  link.rel = "noopener noreferrer"
+  link.setAttribute("aria-label", "Open location in Google Maps")
+  link.dataset.osmSrc = osmEmbedUrl(lat, lng)
+
+  const coords = document.createElement("span")
+  coords.className = "location-coords"
+  coords.textContent = `${lat.toFixed(7)}, ${lng.toFixed(7)}`
+
+  wrap.appendChild(link)
+  wrap.appendChild(coords)
+  enableMapTapOrScroll(link)
+  return wrap
+}
+
+function enableMapTapOrScroll(link: HTMLElement) {
+  // Let a drag over the map scroll the page. A tap still opens
+  // Google Maps. The OSM iframe would otherwise eat the gesture.
+  const TAP_PX = 12
+  let startX = 0
+  let startY = 0
+  let dragged = false
+
+  link.addEventListener("touchstart", (event) => {
+    const touch = event.changedTouches[0]
+    startX = touch.clientX
+    startY = touch.clientY
+    dragged = false
+  }, { passive: true })
+
+  link.addEventListener("touchmove", (event) => {
+    const touch = event.changedTouches[0]
+    if (Math.abs(touch.clientX - startX) > TAP_PX ||
+        Math.abs(touch.clientY - startY) > TAP_PX)
+      dragged = true
+  }, { passive: true })
+
+  link.addEventListener("click", (event) => {
+    if (dragged) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  })
+}
+
+function loadLocationMap(link: HTMLElement) {
+  // Start the OpenStreetMap iframe for one map.
+  if (link.querySelector("iframe"))
+    return
+  const src = link.dataset.osmSrc
+  if (!src)
+    return
+  const iframe = document.createElement("iframe")
+  iframe.src = src
+  iframe.tabIndex = -1
+  iframe.setAttribute("aria-hidden", "true")
+  iframe.referrerPolicy = "no-referrer"
+  link.appendChild(iframe)
+}
+
+function observeLocationMaps() {
+  // Load a map only when its gray square is close to on screen.
+  const maps = document.querySelectorAll(".location-map")
+  if (maps.length === 0)
+    return
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting)
+        continue
+      loadLocationMap(entry.target as HTMLElement)
+      observer.unobserve(entry.target)
+    }
+  }, { rootMargin: "100px" })
+  maps.forEach(map => observer.observe(map))
+}
