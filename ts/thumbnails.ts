@@ -55,6 +55,7 @@ async function handleLoad() {
   setupCollectionMap(location)
   setupThumbnailTextEditing()
   setupThumbnailReorder()
+  setupThumbnailCrop()
 }
 
 async function refreshThumbnailHeading(): Promise<Record<string, unknown> | null> {
@@ -416,6 +417,8 @@ function setupThumbnailReorder() {
   container.addEventListener("pointerdown", (event) => {
     if (event.button !== 0)
       return
+    if (event.metaKey || event.ctrlKey)
+      return
     const link = event.target instanceof Element
       ? event.target.closest("#container > a")
       : null
@@ -476,6 +479,330 @@ function setupThumbnailReorder() {
   }, true)
 
   log("Admin thumbnail reorder is on.")
+}
+
+function previewNameFromThumbSrc(src: string): string | null {
+  const file = (src.split("/").pop() || "").split("?")[0]
+  const match = file.match(/^(c\d+-\d+)-t\.jpg$/i)
+  if (!match)
+    return null
+  return `${match[1]}-p.jpg`
+}
+
+const MIN_CROP_SIDE = 480
+
+type CropHandle = "nw" | "ne" | "sw" | "se"
+
+interface CropRect {
+  x: number
+  y: number
+  size: number
+}
+
+function isCropHandle(value: string | null): value is CropHandle {
+  return value == "nw" || value == "ne" || value == "sw" || value == "se"
+}
+
+function initialCropRect(dw: number, dh: number): CropRect {
+  const size = Math.min(dw, dh)
+  return { x: (dw - size) / 2, y: (dh - size) / 2, size }
+}
+
+function moveCropRect(rect: CropRect, dx: number, dy: number,
+    dw: number, dh: number): CropRect {
+  return {
+    x: Math.max(0, Math.min(dw - rect.size, rect.x + dx)),
+    y: Math.max(0, Math.min(dh - rect.size, rect.y + dy)),
+    size: rect.size,
+  }
+}
+
+function resizeCropFromHandle(rect: CropRect, handle: CropHandle,
+    px: number, py: number, dw: number, dh: number, minSize: number): CropRect {
+  const right = rect.x + rect.size
+  const bottom = rect.y + rect.size
+  let size: number
+  let maxForHandle: number
+  if (handle == "se") {
+    size = Math.min(px - rect.x, py - rect.y)
+    maxForHandle = Math.min(dw - rect.x, dh - rect.y)
+  }
+  else if (handle == "nw") {
+    size = Math.min(right - px, bottom - py)
+    maxForHandle = Math.min(right, bottom)
+  }
+  else if (handle == "ne") {
+    size = Math.min(px - rect.x, bottom - py)
+    maxForHandle = Math.min(dw - rect.x, bottom)
+  }
+  else {
+    size = Math.min(right - px, py - rect.y)
+    maxForHandle = Math.min(right, dh - rect.y)
+  }
+  size = Math.max(minSize, Math.min(maxForHandle, size))
+  if (handle == "nw")
+    return { x: right - size, y: bottom - size, size }
+  if (handle == "ne")
+    return { x: rect.x, y: bottom - size, size }
+  if (handle == "sw")
+    return { x: right - size, y: rect.y, size }
+  return { x: rect.x, y: rect.y, size }
+}
+
+function sourceFromCropRect(rect: CropRect, k: number, nw: number,
+    nh: number): {left: number, top: number, side: number} {
+  const maxSide = Math.min(nw, nh)
+  let side = Math.round(rect.size / k)
+  side = Math.max(MIN_CROP_SIDE, Math.min(maxSide, side))
+  let left = Math.round(rect.x / k)
+  let top = Math.round(rect.y / k)
+  left = Math.max(0, Math.min(nw - side, left))
+  top = Math.max(0, Math.min(nh - side, top))
+  return { left, top, side }
+}
+
+function setupThumbnailCrop() {
+  // Command-click a thumbnail to recrop it. Localhost admin.
+  if (!isAdmin() || !isLocalhost())
+    return
+  if (typeof HTMLDialogElement === "undefined")
+    return
+  const container = get("container")
+  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  if (!(cNum > 0))
+    return
+
+  const dialog = document.createElement("dialog")
+  dialog.id = "thumb-crop-dialog"
+  dialog.className = "thumb-crop-dialog"
+  dialog.setAttribute("aria-label", "Crop thumbnail")
+  dialog.innerHTML =
+    '<div class="thumb-crop-stage">' +
+    '<img alt="" draggable="false">' +
+    '<div class="thumb-crop-square" hidden>' +
+    '<span class="thumb-crop-handle" data-handle="nw"></span>' +
+    '<span class="thumb-crop-handle" data-handle="ne"></span>' +
+    '<span class="thumb-crop-handle" data-handle="sw"></span>' +
+    '<span class="thumb-crop-handle" data-handle="se"></span>' +
+    "</div></div>" +
+    '<div class="thumb-crop-actions">' +
+    '<button type="button" class="thumb-crop-cancel">Cancel</button>' +
+    '<button type="button" class="thumb-crop-ok">OK</button>' +
+    "</div>"
+  document.body.appendChild(dialog)
+
+  const stage = dialog.querySelector(".thumb-crop-stage") as HTMLElement
+  const square = dialog.querySelector(".thumb-crop-square") as HTMLElement
+  const img = dialog.querySelector("img") as HTMLImageElement
+  const cancelBtn = dialog.querySelector(".thumb-crop-cancel") as HTMLButtonElement
+  const okBtn = dialog.querySelector(".thumb-crop-ok") as HTMLButtonElement
+
+  let nw = 0
+  let nh = 0
+  let dw = 0
+  let dh = 0
+  let k = 1
+  let rect: CropRect = { x: 0, y: 0, size: 0 }
+  let cropTarget: HTMLImageElement | null = null
+  let preview = ""
+  let drag: {
+    kind: "pan" | "resize"
+    handle?: CropHandle
+    startX: number
+    startY: number
+    orig: CropRect
+  } | null = null
+  let saving = false
+
+  function applyRect() {
+    square.style.left = `${rect.x}px`
+    square.style.top = `${rect.y}px`
+    square.style.width = `${rect.size}px`
+    square.style.height = `${rect.size}px`
+  }
+
+  function closeDialog() {
+    drag = null
+    saving = false
+    cropTarget = null
+    preview = ""
+    square.hidden = true
+    okBtn.disabled = false
+    cancelBtn.disabled = false
+    stage.classList.remove("dragging", "resizing")
+    if (dialog.open)
+      dialog.close()
+  }
+
+  function stageMax(): {maxW: number, maxH: number} {
+    return {
+      maxW: Math.max(240, Math.min(720, window.innerWidth - 48)),
+      maxH: Math.max(240, Math.min(720, window.innerHeight - 180)),
+    }
+  }
+
+  function openFor(link: HTMLAnchorElement) {
+    const thumb = link.querySelector("img")
+    if (!(thumb instanceof HTMLImageElement))
+      return
+    const name = previewNameFromThumbSrc(thumb.getAttribute("src") || "")
+    if (!name)
+      return
+    preview = name
+    cropTarget = thumb
+    img.removeAttribute("src")
+    img.src = ""
+    img.style.width = ""
+    img.style.height = ""
+    square.hidden = true
+    nw = 0
+    nh = 0
+    okBtn.disabled = true
+    dialog.showModal()
+    img.src = `/images/c${cNum}/${preview}`
+  }
+
+  img.addEventListener("load", () => {
+    nw = img.naturalWidth
+    nh = img.naturalHeight
+    if (nw < 1 || nh < 1) {
+      logError("Preview has no size.")
+      closeDialog()
+      return
+    }
+    const max = stageMax()
+    k = Math.min(max.maxW / nw, max.maxH / nh)
+    dw = nw * k
+    dh = nh * k
+    stage.style.width = `${dw}px`
+    stage.style.height = `${dh}px`
+    img.style.width = `${dw}px`
+    img.style.height = `${dh}px`
+    rect = initialCropRect(dw, dh)
+    applyRect()
+    square.hidden = false
+    okBtn.disabled = false
+  })
+  img.addEventListener("error", () => {
+    logError(`Unable to load preview: ${preview}`)
+    closeDialog()
+  })
+
+  stage.addEventListener("pointerdown", (event) => {
+    if (event.button !== 0 || saving || nw < 1 || square.hidden)
+      return
+    const handleEl = event.target instanceof Element
+      ? event.target.closest(".thumb-crop-handle")
+      : null
+    const handle = handleEl ? handleEl.getAttribute("data-handle") : null
+    const onSquare = event.target instanceof Element &&
+      (event.target === square || square.contains(event.target))
+    if (!isCropHandle(handle) && !onSquare)
+      return
+    event.preventDefault()
+    if (isCropHandle(handle)) {
+      drag = {
+        kind: "resize",
+        handle,
+        startX: event.clientX,
+        startY: event.clientY,
+        orig: { x: rect.x, y: rect.y, size: rect.size },
+      }
+      stage.classList.add("resizing")
+    }
+    else {
+      drag = {
+        kind: "pan",
+        startX: event.clientX,
+        startY: event.clientY,
+        orig: { x: rect.x, y: rect.y, size: rect.size },
+      }
+      stage.classList.add("dragging")
+    }
+    stage.setPointerCapture(event.pointerId)
+  })
+  stage.addEventListener("pointermove", (event) => {
+    if (!drag)
+      return
+    if (drag.kind == "pan") {
+      rect = moveCropRect(
+        drag.orig,
+        event.clientX - drag.startX,
+        event.clientY - drag.startY,
+        dw, dh)
+    }
+    else if (drag.handle) {
+      const box = stage.getBoundingClientRect()
+      rect = resizeCropFromHandle(
+        drag.orig,
+        drag.handle,
+        event.clientX - box.left,
+        event.clientY - box.top,
+        dw, dh, MIN_CROP_SIDE * k)
+    }
+    applyRect()
+  })
+  function endDrag(event: PointerEvent) {
+    if (!drag)
+      return
+    if (stage.hasPointerCapture(event.pointerId))
+      stage.releasePointerCapture(event.pointerId)
+    drag = null
+    stage.classList.remove("dragging", "resizing")
+  }
+  stage.addEventListener("pointerup", endDrag)
+  stage.addEventListener("pointercancel", endDrag)
+
+  cancelBtn.addEventListener("click", () => {
+    closeDialog()
+  })
+  okBtn.addEventListener("click", () => {
+    if (saving || !cropTarget || !preview || nw < 1)
+      return
+    const origin = sourceFromCropRect(rect, k, nw, nh)
+    const target = cropTarget
+    const thumbName = preview.replace(/-p\.jpg$/i, "-t.jpg")
+    saving = true
+    okBtn.disabled = true
+    cancelBtn.disabled = true
+    void saveThumbnail(cNum, preview, origin.left, origin.top, origin.side).then(
+      async () => {
+        const url = `/images/c${cNum}/${thumbName}`
+        await forgetCachedImage(url)
+        target.src = `${url}?t=${Date.now()}`
+        log(`Thumbnail saved: ${thumbName}`)
+        closeDialog()
+      }).catch((error) => {
+        saving = false
+        okBtn.disabled = false
+        cancelBtn.disabled = false
+        logError("Thumbnail save failed", error)
+      })
+  })
+  dialog.addEventListener("cancel", (event) => {
+    if (saving) {
+      event.preventDefault()
+      return
+    }
+    closeDialog()
+  })
+
+  container.addEventListener("click", (event) => {
+    if (!(event.metaKey || event.ctrlKey) || event.button !== 0)
+      return
+    const link = event.target instanceof Element
+      ? event.target.closest("#container > a")
+      : null
+    if (!(link instanceof HTMLAnchorElement))
+      return
+    event.preventDefault()
+    event.stopPropagation()
+    if (document.body.classList.contains("thumb-reordering"))
+      return
+    openFor(link)
+  }, true)
+
+  log("Admin thumbnail crop is on.")
 }
 
 function handleResize() {

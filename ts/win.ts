@@ -155,6 +155,33 @@ async function saveOrder(cNum: number, order: number[]) {
   return await response.json()
 }
 
+async function saveThumbnail(cNum: number, preview: string,
+    left: number, top: number, side: number) {
+  // Crop a preview square to a 480 x 480 thumbnail on disk.
+  const response = await fetch(
+    "http://localhost:3001/saveThumbnail",
+    {
+      method: "POST",
+      headers:
+      {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ cNum, preview, left, top, side })
+    })
+  if (!response.ok)
+    throw new Error(`Save failed: ${response.status}`)
+  return await response.json()
+}
+
+async function forgetCachedImage(url: string) {
+  // Drop a cached jpg so a recropped thumbnail is visible.
+  try {
+    const cache = await caches.open(appCacheName)
+    await cache.delete(url, { ignoreSearch: true })
+  } catch {
+  }
+}
+
 function editedTextFromElement(el: HTMLElement): string {
   // textContent, not innerText. innerText is empty while the page is
   // visibility:hidden, which would save blank titles and descriptions.

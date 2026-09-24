@@ -137,6 +137,9 @@ When making changes to the image page test them with these steps:
     and verify `description` is updated in `cN.json`
   * as admin on localhost, long-press a thumbnail, drag it onto
     another, drop, and verify the photos reorder in `cN.json`
+  * as admin on localhost, Command-click a thumbnail, drag the
+    crop square or a corner, tap OK, and verify the `-t.jpg`
+    file changes
 
 [⬇](#Contents)
 

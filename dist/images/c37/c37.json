@@ -1,0 +1,184 @@
+{
+  "title": "Zion Sunglasses",
+  "indexDescription": "Everyone in sunglasses at Zion in 2004.",
+  "description": "In August 2002 we toured the southwest.  At Zion it was hot and sunny and everyone was wearing sunglasses and looking cool.",
+  "cNum": 37,
+  "posted": "2026-09-24",
+  "images": [
+    {
+      "description": "Alex",
+      "iPreview": "c37-1-p.jpg",
+      "iThumbnail": "c37-1-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 466319,
+      "sizet": 43357,
+      "location": "",
+      "taken": "2002-08-09T11:16:51"
+    },
+    {
+      "description": "Elisabeth",
+      "iPreview": "c37-2-p.jpg",
+      "iThumbnail": "c37-2-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 406600,
+      "sizet": 33793,
+      "location": "",
+      "taken": "2002-08-09T11:17:11"
+    },
+    {
+      "description": "Tom",
+      "iPreview": "c37-5-p.jpg",
+      "iThumbnail": "c37-5-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 444423,
+      "sizet": 37597,
+      "location": "",
+      "taken": "2002-08-09T11:17:44"
+    },
+    {
+      "description": "The near by mountain in Zion.",
+      "iPreview": "c37-8-p.jpg",
+      "iThumbnail": "c37-8-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 682649,
+      "sizet": 62104,
+      "location": "",
+      "taken": "2002-08-09T11:25:49"
+    },
+    {
+      "description": "I'm cool.",
+      "iPreview": "c37-3-p.jpg",
+      "iThumbnail": "c37-3-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 365695,
+      "sizet": 31233,
+      "location": "",
+      "taken": "2002-08-09T11:17:24"
+    },
+    {
+      "description": "😀",
+      "iPreview": "c37-4-p.jpg",
+      "iThumbnail": "c37-4-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 366992,
+      "sizet": 32237,
+      "location": "",
+      "taken": "2002-08-09T11:17:35"
+    },
+    {
+      "description": "😀",
+      "iPreview": "c37-6-p.jpg",
+      "iThumbnail": "c37-6-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 500353,
+      "sizet": 43082,
+      "location": "",
+      "taken": "2002-08-09T11:17:53"
+    },
+    {
+      "description": "Kathleen is cool too.",
+      "iPreview": "c37-7-p.jpg",
+      "iThumbnail": "c37-7-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 440866,
+      "sizet": 39462,
+      "location": "",
+      "taken": "2002-08-09T11:18:07"
+    }
+  ],
+  "building": true,
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.45737934296519356,
+        "tx": -2.6276108516998704,
+        "ty": -15.486386467660765
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      }
+    ]
+  }
+}

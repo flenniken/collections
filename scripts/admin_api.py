@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 """
-Admin API for saving collection JSON files on localhost.
+Admin API for saving collection JSON and thumbnails on localhost.
 """
 
 import os
@@ -11,6 +11,9 @@ if not os.environ.get("coder_env"):
   exit(1)
 
 import json
+import math
+import re
+import shutil
 import sys
 import tempfile
 import threading
@@ -19,6 +22,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from PIL import Image, ImageDraw, ImageOps
 
 # 0.0.0.0 so docker can publish 127.0.0.1:3001:3001 to the host.
 HOST = "0.0.0.0"
@@ -29,7 +33,12 @@ ALLOWED_ORIGINS = (
   "http://localhost:8000",
   "http://127.0.0.1:8000",
 )
-SAVE_PATHS = ("/saveCollection", "/saveDescription", "/saveOrder")
+SAVE_PATHS = (
+  "/saveCollection", "/saveDescription", "/saveOrder", "/saveThumbnail",
+)
+THUMB_SIZE = 480
+JPEG_QUALITY = 80
+PREVIEW_RE = re.compile(r"^c(\d+)-(\d+)-p\.jpg$")
 TEXT_FIELDS = (
   "description", "indexDescription", "imageDescription", "title", "posted",
 )
@@ -176,6 +185,119 @@ def saveOrder(payload, root=None):
   collection.pop("order", None)
   return writeCollectionJson(collection, root=root)
 
+def cropOrigin(value, name):
+  """
+  Return a non-negative pixel offset from JSON.
+  """
+  if isinstance(value, bool) or not isinstance(value, (int, float)):
+    raise AdminApiException(f"Invalid {name}")
+  if not math.isfinite(value):
+    raise AdminApiException(f"Invalid {name}")
+  origin = int(round(value))
+  if origin < 0:
+    raise AdminApiException(f"Invalid {name}")
+  return origin
+
+def thumbnailNameFromPreview(preview):
+  """
+  Return cN-M-t.jpg for a preview basename.
+  """
+  match = PREVIEW_RE.fullmatch(preview)
+  if not match:
+    raise AdminApiException("Invalid preview")
+  return f"c{match.group(1)}-{match.group(2)}-t.jpg"
+
+def writeCroppedThumbnail(previewPath, thumbPath, left, top, side=None):
+  """
+  Write a 480 x 480 JPEG from a square crop of the preview.
+  side defaults to the largest square that fits. It cannot be
+  smaller than 480.
+  """
+  with Image.open(previewPath) as img:
+    rgb = ImageOps.exif_transpose(img).convert("RGB")
+    width, height = rgb.size
+    maxSide = min(width, height)
+    if maxSide < THUMB_SIZE:
+      raise AdminApiException("Preview is too small")
+    if side is None:
+      side = maxSide
+    if side < THUMB_SIZE or side > maxSide:
+      raise AdminApiException("Invalid crop")
+    if left + side > width or top + side > height:
+      raise AdminApiException("Invalid crop")
+    square = rgb.crop((left, top, left + side, top + side))
+    thumb = square.resize((THUMB_SIZE, THUMB_SIZE), Image.Resampling.LANCZOS)
+    tmpPath = thumbPath.with_name(thumbPath.name + ".tmp")
+    thumb.save(
+      tmpPath,
+      format="JPEG",
+      quality=JPEG_QUALITY,
+      optimize=True,
+    )
+  tmpPath.replace(thumbPath)
+
+def saveThumbnail(payload, root=None):
+  """
+  Crop a preview to a 480 x 480 thumbnail and update sizet.
+  """
+  if not isinstance(payload, dict):
+    raise AdminApiException("Invalid JSON")
+  preview = payload.get("preview")
+  if not isinstance(preview, str) or not PREVIEW_RE.fullmatch(preview):
+    raise AdminApiException("Invalid preview")
+  path = collectionJsonPath(payload, root=root)
+  cNum = payload.get("cNum")
+  match = PREVIEW_RE.fullmatch(preview)
+  if int(match.group(1)) != cNum:
+    raise AdminApiException("Invalid preview")
+  if not path.is_file():
+    raise AdminApiException(f"Missing collection json: {path}")
+  try:
+    collection = json.loads(path.read_text(encoding="utf-8"))
+  except json.JSONDecodeError:
+    raise AdminApiException("Invalid collection json")
+  if not isinstance(collection, dict):
+    raise AdminApiException("Invalid collection json")
+  if collection.get("cNum") != cNum:
+    raise AdminApiException("cNum does not match file")
+  images = collection.get("images")
+  if not isinstance(images, list):
+    raise AdminApiException("Invalid images")
+  image = None
+  imageIx = None
+  for ix, item in enumerate(images):
+    if isinstance(item, dict) and item.get("iPreview") == preview:
+      image = item
+      imageIx = ix
+      break
+  if image is None:
+    raise AdminApiException("Preview is not in the collection")
+
+  folder = path.parent
+  previewPath = folder / preview
+  if not previewPath.is_file():
+    raise AdminApiException(f"Missing preview: {preview}")
+  left = cropOrigin(payload.get("left"), "left")
+  top = cropOrigin(payload.get("top"), "top")
+  side = None
+  if "side" in payload and payload.get("side") is not None:
+    side = cropOrigin(payload.get("side"), "side")
+  thumbName = thumbnailNameFromPreview(preview)
+  thumbPath = folder / thumbName
+  writeCroppedThumbnail(previewPath, thumbPath, left, top, side)
+  image["iThumbnail"] = thumbName
+  image["sizet"] = thumbPath.stat().st_size
+  writeCollectionJson(collection, root=root)
+
+  tinDir = (root or COLLECTIONS_ROOT) / "dist" / "tin"
+  tinPath = tinDir / thumbName
+  if imageIx == 0:
+    tinDir.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(thumbPath, tinPath)
+  elif tinPath.is_file():
+    shutil.copyfile(thumbPath, tinPath)
+  return thumbPath
+
 class ApiHandler(BaseHTTPRequestHandler):
   server_version = "CollectionsAdminAPI/1.0"
 
@@ -212,8 +334,10 @@ class ApiHandler(BaseHTTPRequestHandler):
         path = writeCollectionJson(payload, root=self.server.collectionsRoot)
       elif self.path == "/saveDescription":
         path = saveDescription(payload, root=self.server.collectionsRoot)
-      else:
+      elif self.path == "/saveOrder":
         path = saveOrder(payload, root=self.server.collectionsRoot)
+      else:
+        path = saveThumbnail(payload, root=self.server.collectionsRoot)
     except AdminApiException as ex:
       self.sendJson(400, {"ok": False, "message": str(ex)})
       return
@@ -575,6 +699,168 @@ class TestModule(unittest.TestCase):
       saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
       self.assertEqual([image["description"] for image in saved["images"]],
         ["img1", "img2", "img0"])
+    finally:
+      server.shutdown()
+      server.server_close()
+      thread.join(timeout=2)
+
+  def writePreviewJpeg(self, name, width, height, color, mark=None):
+    path = self.folder / name
+    img = Image.new("RGB", (width, height), color)
+    if mark is not None:
+      box, markColor = mark
+      draw = ImageDraw.Draw(img)
+      draw.rectangle(box, fill=markColor)
+    img.save(path, format="JPEG", quality=90)
+    return path
+
+  def writeCollectionForThumb(self):
+    collection = {
+      "cNum": 9,
+      "title": "Keep me",
+      "images": [
+        {
+          "iPreview": "c9-1-p.jpg",
+          "iThumbnail": "c9-1-t.jpg",
+          "description": "img0",
+          "sizet": 1,
+        },
+        {
+          "iPreview": "c9-2-p.jpg",
+          "iThumbnail": "c9-2-t.jpg",
+          "description": "img1",
+          "sizet": 1,
+        },
+      ],
+    }
+    writeCollectionJson(collection, root=self.root)
+    return collection
+
+  def test_saveThumbnail_landscape_left(self):
+    self.writeCollectionForThumb()
+    self.writePreviewJpeg(
+      "c9-1-p.jpg", 1000, 600, (0, 0, 255),
+      mark=((0, 200, 200, 400), (255, 0, 0)))
+    path = saveThumbnail({
+      "cNum": 9,
+      "preview": "c9-1-p.jpg",
+      "left": 0,
+      "top": 0,
+    }, root=self.root)
+    self.assertEqual(path, self.folder / "c9-1-t.jpg")
+    with Image.open(path) as thumb:
+      self.assertEqual(thumb.size, (480, 480))
+      left = thumb.getpixel((20, 240))
+      self.assertGreater(left[0], 240)
+      self.assertLess(left[1], 20)
+      self.assertLess(left[2], 20)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["images"][0]["sizet"], path.stat().st_size)
+    self.assertEqual(saved["title"], "Keep me")
+    tin = self.root / "dist" / "tin" / "c9-1-t.jpg"
+    self.assertTrue(tin.is_file())
+    self.assertEqual(tin.stat().st_size, path.stat().st_size)
+
+  def test_saveThumbnail_center_not_left_mark(self):
+    self.writeCollectionForThumb()
+    self.writePreviewJpeg(
+      "c9-1-p.jpg", 1000, 600, (0, 0, 255),
+      mark=((0, 200, 200, 400), (255, 0, 0)))
+    path = saveThumbnail({
+      "cNum": 9,
+      "preview": "c9-1-p.jpg",
+      "left": 200,
+      "top": 0,
+    }, root=self.root)
+    with Image.open(path) as thumb:
+      center = thumb.getpixel((240, 240))
+      self.assertLess(center[0], 20)
+      self.assertLess(center[1], 20)
+      self.assertGreater(center[2], 240)
+
+  def test_saveThumbnail_invalid_crop(self):
+    self.writeCollectionForThumb()
+    self.writePreviewJpeg("c9-1-p.jpg", 1000, 600, (0, 0, 255))
+    with self.assertRaises(AdminApiException):
+      saveThumbnail({
+        "cNum": 9,
+        "preview": "c9-1-p.jpg",
+        "left": 401,
+        "top": 0,
+      }, root=self.root)
+
+  def test_saveThumbnail_small_square(self):
+    self.writeCollectionForThumb()
+    self.writePreviewJpeg(
+      "c9-1-p.jpg", 1000, 800, (0, 0, 255),
+      mark=((0, 0, 480, 480), (255, 0, 0)))
+    path = saveThumbnail({
+      "cNum": 9,
+      "preview": "c9-1-p.jpg",
+      "left": 0,
+      "top": 0,
+      "side": 480,
+    }, root=self.root)
+    with Image.open(path) as thumb:
+      self.assertEqual(thumb.size, (480, 480))
+      pixel = thumb.getpixel((20, 20))
+      self.assertGreater(pixel[0], 240)
+      self.assertLess(pixel[1], 20)
+      self.assertLess(pixel[2], 20)
+
+  def test_saveThumbnail_side_too_small(self):
+    self.writeCollectionForThumb()
+    self.writePreviewJpeg("c9-1-p.jpg", 1000, 800, (0, 0, 255))
+    with self.assertRaises(AdminApiException):
+      saveThumbnail({
+        "cNum": 9,
+        "preview": "c9-1-p.jpg",
+        "left": 0,
+        "top": 0,
+        "side": 479,
+      }, root=self.root)
+
+  def test_saveThumbnail_second_image_skips_missing_tin(self):
+    self.writeCollectionForThumb()
+    self.writePreviewJpeg("c9-2-p.jpg", 800, 1000, (0, 255, 0))
+    saveThumbnail({
+      "cNum": 9,
+      "preview": "c9-2-p.jpg",
+      "left": 0,
+      "top": 0,
+    }, root=self.root)
+    self.assertFalse((self.root / "dist" / "tin" / "c9-2-t.jpg").exists())
+    self.assertTrue((self.folder / "c9-2-t.jpg").is_file())
+
+  def test_saveThumbnailPost(self):
+    self.writeCollectionForThumb()
+    self.writePreviewJpeg("c9-1-p.jpg", 800, 800, (0, 0, 255))
+    server = AdminHTTPServer(("127.0.0.1", 0), ApiHandler, self.root)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+      port = server.server_address[1]
+      body = json.dumps({
+        "cNum": 9,
+        "preview": "c9-1-p.jpg",
+        "left": 0,
+        "top": 0,
+      }).encode("utf-8")
+      request = Request(
+        f"http://127.0.0.1:{port}/saveThumbnail",
+        data=body,
+        headers={
+          "Content-Type": "application/json",
+          "Origin": "http://localhost:8000",
+        },
+        method="POST",
+      )
+      with urlopen(request) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+        self.assertEqual(response.status, 200)
+      self.assertTrue(payload["ok"])
+      self.assertEqual(payload["path"], "dist/images/c9/c9-1-t.jpg")
+      self.assertTrue((self.folder / "c9-1-t.jpg").is_file())
     finally:
       server.shutdown()
       server.server_close()

@@ -44,9 +44,9 @@ command runs the docker container. The command prompt shows you're in
 the build environment in the collections folder.
 
 The container publishes localhost port 8000 for the website and
-localhost port 3001 for the admin API that saves collection JSON
-files and merges individual descriptions. Cron, nginx, and the admin
-API start with the container.
+localhost port 3001 for the admin API that saves collection JSON,
+merges individual descriptions, and writes recropped thumbnails.
+Cron, nginx, and the admin API start with the container.
 
 ~~~
 cd ~/code/collections

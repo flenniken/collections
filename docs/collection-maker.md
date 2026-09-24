@@ -165,7 +165,8 @@ make: c29-4-t.jpg
 
 Check the thumbnails in the finder.
 
-If a thumbnail does not look good, manually make a new one.
+If a thumbnail does not look good, Command-click it on the thumbnails
+page as localhost admin and drag the crop, or manually make a new one.
 
 * in the finder, trash the thumbnail
 * duplicate the preview
@@ -263,6 +264,12 @@ localhost the change is automatically merged into
   To set the image order use localhost as admin, long-press a thumbnail on the thumbnails page
   then drag it to a new place. The admin API rearranges the `images` (and
   zoom points) in `cN.json`. Run `g all` so the image page matches.
+
+  If a center-cropped thumbnail looks wrong, Command-click it (Control-click
+  on Windows) to open a crop dialog. The square starts as large as it can.
+  Drag it to move, or drag a corner to shrink or grow it. It cannot go
+  below 480 pixels on the preview. Then OK. The admin API overwrites the
+  `-t.jpg` file from the preview.
 
 * image page -- edit each photo's description
 
