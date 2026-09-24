@@ -165,12 +165,15 @@ make: c29-4-t.jpg
 
 Check the thumbnails in the finder.
 
-If a thumbnail does not look good, crop it square 480 x 480 in
-Photoshop and save over the `-t.jpg` file.
+If a thumbnail does not look good, manually make a new one.
 
+* in the finder, trash the thumbnail
+* duplicate the preview
+* rename the dup as the thumbnail
+* in Photoshop, open the -t photo
 * use the crop tool
-* use the Image Size dialog (option+command i)
-* save
+* use the image size dialog (option+command i)
+* save, quality 8
 * close
 
 The folder should contain matching `-p.jpg` and `-t.jpg` files, optional
@@ -210,6 +213,22 @@ Wrote 16 images (16 with GPS, 16 with time) to tmp/c29/c29.json
   c29-4-p.jpg  45.7080528,-123.9415139  2019-07-14T13:37:13
   c29-5-p.jpg  45.7080000,-123.9393306  2019-07-14T18:55:24
 ~~~
+
+You can optionally add a location for the thumbnails page which will
+show a map below the description.  Open the cN.json and add
+the location as shown below.
+
+You can get the GPS coordinates from google maps by dropping a pin
+then opening the information below. It will show something like
+(45.6868445, -121.3035183) which you can copy and paste.
+
+~~~
+  "cNum": 35,
+  "posted": "",
+  "location": "45.6868445,-121.3035183",
+  "images": [
+~~~
+
 
 Move the folder into dist, then build:
 

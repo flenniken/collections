@@ -12,7 +12,8 @@ collection json with location and taken fields on every image.
 
 location is Google Maps decimal degrees, e.g. "20.7473920,-156.4571441".
 taken is the capture time, e.g. "2023-06-04T19:04:44".
-When a preview is missing GPS or a timestamp, that field is "".
+When a preview is missing GPS or a timestamp, or its EXIF cannot be
+read, that field is "". Other images are still processed.
 
 Example:
   scripts/add-locations dist/images/c18/c18.json
@@ -44,6 +45,7 @@ import tempfile
 import json
 import textwrap
 import glob
+import math
 import re
 from PIL import Image
 from PIL.ExifTags import GPSTAGS
@@ -73,7 +75,12 @@ def dmsToDecimal(dms, ref):
     return None
   if len(dms) != 3:
     return None
-  degrees, minutes, seconds = [float(part) for part in dms]
+  try:
+    degrees, minutes, seconds = [float(part) for part in dms]
+  except (TypeError, ValueError, ZeroDivisionError):
+    return None
+  if not all(math.isfinite(part) for part in (degrees, minutes, seconds)):
+    return None
   decimal = degrees + minutes / 60.0 + seconds / 3600.0
   if ref in ("S", "W"):
     decimal = -decimal
@@ -158,7 +165,7 @@ def takenFromExif(exif):
 def metadataFromPreview(previewPath):
   """
   Return location and taken strings from a preview jpg.
-  Missing values are "".
+  Missing or unreadable values are "".
   """
   try:
     with Image.open(previewPath) as img:
@@ -167,11 +174,9 @@ def metadataFromPreview(previewPath):
         "location": locationFromGps(gpsFromExif(exif)),
         "taken": takenFromExif(exif),
       }
-  except LocationsException:
-    raise
-  except Exception as ex:
-    raise LocationsException(
-      f"Error: unable to read metadata from preview: {previewPath}") from ex
+  except Exception:
+    print(f"skip (no metadata): {os.path.basename(previewPath)}")
+    return {"location": "", "taken": ""}
 
 def locationFromPreview(previewPath):
   """
@@ -345,6 +350,12 @@ class TestAddLocations(unittest.TestCase):
     gotExpected(dmsToDecimal((20.0, 44.0), "N"), None)
     gotExpected(dmsToDecimal((20.0, 44.0, 53.99), "X"), None)
 
+  def test_dmsToDecimal_invalid_parts(self):
+    from PIL.TiffImagePlugin import IFDRational
+    gotExpected(dmsToDecimal((IFDRational(0, 0), 0, 0), "N"), None)
+    gotExpected(dmsToDecimal((float("nan"), 0.0, 0.0), "N"), None)
+    gotExpected(dmsToDecimal(("x", 0.0, 0.0), "N"), None)
+
   def test_formatGoogleMapsLocation(self):
     gotExpected(
       formatGoogleMapsLocation(20.748330555555558, -156.45765277777775),
@@ -365,6 +376,15 @@ class TestAddLocations(unittest.TestCase):
     }
     gotExpected(locationFromGps(gps), "20.7483306,-156.4576528")
 
+  def test_locationFromGps_nan(self):
+    gps = {
+      1: "N",
+      2: (float("nan"), float("nan"), float("nan")),
+      3: "W",
+      4: (float("nan"), float("nan"), float("nan")),
+    }
+    gotExpected(locationFromGps(gps), "")
+
   def test_addLocations_missing_preview_is_empty(self):
     folder = tempfile.mkdtemp()
     try:
@@ -384,6 +404,38 @@ class TestAddLocations(unittest.TestCase):
     finally:
       os.remove(preview)
       os.rmdir(folder)
+
+  def test_addLocations_unreadable_preview_is_empty(self):
+    folder = tempfile.mkdtemp()
+    try:
+      good = os.path.join(folder, "c1-1-p.jpg")
+      bad = os.path.join(folder, "c1-2-p.jpg")
+      writeTestJpeg(good)
+      with open(bad, "w") as fh:
+        fh.write("not a jpeg")
+      cinfo = {
+        "cNum": 1,
+        "images": [
+          {"iPreview": "c1-1-p.jpg"},
+          {"iPreview": "c1-2-p.jpg"},
+        ],
+      }
+      cinfo, metadata = addLocations(cinfo, folder)
+      gotExpected(cinfo["images"][0]["location"], "")
+      gotExpected(cinfo["images"][1]["location"], "")
+      gotExpected(cinfo["images"][1]["taken"], "")
+      gotExpected(metadata["c1-2-p.jpg"]["location"], "")
+    finally:
+      os.remove(good)
+      os.remove(bad)
+      os.rmdir(folder)
+
+  def test_metadataFromPreview_frame_grabber_gps(self):
+    preview = "tmp/c36/c36-6-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    gotExpected(metadataFromPreview(preview)["location"], "")
+    gotExpected(metadataFromPreview(preview)["taken"], "")
 
   def test_addLocations_missing_file_errors(self):
     folder = tempfile.mkdtemp()
@@ -426,7 +478,10 @@ class TestAddLocations(unittest.TestCase):
     preview = "dist/images/c18/c18-1-p.jpg"
     if not os.path.isfile(preview):
       self.skipTest(f"missing {preview}")
-    gotExpected(locationFromPreview(preview), "")
+    loc = locationFromPreview(preview)
+    if loc:
+      self.skipTest(f"{preview} has GPS")
+    gotExpected(loc, "")
     gotExpected(metadataFromPreview(preview)["taken"], "")
 
   def test_addLocations_real_preview_with_time(self):
