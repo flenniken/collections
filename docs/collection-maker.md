@@ -1,22 +1,26 @@
 # Collection Maker
 
-How to create a new collection for the Collections project.
+You create a new collection by:
 
-* create a `tmp/cN` folder and add images
+* create a folder and add images
 * rename, convert, and make thumbnails
-* run the maker command to write `cN.json`
-* move the folder to `dist/images` and build
-* on localhost as admin edit descriptions in place on the index, thumbnails, and image pages
-* set order on the thumbnails page as localhost admin
-* set zoom points on localhost admin, then publish
+* create json file
+* move the folder to dist
+* set order on the thumbnails page
+* set descriptions
+* set zoom points
+* publish and notify
+
+We show how to do these steps in detail below.
 
 [⬇](#Contents) (table of contents at the bottom)
 
 # Create Folder
 
-Create a tmp folder named with the next collection prefix. List
-`dist/images` to find the next number. For the example below, create
-c29. Create the cnum variable, it will be used in multiple commands.
+Create a tmp folder for the new collection named with the next
+collection prefix. List `dist/images` to find the next name. For the
+example below, create c29. Make sure to create the cnum bash variable,
+it will be used in multiple commands.
 
 ~~~
 # from container
@@ -30,10 +34,12 @@ cnum=c29 # variable
 mkdir tmp/$cnum
 ~~~
 
-Put 8, 10, 12, 14, or 16 of your best photos in the folder. Export unmodified
-originals from Apple Photos, or copy or export files from Adobe Bridge
+Put 8, 10, 12, 14, or 16 of your best photos in the folder. We show
+detailed steps Apple Photos and for Adobe Bridge.
 
 __Apple Photos__
+
+For Apple Photos follow these steps:
 
 * create an album with all the photos for the topic
 * mark 8, 10, 12, 14, or 16 favorites
@@ -44,13 +50,16 @@ __Apple Photos__
 * export into the empty `tmp/cN` folder
 * check the files in the cN folder with the finder
 
-Live Photos export as paired `.HEIC` and `.mov` files.
+♫ Note: Export Unmodified Originals exports the photos without changes
+you might have made, but it gives you the live photo movie files.  If
+you export jpegs, you get your changes but no live movies.
 
-[![Tmp Folder](tmp-listing.png)](#)
+♫ Note: Live Photos export as two files, paired `.HEIC` and `.mov` files.
 
 __Adobe Bridge Photos__
 
-You can create a folder of collection files from DNG files using Adobe Bridge.
+For Adobe Bridge follow these step. You can use Dng, Tiff or jpeg
+files using Adobe Bridge.
 
 * Open Adobe Bridge
 * Find a folder of images you want to select from to make a collection
@@ -58,14 +67,22 @@ You can create a folder of collection files from DNG files using Adobe Bridge.
 * Select the martini shaped icon and select the menu to show your files, e.g. "Show 3 or more stars"
 * Edit the originals now if you want
 * select all then export the files as jpg files to the collection folder, e.g. tmp/c28.  File > Export to > Custom export.   Choose Save to > Specific folder and browse to tmp/c28.  Extension .jpg, Image Quality 8,  Scale image > 100%, Include metadata
-* Use the Finder to check at the folder of files
+* Use the Finder to check the folder of files
+
+[⬇](#Contents)
+
+# Rename and Convert
+
+You rename and convert the files to the format expected by Collections.
 
 __Standard Rename__
 
-Rename camera JPEGs or HEIC/mov pairs to the standard collection
-names. JPEG extensions become `.jpg`. Files that already use the
-standard name are left alone. New files take the next number after the
-highest number in the folder. Gaps are kept.
+You rename the files to the collection's standard names using the rename
+command as shown below.
+
+You can the rename again after adding images and the standard names are
+left alone. New files take the next number after the highest number in
+the folder. Gaps are kept.
 
 ~~~
 # from container
@@ -79,13 +96,9 @@ rename: 3.HEIC -> c29-3-p.HEIC
 ...
 ~~~
 
-__Convert HEIC and MOV__
+__Convert HEIC to Jpg__
 
-Live videos are optional. Delete any `.mov` files you do not want to
-keep. Look at them in the finder and drag the ones you don't want to
-the trash.
-
-Convert the remaining HEIC files to jpg.
+Convert the HEIC files to jpg.
 
 ~~~
 scripts/convert-heic-previews tmp/$cnum
@@ -101,11 +114,19 @@ remove: c29-10-p.HEIC
 ...
 ~~~
 
-If you only have a video, make a jpg preview by extracting a frame
-with the free Frame Grabber application on the iPhone.
+__Convert MOV to Mp4__
 
-Convert the remaining `.mov` files to `.mp4`.  Browsers play mp4 more
-reliably. The conversion keeps the Live Photo soundtrack.
+Live videos are optional. Delete any `.mov` files you do not want to
+keep. Look at them in the finder and drag the ones you don't want to
+the trash.
+
+If you only have a video, make a jpg preview file by extracting a
+frame with the free Frame Grabber application on the iPhone and
+renaming it to the standard naming.
+
+Convert the remaining `.mov` files to `.mp4`.
+
+♫ Note: We convert mov to mp4 because browsers play mp4 more reliably.
 
 ~~~
 scripts/convert-live-videos tmp/$cnum
@@ -117,40 +138,11 @@ remove: c29-10-v.mov
 ...
 ~~~
 
-The maker pairs each video with the preview that shares a stem:
-`c24-10-v.mp4` goes with `c24-10-p.jpg`. Live Photos play on
-press-and-hold. Longer clips show a play button instead of the LIVE
-badge.
-
-Optionally you can convert HEIC files to jpg in Photoshop:
-
-* Open the HEIC files in Photoshop
-* edit then flatten if necessary
-* save each file as jpg (File > Save) -- uncheck "Embed Color
-  Profile: Display P3"
-* Jpg options: Quality 8, Baseline, no preview
-
-| File     | Role     |
-| -------- | -------- |
-| -p.jpg | The still photo shown on the image page, used for dimensions in cjson, zoom/pan, and offline download |
-| -v.mp4 | Optional motion clip. Live Photos play on press-and-hold. Longer videos show a play button, play to the end, then stop |
-| -t.jpg | Square thumbnail for the index and thumbnail pages |
-
-♫ Notes:
-
--- Some types of editing in Photoshop will create layers. You can tell
-when this happens when saving by the .psd extention. In this case
-flatten the image (layer > flatten image), then save.
-
--- If you save the jpgs with "Embed Color Profile..." checked, the
-maker command will report the file as MPO format instead of JPEG. MPO
-files are not supported.
-
 __Thumbnails__
 
 Make 480 x 480 center-crop thumbnails from the preview files. Existing
-`-t.jpg` files are left alone, so you can remake a bad crop in
-Photoshop and run the script again for new previews only.
+`-t.jpg` files are left alone, so you can add a new preview file and
+re-run the command.
 
 ~~~
 # from container
@@ -163,32 +155,17 @@ make: c29-4-t.jpg
 ...
 ~~~
 
-Check the thumbnails in the finder.
-
-If a thumbnail does not look good, Command-click it on the thumbnails
-page as localhost admin and drag the crop, or manually make a new one.
-
-* in the finder, trash the thumbnail
-* duplicate the preview
-* rename the dup as the thumbnail
-* in Photoshop, open the -t photo
-* use the crop tool
-* use the image size dialog (option+command i)
-* save, quality 8
-* close
-
-The folder should contain matching `-p.jpg` and `-t.jpg` files, optional
-`-v.mp4` files, and nothing extra. Previews must be at least 933
-pixels on both sides.
+Check the files in the finder. The folder should contain matching
+`-p.jpg` and `-t.jpg` files, optional `-v.mp4` files, and nothing
+extra. Previews must be at least 933 pixels on both sides.
 
 Duplicate the tmp folder in the Finder if you want a backup.
 
 [⬇](#Contents)
 
-# Run Maker
+# Make Json File
 
-Run the maker command to validate the files and write `cN.json`. It
-leaves the folder in place.
+Run the maker command to validate the files and write `cN.json`.
 
 ~~~
 # from container
@@ -201,6 +178,8 @@ The json includes every photo in disk order. Titles and descriptions
 are empty. Collections start with the `building` flag, so only admins
 see them. `g all` builds the image and thumbnails pages right away so
 you can edit in place.
+
+__GPS and Time__
 
 Add GPS locations and capture times:
 
@@ -215,13 +194,16 @@ Wrote 16 images (16 with GPS, 16 with time) to tmp/c29/c29.json
   c29-5-p.jpg  45.7080000,-123.9393306  2019-07-14T18:55:24
 ~~~
 
-You can optionally add a location for the thumbnails page which will
-show a map below the description.  Open the cN.json and add
+__Optional Thumbnails Page Map__
+
+You can optionally add a location for the thumbnails page
+which will show a map below its description.  Open the cN.json and add
 the location as shown below.
 
 You can get the GPS coordinates from google maps by dropping a pin
 then opening the information below. It will show something like
-(45.6868445, -121.3035183) which you can copy and paste.
+(45.6868445, -121.3035183) which you can copy and paste as show below
+with the location line:
 
 ~~~
   "cNum": 35,
@@ -230,6 +212,9 @@ then opening the information below. It will show something like
   "images": [
 ~~~
 
+[⬇](#Contents)
+
+# Move into Place
 
 Move the folder into dist, then build:
 
@@ -242,7 +227,7 @@ g all
 
 # Edit Collection
 
-Use Chrome and the local site for editing:
+Run Collections logged in as Admin on your desktop Chrome running on local host.
 
 ~~~
 http://localhost:8000/
@@ -273,17 +258,7 @@ localhost the change is automatically merged into
 
 * image page -- edit each photo's description
 
-On an iPhone, tap the download icon on the image page after editing,
-then air-drop the file if needed and copy to the the dist folder.
-
-~~~
-# from container
-cp ~/Download/c26.json dist/images/c26/
-~~~
-
-[⬇](#Contents)
-
-# Zoom Points
+__Zoom Points__
 
 After the descriptions and order look good, set zoom points.
 
@@ -301,9 +276,16 @@ iPhone 14 Pro Max at 430 x 933 and 932 x 430.
 Save your zoom points with the download icon. On localhost the
 download icon writes `cjson` directly. 
 
+__Zoom Points iPhone__
+
 You can still set zoom points on an iPhone with pinch and pan, then
 tap the download icon and air-drop the `cjson` to your desktop and
 copy it to the dist folder.
+
+~~~
+# from mac collections folder
+cp ~/Download/c26.json dist/images/c26/
+~~~
 
 ♫ Note: air-drop doesn't work when your iphone is plugged into your
 mac.
@@ -336,11 +318,23 @@ doesn’t feel the need to see what’s missing.
 The deploy command copies the files to S3 and updates Cloudfront. The
 collections in "building" state are only visible to admins.  This
 allows admins to set zoom points and test the collection before
-publishing.
+publishing. You can tell a collection is admin only by the red "Admin"
+in the upper left corner of the collection thumbnail.
+
+Typically you build and deploy several times until you get it right.
+
+~~~
+g all
+scripts/deploy -s
+~~~
+
+[⬇](#Contents)
+
+# Publish
 
 Once the collection looks good, you remove the "building" field from
-the cjson, build all, then deploy again.  This publishes it to the
-world.
+the cjson with your text editor, build all, then deploy again.  This
+publishes it to the world.
 
  ~~"building": true,~~
 
@@ -348,9 +342,6 @@ world.
 g all
 scripts/deploy -s
 ~~~
-
-Test by logging out of admin and logging back in as a regular user.
-On the iPhone, confirm the new collection appears in the index.
 
 ♫ Note: If you edit your photos after deploying them, the iPhone will
 continue to use the photos it has cached.  To see the new ones, delete
@@ -360,14 +351,9 @@ the collection and download them again.
 
 # Notifiy
 
-Get your cognito user id then send a notification to yourself to test.
-
-~~~
-scripts/cognito -l
-scripts/notification --publish xxxx "Manzantia 2026"
-~~~
-
-Send a notification to all users.
+You run the notification command to send a notification to all users
+of the new collection. Replace "Manzantia 2026" with the collection
+title.
 
 ~~~
 scripts/notification --publish all "Manzantia 2026"
@@ -375,7 +361,9 @@ scripts/notification --publish all "Manzantia 2026"
 
 [⬇](#Contents)
 
-# Remove DS Store Files
+# Extras
+
+__Remove DS Store Files__
 
 The Mac finder creates a .DS_Store file in a folder when it contains
 an image. Remove these files from the distribution files and from S3.
@@ -399,36 +387,39 @@ aws s3 ls sflennikco --recursive | grep .DS_Store
 2025-09-19 21:55:03       6148 images/c8/.DS_Store
 ~~~
 
-Delete one DS_Store file:
+Delete all DS_Store files. Preview with dryrun:
 
 ~~~
-aws s3 rm s3://sflennikco/images/c4/.DS_Store
+aws s3 rm s3://sflennikco --recursive --exclude "*" --include "*.DS_Store" --dryrun
 ~~~
 
-[⬇](#Contents)
+__File Roles__
 
-# Replace Image
+| File     | Role     |
+| -------- | -------- |
+| -p.jpg | The still photo shown on the image page, used for dimensions in cjson, zoom/pan, and offline download |
+| -v.mp4 | Optional motion clip. Live Photos play on press-and-hold. Longer videos show a play button, play to the end, then stop |
+| -t.jpg | Square thumbnail for the index and thumbnail pages |
 
-Steps to replacement an image with a new one:
+♫ Notes:
 
-* create new preview and thumbnail images
-* copy the two images into the images folder replacing the originals
-* test collections in Chrome on your desktop, refresh the page
-* deploy the files to s3
-* on the iphone delete the collection
-* on the iphone download the collection
+* Some types of editing in Photoshop will create layers. You can tell
+when this happens when you save and it has a .psd extention. In this case
+flatten the image (layer > flatten image), then save to jpg.
+
+* If you save the jpgs with "Embed Color Profile..." checked, the
+maker command will report the file as MPO format instead of JPEG. MPO
+files are not supported.
 
 <style>body { max-width: 40em}</style>
-
-[⬇](#Contents)
 
 # Contents
 
 * [Create Folder](#create-folder) -- how to collect, rename, convert, and thumbnail images.
-* [Run Maker](#run-maker) -- how to write cN.json and move the folder to dist.
+* [Rename and Convert](#rename-and-convert) -- how to rename and convert the image files to collection files.
+* [Make Json File](#make-json-file) -- how to make the collection's json file.
 * [Edit Collection](#edit-collection) -- how to edit descriptions in place and set order.
-* [Zoom Points](#zoom-points) -- how to set the collection zoom points.
-* [Deploy](#deploy) -- how to publish the collection to the world.
+* [Deploy](#deploy) -- how to deploy the files to AWS.
+* [Publish](#publish) -- how to publish the collection to the world.
 * [Notify](#notify) -- how to notify users of the new collection.
-* [Remove DS Store Files](#remove-ds-store-files) -- how to remove the .DS_Store files.
-* [Replace Image](#replace-image) -- how to replace an image.
+* [Extras](#extras) -- how to remove the .DS_Store files and the roles of the collection's files.

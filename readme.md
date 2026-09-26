@@ -68,7 +68,8 @@ You scroll left and right to go to the previous and next images in the
 collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
-You scroll to the bottom to see a description of the image.
+You scroll to the bottom to see a description of the image, the time
+the photo was taken and an option map showing where photo was taken.
 
 You go back to the thumbnails or index page by scrolling to the bottom
 and tapping the thumbnail or index icon. Tap the share icon to save
