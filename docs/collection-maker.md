@@ -159,6 +159,9 @@ Check the files in the finder. The folder should contain matching
 `-p.jpg` and `-t.jpg` files, optional `-v.mp4` files, and nothing
 extra. Previews must be at least 933 pixels on both sides.
 
+Later in the editing phase you can create new thumbnails for the ones
+that don't look good.
+
 Duplicate the tmp folder in the Finder if you want a backup.
 
 [⬇](#Contents)
@@ -233,42 +236,57 @@ Run Collections logged in as Admin on your desktop Chrome running on local host.
 http://localhost:8000/
 ~~~
 
+* Make sure you are logged in as an admin.
+* Refresh the index page so the new collection appears, cmd-shift-r.
+* Go to the thumbnails page by clicking the thumbnails icon.
+* Order the thumbnails. Long press a thumbnail and drag it to the new location.
+* Edit the thumbnails that don't look good, cmd-click a thumbnail.
+* Rebuild all the pages, g all.
+* Go to the thumbnails page and add the description.
+* Go to the index page and add the title, post date and description.
+* Go to the image pages and add the descriptions.
+* Rebuild all the pages, g all.
+* Go to the image pages and edit the verical zoom points.  Bring up the zoom and pan controls by clicking the icon at the bottom of the page.  Double click an image to fit it to the center. Zoom in until the screen is filled (if possible) and position left or right. See zoom point guide.
+* Repeat for each image.
+* Save all zoom points by clicking the download icon at the bottom of the page.
+* Rebuild all the pages, g all.
+* Deploy to AWS, scripts/depoly -s
+* On the iPhone, review the collection.
+* Set the horizontal zoom point for each image, then air drop the json file to the desktop and copy to into the dist folder.
+* Rebuild and deploy as before.
+* On the iPhone, review the collection.
+* Repeat until good.
+
+__Edit Details__
+
 Edit titles, posted dates, and descriptions in place while logged in
 as admin. Empty fields show a placeholder so you can tap them. On
 localhost the change is automatically merged into
 `dist/images/cN/cN.json` when you tap away.
 
-* index page -- edit title and posted date with date picker,
-  and the short description for the newest collections.
-  
-* thumbnails page -- edit collection description and set the image
-  order with drag and drop. Title and posted date are shown here but
-  edited on the index. The page reads them from the collection json so
-  they stay current without `g all`.
+Thumbnails page -- edit collection description and set the image order
+with drag and drop. Title and posted date are shown here but edited on
+the index. The page reads them from the collection json so they stay
+current without `g all`.
 
-  To set the image order use localhost as admin, long-press a thumbnail on the thumbnails page
-  then drag it to a new place. The admin API rearranges the `images` (and
-  zoom points) in `cN.json`. Run `g all` so the image page matches.
+To set the image order use localhost as admin, long-press a thumbnail on the thumbnails page
+then drag it to a new place. The admin API rearranges the `images` (and
+zoom points) in `cN.json`. Run `g all` so the image page matches.
 
-  If a center-cropped thumbnail looks wrong, Command-click it (Control-click
-  on Windows) to open a crop dialog. The square starts as large as it can.
-  Drag it to move, or drag a corner to shrink or grow it. It cannot go
-  below 480 pixels on the preview. Then OK. The admin API overwrites the
-  `-t.jpg` file from the preview.
-
-* image page -- edit each photo's description
+Command-click it (Control-click on Windows) to open a crop
+dialog. The square starts as large as it can.  Drag it to move, or
+drag a corner to shrink or grow it. It cannot go below 480 pixels on
+the preview. Then OK. The admin API overwrites the `-t.jpg` file
+from the preview.
 
 __Zoom Points__
 
-After the descriptions and order look good, set zoom points.
-
-On localhost Chrome, open the image page as admin. Tap the four-arrow
-icon in the bottom menu to show zoom and pan buttons at the upper
-right of the photo.
-Zoom and pan each image, then tap the download icon to write
-`dist/images/cN/cN.json`. Hold a button to repeat. Arrow keys and
-+/- work while the pad is open. Hold Command for one-pixel pans and
-smaller zoom steps.
+Set zoom points on localhost Chrome, open the image page as admin. Tap
+the four-arrow icon in the bottom menu to show zoom and pan buttons at
+the upper right of the photo.  Zoom and pan each image, then tap the
+download icon to write `dist/images/cN/cN.json`. Hold a button to
+repeat. Arrow keys and +/- work while the pad is open. Hold Command
+for one-pixel pans and smaller zoom steps.
 
 Use the same phone viewport you test on an iPhone, for example
 iPhone 14 Pro Max at 430 x 933 and 932 x 430.
