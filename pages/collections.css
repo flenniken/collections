@@ -127,25 +127,6 @@
   cursor: pointer;
 }
 
-#index .parent {
-  position: relative;
-}
-
-#index .needs {
-  display: none;
-  position: absolute;
-  transform: rotate(45deg);
-  border-radius: 8px;
-  background-color: lightyellow;
-  padding-top: .5em;
-  padding-bottom: .5em;
-  padding-left: 1em;
-  padding-right: 1em;
-  font-size: 1.5em;
-  top: 50%;
-  left: 15%;
-}
-
 #index .thumbnail {
   width: 100%;
   -webkit-user-select: none;
