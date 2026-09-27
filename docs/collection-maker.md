@@ -238,6 +238,7 @@ http://localhost:8000/
 
 * Make sure you are logged in as an admin.
 * Refresh the index page so the new collection appears, cmd-shift-r.
+* Download the images by pressing the download icon.
 * Go to the thumbnails page by clicking the thumbnails icon.
 * Order the thumbnails. Long press a thumbnail and drag it to the new location.
 * Edit the thumbnails that don't look good, cmd-click a thumbnail.

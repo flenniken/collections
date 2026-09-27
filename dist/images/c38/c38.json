@@ -1,0 +1,231 @@
+{
+  "title": "Storm King",
+  "indexDescription": "We visited Storm King with Alex and Agatha in upstate New York October 2021.",
+  "description": "Storm King is large grassy outdoor art park.  It's the size of a golf course. You get your steps in walking to see the art pieces.  The art is big to match the scale of the place.",
+  "cNum": 38,
+  "posted": "2026-09-27",
+  "images": [
+    {
+      "description": "I love this photo that Kathleen took of the curvy stone wall with pond.",
+      "iPreview": "c38-11-p.jpg",
+      "iThumbnail": "c38-11-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 5643241,
+      "sizet": 54292,
+      "location": "41.4170833,-74.0666806",
+      "taken": "2021-10-22T13:23:53"
+    },
+    {
+      "description": "The people are the size of ants.",
+      "iPreview": "c38-6-p.jpg",
+      "iThumbnail": "c38-6-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2211218,
+      "sizet": 46904,
+      "location": "41.4236333,-74.0646972",
+      "taken": "2021-10-22T12:54:14"
+    },
+    {
+      "description": "Good view of the countryside.",
+      "iPreview": "c38-7-p.jpg",
+      "iThumbnail": "c38-7-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2897880,
+      "sizet": 59961,
+      "location": "41.4248611,-74.0648583",
+      "taken": "2021-10-22T13:00:11"
+    },
+    {
+      "description": "Agatha next to an art piece made from layers of wood.",
+      "iPreview": "c38-1-p.jpg",
+      "iThumbnail": "c38-1-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 3275503,
+      "sizet": 82562,
+      "location": "41.4243556,-74.0588000",
+      "taken": "2021-10-22T12:13:30"
+    },
+    {
+      "description": "The ground is shaped as waves.",
+      "iPreview": "c38-10-p.jpg",
+      "iThumbnail": "c38-10-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 3474165,
+      "sizet": 73914,
+      "location": "41.4165389,-74.0678722",
+      "taken": "2021-10-22T13:27:06"
+    },
+    {
+      "description": "This one looks like it could start walking.",
+      "iPreview": "c38-2-p.jpg",
+      "iThumbnail": "c38-2-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2918325,
+      "sizet": 61057,
+      "location": "41.4241611,-74.0587528",
+      "taken": "2021-10-22T12:14:52"
+    },
+    {
+      "description": "Kathleen breezing by.",
+      "iPreview": "c38-3-p.jpg",
+      "iThumbnail": "c38-3-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2501244,
+      "sizet": 52513,
+      "iLiveVideo": "c38-3-v.mp4",
+      "liveSize": 3706159,
+      "liveDuration": 2.982,
+      "location": "41.4234722,-74.0590972",
+      "taken": "2021-10-22T12:17:46"
+    },
+    {
+      "description": "Some you can go up to and touch like this one.",
+      "iPreview": "c38-8-p.jpg",
+      "iThumbnail": "c38-8-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 1953786,
+      "sizet": 47856,
+      "location": "41.4250306,-74.0632778",
+      "taken": "2021-10-22T13:11:32"
+    },
+    {
+      "description": "A giant standing on its decapitated head.",
+      "iPreview": "c38-4-p.jpg",
+      "iThumbnail": "c38-4-t.jpg",
+      "width": 4032,
+      "height": 3024,
+      "size": 2104322,
+      "sizet": 45560,
+      "location": "41.4203750,-74.0593194",
+      "taken": "2021-10-22T12:32:34"
+    },
+    {
+      "description": "A close up of the head with a person for scale. I think this is my favorite one.",
+      "iPreview": "c38-5-p.jpg",
+      "iThumbnail": "c38-5-t.jpg",
+      "width": 3024,
+      "height": 4032,
+      "size": 2447168,
+      "sizet": 53046,
+      "iLiveVideo": "c38-5-v.mp4",
+      "liveSize": 2730460,
+      "liveDuration": 2.857,
+      "location": "41.4204778,-74.0591667",
+      "taken": "2021-10-22T12:33:15"
+    }
+  ],
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.7117802478134111,
+        "tx": -1027.91517314469,
+        "ty": -833.89189980175
+      },
+      {
+        "scale": 0.3709763137744476,
+        "tx": -532.8882485692862,
+        "ty": -40.65618642696478
+      },
+      {
+        "scale": 0.18663273671617678,
+        "tx": -168.92340420088857,
+        "ty": 193.86417102954601
+      },
+      {
+        "scale": 0.23139880952380953,
+        "tx": -128.15999999999997,
+        "ty": 0
+      },
+      {
+        "scale": 0.1337777777777778,
+        "tx": -54.696000000000026,
+        "ty": 264.22799999999995
+      },
+      {
+        "scale": 0.3312288515843282,
+        "tx": -473.7573647940055,
+        "ty": -0.3180235955042008
+      },
+      {
+        "scale": 0.1337777777777778,
+        "tx": -54.696000000000026,
+        "ty": 264.22799999999995
+      },
+      {
+        "scale": 0.14983111111111116,
+        "tx": -140.81952000000007,
+        "ty": 239.95535999999993
+      },
+      {
+        "scale": 0.14983111111111116,
+        "tx": -112.05952000000008,
+        "ty": 239.95535999999993
+      },
+      {
+        "scale": 0.23139880952380953,
+        "tx": -48,
+        "ty": 0
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.5194501136580789,
+        "tx": -382.22786233002125,
+        "ty": -738.3772015026216
+      },
+      {
+        "scale": 0.2344712147697812,
+        "tx": -10.040252479732317,
+        "ty": -112.49743390706342
+      },
+      {
+        "scale": 0.2660067129982487,
+        "tx": -60.19689119995246,
+        "ty": -19.857025921153934
+      },
+      {
+        "scale": 0.24790636261999868,
+        "tx": 92.72087571508621,
+        "ty": -509.71296616000325
+      },
+      {
+        "scale": 0.23115079365079366,
+        "tx": 0,
+        "ty": 0
+      },
+      {
+        "scale": 0.24077945029363285,
+        "tx": -26.280417769361122,
+        "ty": -66.59396879062726
+      },
+      {
+        "scale": 0.14447961851140165,
+        "tx": 173.62608316094628,
+        "ty": -3.206975911525973
+      },
+      {
+        "scale": 0.2427239427312828,
+        "tx": -37.49432754103651,
+        "ty": -177.90329485545288
+      },
+      {
+        "scale": 0.2391865369655371,
+        "tx": -3.443973410167814,
+        "ty": -112.40684795310315
+      },
+      {
+        "scale": 0.3147182139828762,
+        "tx": -7.955442504211476,
+        "ty": -542.2646040364798
+      }
+    ]
+  }
+}
