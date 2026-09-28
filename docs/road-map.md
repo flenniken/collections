@@ -12,7 +12,8 @@ Switch the domain from sflennik.com to flenniken.net.
 
 # Scroll Description
 
-Show a vertical scrollbar for long descriptions on the image page. Currently the vertical space allowed for all descriptions is determined by the longest one.  This leaves a lot of white space for shorter descriptions.
+Done. Image-page descriptions taller than ten lines scroll inside
+the description instead of stretching every photo in the collection.
 
 [⬇](#Contents)
 
@@ -452,7 +453,7 @@ filename, date or other metadata.
 # Contents
 
 * [Use flenniken.net](#use-flenniken.net) -- switch the domain from sflennik.com to flenniken.net.
-* [Scroll Description](#scroll-description) -- scroll long descriptions on the image page.
+* [Scroll Description](#scroll-description) -- done.
 * [One Line Index](#one-line-index) -- done.
 * [More Button](#more-button) -- add a button at the bottom of the index when there are a lot of collections.
 * [Test Image Page](#test-image-page) -- write unit tests for the image page.
