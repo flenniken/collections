@@ -121,12 +121,18 @@ RUN sudo ./aws/install
 # Copy in the glow config file.
 COPY --chown=coder:coder glow.yml /home/coder/.config/glow/glow.yml
 
+# Branding used by the image-page feedback SMS. Edit admin_phone in
+# the container. See docs/aws-config.md.
+RUN mkdir -p /home/coder/.aws
+COPY --chown=coder:coder branding.ini /home/coder/.aws/branding.ini
+
+COPY --chown=coder:coder start-container /home/coder/start-container
+RUN chmod +x /home/coder/start-container
+
 # Start in the collections directory.
 WORKDIR /home/coder/collections
 
-# Start cron, nginx, the localhost admin API, and leave the
-# container running in bash.
-CMD sudo service cron start; \
-    sudo nginx; \
-    python3 /home/coder/collections/scripts/admin_api.py & \
-    /bin/bash
+# Start cron, nginx, the localhost admin API, then bash. The start
+# script waits until the API is listening so its line prints before
+# the prompt.
+CMD ["/home/coder/start-container"]

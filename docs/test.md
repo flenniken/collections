@@ -125,12 +125,15 @@ When making changes to the image page test them with these steps:
 * tap the thumbnails menu icon
 * tap the index menu icon
   * tap the share icon and verify the share sheet appears, or the photo downloads
+  * tap the message balloon and verify Messages opens to the number in
+    ~/.aws/branding.ini with the configured feedback text for the
+    current photo
   * as admin on localhost, tap the download icon and verify it writes
     `dist/images/cN/cN.json` instead of downloading a file
   * as admin on localhost, tap the four-arrow icon, zoom and pan, tap
     it again to hide the controls, then save with the download icon
-  * as admin, tap an image description, edit it, tap away, and verify
-    the text stays and only that description changes in `cN.json`
+  * as admin, verify the preview filename appears above the icons and
+    changes when you swipe to the next photo
   * as admin, tap an index description, edit it, tap away, and verify
     `indexDescription` is updated in `cN.json`
   * as admin, tap the thumbnails page description, edit it, tap away,

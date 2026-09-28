@@ -14,6 +14,7 @@ import gulpif from 'gulp-if';
 import ts from 'gulp-typescript';
 import fs from "fs";
 import path from "path";
+import os from "os";
 import jpeg from "jpeg-js";
 import exif from "exif-parser";
 
@@ -99,14 +100,85 @@ function ts2js(srcList: string[], destFile: string, destDir: string,
 // sw.ts which doesn't have access to the DOM, window or document
 // objects.
 const image_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
-                  "ts/image.ts"]
+                  "tmp/branding.ts", "ts/image.ts"]
 const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/userInfo.ts", "ts/thumbnails.ts"]
 const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "ts/login.ts", "ts/download.ts", "ts/notify.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
 
+export function brandingIniPath(): string {
+  return path.join(os.homedir(), ".aws", "branding.ini")
+}
+
+export function parseBrandingIni(text: string): Record<string, string> {
+  // Return key/value pairs from a branding.ini file. Quoted values
+  // may use \n for a newline. ${previewName} is left for the page.
+  const values: Record<string, string> = {}
+  for (const rawLine of text.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith("#") || line.startsWith("["))
+      continue
+    const eq = line.indexOf("=")
+    if (eq < 0)
+      continue
+    const key = line.slice(0, eq).trim()
+    let value = line.slice(eq + 1).trim()
+    if ((value.startsWith('"') && value.endsWith('"') && value.length >= 2) ||
+        (value.startsWith("'") && value.endsWith("'") && value.length >= 2))
+      value = value.slice(1, -1)
+    value = value.replace(/\\n/g, "\n").replace(/\\t/g, "\t")
+    values[key] = value
+  }
+  return values
+}
+
+export interface Branding {
+  adminPhone: string
+  feedbackMessage: string
+}
+
+export function brandingFromValues(values: Record<string, string>,
+    source: string): Branding {
+  const adminPhone = (values["admin_phone"] ?? "").trim()
+  const feedbackMessage = values["feedback_message"] ?? ""
+  if (!adminPhone)
+    throw new Error(`${source} is missing admin_phone.`)
+  if (!/^\+[0-9]{10,15}$/.test(adminPhone))
+    throw new Error(`${source} has an invalid admin_phone.`)
+  if (!feedbackMessage.trim())
+    throw new Error(`${source} is missing feedback_message.`)
+  if (!feedbackMessage.includes("${previewName}"))
+    throw new Error(
+      `${source} feedback_message must contain \${previewName}.`)
+  return { adminPhone, feedbackMessage }
+}
+
+export function readBranding(iniPath?: string): Branding {
+  const filename = iniPath ?? brandingIniPath()
+  if (!fs.existsSync(filename))
+    throw new Error(`Missing ${filename}. See docs/aws-config.md`)
+  const text = fs.readFileSync(filename, "utf8")
+  return brandingFromValues(parseBrandingIni(text), filename)
+}
+
+export function writeBrandingTs(destPath = "tmp/branding.ts",
+    iniPath?: string): string {
+  // Write FEEDBACK_SMS and FEEDBACK_MESSAGE for the image page.
+  const branding = readBranding(iniPath)
+  const dir = path.dirname(destPath)
+  if (!fs.existsSync(dir))
+    fs.mkdirSync(dir, { recursive: true })
+  const content =
+    "// Generated from ~/.aws/branding.ini. Do not edit.\n" +
+    `const FEEDBACK_SMS = ${JSON.stringify(branding.adminPhone)}\n` +
+    `const FEEDBACK_MESSAGE = ${JSON.stringify(branding.feedbackMessage)}\n`
+  fs.writeFileSync(destPath, content)
+  return destPath
+}
+
 // image page
 gulp.task('i', function () {
+  writeBrandingTs()
   return ts2js(image_ts, 'image.js', "dist/js", null)
 });
 

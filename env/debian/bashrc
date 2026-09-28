@@ -51,30 +51,37 @@ function mylistdir {
 # Check that the configuration settings exist.
 
 blueWarning="\033[34mWarning\033[0m"
-if [[ ! -s "/home/coder/.aws" ]]; then
+if [[ ! -s "/home/coder/.aws/credentials" ]]; then
   echo
   echo -e "$blueWarning 1: aws command line credentials are missing."
-  echo "Run: 'aws configure' to set them. See docs/aws-config.md for more info by"
-  echo "running: glow docs/aws-config.md"
+  echo "Run: 'aws configure' to set them. See docs/aws-config.md for more info."
 fi
 
 if [[ ! -s "/home/coder/collections/env/aws-settings.json" ]]; then
   echo
   echo -e "$blueWarning 2: The aws-settings.json file is missing. Run: scripts/cognito -w"
-  echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
+  echo 'See docs/aws-config.md for more info.'
 fi
 
 if [[ ! -s "/home/coder/.aws/vapid" ]] || ! grep -qi '^\[VAPID\]' /home/coder/.aws/vapid 2>/dev/null; then
   echo
-  echo -e "$blueWarning 3: The notification VAPID keys are missing. Save them to ~/.aws/vapid."
-  echo 'See docs/aws-config.md for more info by running: glow docs/aws-config.md'
+  echo -e "$blueWarning 3: The notification VAPID keys are missing. Run: nano ~/.aws/vapid."
+  echo 'See docs/aws-config.md for more info.'
+fi
+
+if [[ ! -s "/home/coder/.aws/branding.ini" ]] || ! grep -qE '^admin_phone *= *"?\+[0-9]' /home/coder/.aws/branding.ini; then
+  echo
+  echo -e "$blueWarning 4: The branding.ini file is missing admin_phone."
+  echo "Run: nano ~/.aws/branding.ini"
+  echo "See docs/aws-config.md for more info."
 fi
 
 
 if [[ ! -s "/home/coder/collections/dist/index.html" ]]; then
   echo
-  echo -e "$blueWarning 3: The website index.html file is missing. Run: g all"
-  echo 'See docs/build.md for more info by running: glow docs/build.md'
+  echo -e "$blueWarning 5: The website index.html file is missing. Run: g all"
+  echo 'See docs/build.md for more info.'
 else
+  echo
   echo "Nginx now serving files. http://localhost:8000/index.html"
 fi

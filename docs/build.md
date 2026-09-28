@@ -68,6 +68,9 @@ alias ls='ls --color=auto'
 alias sudo='sudo '
 ~~~
 
+Edit `~/.aws/branding.ini` and set `admin_phone` before you compile the
+image page. See [aws-config.md](aws-config.md#branding).
+
 You stop the environment by typing ctrl-d.
 
 [⬇](#Contents)

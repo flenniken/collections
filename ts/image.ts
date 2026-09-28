@@ -88,6 +88,7 @@ function handleDOMContentLoaded() {
 
   startTimer.log("setupImageDetails")
   setupImageDetails()
+  updatePhotoName()
 }
 
 async function handleLoad() {
@@ -1466,6 +1467,7 @@ function handleScroll() {
       // Set the image index and stop the interval checking.
       imageIndex = imageIx
       log(`scolling stopped on image: ${imageIndex + 1}`)
+      updatePhotoName()
       if (liveVideoPlayingIx !== null && liveVideoPlayingIx !== imageIx)
         stopLiveVideo(liveVideoPlayingIx)
       if (clipPlayImageIx !== null && clipPlayImageIx !== imageIx)
@@ -1503,6 +1505,7 @@ function showAdminIcons() {
     else
       el.classList.remove('visible')
   })
+  updatePhotoName()
 
   if (localAdmin) {
     log("Admin content is now visible on localhost.")
@@ -1511,6 +1514,15 @@ function showAdminIcons() {
   } else {
     log("User is not an admin, hiding admin content.");
   }
+}
+
+function updatePhotoName() {
+  // Show the current preview filename above the icons for admins.
+  const el = document.getElementById("photo-name")
+  if (!el)
+    return
+  const image = cJson.images[imageIndex]
+  el.textContent = image && image.iPreview ? image.iPreview : ""
 }
 
 const ZOOM_PAD_SCALE = 1.12
@@ -1878,4 +1890,17 @@ async function shareCurrentImage() {
 
   log(`Download ${file.name}`)
   downloadBlobFile(file)
+}
+
+function feedbackSmsUrl(previewName: string): string {
+  // FEEDBACK_SMS and FEEDBACK_MESSAGE come from ~/.aws/branding.ini.
+  const body = FEEDBACK_MESSAGE.split("${previewName}").join(previewName)
+  return `sms:${FEEDBACK_SMS}?&body=${encodeURIComponent(body)}`
+}
+
+function messageCurrentImage() {
+  const image = cJson.images[imageIndex]
+  const href = feedbackSmsUrl(image.iPreview)
+  log(`Message ${image.iPreview}`)
+  window.location.href = href
 }

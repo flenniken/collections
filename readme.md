@@ -46,6 +46,7 @@ The icons do the following:
 * ![download images](dist/icons/download.svg) download the collection's images
 * ![delete cached images](dist/icons/trash-can.svg) delete the collection's cached images
 * ![share image](dist/icons/share.svg) on the image page, share the image
+* ![message Steve](dist/icons/message.svg) on the image page, send Steve a text about the photo
 
 [⬇](#Contents)
 
@@ -73,7 +74,9 @@ the photo was taken and an option map showing where photo was taken.
 
 You go back to the thumbnails or index page by scrolling to the bottom
 and tapping the thumbnail or index icon. Tap the share icon to save
-the current photo or send it with the phone’s share sheet.
+the current photo or send it with the phone’s share sheet. Tap the
+message balloon to open a text to Steve with the photo’s filename
+filled in.
 
 [⬇](#Contents)
 

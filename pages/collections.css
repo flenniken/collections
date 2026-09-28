@@ -657,6 +657,17 @@ li.admin.visible {
   display: list-item;
 }
 
+#images #photo-name {
+  margin: 0.5em 1em 0 1em;
+  font-size: 1.5em;
+  color: #555;
+  text-align: center;
+}
+
+#images #photo-name.visible {
+  display: block;
+}
+
 #about-box .icon {
   width: 2em;
   float: none;

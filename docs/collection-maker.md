@@ -337,8 +337,8 @@ doesn’t feel the need to see what’s missing.
 The deploy command copies the files to S3 and updates Cloudfront. The
 collections in "building" state are only visible to admins.  This
 allows admins to set zoom points and test the collection before
-publishing. You can tell a collection is admin only by the red "Admin"
-in the upper left corner of the collection thumbnail.
+publishing. You can tell a collection is admin only by the red
+"Admin -- cN" in the upper left of the collection card.
 
 Typically you build and deploy several times until you get it right.
 

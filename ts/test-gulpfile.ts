@@ -4,6 +4,7 @@
 // scripts/test-gulpfile
 
 import * as path from 'path';
+import * as fs from 'fs';
 import { runSuite, testThrow, test, gotExpected } from "./sweet-tester";
 import {
   ImageName,
@@ -18,7 +19,11 @@ import {
   getJpegDimensions,
   getImagePath,
   readCJsonFile,
-  validateImageDisk
+  validateImageDisk,
+  parseBrandingIni,
+  brandingFromValues,
+  readBranding,
+  writeBrandingTs
 } from './gulpfile';
 
 if (!process.env.coder_env) {
@@ -565,6 +570,52 @@ function validateImageDiskSuite() {
   test(fn, createTestImage(8, 1, 3024, 4032, 1578565, 63852))
 }
 
+function brandingSuite() {
+  const source = "tmp/test-branding.ini"
+  const parsed = parseBrandingIni(`
+# comment
+[branding]
+admin_phone = "+15555550100"
+feedback_message = "Image \${previewName}.  Hi Steve, \\nI like this photo and "
+`)
+  test(() => {
+    const branding = brandingFromValues(parsed, source)
+    gotExpected(branding.adminPhone, "+15555550100")
+    gotExpected(branding.feedbackMessage,
+      "Image ${previewName}.  Hi Steve, \nI like this photo and ")
+  })
+
+  testThrow(`${source} is missing admin_phone.`, brandingFromValues, {}, source)
+  testThrow(`${source} is missing feedback_message.`, brandingFromValues, {
+    admin_phone: "+15555550100",
+  }, source)
+  testThrow(`${source} has an invalid admin_phone.`, brandingFromValues, {
+    admin_phone: "2065550100",
+    feedback_message: "Image ${previewName}.",
+  }, source)
+  testThrow(`${source} feedback_message must contain \${previewName}.`,
+    brandingFromValues, {
+      admin_phone: "+15555550100",
+      feedback_message: "Hi Steve, ",
+    }, source)
+
+  const missing = path.join("tmp", "missing-branding.ini")
+  testThrow(`Missing ${missing}. See docs/aws-config.md`, readBranding, missing)
+
+  test(() => {
+    const iniPath = path.join("tmp", "test-branding.ini")
+    const tsPath = path.join("tmp", "test-branding.ts")
+    fs.writeFileSync(iniPath, `
+admin_phone = "+15555550100"
+feedback_message = "Image \${previewName}.  Hi, "
+`)
+    writeBrandingTs(tsPath, iniPath)
+    const generated = fs.readFileSync(tsPath, "utf8")
+    gotExpected(generated.includes('const FEEDBACK_SMS = "+15555550100"'), true)
+    gotExpected(generated.includes("Image ${previewName}.  Hi, "), true)
+  })
+}
+
 function testGulpfile() {
   // Run the test suite for the gulpfile.
 
@@ -581,6 +632,7 @@ function testGulpfile() {
   runSuite(getImagePathSuite)
   runSuite(getJpegDimensionsSuite)
   runSuite(validateImageDiskSuite)
+  runSuite(brandingSuite)
 }
 
 testGulpfile()

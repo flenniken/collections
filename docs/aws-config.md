@@ -205,6 +205,31 @@ notifications, and testing.
 
 [⬇](#Contents)
 
+# Branding
+
+The image-page message balloon reads your phone number and feedback
+text from `~/.aws/branding.ini` so they are not stored in git. The
+docker image copies a template into that file. Edit it in the
+container after you create a new one.
+
+~~~
+# from docker container
+cat > ~/.aws/branding.ini << 'EOF'
+admin_phone = "+1XXXXXXXXXX"
+feedback_message = "Image ${previewName}.  Hi Steve, \nI like this photo and "
+EOF
+~~~
+
+`admin_phone` is the SMS To number, with a plus and country code.
+`feedback_message` is the pre-filled body. `${previewName}` is replaced
+with the current photo’s filename, for example `c40-2-p.jpg`. `\n` is a
+newline.
+
+`g i` and `g all` fail when the file is missing or when either value
+is empty. Recreate this file when you rebuild the docker container.
+
+[⬇](#Contents)
+
 # Create S3 Bucket
 
 Create a S3 bucket in the AWS console for the website files.
@@ -658,6 +683,7 @@ scripts/deploy -s
 * [Overview](#overview)
 * [Create IAM User](#create-iam-user)
 * [Notifications](#notifications)
+* [Branding](#branding)
 * [Create S3 Bucket](#create-s3-bucket)
 * [Copy Website](#copy-website)
 * [Register a domain](#register-a-domain)

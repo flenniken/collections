@@ -1,0 +1,17 @@
+#!/bin/sh
+# Start the collections container services, then an interactive shell.
+# Wait until the admin API is listening so its startup line prints
+# before the bash prompt.
+
+sudo service cron start
+sudo nginx
+python3 /home/coder/collections/scripts/admin_api.py &
+
+t=0
+while [ "$t" -lt 50 ]; do
+  python3 -c 'import socket; socket.create_connection(("127.0.0.1", 3001), 0.2).close()' 2>/dev/null && break
+  t=$((t + 1))
+  sleep 0.1
+done
+
+exec /bin/bash

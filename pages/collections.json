@@ -2,12 +2,12 @@
   "indexCollections": [
     {
       "cNum": 40,
-      "building": true,
+      "building": false,
       "title": "Zion Hike",
       "modified": false,
       "indexDescription": "Family hike at Zion on August 9th, 2002.",
       "iThumbnail": "c40-2-t.jpg",
-      "posted": "",
+      "posted": "2026-09-28",
       "iCount": 16,
       "totalSize": 12634077,
       "iNumList": [
