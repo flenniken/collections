@@ -184,6 +184,8 @@ function setupImageDetails() {
       return
     insertAfter.after(createLocationMap(parsed.lat, parsed.lng))
   })
+  observeColboxHeights()
+  syncAreaHeight()
 }
 
 function getFirstImage() {
@@ -835,6 +837,7 @@ function sizeImages(firstImageIx: number) {
   area!.scrollLeft = leftEdges[firstImageIx]
   log(`area!.scrollLeft: ${area!.scrollLeft}`)
   log(`leftEdges: ${leftEdges}`)
+  syncAreaHeight()
 }
 
 function defaultZoomPoints() {
@@ -1444,6 +1447,61 @@ function handleResize() {
   start.log("resize  done")
 }
 
+let colboxHeightObserver: ResizeObserver | null = null
+
+function colboxHeight(imageIx: number): number {
+  // Return the natural height of one image column.
+  return get(`cb${imageIx + 1}`).offsetHeight
+}
+
+function setAreaHeight(height: number) {
+  // Size the horizontal strip to one image column so short photos
+  // do not inherit whitespace from a taller neighbor.
+  if (!area)
+    return
+  area.style.height = `${height}px`
+}
+
+function sizeAreaToCurrentImage() {
+  // Fit the strip to the image that is snapped into view.
+  if (!area || cJson.images.length === 0)
+    return
+  setAreaHeight(colboxHeight(imageIndex))
+}
+
+function sizeAreaToSwipe() {
+  // While paging, grow to the taller of the current image and its
+  // neighbors so a map or long description is not clipped mid-swipe.
+  if (!area || cJson.images.length === 0)
+    return
+  const last = cJson.images.length - 1
+  const prev = Math.max(0, imageIndex - 1)
+  const next = Math.min(last, imageIndex + 1)
+  setAreaHeight(Math.max(
+    colboxHeight(prev), colboxHeight(imageIndex), colboxHeight(next)))
+}
+
+function syncAreaHeight() {
+  // Use the current image when snapped, or neighbors while scrolling.
+  if (scrollStopId != 0)
+    sizeAreaToSwipe()
+  else
+    sizeAreaToCurrentImage()
+}
+
+function observeColboxHeights() {
+  // Keep the strip height in sync when a description, time, or map
+  // changes the current column.
+  if (colboxHeightObserver || !area)
+    return
+  colboxHeightObserver = new ResizeObserver(() => {
+    syncAreaHeight()
+  })
+  cJson.images.forEach((_, ix) => {
+    colboxHeightObserver!.observe(get(`cb${ix + 1}`))
+  })
+}
+
 let scrollStopId = 0
 
 function handleScroll() {
@@ -1458,6 +1516,7 @@ function handleScroll() {
   log("scroll started")
   log(`leftEdges: ${leftEdges}`)
   log(`area.scrollLeft: ${area!.scrollLeft}`)
+  sizeAreaToSwipe()
 
   scrollStopId = window.setInterval(() => {
     // If the current scroll position is on a left edge, we know
@@ -1475,6 +1534,7 @@ function handleScroll() {
       updateLiveVideos(imageIx)
       clearInterval(scrollStopId);
       scrollStopId = 0
+      sizeAreaToCurrentImage()
     }
   }, 100)
 }

@@ -106,8 +106,9 @@ When making changes to the image page test them with these steps:
 * v scroll and overscroll on both ends
 * zoom image small, go to thumbnails, tap the same image and verify image is at its zoom point
 * long press the description text to copy it then extend the selection
-* on c36-9-p.jpg, verify the long description scrolls after about ten
-  lines and neighboring photos do not have extra white space below
+* on the Olympic collection, swipe from c36-9-p.jpg to a short
+  neighbor and verify the page shortens so there is no extra
+  whitespace under the short description
 * long press the GPS coordinates to copy them without opening the map,
   then tap the map and verify it still opens Google Maps
 * press and hold a Live Photo and verify the video plays and keeps

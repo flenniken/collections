@@ -12,8 +12,9 @@ Switch the domain from sflennik.com to flenniken.net.
 
 # Scroll Description
 
-Done. Image-page descriptions taller than ten lines scroll inside
-the description instead of stretching every photo in the collection.
+Done. Each image on the image page sizes the strip to its own
+height, so a long description or map does not leave whitespace under
+the other photos.
 
 [⬇](#Contents)
 
