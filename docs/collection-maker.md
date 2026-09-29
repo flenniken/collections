@@ -235,15 +235,15 @@ http://localhost:8000/
 * Go to the thumbnails page by clicking the thumbnails icon.
 * Order the thumbnails. Long press a thumbnail and drag it to the new location.
 * Edit the thumbnails that don't look good, cmd-click a thumbnail.
-* Rebuild all the pages, g all.
+* Rebuild all the pages, g all, refresh.
 * Go to the thumbnails page and add the description.
 * Go to the index page and add the title, post date and description.
 * Go to the image pages and add the descriptions.
-* Rebuild all the pages, g all.
-* Go to the image pages and edit the verical zoom points.  Bring up the zoom and pan controls by clicking the icon at the bottom of the page.  Double click an image to fit it to the center. Zoom in until the screen is filled (if possible) and position left or right. See zoom point guide.
+* Rebuild all the pages, g all, refresh.
+* Go to the image pages and edit the vertical zoom points.  Bring up the zoom and pan controls by clicking the icon at the bottom of the page.  Double click an image to fit it to the center. Zoom in until the screen is filled (if possible) and position left or right. See zoom point guide.
 * Repeat for each image.
 * Save all zoom points by clicking the download icon at the bottom of the page.
-* Rebuild all the pages, g all.
+* Rebuild all the pages, g all, refresh.
 * Deploy to AWS, scripts/depoly -s
 * On the iPhone, review the collection.
 * Set the horizontal zoom point for each image, then air drop the json file to the desktop and copy to into the dist folder.
