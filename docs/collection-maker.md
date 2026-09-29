@@ -174,7 +174,7 @@ Run the maker command to validate the files and write `cN.json`.
 # from container
 scripts/maker tmp/$cnum
 
-Wrote tmp/c24/c24.json
+Wrote tmp/c24/c24.json (16 with GPS, 16 with time)
 ~~~
 
 The json includes every photo in disk order. Titles and descriptions
@@ -183,25 +183,12 @@ see them. `g all` builds the image and thumbnails pages right away so
 you can edit in place.
 
 If `cN.json` already exists, maker keeps titles, descriptions, image
-order, zoom points, GPS, capture times, and other editorial fields. It
-updates width, height, size, and live-video fields from the files. A
-new photo is appended. A photo that is no longer on disk is dropped.
-When the files have not changed, the json file is left alone.
-
-__GPS and Time__
-
-Add GPS locations and capture times:
-
-~~~
-scripts/add-locations tmp/$cnum/$cnum.json
-
-Wrote 16 images (16 with GPS, 16 with time) to tmp/c29/c29.json
-  c29-1-p.jpg  45.7080917,-123.9392083  2019-07-11T19:25:12
-  c29-2-p.jpg  45.7081861,-123.9393167  2019-07-11T19:45:14
-  c29-3-p.jpg  45.7080944,-123.9391333  2019-07-13T18:58:55
-  c29-4-p.jpg  45.7080528,-123.9415139  2019-07-14T13:37:13
-  c29-5-p.jpg  45.7080000,-123.9393306  2019-07-14T18:55:24
-~~~
+order, zoom points, and other editorial fields. It updates width,
+height, size, live-video, GPS, and capture-time fields from the files.
+GPS and time come from each preview's EXIF. If a preview has no GPS or
+time, an existing value in the json is kept. A new photo is appended.
+A photo that is no longer on disk is dropped. When the files have not
+changed, the json file is left alone.
 
 __Optional Thumbnails Page Map__
 

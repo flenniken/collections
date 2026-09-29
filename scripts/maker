@@ -10,9 +10,9 @@ names (c24-1-p.jpg, c24-1-t.jpg, optional c24-1-v.mp4). Maker writes
 tmp/c24/c24.json and leaves the folder in place.
 
 When c24.json already exists, titles, descriptions, image order, and
-other editorial fields are kept. Width, height, size, and live-video
-fields are refreshed from the files. If nothing changed, the json
-file is left alone.
+other editorial fields are kept. Width, height, size, live-video,
+GPS, and capture-time fields are refreshed from the files. If nothing
+changed, the json file is left alone.
 
 See collection-maker.md for the full workflow.
 
@@ -53,6 +53,9 @@ import string
 import shutil
 import struct
 from PIL import Image, ImageOps
+from PIL.ExifTags import GPSTAGS
+import math
+import glob
 
 thumbnailDim = 480
 previewMinDim = 933
@@ -304,6 +307,169 @@ def validateCollectionFolder(num, ftg):
       raise MakerException(
         f"Error: there are {numOther} extra files in the folder, first: {first}")
 
+googleMapsDecimals = 7
+dateTimeTag = 306
+dateTimeOriginalTag = 36867
+dateTimeDigitizedTag = 36868
+exifIfdTag = 0x8769
+
+def dmsToDecimal(dms, ref):
+  """
+  Convert an EXIF GPS DMS triple to a signed decimal degree.
+
+  dms is (degrees, minutes, seconds). ref is N/S for latitude or
+  E/W for longitude. South and west are negative, matching Google Maps.
+  """
+  if dms is None or ref is None:
+    return None
+  if len(dms) != 3:
+    return None
+  try:
+    degrees, minutes, seconds = [float(part) for part in dms]
+  except (TypeError, ValueError, ZeroDivisionError):
+    return None
+  if not all(math.isfinite(part) for part in (degrees, minutes, seconds)):
+    return None
+  decimal = degrees + minutes / 60.0 + seconds / 3600.0
+  if ref in ("S", "W"):
+    decimal = -decimal
+  elif ref not in ("N", "E"):
+    return None
+  return decimal
+
+def formatGoogleMapsLocation(lat, lng):
+  """
+  Return the Google Maps query string "lat,lng", or "" if either
+  coordinate is missing.
+  """
+  if lat is None or lng is None:
+    return ""
+  return f"{lat:.{googleMapsDecimals}f},{lng:.{googleMapsDecimals}f}"
+
+def gpsFromExif(exif):
+  """
+  Return the GPS IFD dict from a Pillow Exif object, or {} if none.
+  """
+  if exif is None:
+    return {}
+  try:
+    gps = exif.get_ifd(0x8825)
+  except Exception:
+    return {}
+  if not gps:
+    return {}
+  return gps
+
+def locationFromGps(gps):
+  """
+  Convert a GPS IFD dict to a Google Maps location string, or "".
+  """
+  if not gps:
+    return ""
+  named = {GPSTAGS.get(key, key): value for key, value in gps.items()}
+  lat = dmsToDecimal(named.get("GPSLatitude"), named.get("GPSLatitudeRef"))
+  lng = dmsToDecimal(named.get("GPSLongitude"), named.get("GPSLongitudeRef"))
+  return formatGoogleMapsLocation(lat, lng)
+
+def formatTaken(raw):
+  """
+  Convert an EXIF datetime string to ISO local time, or "".
+
+  EXIF stores "2023:06:04 19:04:44". The result is
+  "2023-06-04T19:04:44" with no timezone so the camera's clock time
+  is preserved when displayed.
+  """
+  if not raw:
+    return ""
+  if isinstance(raw, bytes):
+    raw = raw.decode("ascii", "replace")
+  raw = str(raw).strip().rstrip("\x00")
+  match = re.match(
+    r"^(\d{4}):(\d{2}):(\d{2}) (\d{2}):(\d{2}):(\d{2})", raw)
+  if not match:
+    return ""
+  return (f"{match.group(1)}-{match.group(2)}-{match.group(3)}"
+          f"T{match.group(4)}:{match.group(5)}:{match.group(6)}")
+
+def takenFromExif(exif):
+  """
+  Return the capture time from EXIF, or "".
+
+  Prefers DateTimeOriginal, then DateTimeDigitized, then DateTime.
+  """
+  if exif is None:
+    return ""
+  try:
+    exifIfd = exif.get_ifd(exifIfdTag)
+  except Exception:
+    exifIfd = {}
+  raw = None
+  if exifIfd:
+    raw = (exifIfd.get(dateTimeOriginalTag)
+           or exifIfd.get(dateTimeDigitizedTag))
+  if not raw:
+    raw = exif.get(dateTimeTag)
+  return formatTaken(raw)
+
+def metadataFromPreview(previewPath):
+  """
+  Return location and taken strings from a preview jpg.
+  Missing or unreadable values are "".
+  """
+  try:
+    with Image.open(previewPath) as img:
+      exif = img.getexif()
+      return {
+        "location": locationFromGps(gpsFromExif(exif)),
+        "taken": takenFromExif(exif),
+      }
+  except Exception:
+    return {"location": "", "taken": ""}
+
+def locationFromPreview(previewPath):
+  """
+  Return the Google Maps location string from a preview jpg, or "".
+  """
+  return metadataFromPreview(previewPath)["location"]
+
+def previewPaths(folder):
+  """
+  Return sorted preview file paths (*-p.jpg) in the collection folder.
+  """
+  paths = glob.glob(os.path.join(folder, "*-p.jpg"))
+  paths.sort()
+  return paths
+
+def addLocations(cinfo, folder):
+  """
+  Add location and taken fields to each image in cinfo from preview
+  EXIF.
+
+  folder is the collection folder containing the *-p.jpg files.
+  Returns (cinfo, metadata) where metadata maps iPreview basename
+  to {location, taken}.
+  """
+  if "images" not in cinfo:
+    raise MakerException("Error: collection json is missing the images list.")
+
+  metadata = {}
+  for previewPath in previewPaths(folder):
+    basename = os.path.basename(previewPath)
+    metadata[basename] = metadataFromPreview(previewPath)
+
+  for image in cinfo["images"]:
+    iPreview = image.get("iPreview")
+    if not iPreview:
+      raise MakerException("Error: image is missing iPreview.")
+    previewPath = os.path.join(folder, iPreview)
+    if not os.path.isfile(previewPath):
+      raise MakerException(f"Error: preview file not found: {previewPath}")
+    imageMeta = metadata.get(iPreview, {"location": "", "taken": ""})
+    image["location"] = imageMeta["location"]
+    image["taken"] = imageMeta["taken"]
+
+  return cinfo, metadata
+
 def createCollectionCinfo(num, ftg, previewImageInfoList, folder):
   """
   Create the collection info (cinfo) for the given collection number.
@@ -344,6 +510,9 @@ def createCollectionCinfo(num, ftg, previewImageInfoList, folder):
     collectionImage['size'] = fileInfo.size
 
     collectionImage['sizet'] = thumbnailFileInfo.size
+    meta = metadataFromPreview(os.path.join(folder, fileInfo.basename))
+    collectionImage['location'] = meta['location']
+    collectionImage['taken'] = meta['taken']
     liveVideoFileInfo = liveVideoForPreview(fileInfo, videosByStem)
     if liveVideoFileInfo:
       collectionImage['iLiveVideo'] = liveVideoFileInfo.basename
@@ -404,6 +573,14 @@ def mergeImage(old, fresh):
       merged[key] = fresh[key]
     else:
       merged.pop(key, None)
+  for key in ("location", "taken"):
+    freshValue = fresh.get(key, "")
+    if freshValue:
+      merged[key] = freshValue
+    elif key in old:
+      merged[key] = old[key]
+    else:
+      merged[key] = ""
   return merged
 
 def mergeCinfo(fresh, existing):
@@ -583,7 +760,9 @@ def new(folder):
       print(f"Unchanged {cjsonFilename}")
       return
   writeCinfo(cjsonFilename, cinfo)
-  print(f"Wrote {cjsonFilename}")
+  gpsCount = sum(1 for image in cinfo["images"] if image.get("location"))
+  takenCount = sum(1 for image in cinfo["images"] if image.get("taken"))
+  print(f"Wrote {cjsonFilename} ({gpsCount} with GPS, {takenCount} with time)")
 
 def parseCommandLine():
   """
@@ -1145,6 +1324,8 @@ class TestMaker(unittest.TestCase):
         gotExpected(image['iPreview'], preview.basename)
         gotExpected(image['iThumbnail'], f"{stem}-t.jpg")
         gotExpected(image['size'], preview.size)
+        gotExpected(image['location'], "")
+        gotExpected(image['taken'], "")
 
       validateCollectionFolder(num, ftg)
 
@@ -1436,6 +1617,207 @@ class TestMaker(unittest.TestCase):
       if old is None:
         continue
       gotExpected(image["description"], old["description"])
+
+  def test_mergeCinfo_keeps_location_when_exif_empty(self):
+    existing = {
+      "title": "Santa Fe",
+      "cNum": 4,
+      "images": [{
+        "description": "Deck photo",
+        "iPreview": "c4-1-p.jpg",
+        "iThumbnail": "c4-1-t.jpg",
+        "width": 4032,
+        "height": 3024,
+        "size": 10,
+        "sizet": 5,
+        "location": "35.6488944,-105.9176778",
+        "taken": "2025-06-21T18:25:30",
+      }],
+    }
+    fresh = {
+      "title": "",
+      "cNum": 4,
+      "images": [{
+        "description": "",
+        "iPreview": "c4-1-p.jpg",
+        "iThumbnail": "c4-1-t.jpg",
+        "width": 4032,
+        "height": 3024,
+        "size": 10,
+        "sizet": 5,
+        "location": "",
+        "taken": "",
+      }],
+      "building": True,
+      "zoomPoints": {},
+    }
+    merged = mergeCinfo(fresh, existing)
+    gotExpected(merged["images"][0]["location"], "35.6488944,-105.9176778")
+    gotExpected(merged["images"][0]["taken"], "2025-06-21T18:25:30")
+
+def writeTestJpeg(path):
+  """ Write a tiny jpeg with no GPS. """
+  img = Image.new("RGB", (8, 8), "white")
+  img.save(path, "JPEG")
+
+class TestAddLocations(unittest.TestCase):
+
+  def test_dmsToDecimal_hawaii(self):
+    lat = dmsToDecimal((20.0, 44.0, 53.99), "N")
+    lng = dmsToDecimal((156.0, 27.0, 27.55), "W")
+    gotExpected(round(lat, 7), 20.7483306)
+    gotExpected(round(lng, 7), -156.4576528)
+
+  def test_dmsToDecimal_south_east(self):
+    lat = dmsToDecimal((33.0, 51.0, 54.0), "S")
+    lng = dmsToDecimal((151.0, 12.0, 36.0), "E")
+    gotExpected(round(lat, 7), -33.8650000)
+    gotExpected(round(lng, 7), 151.2100000)
+
+  def test_dmsToDecimal_missing(self):
+    gotExpected(dmsToDecimal(None, "N"), None)
+    gotExpected(dmsToDecimal((20.0, 44.0, 53.99), None), None)
+    gotExpected(dmsToDecimal((20.0, 44.0), "N"), None)
+    gotExpected(dmsToDecimal((20.0, 44.0, 53.99), "X"), None)
+
+  def test_dmsToDecimal_invalid_parts(self):
+    from PIL.TiffImagePlugin import IFDRational
+    gotExpected(dmsToDecimal((IFDRational(0, 0), 0, 0), "N"), None)
+    gotExpected(dmsToDecimal((float("nan"), 0.0, 0.0), "N"), None)
+    gotExpected(dmsToDecimal(("x", 0.0, 0.0), "N"), None)
+
+  def test_formatGoogleMapsLocation(self):
+    gotExpected(
+      formatGoogleMapsLocation(20.748330555555558, -156.45765277777775),
+      "20.7483306,-156.4576528")
+    gotExpected(formatGoogleMapsLocation(None, -156.4), "")
+    gotExpected(formatGoogleMapsLocation(20.7, None), "")
+
+  def test_locationFromGps_empty(self):
+    gotExpected(locationFromGps({}), "")
+    gotExpected(locationFromGps(None), "")
+
+  def test_locationFromGps_named(self):
+    gps = {
+      1: "N",
+      2: (20.0, 44.0, 53.99),
+      3: "W",
+      4: (156.0, 27.0, 27.55),
+    }
+    gotExpected(locationFromGps(gps), "20.7483306,-156.4576528")
+
+  def test_locationFromGps_nan(self):
+    gps = {
+      1: "N",
+      2: (float("nan"), float("nan"), float("nan")),
+      3: "W",
+      4: (float("nan"), float("nan"), float("nan")),
+    }
+    gotExpected(locationFromGps(gps), "")
+
+  def test_addLocations_missing_preview_is_empty(self):
+    folder = tempfile.mkdtemp()
+    try:
+      preview = os.path.join(folder, "c1-1-p.jpg")
+      writeTestJpeg(preview)
+      cinfo = {
+        "cNum": 1,
+        "images": [
+          {"iPreview": "c1-1-p.jpg"},
+        ],
+      }
+      cinfo, metadata = addLocations(cinfo, folder)
+      gotExpected(cinfo["images"][0]["location"], "")
+      gotExpected(cinfo["images"][0]["taken"], "")
+      gotExpected(metadata["c1-1-p.jpg"]["location"], "")
+      gotExpected(metadata["c1-1-p.jpg"]["taken"], "")
+    finally:
+      os.remove(preview)
+      os.rmdir(folder)
+
+  def test_addLocations_unreadable_preview_is_empty(self):
+    folder = tempfile.mkdtemp()
+    try:
+      good = os.path.join(folder, "c1-1-p.jpg")
+      bad = os.path.join(folder, "c1-2-p.jpg")
+      writeTestJpeg(good)
+      with open(bad, "w") as fh:
+        fh.write("not a jpeg")
+      cinfo = {
+        "cNum": 1,
+        "images": [
+          {"iPreview": "c1-1-p.jpg"},
+          {"iPreview": "c1-2-p.jpg"},
+        ],
+      }
+      cinfo, metadata = addLocations(cinfo, folder)
+      gotExpected(cinfo["images"][0]["location"], "")
+      gotExpected(cinfo["images"][1]["location"], "")
+      gotExpected(cinfo["images"][1]["taken"], "")
+      gotExpected(metadata["c1-2-p.jpg"]["location"], "")
+    finally:
+      os.remove(good)
+      os.remove(bad)
+      os.rmdir(folder)
+
+  def test_metadataFromPreview_frame_grabber_gps(self):
+    preview = "tmp/c36/c36-6-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    gotExpected(metadataFromPreview(preview)["location"], "")
+    gotExpected(metadataFromPreview(preview)["taken"], "")
+
+  def test_addLocations_missing_file_errors(self):
+    folder = tempfile.mkdtemp()
+    try:
+      cinfo = {
+        "images": [{"iPreview": "c1-1-p.jpg"}],
+      }
+      try:
+        addLocations(cinfo, folder)
+        assert False, "Unexpectedly passed"
+      except MakerException as ex:
+        gotExpected(
+          str(ex),
+          f"Error: preview file not found: {os.path.join(folder, 'c1-1-p.jpg')}")
+    finally:
+      os.rmdir(folder)
+
+  def test_formatTaken(self):
+    gotExpected(formatTaken("2023:06:04 19:04:44"), "2023-06-04T19:04:44")
+    gotExpected(formatTaken("2025:01:20 07:02:41"), "2025-01-20T07:02:41")
+    gotExpected(formatTaken(""), "")
+    gotExpected(formatTaken(None), "")
+    gotExpected(formatTaken("not a date"), "")
+    gotExpected(formatTaken(b"2023:06:04 19:04:44"), "2023-06-04T19:04:44")
+
+  def test_addLocations_real_preview_with_gps(self):
+    preview = "dist/images/c1/c1-1-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    loc = locationFromPreview(preview)
+    self.assertTrue(loc)
+    latStr, lngStr = loc.split(",")
+    lat = float(latStr)
+    lng = float(lngStr)
+    self.assertTrue(48 < lat < 49)
+    self.assertTrue(-114 < lng < -113)
+
+  def test_addLocations_real_preview_without_gps(self):
+    preview = "dist/images/c18/c18-1-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    loc = locationFromPreview(preview)
+    if loc:
+      self.skipTest(f"{preview} has GPS")
+    gotExpected(loc, "")
+    gotExpected(metadataFromPreview(preview)["taken"], "")
+
+  def test_addLocations_real_preview_with_time(self):
+    preview = "dist/images/c1/c1-1-p.jpg"
+    if not os.path.isfile(preview):
+      self.skipTest(f"missing {preview}")
+    gotExpected(metadataFromPreview(preview)["taken"], "2023-06-04T19:04:44")
 
 if __name__ == '__main__':
   args = parseCommandLine()

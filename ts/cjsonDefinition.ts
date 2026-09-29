@@ -30,12 +30,12 @@ namespace CJson {
 
     // Google Maps decimal-degree coordinates from the preview GPS,
     // e.g. "20.7473920,-156.4571441". Empty string means the preview
-    // has no GPS. Added by scripts/add-locations.
+    // has no GPS. Filled by scripts/maker from EXIF.
     location?: string;
 
     // When the preview was taken, from EXIF DateTimeOriginal,
     // e.g. "2023-06-04T19:04:44". Empty string means none.
-    // Added by scripts/add-locations.
+    // Filled by scripts/maker from EXIF.
     taken?: string;
 
     // Optional Live Photo or clip video basename, e.g. c2-1-v.mp4.
