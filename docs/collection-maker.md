@@ -182,6 +182,12 @@ are empty. Collections start with the `building` flag, so only admins
 see them. `g all` builds the image and thumbnails pages right away so
 you can edit in place.
 
+If `cN.json` already exists, maker keeps titles, descriptions, image
+order, zoom points, GPS, capture times, and other editorial fields. It
+updates width, height, size, and live-video fields from the files. A
+new photo is appended. A photo that is no longer on disk is dropped.
+When the files have not changed, the json file is left alone.
+
 __GPS and Time__
 
 Add GPS locations and capture times:

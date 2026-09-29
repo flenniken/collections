@@ -9,6 +9,11 @@ Pass a folder named like tmp/c24. The files must already use standard
 names (c24-1-p.jpg, c24-1-t.jpg, optional c24-1-v.mp4). Maker writes
 tmp/c24/c24.json and leaves the folder in place.
 
+When c24.json already exists, titles, descriptions, image order, and
+other editorial fields are kept. Width, height, size, and live-video
+fields are refreshed from the files. If nothing changed, the json
+file is left alone.
+
 See collection-maker.md for the full workflow.
 
 Example:
@@ -363,6 +368,76 @@ def createCollectionCinfo(num, ftg, previewImageInfoList, folder):
   }
   return cinfo
 
+IMAGE_FILE_KEYS = (
+  "iPreview", "iThumbnail", "width", "height", "size", "sizet",
+)
+LIVE_FILE_KEYS = ("iLiveVideo", "liveSize", "liveDuration")
+
+def loadExistingCinfo(path):
+  """
+  Return the collection json at path, or None when the file is missing.
+  """
+  if not os.path.isfile(path):
+    return None
+  try:
+    with open(path, encoding="utf-8") as fh:
+      data = json.load(fh)
+  except json.JSONDecodeError as ex:
+    raise MakerException(f"Error: cannot read existing json: {path}: {ex}")
+  if not isinstance(data, dict):
+    raise MakerException(
+      f"Error: existing json is not a collection object: {path}")
+  if "images" in data and not isinstance(data["images"], list):
+    raise MakerException(
+      f"Error: existing json images is not a list: {path}")
+  return data
+
+def mergeImage(old, fresh):
+  """
+  Keep editorial fields from old and take file-derived fields from fresh.
+  """
+  merged = dict(old)
+  for key in IMAGE_FILE_KEYS:
+    merged[key] = fresh[key]
+  for key in LIVE_FILE_KEYS:
+    if key in fresh:
+      merged[key] = fresh[key]
+    else:
+      merged.pop(key, None)
+  return merged
+
+def mergeCinfo(fresh, existing):
+  """
+  Keep titles, descriptions, order, zoom points, and other editorial
+  fields from existing. File-derived image fields come from fresh.
+  New previews are appended. Previews that disappeared are dropped.
+  """
+  merged = dict(existing)
+  merged["cNum"] = fresh["cNum"]
+  freshByPreview = {image["iPreview"]: image for image in fresh["images"]}
+  images = []
+  seen = set()
+  for old in existing.get("images", []):
+    preview = old.get("iPreview")
+    freshImage = freshByPreview.get(preview)
+    if freshImage is None:
+      continue
+    images.append(mergeImage(old, freshImage))
+    seen.add(preview)
+  for freshImage in fresh["images"]:
+    if freshImage["iPreview"] not in seen:
+      images.append(freshImage)
+  merged["images"] = images
+  return merged
+
+def writeCinfo(path, cinfo):
+  """
+  Write collection json with the usual formatting.
+  """
+  with open(path, "w", encoding="utf-8") as fh:
+    fh.write(json.dumps(cinfo, indent=2, ensure_ascii=False))
+    fh.write("\n")
+
 def getStdImageName(num, ix, kind):
   if kind == 'preview':
     prefix = 'p'
@@ -501,10 +576,13 @@ def new(folder):
 
   cinfo = createCollectionCinfo(num, ftg, previewImageInfoList, folder)
   cjsonFilename = os.path.join(folder, f"{prefix}.json")
-  with open(cjsonFilename, "w", encoding="utf-8") as fh:
-    fh.write(json.dumps(cinfo, indent=2, ensure_ascii=False))
-    fh.write("\n")
-
+  existing = loadExistingCinfo(cjsonFilename)
+  if existing is not None:
+    cinfo = mergeCinfo(cinfo, existing)
+    if cinfo == existing:
+      print(f"Unchanged {cjsonFilename}")
+      return
+  writeCinfo(cjsonFilename, cinfo)
   print(f"Wrote {cjsonFilename}")
 
 def parseCommandLine():
@@ -1136,6 +1214,228 @@ class TestMaker(unittest.TestCase):
         success = False
 
     self.assertTrue(success)
+
+  def test_loadExistingCinfo_missing(self):
+    gotExpected(loadExistingCinfo("missing-cjson.json"), None)
+
+  def test_loadExistingCinfo_invalid(self):
+    folder = tempfile.mkdtemp(prefix="maker-")
+    try:
+      path = os.path.join(folder, "c4.json")
+      createFile(path, "fake cjson file")
+      try:
+        loadExistingCinfo(path)
+        fail("Unexpectedly passed")
+      except MakerException as ex:
+        self.assertTrue(str(ex).startswith(
+          f"Error: cannot read existing json: {path}:"))
+    finally:
+      shutil.rmtree(folder)
+
+  def test_mergeCinfo_unchanged(self):
+    existing = {
+      "title": "Santa Fe",
+      "indexDescription": "Index text",
+      "description": "Thumbnails text",
+      "cNum": 4,
+      "posted": "2025-06-22",
+      "images": [{
+        "description": "Deck photo",
+        "iPreview": "c4-1-p.jpg",
+        "iThumbnail": "c4-1-t.jpg",
+        "width": 4032,
+        "height": 3024,
+        "size": 100,
+        "sizet": 50,
+        "location": "35.6,-105.9",
+        "taken": "2025-06-21T18:25:30",
+      }],
+      "zoomPoints": {"430x933": [{"scale": 1, "tx": 0, "ty": 0}]},
+    }
+    fresh = {
+      "title": "",
+      "indexDescription": "",
+      "description": "",
+      "cNum": 4,
+      "posted": "",
+      "images": [{
+        "description": "",
+        "iPreview": "c4-1-p.jpg",
+        "iThumbnail": "c4-1-t.jpg",
+        "width": 4032,
+        "height": 3024,
+        "size": 100,
+        "sizet": 50,
+      }],
+      "building": True,
+      "zoomPoints": {},
+    }
+    merged = mergeCinfo(fresh, existing)
+    gotExpected(merged, existing)
+    gotExpected("building" in merged, False)
+
+  def test_mergeCinfo_updates_size_keeps_description(self):
+    existing = {
+      "title": "Santa Fe",
+      "cNum": 4,
+      "images": [{
+        "description": "Deck photo",
+        "iPreview": "c4-1-p.jpg",
+        "iThumbnail": "c4-1-t.jpg",
+        "width": 100,
+        "height": 100,
+        "size": 1,
+        "sizet": 1,
+      }],
+    }
+    fresh = {
+      "title": "",
+      "cNum": 4,
+      "images": [{
+        "description": "",
+        "iPreview": "c4-1-p.jpg",
+        "iThumbnail": "c4-1-t.jpg",
+        "width": 4032,
+        "height": 3024,
+        "size": 3191993,
+        "sizet": 119055,
+      }],
+      "building": True,
+      "zoomPoints": {},
+    }
+    merged = mergeCinfo(fresh, existing)
+    image = merged["images"][0]
+    gotExpected(merged["title"], "Santa Fe")
+    gotExpected(image["description"], "Deck photo")
+    gotExpected(image["width"], 4032)
+    gotExpected(image["height"], 3024)
+    gotExpected(image["size"], 3191993)
+    gotExpected(image["sizet"], 119055)
+
+  def test_mergeCinfo_adds_live_video(self):
+    existing = {
+      "title": "Santa Fe",
+      "cNum": 4,
+      "images": [{
+        "description": "Live photo of the plaza",
+        "iPreview": "c4-5-p.jpg",
+        "iThumbnail": "c4-5-t.jpg",
+        "width": 4032,
+        "height": 3024,
+        "size": 10,
+        "sizet": 5,
+      }],
+    }
+    fresh = {
+      "title": "",
+      "cNum": 4,
+      "images": [{
+        "description": "",
+        "iPreview": "c4-5-p.jpg",
+        "iThumbnail": "c4-5-t.jpg",
+        "width": 4032,
+        "height": 3024,
+        "size": 10,
+        "sizet": 5,
+        "iLiveVideo": "c4-5-v.mp4",
+        "liveSize": 12345,
+        "liveDuration": 2.5,
+      }],
+      "building": True,
+      "zoomPoints": {},
+    }
+    merged = mergeCinfo(fresh, existing)
+    image = merged["images"][0]
+    gotExpected(image["description"], "Live photo of the plaza")
+    gotExpected(image["iLiveVideo"], "c4-5-v.mp4")
+    gotExpected(image["liveSize"], 12345)
+    gotExpected(image["liveDuration"], 2.5)
+
+  def test_mergeCinfo_preserves_order_and_appends(self):
+    existing = {
+      "title": "Santa Fe",
+      "cNum": 4,
+      "images": [
+        {"description": "B", "iPreview": "c4-2-p.jpg",
+          "iThumbnail": "c4-2-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+        {"description": "A", "iPreview": "c4-1-p.jpg",
+          "iThumbnail": "c4-1-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+      ],
+    }
+    fresh = {
+      "title": "",
+      "cNum": 4,
+      "images": [
+        {"description": "", "iPreview": "c4-1-p.jpg",
+          "iThumbnail": "c4-1-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+        {"description": "", "iPreview": "c4-2-p.jpg",
+          "iThumbnail": "c4-2-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+        {"description": "", "iPreview": "c4-3-p.jpg",
+          "iThumbnail": "c4-3-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+      ],
+      "building": True,
+      "zoomPoints": {},
+    }
+    merged = mergeCinfo(fresh, existing)
+    gotExpected([image["iPreview"] for image in merged["images"]],
+      ["c4-2-p.jpg", "c4-1-p.jpg", "c4-3-p.jpg"])
+    gotExpected(merged["images"][0]["description"], "B")
+    gotExpected(merged["images"][1]["description"], "A")
+    gotExpected(merged["images"][2]["description"], "")
+
+  def test_mergeCinfo_drops_missing_preview(self):
+    existing = {
+      "title": "Santa Fe",
+      "cNum": 4,
+      "images": [
+        {"description": "Keep", "iPreview": "c4-1-p.jpg",
+          "iThumbnail": "c4-1-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+        {"description": "Gone", "iPreview": "c4-9-p.jpg",
+          "iThumbnail": "c4-9-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+      ],
+    }
+    fresh = {
+      "title": "",
+      "cNum": 4,
+      "images": [
+        {"description": "", "iPreview": "c4-1-p.jpg",
+          "iThumbnail": "c4-1-t.jpg", "width": 1, "height": 1,
+          "size": 1, "sizet": 1},
+      ],
+      "building": True,
+      "zoomPoints": {},
+    }
+    merged = mergeCinfo(fresh, existing)
+    gotExpected(len(merged["images"]), 1)
+    gotExpected(merged["images"][0]["description"], "Keep")
+
+  def test_merge_real_c4_keeps_descriptions(self):
+    folder = "dist/images/c4"
+    path = os.path.join(folder, "c4.json")
+    if not os.path.exists(path):
+      return
+    existing = loadExistingCinfo(path)
+    fileInfoList = getFileInfoList(folder)
+    ftg = FileTypeGroups(fileInfoList)
+    previewImageInfoList = getImageInfoList(folder, ftg.previews, previews=True)
+    fresh = createCollectionCinfo(4, ftg, previewImageInfoList, folder)
+    merged = mergeCinfo(fresh, existing)
+    gotExpected(merged["title"], existing["title"])
+    gotExpected(merged["description"], existing["description"])
+    gotExpected(merged["indexDescription"], existing["indexDescription"])
+    oldByPreview = {image["iPreview"]: image for image in existing["images"]}
+    for image in merged["images"]:
+      old = oldByPreview.get(image["iPreview"])
+      if old is None:
+        continue
+      gotExpected(image["description"], old["description"])
 
 if __name__ == '__main__':
   args = parseCommandLine()
