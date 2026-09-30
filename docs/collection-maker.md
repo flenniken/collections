@@ -96,12 +96,22 @@ rename: 3.HEIC -> c29-3-p.HEIC
 ...
 ~~~
 
-__Convert HEIC to Jpg__
+__Convert HEIC and MOV__
 
-Convert the HEIC files to jpg.
+Convert HEIC stills to jpg and Live Photo `.mov` files to `.mp4`.
+
+Live videos are optional. Delete any `.mov` files you do not want to
+keep. Look at them in the finder and drag the ones you don't want to
+the trash.
+
+If you only have a video, make a jpg preview file by extracting a
+frame with the free Frame Grabber application on the iPhone and
+renaming it to the standard naming.
+
+♫ Note: We convert mov to mp4 because browsers play mp4 more reliably.
 
 ~~~
-scripts/convert-heic-previews tmp/$cnum
+scripts/convert-heic-mov tmp/$cnum
 
 convert: c29-1-p.HEIC -> c29-1-p.jpg
 File contains 1 image
@@ -112,25 +122,6 @@ File contains 1 image
 Written to tmp/c29/c29-10-p.jpg
 remove: c29-10-p.HEIC
 ...
-~~~
-
-__Convert MOV to Mp4__
-
-Live videos are optional. Delete any `.mov` files you do not want to
-keep. Look at them in the finder and drag the ones you don't want to
-the trash.
-
-If you only have a video, make a jpg preview file by extracting a
-frame with the free Frame Grabber application on the iPhone and
-renaming it to the standard naming.
-
-Convert the remaining `.mov` files to `.mp4`.
-
-♫ Note: We convert mov to mp4 because browsers play mp4 more reliably.
-
-~~~
-scripts/convert-live-videos tmp/$cnum
-
 convert: c29-1-v.mov -> c29-1-v.mp4
 remove: c29-1-v.mov
 convert: c29-10-v.mov -> c29-10-v.mp4
