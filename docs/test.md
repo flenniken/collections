@@ -99,6 +99,8 @@ When making changes to the image page test them with these steps:
 * zoom when v scrolled
 * double tap to restore
 * double tap to fit to screen
+* double tap to fill the screen and verify the overflowing side is
+  centered, not left aligned
 * double tap a photo and verify the page does not scroll vertically
 * h scroll
 * h scroll half way and snap back

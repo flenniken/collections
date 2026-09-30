@@ -277,8 +277,9 @@ function getFitZoomPoint(imageIx: number, cjson: CJson.Collection) {
 }
 
 function getFillZoomPoint(imageIx: number, cjson: CJson.Collection) {
-  // Scale an image to cover the screen area, preserving aspect ratio
-  // and centering it. Some pixels may extend outside the area.
+  // Scale an image to cover the screen, preserving aspect ratio.
+  // The side that overflows is centered so the crop is even on both
+  // ends, not aligned to the left or top.
 
   const width = cjson.images[imageIx].width
   const height = cjson.images[imageIx].height
@@ -838,7 +839,8 @@ function sizeImages(firstImageIx: number) {
 }
 
 function defaultZoomPoints() {
-  // Create zoom points where the images fit the screen.
+  // Create zoom points where the images fit the screen, centered in
+  // any leftover space.
 
   let zoomPoints: CJson.ZoomPoint[] = []
   cJson.images.forEach((image, imageIx) => {
@@ -851,7 +853,9 @@ function defaultZoomPoints() {
     } else {
       scale = availHeight / image.height
     }
-    const zoomPoint = {"scale": scale, "tx": 0, "ty": 0}
+    const tx = (availWidth - image.width * scale) / 2
+    const ty = (availHeight - image.height * scale) / 2
+    const zoomPoint = {"scale": scale, "tx": tx, "ty": ty}
     zoomPoints.push(zoomPoint)
     log(`Zoom point: (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)}), scale: ${two(zoomPoint.scale)}`)
   })
@@ -1073,6 +1077,30 @@ function closeZoomPoints(zoomPoint: CJson.ZoomPoint, origZP: CJson.ZoomPoint): b
   return scaleClose && txClose && tyClose;
 }
 
+function uniqueZoomCycle(origZP: CJson.ZoomPoint, fitZP: CJson.ZoomPoint,
+    fillZP: CJson.ZoomPoint): CJson.ZoomPoint[] {
+  // Double-tap states in order, skipping duplicates. When the saved
+  // zoom point is already fit, the cycle is fit <-> fill.
+  const unique: CJson.ZoomPoint[] = []
+  for (const zp of [origZP, fitZP, fillZP]) {
+    if (unique.some(seen => closeZoomPoints(seen, zp)))
+      continue
+    unique.push(zp)
+  }
+  return unique
+}
+
+function nextZoomInCycle(current: CJson.ZoomPoint,
+    cycle: CJson.ZoomPoint[]): CJson.ZoomPoint {
+  // Return the next zoom point in the cycle.
+  if (cycle.length === 0)
+    return current
+  const ix = cycle.findIndex(zp => closeZoomPoints(current, zp))
+  if (ix === -1)
+    return cycle[0]
+  return cycle[(ix + 1) % cycle.length]
+}
+
 function handleRestoreImage(event: Event) {
   // Cycle the image through zoom point, fit, and fill on double tap.
 
@@ -1090,23 +1118,13 @@ function handleRestoreImage(event: Event) {
   log(`     Fit zoom point: scale: ${two(fitZP.scale)}, (${two(fitZP.tx)}, ${two(fitZP.ty)})`)
   log(`    Fill zoom point: scale: ${two(fillZP.scale)}, (${two(fillZP.tx)}, ${two(fillZP.ty)})`)
 
-  let nextZP: CJson.ZoomPoint
-  if (closeZoomPoints(zoomPoint, origZP)) {
-    nextZP = newZoomPoint(fitZP)
-  }
-  else if (closeZoomPoints(zoomPoint, fitZP)) {
-    nextZP = newZoomPoint(fillZP)
-  }
-  else if (closeZoomPoints(zoomPoint, fillZP)) {
-    nextZP = newZoomPoint(origZP)
-  }
-  else {
-    nextZP = newZoomPoint(origZP)
-  }
+  const cycle = uniqueZoomCycle(origZP, fitZP, fillZP)
+  const nextZP = newZoomPoint(nextZoomInCycle(zoomPoint, cycle))
   log(`    Next zoom point: scale: ${two(nextZP.scale)}, (${two(nextZP.tx)}, ${two(nextZP.ty)})`)
 
-  // Animate the image from the original zoom point to its next zoom
-  // point.
+  // Animate to the next zoom point. Set the destination transform on
+  // the element first so the fill (centered crop) stays after the
+  // animation instead of snapping back to the previous position.
   const img = get(`i${imageIx+1}`)
   const video = getLiveVideoElement(imageIx)
   img.style.transformOrigin = "0px 0px"
@@ -1114,7 +1132,12 @@ function handleRestoreImage(event: Event) {
     video.style.transformOrigin = "0px 0px"
   const fromTransform = `translate(${zoomPoint.tx}px, ${zoomPoint.ty}px) scale(${zoomPoint.scale})`
   const toTransform = `translate(${nextZP.tx}px, ${nextZP.ty}px) scale(${nextZP.scale})`
-  const animation = img.animate([
+  zoomPoint.scale = nextZP.scale
+  zoomPoint.tx = nextZP.tx
+  zoomPoint.ty = nextZP.ty
+  add_border(img, zoomPoint)
+  setImageTransform(imageIx, zoomPoint)
+  img.animate([
     { transform: fromTransform },
     { transform: toTransform },
   ],
@@ -1131,23 +1154,6 @@ function handleRestoreImage(event: Event) {
       duration: 300,
       iterations: 1,
     })
-  }
-  animation.onfinish = (event) => {
-    // Restore the current zoom point and set the finish size and
-    // position.
-    log("Restore image finished")
-    zoomPoint.scale = nextZP.scale;
-    zoomPoint.tx = nextZP.tx;
-    zoomPoint.ty = nextZP.ty;
-    add_border(img, zoomPoint)
-    setImageTransform(imageIx, zoomPoint)
-    log(`Final zoom point: scale: ${two(zoomPoint.scale)}, (${two(zoomPoint.tx)}, ${two(zoomPoint.ty)})`)
-
-    // It's an error if the original zoom point changes. This has
-    // happened when the original object was a reference to the mutable
-    // zoomPoint object.
-    const origZP = newZoomPoint(getZoomPoint(imageIx, cJsonOriginal))
-    log(`Original zoom point: scale: ${two(origZP.scale)}, (${two(origZP.tx)}, ${two(origZP.ty)})`)
   }
 }
 
