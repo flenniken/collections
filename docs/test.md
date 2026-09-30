@@ -99,6 +99,7 @@ When making changes to the image page test them with these steps:
 * zoom when v scrolled
 * double tap to restore
 * double tap to fit to screen
+* double tap a photo and verify the page does not scroll vertically
 * h scroll
 * h scroll half way and snap back
 * flick h scroll

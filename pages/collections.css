@@ -323,6 +323,7 @@ body.thumb-reordering {
 
 #images .container {
   background-color: white;
+  touch-action: manipulation;
 }
 
 #images .live-badge {

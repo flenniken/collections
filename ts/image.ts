@@ -108,15 +108,12 @@ async function handleLoad() {
   // Watch the touchstart event on the containers for double touch.
   const containers = area!.querySelectorAll(".container")
   containers.forEach(container => {
-    container.addEventListener("touchstart", handleContainerTouchStart, {passive: true})
+    container.addEventListener("touchstart", handleContainerTouchStart, {passive: false})
 
     // Watch the area scroll and scroll end events.
     area!.addEventListener("scroll", handleScroll, false)
     area!.addEventListener("scrollend", handleScrollEnd, false)
   })
-
-  // Disable the default browser zoom and pan behavior.
-  get("images").setAttribute("touch-action", "none")
 
   // Show the page now to cut down on page flashing.
   document.body.style.visibility = "visible"
@@ -984,6 +981,7 @@ function preventSwipe(event: Event) {
 
 // A timer to detect a double touch.
 let doubleTouch: Timer | null = null
+let preventDoubleTapScroll = false
 
 function handleTouchStart(event: TouchEvent) {
   // Log the current image. See handleContainerTouchStart for zoom
@@ -1008,8 +1006,11 @@ function handleContainerTouchStart(event: Event) {
     if (doubleTouch !== null) {
       let seconds = doubleTouch.seconds()
       if (seconds < .5) {
-        const event = new Event("restoreimage");
-        window.dispatchEvent(event);
+        // Stop Safari's double-tap-to-scroll now that the page can
+        // be taller than the photo.
+        event.preventDefault()
+        preventDoubleTapScroll = true
+        window.dispatchEvent(new Event("restoreimage"))
         doubleTouch = null
         return
       }
@@ -1322,6 +1323,11 @@ function handleDragStart(event: Event) {
 
 function handleTouchEnd(event: TouchEvent) {
   // Log the current zoom point.
+
+  if (preventDoubleTapScroll) {
+    event.preventDefault()
+    preventDoubleTapScroll = false
+  }
 
   if (livePressImageIx !== null && !livePressTouchEnded(event))
     return
