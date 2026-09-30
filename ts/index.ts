@@ -46,6 +46,26 @@ function toNearestMB(bytes: number): number {
   return Math.round(bytes / MB);
 }
 
+function formatStorageSize(bytes: number): string {
+  // Format bytes as MB, or GB when the value is a gigabyte or more.
+  const GB = 1024 * 1024 * 1024
+  const MB = 1024 * 1024
+  if (bytes >= GB)
+    return `${(bytes / GB).toFixed(1)} GB`
+  return `${Math.round(bytes / MB).toLocaleString()} MB`
+}
+
+function formatUsedPercent(used: number, quota: number): string {
+  // Avoid "0%" when something is stored but it is a tiny slice of the
+  // browser's origin quota, which is often hundreds of gigabytes.
+  if (quota <= 0)
+    return "0%"
+  const pct = (used / quota) * 100
+  if (used > 0 && pct < 1)
+    return "<1%"
+  return `${pct.toFixed(0)}%`
+}
+
 async function setCollectionState(cNum: number, collectionState: string) {
   // Show or hide the UI elements that show the whether the collection is
   // ready to view.
@@ -507,24 +527,24 @@ async function getUsageQuotaString(cNum: number | null) {
   // or when null how much all the collections use.
 
   const estimate = await navigator.storage.estimate()
+  const usage = estimate.usage ?? 0
+  const quota = estimate.quota ?? 0
 
-  if (!estimate.usage || !estimate.quota)
+  if (!quota)
     return "No disk quota estimate."
 
-  const quota = toNearestMB(estimate.quota)
-  const quotaFormatted = quota.toLocaleString();
+  log(`storage estimate: usage ${usage}, quota ${quota}`)
+  const remaining = Math.max(0, quota - usage)
+  const roomFormatted = formatStorageSize(remaining)
 
   if (cNum == null) {
-    const percent = ((estimate.usage / estimate.quota) * 100).toFixed(0)
-    const totalUsageFormatted = toNearestMB(estimate.usage).toLocaleString();
-    return `All the collections are using ${totalUsageFormatted} MB (${percent}%) and you have room for ${quotaFormatted} MB on your phone.`
+    const percent = formatUsedPercent(usage, quota)
+    return `All the collections are using ${formatStorageSize(usage)} (${percent}) and you have room for ${roomFormatted} on your phone.`
   }
   else {
-    const indexCollection = getIndexCollection(cNum)
-    const cNumUsage = indexCollection.totalSize
-    const percent = ((cNumUsage / estimate.quota) * 100).toFixed(0)
-    const cNumUsageFormatted = toNearestMB(cNumUsage).toLocaleString();
-    return `The collection is using ${cNumUsageFormatted} MB (${percent}%) and you have room for ${quotaFormatted} MB on your phone.`
+    const cNumUsage = getIndexCollection(cNum).totalSize
+    const percent = formatUsedPercent(cNumUsage, quota)
+    return `The collection is using ${formatStorageSize(cNumUsage)} (${percent}) and you have room for ${roomFormatted} on your phone.`
   }
 }
 
