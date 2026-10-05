@@ -1,0 +1,226 @@
+{
+  "title": "Grand Canyon",
+  "indexDescription": "Views from the Grand Canyon.",
+  "description": "We stopped at the Grand Canyon south rim visitors center for the view.  There was no indication of a canyon on the drive over.  Not until you park and walk to the edge do you see it and it is impressive.",
+  "cNum": 44,
+  "posted": "2026-10-02",
+  "location": "36.062458343610636, -112.1079039744516",
+  "images": [
+    {
+      "description": "View from the visitors center.",
+      "iPreview": "c44-2-p.jpg",
+      "iThumbnail": "c44-2-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 688425,
+      "sizet": 53702,
+      "location": "",
+      "taken": "2002-08-11T14:37:40"
+    },
+    {
+      "description": "😎",
+      "iPreview": "c44-1-p.jpg",
+      "iThumbnail": "c44-1-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 728898,
+      "sizet": 57324,
+      "location": "",
+      "taken": "2002-08-11T14:36:59"
+    },
+    {
+      "description": "The visitor's center is built on the edge of the canyon.",
+      "iPreview": "c44-3-p.jpg",
+      "iThumbnail": "c44-3-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 640942,
+      "sizet": 59570,
+      "location": "",
+      "taken": "2002-08-11T14:37:52"
+    },
+    {
+      "description": "Alex, Elisabeth, Tom and Kathleen posing at the lookout.",
+      "iPreview": "c44-5-p.jpg",
+      "iThumbnail": "c44-5-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 642957,
+      "sizet": 55476,
+      "location": "",
+      "taken": "2002-08-11T14:40:50"
+    },
+    {
+      "description": "Looking over Tom's shoulder at the shear drop off.",
+      "iPreview": "c44-4-p.jpg",
+      "iThumbnail": "c44-4-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 635102,
+      "sizet": 56388,
+      "location": "",
+      "taken": "2002-08-11T14:40:16"
+    },
+    {
+      "description": "Another view of the visitors center from below.",
+      "iPreview": "c44-6-p.jpg",
+      "iThumbnail": "c44-6-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 898683,
+      "sizet": 77332,
+      "location": "",
+      "taken": "2002-08-11T14:41:55"
+    },
+    {
+      "description": "Kathleen",
+      "iPreview": "c44-7-p.jpg",
+      "iThumbnail": "c44-7-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 667927,
+      "sizet": 55124,
+      "location": "",
+      "taken": "2002-08-11T14:43:54"
+    },
+    {
+      "description": "The outlook protruding over the canyon.",
+      "iPreview": "c44-9-p.jpg",
+      "iThumbnail": "c44-9-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 607475,
+      "sizet": 50623,
+      "location": "",
+      "taken": "2002-08-11T14:50:33"
+    },
+    {
+      "description": "Looking down into the canyon at the different colored layers.",
+      "iPreview": "c44-10-p.jpg",
+      "iThumbnail": "c44-10-t.jpg",
+      "width": 2048,
+      "height": 1536,
+      "size": 798763,
+      "sizet": 63354,
+      "location": "",
+      "taken": "2002-08-11T15:06:46"
+    },
+    {
+      "description": "This picture is similar to the one of Kathleen but of Steve (me).  My face and front was in a shadow, much more than's Kathleen's picture.  I told Lightroom AI to lighten the shadows of the person and this is what I got.  It looks great as a first impression and it is better that the original. After looking at it for a minute, I think it went overboard.  It took liberties by inventing pixels that weren't there.",
+      "iPreview": "c44-8-p.jpg",
+      "iThumbnail": "c44-8-t.jpg",
+      "width": 4779,
+      "height": 3584,
+      "size": 2095931,
+      "sizet": 38612,
+      "location": "",
+      "taken": "2002-08-11T14:44:51"
+    }
+  ],
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.652106801556646,
+        "tx": -333.91113233185456,
+        "ty": -34.3180235955042
+      },
+      {
+        "scale": 0.652106801556646,
+        "tx": -548.7573647940055,
+        "ty": -34.3180235955042
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.263375,
+        "tx": -47.696000000000026,
+        "ty": 264.22799999999995
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.2099609375,
+        "tx": 0,
+        "ty": 305.25
+      },
+      {
+        "scale": 0.23515625,
+        "tx": -39.80000000000001,
+        "ty": 285.9
+      },
+      {
+        "scale": 0.4144256614400002,
+        "tx": -161.3718773145602,
+        "ty": 148.22109201407983
+      },
+      {
+        "scale": 0.652106801556646,
+        "tx": -644.7573647940055,
+        "ty": -34.3180235955042
+      },
+      {
+        "scale": 0.10077422054823186,
+        "tx": -25.80000000000001,
+        "ty": 285.9125967775685
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.455078125,
+        "tx": 0,
+        "ty": -134.5
+      },
+      {
+        "scale": 0.455078125,
+        "tx": 0,
+        "ty": -134.5
+      },
+      {
+        "scale": 0.455078125,
+        "tx": 0,
+        "ty": -134.5
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.47654321311419223,
+        "tx": -12.833565584000382,
+        "ty": -37.80521614356718
+      },
+      {
+        "scale": 0.2799479166666667,
+        "tx": 179.33333333333331,
+        "ty": 0
+      },
+      {
+        "scale": 0.46254948131024504,
+        "tx": -3.653674145670209,
+        "ty": -110.18078155120969
+      },
+      {
+        "scale": 0.4641070469734542,
+        "tx": -10.58898200785734,
+        "ty": -74.00635122819844
+      },
+      {
+        "scale": 0.20709595550062618,
+        "tx": -26.96435836560329,
+        "ty": -145.98461705714686
+      }
+    ]
+  }
+}

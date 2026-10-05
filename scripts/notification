@@ -43,6 +43,11 @@
 //   subject: contact email (required for --publish)
 //
 // Do not store VAPID keys in ~/.aws/credentials; boto3 cannot parse them there.
+//
+// List users (-l/--list-users):
+//
+//   Print email and id for each user who has a push subscription.
+//
 // DynamoDB:
 //
 //   table name = TABLE_NAME constant below
@@ -166,6 +171,8 @@ program
     'Create the DynamoDB table and API Gateway for push subscriptions.')
   .option('-g, --get-subscriptions [json]',
     'List push subscriptions one per line. Use json for listing them in JSON format with more details.')
+  .option('-l, --list-users',
+    'List users with notification subscriptions as email and id, one per line.')
   .option('--deploy <name>',
     'Deploy a notification Lambda function (e.g. save-subscription).')
 
@@ -825,6 +832,64 @@ async function scanSubscriptions() {
   return items
 }
 
+function cognitoIdpSdk() {
+  // Load the Cognito Identity Provider SDK when -l runs.
+  const {
+    CognitoIdentityProviderClient,
+    ListUsersCommand,
+  } = requireHomeModule('@aws-sdk/client-cognito-identity-provider')
+  return { CognitoIdentityProviderClient, ListUsersCommand }
+}
+
+function cognitoAttribute(user, name) {
+  // Return a Cognito user attribute value, or an empty string.
+  const attrs = user.Attributes ?? []
+  const found = attrs.find(attr => attr.Name === name)
+  return found?.Value ?? ''
+}
+
+async function listCognitoUsers() {
+  // Return Cognito users as {email, id} rows.
+  const { CognitoIdentityProviderClient, ListUsersCommand } = cognitoIdpSdk()
+  const region = loadAwsRegion()
+  const userPoolId = loadAwsSettings().userPoolId
+  const client = new CognitoIdentityProviderClient({ region })
+  const users = []
+  let paginationToken
+  do {
+    const response = await client.send(new ListUsersCommand({
+      UserPoolId: userPoolId,
+      Limit: 60,
+      PaginationToken: paginationToken,
+    }))
+    users.push(...(response.Users ?? []))
+    paginationToken = response.PaginationToken
+  } while (paginationToken)
+
+  return users.map(user => ({
+    email: cognitoAttribute(user, 'email') || user.Username || '',
+    id: cognitoAttribute(user, 'sub') || user.Username || '',
+  }))
+}
+
+async function listUsers() {
+  // List subscribers as "email id", one per line.
+  const items = await scanSubscriptions()
+  const subscriberIds = [...new Set(
+    items.map(item => item.userId).filter(Boolean))]
+  const emailById = new Map()
+  for (const user of await listCognitoUsers())
+    emailById.set(user.id, user.email)
+
+  const rows = subscriberIds.map(id => ({
+    email: emailById.get(id) || '',
+    id,
+  }))
+  rows.sort((a, b) => a.email.localeCompare(b.email) || a.id.localeCompare(b.id))
+  for (const row of rows)
+    console.log(`${row.email || '-'} ${row.id}`)
+}
+
 async function getSubscriptions(mode) {
   // List subscriptions one per line, or as detailed JSON.
   const items = await scanSubscriptions()
@@ -1227,6 +1292,8 @@ async function main() {
     await configure()
   } else if (options.getSubscriptions !== undefined) {
     await getSubscriptions(options.getSubscriptions)
+  } else if (options.listUsers) {
+    await listUsers()
   } else if (options.deploy) {
     await deployLambda(options.deploy)
   } else {

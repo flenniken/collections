@@ -1,12 +1,12 @@
 {
   "title": "Georgia",
   "indexDescription": "Georgia trip with Ken and Dianne in 2025. ",
-  "description": "Georgia trip with Ken and Dianne in 2025.   We started in Savanna for a couple of days then we moved to the coast to St. Simon beach.",
+  "description": "Georgia trip with Ken and Dianne in 2025.   We started in Savannah for a couple of days then we moved to the coast to St. Simon beach.",
   "cNum": 43,
-  "posted": "",
+  "posted": "2026-10-01",
   "images": [
     {
-      "description": "The Live Oak trees were amazing. ",
+      "description": "The Live Oak trees in Savannah were amazing. ",
       "iPreview": "c43-7-p.jpg",
       "iThumbnail": "c43-7-t.jpg",
       "width": 4032,
@@ -17,7 +17,7 @@
       "taken": "2024-04-11T14:40:08"
     },
     {
-      "description": "In Savanna we stayed in the house out of view on the left. It has stairs like the one you can see.",
+      "description": "In Savannah we stayed in the house out of view on the left. It has stairs like the one you can see.",
       "iPreview": "c43-1-p.jpg",
       "iThumbnail": "c43-1-t.jpg",
       "width": 4032,
@@ -39,7 +39,7 @@
       "taken": "2024-04-10T15:39:58"
     },
     {
-      "description": "The live oak trees in the park across the street from our house.  Savanna has a park every two blocks in a grid.",
+      "description": "The live oak trees in the park across the street from our house.  Savannah has a park every two blocks in a grid.",
       "iPreview": "c43-2-p.jpg",
       "iThumbnail": "c43-2-t.jpg",
       "width": 4032,
@@ -61,7 +61,7 @@
       "taken": "2024-04-11T11:42:10"
     },
     {
-      "description": "Kathleen, Diane and Ken. It has rained earlier but it was warm out. ",
+      "description": "Kathleen, Dianne and Ken. It has rained earlier but it was warm out. ",
       "iPreview": "c43-5-p.jpg",
       "iThumbnail": "c43-5-t.jpg",
       "width": 4032,
@@ -83,7 +83,7 @@
       "taken": "2024-04-11T14:15:31"
     },
     {
-      "description": "There was a lot of cargo traffic on the Savanna River.  The ships were close to the walking path. You can see how big they are. \n\nBaltimore's port was closed because a ship ran into a bridge. Savanna and others handled the traffic.  We saw several RORO ships, roll on roll off. ",
+      "description": "There was a lot of cargo traffic on the Savannah River.  The ships were close to the walking path. You can see how big they are. \n\nBaltimore's port was closed because a ship ran into a bridge. Savannah and others handled the traffic.  We saw several RORO ships, roll on roll off. ",
       "iPreview": "c43-8-p.jpg",
       "iThumbnail": "c43-8-t.jpg",
       "width": 3024,
@@ -130,7 +130,7 @@
       "taken": "2024-04-14T15:21:04"
     },
     {
-      "description": "The dining room and kitchen. Kathleen is at the ice making machine. Ken is adjusting the TV.  Dianna is taking the long walk to the bedrooms in back.",
+      "description": "The dining room and kitchen. Kathleen is at the ice making machine. Ken is adjusting the TV.  Dianne is taking the long walk to the bedrooms in back.",
       "iPreview": "c43-13-p.jpg",
       "iThumbnail": "c43-13-t.jpg",
       "width": 4032,
@@ -144,7 +144,7 @@
       "liveDuration": 2.95
     },
     {
-      "description": "The Masters golf tournament was going on while we were there. It was relatively just up the street. ",
+      "description": "The Masters golf tournament was going on while we were there. It was practically just up the street. ",
       "iPreview": "c43-15-p.jpg",
       "iThumbnail": "c43-15-t.jpg",
       "width": 4032,
@@ -177,7 +177,7 @@
       "taken": "2024-04-14T11:43:29"
     },
     {
-      "description": "Selfie on the beach. ",
+      "description": "Selfie on the Jekyll island beach. ",
       "iPreview": "c43-16-p.jpg",
       "iThumbnail": "c43-16-t.jpg",
       "width": 4032,
@@ -188,18 +188,17 @@
       "taken": "2024-04-15T13:58:30"
     }
   ],
-  "building": true,
   "zoomPoints": {
     "430x933": [
       {
-        "scale": 0.10664682539682539,
-        "tx": 0,
-        "ty": 305.25
+        "scale": 0.31870853127294635,
+        "tx": -394.73496486595013,
+        "ty": -11.636279974791648
       },
       {
-        "scale": 0.10664682539682539,
-        "tx": 0,
-        "ty": 305.25
+        "scale": 0.21050192327111128,
+        "tx": -27.760973524472774,
+        "ty": 148.22109201407983
       },
       {
         "scale": 0.2492825547939959,
@@ -207,9 +206,9 @@
         "ty": -11.480734037275283
       },
       {
-        "scale": 0.10664682539682539,
-        "tx": 0,
-        "ty": 305.25
+        "scale": 0.3312288515843282,
+        "tx": -500.7573647940055,
+        "ty": -34.3180235955042
       },
       {
         "scale": 0.10664682539682539,

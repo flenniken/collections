@@ -430,6 +430,13 @@ scripts/notification --get-subscriptions json
 The first form prints one line per subscription (date, user id, short
 endpoint). The 'json' form prints the full items.
 
+List users who have a notification subscription as email and id, one
+per line:
+
+~~~
+scripts/notification -l
+~~~
+
 **Configure**
 
 You configure the services with the notification command's --configure
@@ -548,6 +555,6 @@ localStorage.removeItem('notificationsVapidPublicKey')
 * [AWS Services](#aws-services) -- how the aws services, API Gateway, Lambda and DynamoDB support notifications.
 * [Save Subscription](#save-subscription) -- save a push subscription manually for testing.
 * [Publish Notifications](#publish-notifications) -- notify users when a collection is published.
-* [List Subscriptions](#list-subscriptions) -- list push subscriptions stored in DynamoDB.
+* [List Subscriptions](#list-subscriptions) -- list push subscriptions stored in DynamoDB, or subscribers with -l.
 * [Testing](#testing) -- how to test the notification feature.
 
