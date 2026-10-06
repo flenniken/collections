@@ -366,16 +366,6 @@ Jan 16, 2025</time>
 
 [⬇](#Contents)
 
-# Photo Location
-
-Put the photo's coordinates in the UI with a link to google maps:
-(20.7473920, -156.4571441) see “google map link” note.
-
-Use metar to extract the metadata for the maker app and fill in the
-initial collection json.
-
-[⬇](#Contents)
-
 # Statictea Lambda
 
 Investigate building collections on a lambda function.
@@ -430,17 +420,6 @@ application > storage
 
 [⬇](#Contents)
 
-# Drag Icon
-
-Disable long press drag icon on the index, thumbnails and images pages.
-
-[⬇](#Contents)
-
-Disable long press share menu for the thumbnails on the index and
-thumbnails pages but leave it on the images page.
-
-[⬇](#Contents)
-
 # Associate with Originals
 
 Make it easy to find the Collection’s originals in the original photos
@@ -470,13 +449,11 @@ filename, date or other metadata.
 * [Different Bundler](#different-bundler) -- use a different bundler for easier sharing of code.
 * [view-download](#view-download) -- show the unique id with view-download so you can look up the details with it.
 * [Time Tag](#time-tag) -- use the time tag for the post date on the index page.
-* [Photo Location](#photo-location) -- put the photo's coordinates in the UI with a link to google maps.
 * [Statictea Lambda](#statictea-lambda) -- investigate building collections on a lambda function.
 * [Client Cache]($client-cache) -- test when a change affects the user's cache.
 * [Billing Alarm](#billing-alarm) -- setup a billing alarm and document the steps.
 * [Tab Bar](#tab-bar) -- test different locations for the tab bar.
 * [Cognito Logs](#cognito-logs) -- document how to find and read the Cognito logs.
 * [Low Quota](#low-quota) -- test with a low disk space quoto.
-* [Drag Icon](#drag-icon) -- disable long press drag icon on the index, thumbnails and images pages.
 * [Share Menu](#share-menu) -- disable long press share menu for the thumbnails.
 * [Associate with Originals](#associate-with-originals) -- make it easy to find the collection image originals.

@@ -52,6 +52,7 @@ function updateLoginUI() {
     get("first-letter").style.display = "none"
   }
   showHideAdminUI("index")
+  updateAboutNotifications()
 }
 
 function logMeIn() {

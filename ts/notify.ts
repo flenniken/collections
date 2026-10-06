@@ -5,6 +5,7 @@
 const VAPID_PUBLIC_KEY = 'BDHakmrjRIE_lXPCCfX3HmyN4fbAOE0af08LQ5Lpe4On3E-87f1XyaZ_1LRvdh-0KZRvdY3KJr1-ZiIGHv8iNA4'
 
 const NOTIFICATIONS_ON_KEY = 'notificationsOn'
+const NOTIFICATIONS_ASKED_KEY = 'notificationsAsked'
 const VAPID_PUBLIC_KEY_LOCAL_KEY = 'notificationsVapidPublicKey'
 
 document.addEventListener("visibilitychange", async () => {
@@ -42,6 +43,7 @@ async function ensureNotifications() {
 
     if (permission === "denied") {
       log("Notifications: disabled in system settings")
+      setNotificationAskedLocally()
       await clearPushSubscription(registration)
       setNotificationsOnLocally(false)
       updateAboutNotifications()
@@ -49,12 +51,18 @@ async function ensureNotifications() {
     }
 
     if (permission === "default") {
-      log("Notifications: permission default, enable from the about box")
+      log("Notifications: permission default")
+      const existing = await registration.pushManager.getSubscription()
+      if (notificationsOnLocally() || storedVapidPublicKey() || existing)
+        setNotificationAskedLocally()
       await clearPushSubscription(registration)
-      setNotificationsOnLocally(false)
+      if (notificationsOnLocally())
+        setNotificationsOnLocally(false)
       updateAboutNotifications()
       return
     }
+
+    setNotificationAskedLocally()
 
     if (shouldResubscribeForVapid()) {
       log("Notifications: VAPID public key changed, re-subscribing")
@@ -90,6 +98,14 @@ function setNotificationsOnLocally(on: boolean) {
   localStorage.setItem(NOTIFICATIONS_ON_KEY, on ? 'true' : 'false')
   if (!on)
     clearStoredVapidPublicKey()
+}
+
+function notificationAskedLocally(): boolean {
+  return localStorage.getItem(NOTIFICATIONS_ASKED_KEY) === 'true'
+}
+
+function setNotificationAskedLocally() {
+  localStorage.setItem(NOTIFICATIONS_ASKED_KEY, 'true')
 }
 
 function storedVapidPublicKey(): string | null {
@@ -128,6 +144,7 @@ async function syncNotificationState(subscription: PushSubscription, userInfo: U
     const saved = await saveSubscriptionToBackend(subscription, userInfo)
     if (saved) {
       setNotificationsOnLocally(true)
+      setNotificationAskedLocally()
       setStoredVapidPublicKey()
     }
   }
@@ -223,7 +240,7 @@ async function clearAppBadge() {
 
 async function enableNotificationsFromAboutBox() {
   // Request notification permission from a user gesture, then subscribe.
-  log("Notifications: enable from about box")
+  log("Notifications: enable from button")
 
   if (!hasLoggedIn()) {
     window.alert(["You need to login before you can enable notifications."])
@@ -236,40 +253,64 @@ async function enableNotificationsFromAboutBox() {
     return
   }
 
-  if (Notification.permission !== "default") {
-    updateAboutNotifications()
-    return
+  if (Notification.permission === "default") {
+    const result = await Notification.requestPermission()
+    log(`Notifications: permission result is "${result}"`)
   }
 
-  const result = await Notification.requestPermission()
-  log(`Notifications: permission result is "${result}"`)
-  if (result !== "granted") {
+  setNotificationAskedLocally()
+
+  if (Notification.permission === "granted") {
+    await ensureNotifications()
+  } else {
     setNotificationsOnLocally(false)
-    updateAboutNotifications()
-    return
   }
-
-  await ensureNotifications()
   updateAboutNotifications()
 }
 
-function canEnableNotificationsFromAboutBox(): boolean {
+function canRequestNotificationPermission(): boolean {
+  // Only before the user has answered. iOS reports default both before
+  // the first prompt and after they turn notifications off in Settings.
   if (!("Notification" in window))
     return false
-  return Notification.permission === "default"
+  if (Notification.permission !== "default")
+    return false
+  if (notificationAskedLocally() || notificationsOnLocally())
+    return false
+  return true
+}
+
+function shouldShowNotifyPrompt(): boolean {
+  // Show the banner only when permission is still undecided.
+  if (!hasLoggedIn())
+    return false
+  if (iphoneRequiresHomeScreen())
+    return false
+  if (!("serviceWorker" in navigator) || !("PushManager" in window))
+    return false
+  return canRequestNotificationPermission()
+}
+
+function updateNotifyPrompt() {
+  // Show or hide the index notification prompt.
+  const prompt = document.getElementById("notify-prompt")
+  if (!prompt)
+    return
+  prompt.style.display = shouldShowNotifyPrompt() ? "block" : "none"
 }
 
 function updateAboutNotifications() {
-  // Show notification status in the about box.
+  // Show notification status in the about box and the index prompt.
   const status = get("about-notifications")
   const enableMsg = get("about-notifications-enable-msg")
   const enableBtn = get("about-notifications-enable")
   const iphoneNote = get("about-iphone-notifications")
+  updateNotifyPrompt()
 
   const on = "Notification" in window && Notification.permission === "granted"
   status.textContent = on ? "🔔 Notifications on" : "Notifications off"
 
-  if (canEnableNotificationsFromAboutBox()) {
+  if (canRequestNotificationPermission()) {
     enableMsg.textContent =
       "When you turn on notifications you will be notified when there is a new collection."
     enableMsg.style.display = "block"
@@ -281,8 +322,7 @@ function updateAboutNotifications() {
     enableMsg.style.display = "none"
     enableBtn.style.display = "none"
 
-    if (navigator.platform == "iPhone" &&
-        Notification.permission !== "default") {
+    if (navigator.platform == "iPhone" && !on) {
       iphoneNote.innerHTML =
         "Use the system settings to turn on or off notifications:<br>" +
         "settings → Notifications → Collections"

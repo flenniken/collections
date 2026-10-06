@@ -1,11 +1,18 @@
 # Notification
 
-When a new collection is published, users see a notification and a red
-badge on the installed iPhone PWA icon. The notification looks similar to:
+After you publish a collection, you send a notification to users with
+notifications turned on by using the notification command. The users
+see a notification and a red badge on the home screen icon.
+
+The notification looks similar to:
 
 [![Notification](notification.png)](#)
 
-and the badge looks like:
+The notification text is text specified with the notification command
+which is usually the collection title.  "from Collections" is added by
+the system.
+
+The badge looks like:
 
 [![Badge](badge.png)](#)
 
@@ -18,46 +25,21 @@ The collection list already shows unpublished content using the
 existing download icon, so the badge only serves as an attention
 indicator.
 
-On an iPhone the user chooses whether to receive notifications using
-the system notification settings:
+When the collection’s app is launched a note at the top of the index
+page appears if the user hasn’t turned on or off notifications.  It
+contains a button to turn on notifications. After pressing the button
+the system dialog appears for turning on or off notifications.
+
+<todo screenshot>
+
+On an iPhone the user can always set notifications with the system
+settings:
 
 ~~~
 settings > Notifications > Collections
 ~~~
 
 [⬇](#Contents) Contents (table of contents at the bottom)
-
-# Notification Flow
-
-The notification system alerts users when new collections become available.
-
-**Flow**:
-
-* New collection is published.
-* Backend code sends a Web Push notification.
-* Application service worker code receives the push event.
-* Service worker sets the icon application badge.
-* User sees the badge on the home screen icon.
-* User opens the application.
-* Application immediately clears the badge.
-* User sees the new collection with the existing download icon.
-
-[⬇](#Contents) Contents
-
-# Platform
-
-The notification feature targets the primary Collections deployment
-platform.
-
-* iPhone
-* Safari
-* Home Screen installed PWA
-* AWS backend
-
-Besides the iPhone the code supports Chrome for testing but other
-platforms are not currently a priority.
-
-[⬇](#Contents) Contents
 
 # Badge Behavior
 
@@ -107,13 +89,11 @@ private = hLtpU4Ttw2gFwGC80LhPiBANOJqVWqUZSdQCmgHYh9U
 subject = your-email@example.com
 ~~~
 
-Save the keys to `~/.aws/vapid` in a [VAPID] section so you
-can recreate them when the container is rebuilt. Do not store them in
-`~/.aws/credentials`; boto3 cannot parse a [VAPID] section there.
-The subject is a contact email required by web-push when sending
-notifications with --publish. The public key is
-also stored publicly in the notify.ts file as the VAPID_PUBLIC_KEY
-variable:
+Save the keys to `~/.aws/vapid` in a [VAPID] section so you can
+recreate them when the container is rebuilt. The subject is a contact
+email required by web-push when sending notifications with
+--publish. The public key is also stored publicly in the notify.ts
+file as the VAPID_PUBLIC_KEY variable:
 
 ~~~
 grep "VAPID_PUBLIC_KEY = " ts/notify.ts
@@ -468,24 +448,29 @@ actions.
 
 **iPhone**
 
-On the iPhone, unlike Chrome, you don't see the notifiction dialog.
-Instead you use the system settings to enable notifications:
+The index banner is only for users who have never answered. It shows
+when permission is still **default** and this device has not already
+turned notifications on or tapped the button. It does not show when
+notifications are on, and it does not show after they turn them off
+in Settings.
+
+iOS will not show the Allow dialog again after the first yes or no.
+Turning Allow Notifications off in Settings is not a first-time user.
+
+To test the banner without deleting cached photos, in the page
+console:
 
 ~~~
-settings > Notifications > Collections
+localStorage.removeItem('notificationsOn')
+localStorage.removeItem('notificationsAsked')
+localStorage.removeItem('notificationsVapidPublicKey')
 ~~~
 
-We don't show the system notification dialog on the iPhone because the
-iPhone requires that it's called from a click event.  We manage
-notifications on the visibilty event.
+then reload. That only fakes the in-app “never asked” flag. iOS still
+will not show Allow if it already asked this home-screen app.
 
-The API supports three states, and iOS uses two: **default** and
-**granted**.  When a user disables notifications in iOS Settings, the
-state reverts to default. When they toggle it back on, it changes to
-granted.
-
-When the state is default, the code removes the stale subscription.
-When testing make sure new subscriptions are different than before.
+Use **Settings → Notifications → Collections** to turn notifications
+on or off after the first decision.
 
 **Chrome**
 

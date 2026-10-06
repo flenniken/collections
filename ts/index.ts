@@ -315,6 +315,7 @@ async function handleLoad() {
   if (!iphoneRequiresHomeScreen()) {
     await setIndexCollectionStates()
   }
+  updateAboutNotifications()
 
   // Scroll to the saved scroll position if it exists.
   const savedScrollPosition = localStorage.getItem("indexScrollPosition");
