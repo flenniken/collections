@@ -1,6 +1,34 @@
 {
   "indexCollections": [
     {
+      "cNum": 47,
+      "building": false,
+      "title": "Christmas at Garret and Jaclyn's",
+      "modified": false,
+      "indexDescription": "Christmas at Garret and Jaclyn's house in 2019.",
+      "iThumbnail": "c47-5-t.jpg",
+      "posted": "2026-10-07",
+      "iCount": 10,
+      "totalSize": 17669467,
+      "iNumList": [
+        5,
+        3,
+        1,
+        2,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "liveINums": [
+        2,
+        4,
+        6
+      ]
+    },
+    {
       "cNum": 46,
       "building": false,
       "title": "Neahkahnie Treasure",

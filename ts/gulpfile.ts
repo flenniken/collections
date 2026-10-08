@@ -1029,15 +1029,16 @@ different inum: iPreview ${image.iPreview}, iThumbnail ${image.iThumbnail}`)
     throw new Error(`Collection ${cNum} image ${ix}: liveDuration is not allowed without iLiveVideo.`)
   }
 
-  // Check that width and height greater than or equal to previewMinDim = 933
-  const previewMinDim = 933
-  if (image.width < previewMinDim) {
-    throw new Error(`Collection ${cNum} image ${ix}: preview width must be >= ${previewMinDim}: \
-got: ${image.width}.`)
-  }
-  if (image.height < previewMinDim) {
-    throw new Error(`Collection ${cNum} image ${ix}: preview height must be >= ${previewMinDim}: \
-got: ${image.height}.`)
+  // One side at least 933 (iPhone long side), the other at least 700.
+  const previewLongMin = 933
+  const previewShortMin = 700
+  const longSide = Math.max(image.width, image.height)
+  const shortSide = Math.min(image.width, image.height)
+  if (longSide < previewLongMin || shortSide < previewShortMin) {
+    throw new Error(
+      `Collection ${cNum} image ${ix}: preview must be at least ` +
+      `${previewLongMin} on one side and ${previewShortMin} on the other: ` +
+      `got: ${image.width}x${image.height}.`)
   }
 
   if (requireDescriptions &&

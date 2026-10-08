@@ -333,14 +333,21 @@ function validateCinfoImageSuite() {
   let eMessage = "Collection 4 image 2: different inum: iPreview c4-2-p.jpg, iThumbnail c4-0-t.jpg"
   testThrow(eMessage, fn, 4, 2, false, image)
 
+  image = createTestImage(4, 2, 933, 700)
+  test(fn, 4, 2, false, image)
+  image = createTestImage(4, 2, 700, 933)
+  test(fn, 4, 2, false, image)
+
   image = createTestImage(4, 2)
   image.width = 932
-  eMessage = "Collection 4 image 2: preview width must be >= 933: got: 932."
+  image.height = 700
+  eMessage = "Collection 4 image 2: preview must be at least 933 on one side and 700 on the other: got: 932x700."
   testThrow(eMessage, fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
-  image.height = 932
-  eMessage = "Collection 4 image 2: preview height must be >= 933: got: 932."
+  image.width = 933
+  image.height = 699
+  eMessage = "Collection 4 image 2: preview must be at least 933 on one side and 700 on the other: got: 933x699."
   testThrow(eMessage, fn, 4, 2, false, image)
 
   image = createTestImage(4, 2)
@@ -354,11 +361,12 @@ function validateCinfoImageSuite() {
 
   image = createTestImage(4, 2)
   image.width = 0
-  testThrow("Collection 4 image 2: preview width must be >= 933: got: 0.", fn, 4, 2, true, image)
+  testThrow("Collection 4 image 2: preview must be at least 933 on one side and 700 on the other: got: 0x933.", fn, 4, 2, true, image)
 
   image = createTestImage(4, 2)
-  image.height = 932
-  testThrow("Collection 4 image 2: preview height must be >= 933: got: 932.", fn, 4, 2, true, image)
+  image.width = 933
+  image.height = 699
+  testThrow("Collection 4 image 2: preview must be at least 933 on one side and 700 on the other: got: 933x699.", fn, 4, 2, true, image)
 
   image = createTestImage(4, 2)
   image.iLiveVideo = "c4-2-v.mp4"

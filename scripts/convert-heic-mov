@@ -23,7 +23,8 @@
 
 set -euo pipefail
 
-previewMinDim=933
+previewLongMin=933
+previewShortMin=700
 jpegQuality=80
 
 folder="${1:-.}"
@@ -140,8 +141,15 @@ convert_heic() {
   fi
 
   read -r width height <<< "$(jpeg_dimensions "$out")"
-  if [[ "$width" -lt "$previewMinDim" || "$height" -lt "$previewMinDim" ]]; then
-    echo "warning: $(basename "$out") is ${width}x${height}; maker requires >= ${previewMinDim} in both dimensions"
+  if (( width > height )); then
+    longSide=$width
+    shortSide=$height
+  else
+    longSide=$height
+    shortSide=$width
+  fi
+  if (( longSide < previewLongMin || shortSide < previewShortMin )); then
+    echo "warning: $(basename "$out") is ${width}x${height}; maker requires one side >= ${previewLongMin} and the other >= ${previewShortMin}"
   fi
 
   rm "$heic"

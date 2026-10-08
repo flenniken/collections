@@ -58,7 +58,8 @@ import math
 import glob
 
 thumbnailDim = 480
-previewMinDim = 933
+previewLongMin = 933
+previewShortMin = 700
 
 COLLECTION_RE = re.compile(r"^c(\d+)$")
 DIGITS_RE = re.compile(r"(\d+)")
@@ -205,10 +206,12 @@ Error: image must be a jpg.
 file: {ii.kind} ({ii.width} x {ii.height}) {fullPath}
 """)
     if previews:
-      if ii.width < previewMinDim or ii.height < previewMinDim:
+      longSide = max(ii.width, ii.height)
+      shortSide = min(ii.width, ii.height)
+      if longSide < previewLongMin or shortSide < previewShortMin:
         raise MakerException(
           f"""\
-Error: preview width and height must greater than or equal to {previewMinDim}.
+Error: preview must be at least {previewLongMin} on one side and {previewShortMin} on the other.
 file: ({ii.width} x {ii.height}) {fileInfo.basename}
 """
         )
@@ -949,7 +952,7 @@ def getTestImageInfoList(previews):
   """
   imageInfoList = []
   for ix, fileInfo in enumerate(previews):
-    imageInfoList.append(ImageInfo(previewMinDim+ix, previewMinDim+ix, "JPEG"))
+    imageInfoList.append(ImageInfo(previewLongMin+ix, previewLongMin+ix, "JPEG"))
   return imageInfoList
 
 class TestClients:
@@ -1139,7 +1142,8 @@ class TestMaker(unittest.TestCase):
 
   def test_dim(self):
     gotExpected(thumbnailDim, 480)
-    gotExpected(previewMinDim, 933)
+    gotExpected(previewLongMin, 933)
+    gotExpected(previewShortMin, 700)
 
   def test_ImageFile(self):
     previewName = "dist/images/c1/c1-1-p.jpg"

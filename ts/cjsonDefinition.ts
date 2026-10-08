@@ -17,8 +17,8 @@ namespace CJson {
     // collection is building. Required when published.
     description: string;
 
-    // Width and height of the preview image in pixels. A preview's
-    // minimum dimension is at least 933 pixels.
+    // Width and height of the preview image in pixels. One side is at
+    // least 933 pixels and the other is at least 700.
     width: number;
     height: number;
 

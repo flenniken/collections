@@ -49,6 +49,7 @@ For Apple Photos follow these steps:
 * filename: Sequential, no prefix, no subfolder
 * export into the empty `tmp/cN` folder
 * check the files in the cN folder with the finder
+* remove the .mov files you don't want
 
 ♫ Note: Export Unmodified Originals exports the photos without changes
 you might have made, but it gives you the live photo movie files.  If
@@ -148,7 +149,8 @@ make: c29-4-t.jpg
 
 Check the files in the finder. The folder should contain matching
 `-p.jpg` and `-t.jpg` files, optional `-v.mp4` files, and nothing
-extra. Previews must be at least 933 pixels on both sides.
+extra. Previews must be at least 933 pixels on one side and 700 on
+the other.
 
 Later in the editing phase you can create new thumbnails for the ones
 that don't look good.
