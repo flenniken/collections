@@ -111,6 +111,17 @@ function userIdsMatch(bodyUserId, claims) {
   return bodyUserId === tokenId;
 }
 
+function pushProvider(endpoint) {
+  // Return the push service hostname so leftover Apple (or FCM)
+  // endpoints from re-subscribe can be replaced, while a phone and a
+  // desktop browser can both remain.
+  try {
+    return new URL(endpoint).hostname;
+  } catch {
+    return 'unknown';
+  }
+}
+
 function subscriptionItem(subscription) {
   // Return the DynamoDB item for a push subscription.
   return {
@@ -165,6 +176,33 @@ async function deleteOtherSubscriptionsForEndpoint(endpoint, userId, client) {
   }
 }
 
+async function scanSubscriptionsForUser(userId, client) {
+  // Return stored subscriptions for this user.
+  const { ScanCommand } = dynamoSdk();
+  const db = client || getDocClient();
+  const response = await db.send(new ScanCommand({
+    TableName: TABLE_NAME,
+    FilterExpression: 'userId = :userId',
+    ExpressionAttributeValues: { ':userId': userId },
+  }));
+  return response.Items || [];
+}
+
+async function deleteOlderSubscriptionsForUser(userId, endpoint, client) {
+  // Keep this endpoint; remove the user's other endpoints for the
+  // same push service.
+  const items = await scanSubscriptionsForUser(userId, client);
+  const provider = pushProvider(endpoint);
+  for (const item of items) {
+    if (item.userId !== userId || !item.endpoint)
+      continue;
+    if (item.endpoint === endpoint)
+      continue;
+    if (pushProvider(item.endpoint) === provider)
+      await deleteSubscriptionItem(item.userId, item.endpoint, client);
+  }
+}
+
 async function saveSubscription(subscription, claims, client, event) {
   // Validate the subscription, check authorization, and save it.
   const error = validateSubscription(subscription);
@@ -184,6 +222,7 @@ async function saveSubscription(subscription, claims, client, event) {
 
   try {
     await deleteOtherSubscriptionsForEndpoint(item.endpoint, item.userId, client);
+    await deleteOlderSubscriptionsForUser(item.userId, item.endpoint, client);
   } catch (err) {
     console.error(`Failed to remove duplicate endpoint subscriptions: ${err.message}`);
   }
@@ -220,11 +259,14 @@ module.exports = {
   validateSubscription,
   tokenUserId,
   userIdsMatch,
+  pushProvider,
   subscriptionItem,
   putSubscription,
   deleteSubscriptionItem,
   scanSubscriptionsForEndpoint,
   deleteOtherSubscriptionsForEndpoint,
+  scanSubscriptionsForUser,
+  deleteOlderSubscriptionsForUser,
   saveSubscription,
   apiResponse,
   corsHeaders,

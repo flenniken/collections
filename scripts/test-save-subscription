@@ -27,6 +27,7 @@
     validateSubscription,
     tokenUserId,
     userIdsMatch,
+    pushProvider,
     subscriptionItem,
     saveSubscription,
     corsHeaders,
@@ -321,6 +322,13 @@ expected: ${expected}
     'Failed to save subscription.',
   )
 
+  logProgress('Test pushProvider groups Apple and FCM endpoints.');
+  gotExpected(pushProvider(
+    'https://web.push.apple.com/Qabc'), 'web.push.apple.com')
+  gotExpected(pushProvider(
+    'https://fcm.googleapis.com/fcm/send/xyz'), 'fcm.googleapis.com')
+  gotExpected(pushProvider('not a url'), 'unknown')
+
   logProgress('Test saveSubscription removes other users with the same endpoint.');
   const saveDuplicateClient = new MockDocClient()
   saveDuplicateClient.scanItems = [
@@ -336,6 +344,26 @@ expected: ${expected}
   gotExpected(saveDuplicateClient.deleted.length, 1)
   gotExpected(saveDuplicateClient.deleted[0].userId, 'other-user')
   gotExpected(saveDuplicateClient.deleted[0].endpoint, subscription.endpoint)
+
+  logProgress('Test saveSubscription keeps only the latest same-service endpoint.');
+  const appleNew = 'https://web.push.apple.com/new-endpoint'
+  const appleOld = 'https://web.push.apple.com/old-endpoint'
+  const fcmKeep = 'https://fcm.googleapis.com/fcm/send/desktop'
+  const replaceClient = new MockDocClient()
+  replaceClient.scanItems = [
+    { userId: testUserId, endpoint: appleOld },
+    { userId: testUserId, endpoint: fcmKeep },
+  ]
+  await testSaveSubscription(
+    { ...subscription, endpoint: appleNew },
+    claims,
+    replaceClient,
+    200,
+    'Subscription saved.',
+  )
+  gotExpected(replaceClient.deleted.length, 1)
+  gotExpected(replaceClient.deleted[0].userId, testUserId)
+  gotExpected(replaceClient.deleted[0].endpoint, appleOld)
 
   logProgress('Test handler with wrong region.');
   const savedRegion = process.env.AWS_REGION

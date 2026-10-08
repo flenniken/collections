@@ -1010,6 +1010,31 @@ function uniqueEndpointSubscriptions(items) {
   return [...byEndpoint.values()]
 }
 
+function pushProvider(endpoint) {
+  // Same push service shares a hostname. Re-subscribe creates a new
+  // Apple path but still web.push.apple.com.
+  try {
+    return new URL(endpoint).hostname
+  } catch {
+    return 'unknown'
+  }
+}
+
+function uniqueLatestSubscriptions(items) {
+  // After endpoint de-dupe, keep the newest row per user and push
+  // service so leftover Apple endpoints from testing do not each
+  // send a banner. A phone and a Chrome desktop can both remain.
+  const uniqueEndpoints = uniqueEndpointSubscriptions(items)
+  const byUserProvider = new Map()
+  for (const item of uniqueEndpoints) {
+    const key = `${item.userId}\0${pushProvider(item.endpoint)}`
+    const existing = byUserProvider.get(key)
+    if (!existing || String(item.updatedAt ?? '') > String(existing.updatedAt ?? ''))
+      byUserProvider.set(key, item)
+  }
+  return [...byUserProvider.values()]
+}
+
 async function publishNotifications(user, title) {
   // Send a collection publish notification to one user or all subscribers.
   errorExit(!user, '--publish requires a user id or all.')
@@ -1018,7 +1043,18 @@ async function publishNotifications(user, title) {
   const subject = loadVapidSubject()
   const items = await scanSubscriptions()
   const matching = subscriptionsForUser(items, user)
-  const targets = uniqueEndpointSubscriptions(matching)
+  const uniqueEndpoints = uniqueEndpointSubscriptions(matching)
+  const targets = uniqueLatestSubscriptions(matching)
+  const targetSet = new Set(targets)
+  let removedOld = 0
+  for (const item of uniqueEndpoints) {
+    if (targetSet.has(item))
+      continue
+    await deleteSubscription(item.userId, item.endpoint)
+    removedOld += 1
+    console.log(
+      `Removed older subscription for ${item.userId} ${shortEndpoint(item.endpoint)}`)
+  }
 
   if (user === 'all') {
     errorExit(targets.length === 0, 'No push subscriptions found.')
@@ -1026,9 +1062,10 @@ async function publishNotifications(user, title) {
     errorExit(targets.length === 0, `No push subscriptions for user ${user}.`)
   }
 
-  const skipped = matching.length - targets.length
+  const skippedEndpoints = matching.length - uniqueEndpoints.length
   console.log(`Sending "${title}" to ${targets.length} subscription(s).` +
-    (skipped ? ` Skipping ${skipped} duplicate endpoint(s).` : ''))
+    (skippedEndpoints ? ` Skipping ${skippedEndpoints} duplicate endpoint(s).` : '') +
+    (removedOld ? ` Removed ${removedOld} older subscription(s).` : ''))
 
   let sent = 0
   let failed = 0

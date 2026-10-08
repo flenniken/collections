@@ -264,7 +264,10 @@ The function receives the JSON body described above and it refreshes
 existing record or it creates a new subscription record when the
 (userId, endpoint) doesn't exist. If another user already has that
 same device endpoint, that other row is removed so one phone does not
-get two notifications.
+get two notifications. If this user already has other endpoints for
+the same push service (for example leftover Apple URLs from turning
+notifications off and on), those older rows are removed so only the
+latest iPhone and latest Chrome subscription remain.
 
 Test the function with:
 
@@ -287,12 +290,14 @@ node scripts/testSaveSubscription.js
 * Test tokenUserId from claims.
 * Test userIdsMatch.
 * Test subscriptionItem.
+* Test pushProvider groups Apple and FCM endpoints.
 * Test saveSubscription with mismatched userId.
 * Test saveSubscription with mock DynamoDB client.
 Saved subscription for user 0861d3e0-00a1-7058-ad19-4d7b1880d276.
 * Test saveSubscription with DynamoDB error.
 DynamoDB PutItem: test failure
 * Test saveSubscription removes other users with the same endpoint.
+* Test saveSubscription keeps only the latest same-service endpoint.
 * Test handler with wrong region.
 Wrong AWS region: expected us-west-2, got us-east-1.
 * Test handler with invalid JSON body.
@@ -384,9 +389,11 @@ scripts/notification --publish <user-id> "New Tokyo collection"
 scripts/notification --publish all "New Tokyo collection"
 ~~~
 
-The command scans DynamoDB and sends one push per device endpoint.
-The same iPhone can be stored under more than one Cognito user;
-duplicate endpoints are skipped so the phone gets one notification.
+The command scans DynamoDB and sends one push per device endpoint,
+then one per user and push service (newest `updatedAt`). The same
+iPhone can be stored under more than one Cognito user; duplicate
+endpoints are skipped. Extra Apple endpoints from re-subscribe
+testing are removed so the phone gets one notification.
 Use "all" to notify every subscriber, or pass a Cognito user id to
 test with one user. Add a subject line to the [VAPID] section of
 ~/.aws/vapid (contact email for web-push).
