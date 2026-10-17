@@ -1,0 +1,226 @@
+{
+  "title": "Taos Pueblo",
+  "indexDescription": "Taos Pueblo visit during our Santa Fe 2017 trip.",
+  "description": "From our base in Santa Fe we made a trip to Taos Pueblo for the day.  The adobe village has been inhabited for 1,000 years!  Currently they're tailored for tourists.  They charge to visit and there are shops where you can buy jewelry and art pieces that they make locally.",
+  "cNum": 49,
+  "posted": "2026-10-10",
+  "location": "36.43818904373536, -105.5472672898137",
+  "images": [
+    {
+      "description": "The pueblo is multiple stories.",
+      "iPreview": "c49-7-p.jpg",
+      "iThumbnail": "c49-7-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 2773546,
+      "sizet": 40973,
+      "location": "",
+      "taken": "2017-09-10T14:05:27"
+    },
+    {
+      "description": "Ken perusing the jewelry. ",
+      "iPreview": "c49-1-p.jpg",
+      "iThumbnail": "c49-1-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 3026168,
+      "sizet": 47433,
+      "location": "",
+      "taken": "2017-09-10T12:41:15"
+    },
+    {
+      "description": "In the corner of the picture Ken is chatting with a local he knows from a previous visit.",
+      "iPreview": "c49-3-p.jpg",
+      "iThumbnail": "c49-3-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 2699648,
+      "sizet": 54366,
+      "location": "",
+      "taken": "2017-09-10T12:58:54"
+    },
+    {
+      "description": "A couple of people sitting in the shade next to kilns.",
+      "iPreview": "c49-4-p.jpg",
+      "iThumbnail": "c49-4-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 3237309,
+      "sizet": 56357,
+      "location": "",
+      "taken": "2017-09-10T13:01:00"
+    },
+    {
+      "description": "I like the colored doors.",
+      "iPreview": "c49-2-p.jpg",
+      "iThumbnail": "c49-2-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 3157526,
+      "sizet": 45912,
+      "location": "",
+      "taken": "2017-09-10T12:58:46"
+    },
+    {
+      "description": "Closeup of the adobe with blue sky and puffy white clouds in the background.",
+      "iPreview": "c49-5-p.jpg",
+      "iThumbnail": "c49-5-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 1831661,
+      "sizet": 29561,
+      "location": "",
+      "taken": "2017-09-10T13:04:18"
+    },
+    {
+      "description": "A guy working on the roof.  Tall mountains in the background.",
+      "iPreview": "c49-6-p.jpg",
+      "iThumbnail": "c49-6-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 3153138,
+      "sizet": 42465,
+      "location": "",
+      "taken": "2017-09-10T13:04:41"
+    },
+    {
+      "description": "There is a stream by the tree and mountains in the distance.",
+      "iPreview": "c49-8-p.jpg",
+      "iThumbnail": "c49-8-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 3379185,
+      "sizet": 55855,
+      "location": "",
+      "taken": "2017-09-10T14:32:14"
+    },
+    {
+      "description": "Ken and Dianne",
+      "iPreview": "c49-9-p.jpg",
+      "iThumbnail": "c49-9-t.jpg",
+      "width": 5472,
+      "height": 3648,
+      "size": 2936378,
+      "sizet": 48848,
+      "location": "",
+      "taken": "2017-09-10T14:32:55"
+    },
+    {
+      "description": "Kathleen after visiting the shops.",
+      "iPreview": "c49-10-p.jpg",
+      "iThumbnail": "c49-10-t.jpg",
+      "width": 3648,
+      "height": 5472,
+      "size": 3702031,
+      "sizet": 58938,
+      "location": "",
+      "taken": "2017-09-10T14:38:42"
+    }
+  ],
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.07858187134502924,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.07858187134502924,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.07858187134502924,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.07858187134502924,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.07858187134502924,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.2605960079095683,
+        "tx": -496.4694110951391,
+        "ty": -5.589305426342605
+      },
+      {
+        "scale": 0.2736550791273626,
+        "tx": -858.549435928559,
+        "ty": -30.14172954358446
+      },
+      {
+        "scale": 0.07858187134502924,
+        "tx": 0,
+        "ty": 323.16666666666663
+      },
+      {
+        "scale": 0.13072995195734227,
+        "tx": -146.97200015534065,
+        "ty": 223.77129852240057
+      },
+      {
+        "scale": 0.17050438596491227,
+        "tx": -96,
+        "ty": 5.684341886080802e-14
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.1703216374269006,
+        "tx": -5.684341886080802e-14,
+        "ty": -95.66666666666669
+      },
+      {
+        "scale": 0.1560878918830945,
+        "tx": 34.7293905989971,
+        "ty": -113.69193786115665
+      },
+      {
+        "scale": 0.18259603805900496,
+        "tx": -6.468121701266625,
+        "ty": -185.3445883008916
+      },
+      {
+        "scale": 0.1703216374269006,
+        "tx": -5.684341886080802e-14,
+        "ty": -95.66666666666669
+      },
+      {
+        "scale": 0.1703216374269006,
+        "tx": -5.684341886080802e-14,
+        "ty": -95.66666666666669
+      },
+      {
+        "scale": 0.1703216374269006,
+        "tx": -5.684341886080802e-14,
+        "ty": -95.66666666666669
+      },
+      {
+        "scale": 0.1703216374269006,
+        "tx": -5.684341886080802e-14,
+        "ty": -95.66666666666669
+      },
+      {
+        "scale": 0.1703216374269006,
+        "tx": -5.684341886080802e-14,
+        "ty": -95.66666666666669
+      },
+      {
+        "scale": 0.1703216374269006,
+        "tx": -5.684341886080802e-14,
+        "ty": -95.66666666666669
+      },
+      {
+        "scale": 0.07858187134502924,
+        "tx": 322.66666666666663,
+        "ty": 0
+      }
+    ]
+  }
+}

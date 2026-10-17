@@ -851,26 +851,19 @@ Created User:
 def printMailMessage(email, tempPassword):
 
   message = f"""\
-I’ve been working on a photo sharing application called Collections
-for a few years.
+Welcome to Collections. 
 
-Alex, Tom and Elisabeth have been beta testing it and it’s working
-well enough I’m ready to open it up for my friends and family.
+You can read about how the Collections app works from the github
+repository readme:
 
-I post pictures I’ve taken, like Manzanita, and you (friends and
-family) can privately view them on your iPhone.
+https://github.com/flenniken/collections
 
-You can read more about how the application works from the github
-repository readme: https://github.com/flenniken/collections
+You start using it by signing in with your email and the temporary
+password below. It will step you through creating a new password and
+creating a home screen icon.
 
-If you are interested, follow the instructions below to sign in and
-use Collections.
-
-Sign in with your email and the temporary password below. It will step
-you through creating a new password.
-
-It’s best to run Collections on an iPhone. If you are, copy and paste
-the link into the Safari browser:
+It’s best to run Collections on an iPhone. Copy and paste the
+following link into the Safari browser on your iPhone:
 
 https://collections.sflennik.com/index.html
 
