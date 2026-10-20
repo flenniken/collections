@@ -44,6 +44,9 @@ S3_TRANSFER_CONFIG = TransferConfig(
   multipart_threshold=S3_MULTIPART_THRESHOLD,
   multipart_chunksize=S3_MULTIPART_CHUNKSIZE,
 )
+# One month, matching the CloudFront edge TTL. Only /tin/ files get
+# this so the browser can skip the network when the copy is fresh.
+TIN_CACHE_CONTROL = "max-age=2592000"
 
 def getFileInfo(s3Client, bucket_name, exclude_prefix):
     """
@@ -78,6 +81,37 @@ def getFileInfo(s3Client, bucket_name, exclude_prefix):
 
     return fileInfo
 
+def isTinS3Key(filename):
+  """
+  Return true when the S3 key is an index thumbnail in tin/.
+  """
+  return filename.replace("\\", "/").startswith("tin/")
+
+def s3UploadExtraArgs(filename, content_type):
+  """
+  Return S3 upload metadata. Index thumbnails get a one-month
+  Cache-Control so the browser can reuse a fresh copy.
+  """
+  extra = {'ContentType': content_type}
+  if isTinS3Key(filename):
+    extra['CacheControl'] = TIN_CACHE_CONTROL
+  return extra
+
+def listTinFiles():
+  """
+  Return the tin/ paths under dist, sorted.
+  """
+  tinDir = os.path.join("dist", "tin")
+  if not os.path.isdir(tinDir):
+    return []
+  files = []
+  for name in os.listdir(tinDir):
+    path = os.path.join(tinDir, name)
+    if os.path.isfile(path):
+      files.append(os.path.join("tin", name))
+  files.sort()
+  return files
+
 def copyFilesToS3(s3Client, bucket_name, filenames):
   """
   Copy the given list of filenames to the given S3 bucket.
@@ -97,11 +131,34 @@ def copyFilesToS3(s3Client, bucket_name, filenames):
     if content_type is None:
       content_type = 'binary/octet-stream'
 
+    extraArgs = s3UploadExtraArgs(filename, content_type)
+
     # Upload the file to S3
-    print(f"Copying {localPath} to s3 as {content_type}")
+    cacheControl = extraArgs.get('CacheControl')
+    if cacheControl:
+      print(f"Copying {localPath} to s3 as {content_type} {cacheControl}")
+    else:
+      print(f"Copying {localPath} to s3 as {content_type}")
     s3Client.upload_file(localPath, bucket_name, filename,
-      ExtraArgs={'ContentType': content_type},
+      ExtraArgs=extraArgs,
       Config=S3_TRANSFER_CONFIG)
+
+def syncTinCacheControl(s3Client, bucket_name, cloudfrontClient, distribution_id):
+  """
+  Copy every dist/tin file to S3 with Cache-Control and invalidate
+  those paths. Use this once so existing tin objects get max-age.
+  Later -s uploads already set the header on changed tin files.
+  """
+  filenames = listTinFiles()
+  if not filenames:
+    print("No tin files found.")
+    return
+
+  copyFilesToS3(s3Client, bucket_name, filenames)
+  invalidation_id = invalidateCloudFrontCache(cloudfrontClient, distribution_id,
+    filenames)
+  if invalidation_id:
+    waitForDeployed(cloudfrontClient, distribution_id, invalidation_id)
 
 def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   """
@@ -285,6 +342,11 @@ def process(args):
   elif args.listModified:
     s3Client = getBotoClient('s3')
     listModified(s3Client, bucket_name)
+  elif args.tinCache:
+    s3Client = getBotoClient('s3')
+    cloudfrontClient = getBotoClient('cloudfront')
+    syncTinCacheControl(s3Client, bucket_name, cloudfrontClient,
+      distribution_id)
   else:
     raise DeployException("Invalid argument")
 
@@ -320,6 +382,9 @@ def parseCommandLine():
 
   parser.add_argument("-m", "--listModified", action='store_true',
     help="list the modified files")
+
+  parser.add_argument("--tin-cache", dest="tinCache", action='store_true',
+    help="copy all dist/tin files to S3 with Cache-Control max-age=2592000 and invalidate them")
 
   args = parser.parse_args(sys.argv[1:])
   return args
@@ -364,6 +429,36 @@ class TestModule(unittest.TestCase):
 
   def test_me(self):
     self.assertTrue(1)
+
+  def test_s3UploadExtraArgs(self):
+    self.assertEqual(s3UploadExtraArgs("tin/c1-1-t.jpg", "image/jpeg"), {
+      "ContentType": "image/jpeg",
+      "CacheControl": TIN_CACHE_CONTROL,
+    })
+    self.assertEqual(s3UploadExtraArgs("tin\\c2-3-t.jpg", "image/jpeg"), {
+      "ContentType": "image/jpeg",
+      "CacheControl": TIN_CACHE_CONTROL,
+    })
+    self.assertEqual(s3UploadExtraArgs("index.html", "text/html"), {
+      "ContentType": "text/html",
+    })
+    self.assertEqual(s3UploadExtraArgs("sw.js", "application/javascript"), {
+      "ContentType": "application/javascript",
+    })
+    self.assertEqual(s3UploadExtraArgs("images/c1/c1-1-t.jpg", "image/jpeg"), {
+      "ContentType": "image/jpeg",
+    })
+    self.assertTrue(isTinS3Key("tin/c50-12-t.jpg"))
+    self.assertFalse(isTinS3Key("images/c50/c50-12-t.jpg"))
+    self.assertFalse(isTinS3Key("sw.js"))
+
+  def test_listTinFiles(self):
+    files = listTinFiles()
+    self.assertTrue(len(files) > 0)
+    for filename in files:
+      self.assertTrue(isTinS3Key(filename))
+      self.assertTrue(os.path.isfile(os.path.join("dist", filename)))
+    self.assertEqual(files, sorted(files))
 
   def test_getAwsSettings(self):
     awsSettings = getAwsSettings()

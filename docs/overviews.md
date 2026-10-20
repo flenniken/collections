@@ -190,7 +190,11 @@ It handles image files differently then the other files:
 network if not found in the cache. This optimizes image loading and
 enables offline access.
 
-* For all other files (html, js, icons, tin, etc.), it tries the network
+* For index thumbnails in tin, it uses the browser HTTP cache. A
+fresh max-age copy skips the network. A reload revalidates. The
+application cache is the offline fallback.
+
+* For all other files (html, js, icons, etc.), it tries the network
 first to ensure fresh content, falling back to cached versions when
 offline.
 

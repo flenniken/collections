@@ -98,7 +98,7 @@ function stripUrlParameters(url: string): string {
 }
 
 async function fetchRemote(cache: Cache, request: Request,
-    storeTwice: boolean): Promise<Response> {
+    storeTwice: boolean, useBrowserFreshness = false): Promise<Response> {
   // Fetch a file on the net and store it in one or more
   // caches. Return a promise that resolves to a response.
   //
@@ -106,21 +106,26 @@ async function fetchRemote(cache: Cache, request: Request,
   // CloudFront invalidation is visible, then store the result in the
   // browser cache and the application cache.
   //
+  // When storeTwice is true and useBrowserFreshness is true, honor
+  // the page's cache mode instead. A fresh max-age response comes
+  // from the HTTP cache; a reload revalidates.
+  //
   // When storeTwice is false, fetch from the net and store in the
   // application cache but not the browser cache.
   //
   // If the reponse is not "ok", it throws the reponse status as a
   // string.
 
-  let options: any
-  if (storeTwice) {
-    options = {"cache": "no-cache"}
+  let response: Response
+  if (storeTwice && useBrowserFreshness) {
+    response = await fetch(request)
+  }
+  else if (storeTwice) {
+    response = await fetch(request, {"cache": "no-cache"})
   }
   else {
-    options = {"cache": "no-store"}
+    response = await fetch(request, {"cache": "no-store"})
   }
-
-  var response = await fetch(request, options)
 
   if (!response.ok) {
     throw new Error(`${response.status}`);
@@ -198,6 +203,13 @@ function isImageFileType(url: string) {
   if (url.includes("-v.mp4"))
     return true
   return false
+}
+
+function isTinUrl(url: string) {
+  // Index thumbnails in /tin/ are public and use the browser HTTP
+  // cache. They stay visible when a collection is removed from the
+  // application cache.
+  return url.includes("/tin/")
 }
 
 self.addEventListener("fetch", (event: Event) => {
@@ -287,11 +299,15 @@ self.addEventListener("fetch", (event: Event) => {
       // The file is not an image in the images folder. Look for it in
       // the internet first so we always get the newest when
       // connected, then look in the cache so we work when offline.
+      //
+      // /tin/ files are the exception: they use the browser HTTP
+      // cache so a fresh max-age copy skips the network.
 
       // Look for the file on the net. When found store it in the
       // browser cache and the application cache.
       try {
-        const result = await fetchRemote(cache, fetchEvent.request, true)
+        const result = await fetchRemote(cache, fetchEvent.request, true,
+            isTinUrl(url))
         logsw(`Regular file found on net: ${sUrl(url)}`)
         return result
       }
