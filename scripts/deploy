@@ -87,29 +87,58 @@ def isTinS3Key(filename):
   """
   return filename.replace("\\", "/").startswith("tin/")
 
+def isHttpCacheS3Key(filename):
+  """
+  Return true when the S3 key should get a one-month Cache-Control
+  for the browser HTTP cache: tin thumbnails, icons, favicon, and
+  the web manifest.
+  """
+  key = filename.replace("\\", "/")
+  if key.startswith("tin/") or key.startswith("icons/"):
+    return True
+  if key in ("favicon.ico", "collections.webmanifest"):
+    return True
+  return False
+
 def s3UploadExtraArgs(filename, content_type):
   """
-  Return S3 upload metadata. Index thumbnails get a one-month
-  Cache-Control so the browser can reuse a fresh copy.
+  Return S3 upload metadata. Rarely changing public files get a
+  one-month Cache-Control so the browser can reuse a fresh copy.
   """
   extra = {'ContentType': content_type}
-  if isTinS3Key(filename):
+  if isHttpCacheS3Key(filename):
     extra['CacheControl'] = TIN_CACHE_CONTROL
   return extra
+
+def listFilesInDistFolder(folder):
+  """
+  Return paths under dist/folder, sorted.
+  """
+  distFolder = os.path.join("dist", folder)
+  if not os.path.isdir(distFolder):
+    return []
+  files = []
+  for name in os.listdir(distFolder):
+    path = os.path.join(distFolder, name)
+    if os.path.isfile(path):
+      files.append(os.path.join(folder, name))
+  files.sort()
+  return files
 
 def listTinFiles():
   """
   Return the tin/ paths under dist, sorted.
   """
-  tinDir = os.path.join("dist", "tin")
-  if not os.path.isdir(tinDir):
-    return []
-  files = []
-  for name in os.listdir(tinDir):
-    path = os.path.join(tinDir, name)
-    if os.path.isfile(path):
-      files.append(os.path.join("tin", name))
-  files.sort()
+  return listFilesInDistFolder("tin")
+
+def listHttpCacheFiles():
+  """
+  Return dist paths that get Cache-Control max-age, sorted.
+  """
+  files = listFilesInDistFolder("tin") + listFilesInDistFolder("icons")
+  for name in ("favicon.ico", "collections.webmanifest"):
+    if os.path.isfile(os.path.join("dist", name)):
+      files.append(name)
   return files
 
 def copyFilesToS3(s3Client, bucket_name, filenames):
@@ -145,13 +174,14 @@ def copyFilesToS3(s3Client, bucket_name, filenames):
 
 def syncTinCacheControl(s3Client, bucket_name, cloudfrontClient, distribution_id):
   """
-  Copy every dist/tin file to S3 with Cache-Control and invalidate
-  those paths. Use this once so existing tin objects get max-age.
-  Later -s uploads already set the header on changed tin files.
+  Copy every HTTP-cache file (tin, icons, favicon, manifest) to S3
+  with Cache-Control and invalidate those paths. Use this once so
+  existing objects get max-age. Later -s uploads already set the
+  header on changed files.
   """
-  filenames = listTinFiles()
+  filenames = listHttpCacheFiles()
   if not filenames:
-    print("No tin files found.")
+    print("No HTTP-cache files found.")
     return
 
   copyFilesToS3(s3Client, bucket_name, filenames)
@@ -384,7 +414,7 @@ def parseCommandLine():
     help="list the modified files")
 
   parser.add_argument("--tin-cache", dest="tinCache", action='store_true',
-    help="copy all dist/tin files to S3 with Cache-Control max-age=2592000 and invalidate them")
+    help="copy tin, icons, favicon, and the web manifest to S3 with Cache-Control max-age=2592000 and invalidate them")
 
   args = parser.parse_args(sys.argv[1:])
   return args
@@ -448,9 +478,32 @@ class TestModule(unittest.TestCase):
     self.assertEqual(s3UploadExtraArgs("images/c1/c1-1-t.jpg", "image/jpeg"), {
       "ContentType": "image/jpeg",
     })
+    self.assertEqual(s3UploadExtraArgs("icons/user.svg", "image/svg+xml"), {
+      "ContentType": "image/svg+xml",
+      "CacheControl": TIN_CACHE_CONTROL,
+    })
+    self.assertEqual(s3UploadExtraArgs("favicon.ico", "image/x-icon"), {
+      "ContentType": "image/x-icon",
+      "CacheControl": TIN_CACHE_CONTROL,
+    })
+    self.assertEqual(
+      s3UploadExtraArgs("collections.webmanifest", "application/manifest+json"),
+      {
+        "ContentType": "application/manifest+json",
+        "CacheControl": TIN_CACHE_CONTROL,
+      })
+    self.assertEqual(s3UploadExtraArgs("collections.css", "text/css"), {
+      "ContentType": "text/css",
+    })
+    self.assertEqual(s3UploadExtraArgs("js/index.js", "application/javascript"), {
+      "ContentType": "application/javascript",
+    })
     self.assertTrue(isTinS3Key("tin/c50-12-t.jpg"))
     self.assertFalse(isTinS3Key("images/c50/c50-12-t.jpg"))
     self.assertFalse(isTinS3Key("sw.js"))
+    self.assertTrue(isHttpCacheS3Key("icons/photo.svg"))
+    self.assertFalse(isHttpCacheS3Key("index.html"))
+    self.assertFalse(isHttpCacheS3Key("sw.js"))
 
   def test_listTinFiles(self):
     files = listTinFiles()
@@ -459,6 +512,16 @@ class TestModule(unittest.TestCase):
       self.assertTrue(isTinS3Key(filename))
       self.assertTrue(os.path.isfile(os.path.join("dist", filename)))
     self.assertEqual(files, sorted(files))
+
+  def test_listHttpCacheFiles(self):
+    files = listHttpCacheFiles()
+    self.assertTrue(len(files) > 0)
+    for filename in files:
+      self.assertTrue(isHttpCacheS3Key(filename))
+      self.assertTrue(os.path.isfile(os.path.join("dist", filename)))
+    self.assertTrue(any(name.startswith("tin/") for name in files))
+    self.assertTrue(any(name.startswith("icons/") for name in files))
+    self.assertIn("collections.webmanifest", files)
 
   def test_getAwsSettings(self):
     awsSettings = getAwsSettings()

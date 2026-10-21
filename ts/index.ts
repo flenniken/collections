@@ -385,9 +385,16 @@ function installBanner() {
   get("install-banner").style.display = "block"
 }
 
-addEventListener("message", (event) => {
-  // Listen for messages sent from the client and echo them here.
+addEventListener("message", (event: MessageEvent) => {
+  // The service worker posts reload-index when a background fetch
+  // found a new index.html (a newly published collection).
+  const data = event.data as { action?: string } | string
   log(`Message received: ${event.data}`)
+  if (typeof data === "object" && data && data.action === "reload-index") {
+    log("Reload index, new content.")
+    window.location.replace(
+      window.location.pathname + window.location.search + window.location.hash)
+  }
 })
 
 // onmessage = (e) => {

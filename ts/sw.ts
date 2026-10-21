@@ -205,11 +205,113 @@ function isImageFileType(url: string) {
   return false
 }
 
-function isTinUrl(url: string) {
-  // Index thumbnails in /tin/ are public and use the browser HTTP
-  // cache. They stay visible when a collection is removed from the
-  // application cache.
-  return url.includes("/tin/")
+function urlPathname(url: string): string {
+  try {
+    return new URL(url).pathname
+  }
+  catch {
+    return url
+  }
+}
+
+function isHttpCacheUrl(url: string) {
+  // Rarely changing public files. Use the browser HTTP cache (max-age
+  // on S3). A reload revalidates.
+  const path = urlPathname(url)
+  if (path.includes("/tin/") || path.includes("/icons/"))
+    return true
+  if (path === "/favicon.ico" || path.endsWith("/favicon.ico"))
+    return true
+  if (path === "/collections.webmanifest" ||
+      path.endsWith("/collections.webmanifest"))
+    return true
+  return false
+}
+
+function isServiceWorkerUrl(url: string) {
+  const path = urlPathname(url)
+  return path === "/sw.js" || path.endsWith("/sw.js")
+}
+
+function isReloadRequest(request: Request) {
+  return request.cache === "reload" || request.cache === "no-cache"
+}
+
+function isIndexHtmlUrl(url: string) {
+  const path = urlPathname(url)
+  return path === "/" || path === "/index.html"
+}
+
+function isStaleWhileRevalidateUrl(url: string) {
+  // HTML, CSS, and page JS show the cached copy immediately, then
+  // revalidate. sw.js is not included so a new worker can install.
+  if (isServiceWorkerUrl(url) || isHttpCacheUrl(url) || isImageFileType(url))
+    return false
+  const path = urlPathname(url)
+  return path.endsWith(".html") || path.endsWith(".css") ||
+    path.endsWith(".js")
+}
+
+async function bodiesDiffer(a: Response, b: Response): Promise<boolean> {
+  const [ab, bb] = await Promise.all([a.arrayBuffer(), b.arrayBuffer()])
+  if (ab.byteLength !== bb.byteLength)
+    return true
+  const av = new Uint8Array(ab)
+  const bv = new Uint8Array(bb)
+  for (let i = 0; i < av.length; i++) {
+    if (av[i] !== bv[i])
+      return true
+  }
+  return false
+}
+
+async function revalidateIndexShell(cache: Cache, indexRequest: Request) {
+  // Refresh CSS and index JS so a reload after new index.html does
+  // not mix old shell files with the new document.
+  const origin = new URL(indexRequest.url)
+  const paths = ["/collections.css", "/js/index.js"]
+  await Promise.all(paths.map(async (path) => {
+    try {
+      const url = new URL(path, origin).toString()
+      await fetchRemote(cache, new Request(url), true)
+    }
+    catch (error) {
+      logsw(`SWR shell revalidate failed ${path}: ${error}`)
+    }
+  }))
+}
+
+async function notifyIndexReload() {
+  const scope = self as unknown as ServiceWorkerGlobalScope
+  const clients = await scope.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true,
+  })
+  for (const client of clients) {
+    const path = urlPathname(client.url)
+    if (path === "/" || path === "/index.html")
+      client.postMessage({ action: "reload-index" })
+  }
+}
+
+async function revalidateStale(cache: Cache, request: Request,
+    cached: Response) {
+  // Update the application cache in the background. Reload the index
+  // when index.html bytes changed so a newly published collection
+  // appears on this visit.
+  try {
+    const fresh = await fetchRemote(cache, request, true)
+    if (!isIndexHtmlUrl(request.url))
+      return
+    if (!await bodiesDiffer(cached, fresh))
+      return
+    logsw("index.html changed, reload index clients.")
+    await revalidateIndexShell(cache, request)
+    await notifyIndexReload()
+  }
+  catch (error) {
+    logsw(`SWR revalidate failed: ${error}`)
+  }
 }
 
 self.addEventListener("fetch", (event: Event) => {
@@ -295,19 +397,37 @@ self.addEventListener("fetch", (event: Event) => {
         logsw(`Image file not found: ${statusStr}.`)
       }
     }
-    else {
-      // The file is not an image in the images folder. Look for it in
-      // the internet first so we always get the newest when
-      // connected, then look in the cache so we work when offline.
-      //
-      // /tin/ files are the exception: they use the browser HTTP
-      // cache so a fresh max-age copy skips the network.
-
-      // Look for the file on the net. When found store it in the
-      // browser cache and the application cache.
+    else if (isStaleWhileRevalidateUrl(url) && !isReloadRequest(request)) {
+      // HTML, CSS, and page JS: show the cached file immediately,
+      // then check the network. A reload skips this and goes to the
+      // net.
+      const cached = await cacheMatch(cache, request)
+      if (cached) {
+        logsw(`SWR cache: ${sUrl(url)}`)
+        fetchEvent.waitUntil(revalidateStale(cache, request, cached.clone()))
+        return cached
+      }
       try {
-        const result = await fetchRemote(cache, fetchEvent.request, true,
-            isTinUrl(url))
+        const result = await fetchRemote(cache, request, true)
+        logsw(`SWR filled from net: ${sUrl(url)}`)
+        return result
+      }
+      catch (error) {
+        if (error instanceof Error) {
+          statusStr = `${error.message}`
+        }
+        logsw(`SWR not found on net: ${statusStr}`)
+      }
+    }
+    else {
+      // Network first: sw.js, reloads, json, and HTTP-cache files
+      // (tin, icons, favicon, manifest). HTTP-cache files honor the
+      // page's cache mode so a fresh max-age copy skips the network.
+      try {
+        const useBrowserFreshness =
+          isHttpCacheUrl(url) && !isReloadRequest(request)
+        const result = await fetchRemote(cache, request, true,
+            useBrowserFreshness)
         logsw(`Regular file found on net: ${sUrl(url)}`)
         return result
       }

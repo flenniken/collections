@@ -16,21 +16,22 @@ You can issue CloudFront invalidation requests every time your site is
 updated so the new files are removed from the cache.  The deploy
 script does this.
 
-Index thumbnails in `tin/` also get `Cache-Control: max-age=2592000`
-on S3 so the browser can reuse a fresh copy without a CloudFront
-round trip. HTML, JS, CSS, and collection photos are uploaded without
-that header. A recropped tin file shows on the index after a refresh,
-or when the month expires.
+Index thumbnails in `tin/`, icons, `favicon.ico`, and
+`collections.webmanifest` get `Cache-Control: max-age=2592000` on S3
+so the browser can reuse a fresh copy without a CloudFront round
+trip. HTML, JS, CSS, and collection photos are uploaded without that
+header. A recropped tin file or a new icon shows after a refresh, or
+when the month expires.
 
-Deploy compares file bytes, not headers. Existing tin objects do not
-pick up max-age until you copy them again. Do that once:
+Deploy compares file bytes, not headers. Existing objects do not pick
+up max-age until you copy them again. Do that once:
 
 ~~~
 scripts/deploy --tin-cache
 ~~~
 
-After that, `scripts/deploy -s` sets the header on any tin file whose
-bytes changed.
+After that, `scripts/deploy -s` sets the header on any of those files
+whose bytes changed.
 
 [⬇](#Contents)
 
@@ -65,6 +66,6 @@ scripts/deploy -s
 
 # Contents
 
-* [Cache Behavior](#cache-behavior) -- how the cloudfront cache works and how tin files get max-age.
+* [Cache Behavior](#cache-behavior) -- how the cloudfront cache works and how tin and icon files get max-age.
 * [List Modified](#list-modified) -- how to list the files that need to be deployed.
 * [Sync](#sync) -- how to deploy changed files.

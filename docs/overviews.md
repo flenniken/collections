@@ -190,13 +190,17 @@ It handles image files differently then the other files:
 network if not found in the cache. This optimizes image loading and
 enables offline access.
 
-* For index thumbnails in tin, it uses the browser HTTP cache. A
-fresh max-age copy skips the network. A reload revalidates. The
-application cache is the offline fallback.
+* For tin thumbnails, icons, favicon, and the web manifest, it uses
+the browser HTTP cache. A fresh max-age copy skips the network. A
+reload revalidates. The application cache is the offline fallback.
 
-* For all other files (html, js, icons, etc.), it tries the network
-first to ensure fresh content, falling back to cached versions when
-offline.
+* For HTML, CSS, and page JS, it shows the cached file immediately,
+then revalidates in the background. When index.html changes, the
+index page reloads so a newly published collection appears. A
+manual refresh skips the cache and goes to the network.
+
+* For sw.js, it revalidates every launch so a new service worker can
+install. The application cache is the offline fallback.
 
 [⬇](#Contents)
 
