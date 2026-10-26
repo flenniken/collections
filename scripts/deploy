@@ -155,6 +155,9 @@ def copyFilesToS3(s3Client, bucket_name, filenames):
 
     # Construct the local path in the dist folder
     localPath = os.path.join("dist", filename)
+    if not os.path.isfile(localPath):
+      print(f"warning: skipped missing file: {localPath}")
+      continue
 
     content_type, _ = mimetypes.guess_type(localPath)
     if content_type is None:
@@ -265,12 +268,37 @@ def listModified(s3Client, bucket_name):
   for filename in modifiedFiles:
     print(filename)
 
+# Docker bind mounts can list a newly copied file before open() works.
+HASH_OPEN_RETRIES = 4
+HASH_OPEN_DELAY = 0.25
+
+def openForHash(path, retries=None, delay=None):
+  """
+  Open a local file for hashing. Retry on FileNotFoundError; newly
+  copied photos sometimes appear in os.walk before the bind mount
+  can open them.
+  """
+  if retries is None:
+    retries = HASH_OPEN_RETRIES
+  if delay is None:
+    delay = HASH_OPEN_DELAY
+  lastError = None
+  for attempt in range(retries + 1):
+    try:
+      return open(path, "rb")
+    except FileNotFoundError as ex:
+      lastError = ex
+      if attempt == retries:
+        break
+      time.sleep(delay)
+  raise lastError
+
 def md5File(path):
   """
   Return the MD5 hex digest of the file, read in chunks.
   """
   md5 = hashlib.md5()
-  with open(path, "rb") as fh:
+  with openForHash(path) as fh:
     while True:
       data = fh.read(1024 * 1024)
       if not data:
@@ -284,7 +312,7 @@ def multipartEtag(path, chunksize=S3_MULTIPART_CHUNKSIZE):
   per-part MD5s, a dash, and the part count.
   """
   partMd5s = []
-  with open(path, "rb") as fh:
+  with openForHash(path) as fh:
     while True:
       data = fh.read(chunksize)
       if not data:
@@ -351,8 +379,11 @@ def getModifiedFiles(s3Client, bucket_name):
         continue
       relative_path = os.path.relpath(filepath, "dist")
       s3hash = s3FileHashes.get(relative_path)
-      if s3hash is None or not fileMatchesS3Etag(filepath, s3hash):
-        modified.append(relative_path)
+      try:
+        if s3hash is None or not fileMatchesS3Etag(filepath, s3hash):
+          modified.append(relative_path)
+      except FileNotFoundError:
+        print(f"warning: skipped missing file: {filepath}")
 
   return modified
 
@@ -459,6 +490,10 @@ class TestModule(unittest.TestCase):
 
   def test_me(self):
     self.assertTrue(1)
+
+  def test_openForHash_missing(self):
+    with self.assertRaises(FileNotFoundError):
+      openForHash("/no/such/file", retries=0, delay=0)
 
   def test_s3UploadExtraArgs(self):
     self.assertEqual(s3UploadExtraArgs("tin/c1-1-t.jpg", "image/jpeg"), {
