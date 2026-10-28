@@ -36,6 +36,7 @@
       "height": 2336,
       "size": 1133478,
       "sizet": 53714,
+      "url": ["https://en.wikipedia.org/wiki/Don_Quixote","Don Quixote"],
       "location": "",
       "taken": "2010-01-02T05:08:51"
     },
@@ -135,7 +136,8 @@
       "height": 2739,
       "size": 944207,
       "sizet": 53883,
-      "location": "",
+      "url": ["https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid", "Plaza Mayor"],
+      "location": "40.41549792101842, -3.707175222424149",
       "taken": "2010-01-04T08:42:15"
     },
     {
@@ -168,6 +170,7 @@
       "height": 2336,
       "size": 1234172,
       "sizet": 52291,
+      "url": ["https://en.wikipedia.org/wiki/High-speed_rail_in_Spain", "Spain's 190 MPH Trains"],
       "location": "",
       "taken": "2010-01-05T04:15:20"
     },

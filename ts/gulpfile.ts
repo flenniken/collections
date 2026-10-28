@@ -15,6 +15,7 @@ import ts from 'gulp-typescript';
 import fs from "fs";
 import path from "path";
 import os from "os";
+import { URL } from "url";
 import jpeg from "jpeg-js";
 import exif from "exif-parser";
 
@@ -722,6 +723,30 @@ export function validLocationString(value: string): boolean {
     lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
 }
 
+export function validUrlString(value: string): boolean {
+  // Return true when value is an http or https URL.
+  try {
+    const parsed = new URL(value.trim())
+    return (parsed.protocol === "http:" || parsed.protocol === "https:") &&
+      parsed.username === "" && parsed.password === ""
+  } catch {
+    return false
+  }
+}
+
+function validateUrlField(label: string, url: unknown) {
+  // url is [href, text]. href is http(s), text is non-empty.
+  if (!Array.isArray(url) || url.length != 2) {
+    throw new Error(`${label} is invalid.`)
+  }
+  const href = url[0]
+  const text = url[1]
+  if (typeof href !== "string" || typeof text !== "string" ||
+      text.trim() === "" || !validUrlString(href)) {
+    throw new Error(`${label} is invalid.`)
+  }
+}
+
 export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   // Validate the collection information without reading files on disk.
   // The cNum parameter is the expected collection number. The cinfo
@@ -737,7 +762,7 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
     "cNum", "images", "zoomPoints"
   ]
   const optionalFields = [
-    "building", "modified", "location",
+    "building", "modified", "location", "url",
   ]
   validateFields(cNum, cinfo, requiredFields, optionalFields)
 
@@ -763,6 +788,8 @@ must be true when it exists.`)
       throw new Error(`The collection ${cinfo.cNum} location is invalid.`)
     }
   }
+  if ("url" in cinfo)
+    validateUrlField(`The collection ${cinfo.cNum} url`, cinfo.url)
 
   const building = cinfo.building === true
 
@@ -854,7 +881,7 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
     "iPreview", "iThumbnail", "description",
     "width", "height", "size", "sizet"]
   const imageOptionalFields = [
-    "iLiveVideo", "liveSize", "liveDuration", "location", "taken"]
+    "iLiveVideo", "liveSize", "liveDuration", "location", "taken", "url"]
 
   // Check that the image does not have extra fields.
   cinfo.images.forEach((image, ix) => {
@@ -1047,6 +1074,9 @@ different inum: iPreview ${image.iPreview}, iThumbnail ${image.iThumbnail}`)
     throw new Error(`Collection ${cNum} image ${ix}: description is required \
 when not building.`)
   }
+
+  if ("url" in image)
+    validateUrlField(`Collection ${cNum} image ${ix}: url`, image.url)
 }
 
 // Check that zoomPoints has at least two fields.

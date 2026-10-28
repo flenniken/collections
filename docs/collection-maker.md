@@ -201,6 +201,35 @@ with the location line:
   "images": [
 ~~~
 
+__Optional URL Link__
+
+You can optionally add a `url` on the collection for the thumbnails
+page, or on an image for the image page.  The link shows below the
+description and above the map.  It is an http or https URL plus the
+text shown on the page.
+
+On the collection:
+
+~~~
+  "description": "We walked the Alhambra in the heat.",
+  "url": ["https://en.wikipedia.org/wiki/Alhambra", "Alhambra"],
+  "location": "37.1769,-3.5899",
+~~~
+
+On an image:
+
+~~~
+    "description": "The Court of the Lions.",
+    "url": ["https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid", "Plaza Mayor"],
+    "location": "37.1770,-3.5895",
+~~~
+
+That image link renders as:
+
+~~~
+<a href="https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid">Plaza Mayor</a>
+~~~
+
 [⬇](#Contents)
 
 # Move into Place

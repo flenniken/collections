@@ -285,6 +285,51 @@ async function fetchCollectionJson(cNum: number): Promise<Record<string, unknown
   }
 }
 
+function parseHttpUrl(url?: string): string | null {
+  // Return a trimmed http(s) URL, or null when it is missing or not
+  // a web link.
+  if (!url)
+    return null
+  const trimmed = url.trim()
+  if (!trimmed)
+    return null
+  try {
+    const parsed = new URL(trimmed)
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:")
+      return null
+    if (parsed.username || parsed.password)
+      return null
+    return trimmed
+  } catch {
+    return null
+  }
+}
+
+function parseInfoLink(url: unknown): {href: string, text: string} | null {
+  // Return href and label from a [url, text] pair, or null when the
+  // field is missing or not a web link with non-empty text.
+  if (!Array.isArray(url) || url.length != 2)
+    return null
+  const href = parseHttpUrl(typeof url[0] === "string" ? url[0] : "")
+  const text = typeof url[1] === "string" ? url[1].trim() : ""
+  if (!href || !text)
+    return null
+  return {href, text}
+}
+
+function createInfoLink(href: string, text: string): HTMLParagraphElement {
+  // Return a tappable link for an optional collection or image URL.
+  const wrap = document.createElement("p")
+  wrap.className = "info-link"
+  const link = document.createElement("a")
+  link.href = href
+  link.target = "_blank"
+  link.rel = "noopener noreferrer"
+  link.textContent = text
+  wrap.appendChild(link)
+  return wrap
+}
+
 function parseLocation(location?: string): {lat: number, lng: number} | null {
   // Return lat and lng from a collection location string, or null
   // when there is no GPS.

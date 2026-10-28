@@ -47,11 +47,18 @@ async function handleLoad() {
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
   let location = document.body.dataset.location || ""
+  let url: unknown = [
+    document.body.dataset.url || "",
+    document.body.dataset.urlText || "",
+  ]
   if (isLocalhost()) {
     const cinfo = await refreshThumbnailHeading()
     if (cinfo && typeof cinfo.location === "string")
       location = cinfo.location
+    if (cinfo)
+      url = cinfo.url
   }
+  setupCollectionLink(url)
   setupCollectionMap(location)
   setupThumbnailTextEditing()
   setupThumbnailReorder()
@@ -82,8 +89,21 @@ async function refreshThumbnailHeading(): Promise<Record<string, unknown> | null
   return cinfo
 }
 
+function setupCollectionLink(url: unknown) {
+  // Show a collection link under the description when url is set.
+  document.querySelector("#thumbnails .info-link")?.remove()
+  const parsed = parseInfoLink(url)
+  if (!parsed)
+    return
+  const desc = document.getElementById("description")
+  if (!desc)
+    return
+  desc.after(createInfoLink(parsed.href, parsed.text))
+}
+
 function setupCollectionMap(location: string) {
-  // Show a collection map under the description when location is set.
+  // Show a collection map under the description, below the link
+  // when both are set.
   document.querySelector("#thumbnails .location")?.remove()
   const parsed = parseLocation(location)
   if (!parsed)
@@ -91,7 +111,8 @@ function setupCollectionMap(location: string) {
   const desc = document.getElementById("description")
   if (!desc)
     return
-  desc.after(createLocationMap(parsed.lat, parsed.lng))
+  const after = document.querySelector("#thumbnails .info-link") || desc
+  after.after(createLocationMap(parsed.lat, parsed.lng))
   observeLocationMaps()
 }
 

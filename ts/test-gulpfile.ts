@@ -422,6 +422,48 @@ function validateCinfoNoReadingSuite() {
 
   cinfo = createTestCinfo({numImages: 1,
     zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.url = ["https://en.wikipedia.org/wiki/Madrid", "Madrid"]
+  test(fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.url = "https://en.wikipedia.org/wiki/Madrid" as any
+  testThrow("The collection 4 url is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.url = ["javascript:alert(1)", "Madrid"]
+  testThrow("The collection 4 url is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.url = ["https://en.wikipedia.org/wiki/Madrid", ""]
+  testThrow("The collection 4 url is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.url = ["https://en.wikipedia.org/wiki/Madrid"] as any
+  testThrow("The collection 4 url is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].url = [
+    "https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid", "Plaza Mayor"]
+  test(fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].url = ["ftp://example.com/file", "File"]
+  testThrow("Collection 4 image 0: url is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.images[0].url = [
+    "https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid", "  "]
+  testThrow("Collection 4 image 0: url is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
   cinfo.images[0].taken = "2023-06-04T19:04:44"
   test(fn, 4, cinfo)
 

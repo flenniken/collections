@@ -22,7 +22,9 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
 </head>
 <!--$ nextline -->
 <!--$ : locationAttr = html(if(exists(s, "location"), s.location, ""), "attribute") -->
-<body id="thumbnails" data-cnum="{s.cNum}" data-location="{locationAttr}">
+<!--$ : urlAttr = html(if(exists(s, "url"), s.url[0], ""), "attribute") -->
+<!--$ : urlTextAttr = html(if(exists(s, "url"), s.url[1], ""), "attribute") -->
+<body id="thumbnails" data-cnum="{s.cNum}" data-location="{locationAttr}" data-url="{urlAttr}" data-url-text="{urlTextAttr}">
   <div id="top-bar">
   </div>
   <div id="container">

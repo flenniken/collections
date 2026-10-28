@@ -459,6 +459,18 @@ body.thumb-reordering {
   outline-offset: 4px;
 }
 
+#images .info-link,
+#thumbnails .info-link {
+  margin: -0.25em 1em 1em 1em;
+  font-size: 1em;
+  overflow-wrap: anywhere;
+}
+
+#images .info-link a,
+#thumbnails .info-link a {
+  color: #007aff;
+}
+
 #images .taken {
   display: block;
   margin: -0.25em 1em 1em 1em;

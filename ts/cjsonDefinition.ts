@@ -17,6 +17,12 @@ namespace CJson {
     // collection is building. Required when published.
     description: string;
 
+    // Optional link shown on the image page below the description
+    // and above the map: [href, text], e.g.
+    // ["https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid",
+    // "Plaza Mayor"]. Omitted means no link.
+    url?: [string, string];
+
     // Width and height of the preview image in pixels. One side is at
     // least 933 pixels and the other is at least 700.
     width: number;
@@ -80,6 +86,12 @@ namespace CJson {
     // Full desciption of the collection for the thumbnails page.
     // Empty is allowed while building.
     description: string;
+
+    // Optional link shown on the thumbnails page below the
+    // description and above the map: [href, text], e.g.
+    // ["https://en.wikipedia.org/wiki/Madrid", "Madrid"].
+    // Omitted means no link.
+    url?: [string, string];
 
     // Optional Google Maps decimal-degree coordinates for the
     // thumbnails page, e.g. "45.6868445,-121.3035183". Empty or

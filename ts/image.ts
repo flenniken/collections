@@ -162,13 +162,20 @@ function createTakenTime(taken: string): HTMLTimeElement | null {
 }
 
 function setupImageDetails() {
-  // Add capture time and a map under each image description.
+  // Add an optional link, capture time, and a map under each image
+  // description.
   cJson.images.forEach((image, ix) => {
     const colbox = get(`cb${ix + 1}`)
     const description = colbox.querySelector(".description")
     if (!description)
       return
     let insertAfter: Element = description
+    const infoLink = parseInfoLink(image.url)
+    if (infoLink) {
+      const link = createInfoLink(infoLink.href, infoLink.text)
+      insertAfter.after(link)
+      insertAfter = link
+    }
     if (image.taken) {
       const takenEl = createTakenTime(image.taken)
       if (takenEl) {
