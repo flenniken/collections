@@ -2,7 +2,7 @@
   "indexCollections": [
     {
       "cNum": 59,
-      "building": true,
+      "building": false,
       "title": "Madrid, Spain",
       "modified": false,
       "indexDescription": "A family trip to Madrid in 2009.",
