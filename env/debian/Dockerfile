@@ -61,9 +61,9 @@ RUN apt-get update && apt-get install -y curl \
  && curl -fsSL https://deb.nodesource.com/setup_24.x | bash - \
  && apt-get install -y nodejs
 
-# Install globally typescript, gulp and w3c validator.
+# Install globally gulp and typescript. html-validate comes from
+# package.json.
 RUN npm install --global gulp-cli
-RUN npm install --global w3c-html-validator
 RUN npm install --global typescript@5.8.3
 
 # Install bashrc for the prompt and some aliases.

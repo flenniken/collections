@@ -209,54 +209,53 @@ gulp.task('sw', function () {
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
 
-function validateHtml(filename: string) {
-  // Validate an html file.
-
-  fancyLog(`Validating html file: ${filename}.`)
-
-  // See https://www.npmjs.com/package/w3c-html-validator
-
-  // To ignore multiple warnings:
-  //   * use a file "--ignore-config=valid-ignore.txt".
-  //   * use | regex
-  //   * you cannot specify more than one --ignore option.
-
-  // Ignore these:
-  // Consider avoiding viewport values that prevent users from resizing documents.
-  // Empty heading
-
-  const parameters = [
-    "--ignore=/Consider avoiding viewport values that|Empty heading/",
-    `${filename}`
-  ]
-
-  const validator = child_process.spawn("html-validator", parameters, {stdio: "inherit"});
-  validator.on('close', (code) => {
+function validateHtml(filenames: string[], cb: TaskCallback) {
+  // Validate html files with the local html-validate command.
+  // npx html-validate dist/images/c58/thumbnails-58.html
+  if (filenames.length === 0)
+    return cb()
+  for (const filename of filenames)
+    fancyLog(`Validating html file: ${filename}.`)
+  const validator = child_process.spawn(
+    "npx", ["html-validate", ...filenames], {stdio: "inherit"})
+  let settled = false
+  const done = (err?: Error) => {
+    if (settled)
+      return
+    settled = true
+    cb(err)
+  }
+  validator.on("error", (err) => {
+    done(err)
+  })
+  validator.on("close", (code) => {
     if (code !== 0) {
-      const msg = `html-validator exited with code ${code}.`;
-      fancyLog(msg);
-      throw new Error(msg)
+      const msg = `html-validate exited with code ${code}.`
+      fancyLog(msg)
+      done(new Error(msg))
+      return
     }
-  });
+    done()
+  })
 }
 
 gulp.task("vindex", function (cb) {
   // Validate the index html file.
-  validateHtml("dist/index.html")
-  cb()
+  validateHtml(["dist/index.html"], cb)
 })
 
 gulp.task("vready", function (cb) {
   // Validate the collection thumbnails and images pages.
   const collections = getReadyCollections()
   fancyLog(`${collections.length} collections`)
+  const files: string[] = []
   for (let ix = 0; ix < collections.length; ix++) {
     const cNum = collections[ix].cNum
     fancyLog(`Validate: ${cNum}`)
-    validateHtml(`dist/images/c${cNum}/image-${cNum}.html`)
-    validateHtml(`dist/images/c${cNum}/thumbnails-${cNum}.html`)
+    files.push(`dist/images/c${cNum}/image-${cNum}.html`)
+    files.push(`dist/images/c${cNum}/thumbnails-${cNum}.html`)
   }
-  cb()
+  validateHtml(files, cb)
 })
 
 gulp.task("vpages", gulp.parallel("vindex", "vready"));
