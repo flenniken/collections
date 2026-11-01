@@ -174,8 +174,9 @@ export function writeBrandingTs(destPath = "tmp/branding.ts",
 
 // image page
 gulp.task('i', function () {
-  writeBrandingTs()
+  const brandingPath = writeBrandingTs()
   return ts2js(image_ts, 'image.js', "dist/js", null)
+    .on("end", () => fs.rmSync(brandingPath, { force: true }))
 });
 
 // thumbnails page

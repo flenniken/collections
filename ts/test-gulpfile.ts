@@ -609,10 +609,15 @@ feedback_message = "Image \${previewName}.  Hi Steve, \\nI like this photo and "
 admin_phone = "+15555550100"
 feedback_message = "Image \${previewName}.  Hi, "
 `)
-    writeBrandingTs(tsPath, iniPath)
-    const generated = fs.readFileSync(tsPath, "utf8")
-    gotExpected(generated.includes('const FEEDBACK_SMS = "+15555550100"'), true)
-    gotExpected(generated.includes("Image ${previewName}.  Hi, "), true)
+    try {
+      writeBrandingTs(tsPath, iniPath)
+      const generated = fs.readFileSync(tsPath, "utf8")
+      gotExpected(generated.includes('const FEEDBACK_SMS = "+15555550100"'), true)
+      gotExpected(generated.includes("Image ${previewName}.  Hi, "), true)
+    } finally {
+      fs.rmSync(iniPath, { force: true })
+      fs.rmSync(tsPath, { force: true })
+    }
   })
 }
 

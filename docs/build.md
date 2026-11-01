@@ -101,10 +101,13 @@ See docs/aws-config.md for more info by running: glow docs/aws-config.md
 You build the app in the docker container with the gulp app by typing
 “g all”.
 
-Changed files go the dist folder.  The process builds everything but
-only copies a file when the new bytes are different then the previous
-bytes.  The build process is fast enough for this to work well and no
-complex dependencies need to be maintained.
+The build system, g all, builds everything storing the result files in
+the tmp folder.  It then checks whether anything has changed by
+comparing files with the production files in the dist folder.  If a
+file differs, it is copied to the dist folder. The build process is
+fast enough for this to work well and no complex dependencies need to
+be maintained.  You can delete the tmp folder and the system will
+recreate the files on the next build.
 
 Here is an example:
 
