@@ -337,6 +337,11 @@ gulp.task("ready", function (cb) {
   fancyLog(`${numCollections} collections`)
   if (numCollections == 0)
     return cb()
+
+  const tmpDir = 'tmp/html'
+  if (!fs.existsSync(tmpDir))
+    fs.mkdirSync(tmpDir, { recursive: true })
+
   for (let ix = 0; ix < numCollections; ix++) {
     const cNum = collections[ix].cNum
     thumbnailsPage(cNum, ()=>{})
@@ -357,7 +362,7 @@ statictea \
 */
 
   fancyLog(`Building collection ${cNum} thumbnails page.`)
-  const tmpFilename = `tmp/thumbnails-${cNum}.html`
+  const tmpFilename = `tmp/html/thumbnails-${cNum}.html`
   const distFilename = `dist/images/c${cNum}/thumbnails-${cNum}.html`
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
@@ -380,7 +385,7 @@ statictea \
 */
 
   fancyLog(`Building collection ${cNum} images page.`)
-  const tmpFilename = `tmp/image-${cNum}.html`
+  const tmpFilename = `tmp/html/image-${cNum}.html`
   const distFilename = `dist/images/c${cNum}/image-${cNum}.html`
   const parameters = [
     "-t", "pages/image-tmpl.html",
