@@ -45,6 +45,7 @@ let help = `
 
    vindex -- Validate index html
    vready -- Validate images and thumbnails pages for all collections.
+             g vready 58 validates one collection.
    vsize  -- Validate json images width, height and size match on disk values.
 
 * all: Compile most everything in parallel: ts, pages (not tsync, vpages).
@@ -209,6 +210,24 @@ gulp.task('sw', function () {
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
 
+export function parseCliCollectionNum(argv: string[]): number | null {
+  // Return --cnum=58 or --cnum 58 from the gulp command line.
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    let value = ""
+    if (arg.startsWith("--cnum="))
+      value = arg.slice("--cnum=".length)
+    else if (arg === "--cnum" && i + 1 < argv.length)
+      value = argv[i + 1]
+    else
+      continue
+    const cNum = parseInt(value, 10)
+    if (cNum > 0)
+      return cNum
+  }
+  return null
+}
+
 function validateHtml(filenames: string[], cb: TaskCallback) {
   // Validate html files with the local html-validate command.
   // npx html-validate dist/images/c58/thumbnails-58.html
@@ -247,10 +266,18 @@ gulp.task("vindex", function (cb) {
 gulp.task("vready", function (cb) {
   // Validate the collection thumbnails and images pages.
   const collections = getReadyCollections()
-  fancyLog(`${collections.length} collections`)
+  const only = parseCliCollectionNum(process.argv)
+  let cNums = collections.map(c => c.cNum)
+  if (only != null) {
+    if (cNums.indexOf(only) < 0) {
+      cb(new Error(`Collection ${only} is not a ready collection.`))
+      return
+    }
+    cNums = [only]
+  }
+  fancyLog(`${cNums.length} collection${cNums.length == 1 ? "" : "s"}`)
   const files: string[] = []
-  for (let ix = 0; ix < collections.length; ix++) {
-    const cNum = collections[ix].cNum
+  for (const cNum of cNums) {
     fancyLog(`Validate: ${cNum}`)
     files.push(`dist/images/c${cNum}/image-${cNum}.html`)
     files.push(`dist/images/c${cNum}/thumbnails-${cNum}.html`)

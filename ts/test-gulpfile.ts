@@ -23,7 +23,8 @@ import {
   parseBrandingIni,
   brandingFromValues,
   readBranding,
-  writeBrandingTs
+  writeBrandingTs,
+  parseCliCollectionNum
 } from './gulpfile';
 
 if (!process.env.coder_env) {
@@ -666,11 +667,27 @@ feedback_message = "Image \${previewName}.  Hi, "
   })
 }
 
+function parseCliCollectionNumSuite() {
+  test(() => {
+    gotExpected(parseCliCollectionNum([]), null)
+    gotExpected(parseCliCollectionNum(["node", "gulp", "vready"]), null)
+    gotExpected(parseCliCollectionNum(
+      ["node", "gulp", "vready", "--cnum", "58"]), 58)
+    gotExpected(parseCliCollectionNum(
+      ["node", "gulp", "vready", "--cnum=58"]), 58)
+    gotExpected(parseCliCollectionNum(
+      ["node", "gulp", "vready", "--cnum", "0"]), null)
+    gotExpected(parseCliCollectionNum(
+      ["node", "gulp", "vready", "--cnum", "abc"]), null)
+  })
+}
+
 function testGulpfile() {
   // Run the test suite for the gulpfile.
 
   console.log("Test gulpfile.ts")
 
+  runSuite(parseCliCollectionNumSuite)
   runSuite(parseImageNameSuite)
   runSuite(getCollectionImagesSuite)
   runSuite(getUnusedImageFilesSuite)

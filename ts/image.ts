@@ -367,7 +367,6 @@ function addLiveBadge(imageIx: number) {
     return
   const badge = document.createElement("div")
   badge.className = "live-badge"
-  badge.setAttribute("aria-label", "Live Photo")
   badge.innerHTML =
     '<svg class="live-badge-icon" viewBox="0 0 24 24" aria-hidden="true">' +
     '<circle cx="12" cy="12" r="2.6" fill="currentColor"/>' +

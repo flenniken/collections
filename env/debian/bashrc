@@ -14,8 +14,16 @@ alias ll='ls -l'
 alias jqless='jq -C | less -RF'
 
 # Run the gulp command using the gulpfile in the tmp folder without
-# changing the working directory.
-alias g='gulp --cwd . --gulpfile tmp/gulpfile.js'
+# changing the working directory. "g vready 58" validates one
+# collection; gulp would otherwise treat 58 as a task name.
+unalias g 2>/dev/null
+function g {
+  if [[ "$1" == "vready" && "$2" =~ ^[0-9]+$ ]]; then
+    gulp --cwd . --gulpfile tmp/gulpfile.js vready --cnum="$2"
+    return
+  fi
+  gulp --cwd . --gulpfile tmp/gulpfile.js "$@"
+}
 
 # Show the UTC time like the log files use.
 alias utc='date -u +"%Y-%m-%d %H:%M:%S"'

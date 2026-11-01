@@ -43,6 +43,38 @@ TEXT_FIELDS = (
   "description", "indexDescription", "imageDescription", "title", "posted",
 )
 
+def cleanTextField(text):
+  # Drop leading and trailing whitespace, and spaces at the end of
+  # each line, so html-validate no-trailing-whitespace stays quiet.
+  lines = text.replace("\r\n", "\n").split("\n")
+  return "\n".join(line.rstrip() for line in lines).strip()
+
+def cleanCollectionTextFields(collection):
+  # Strip whitespace from title, posted, and description fields.
+  changed = False
+  for key in ("title", "posted", "description", "indexDescription"):
+    value = collection.get(key)
+    if not isinstance(value, str):
+      continue
+    cleaned = cleanTextField(value)
+    if cleaned != value:
+      collection[key] = cleaned
+      changed = True
+  images = collection.get("images")
+  if not isinstance(images, list):
+    return changed
+  for image in images:
+    if not isinstance(image, dict):
+      continue
+    value = image.get("description")
+    if not isinstance(value, str):
+      continue
+    cleaned = cleanTextField(value)
+    if cleaned != value:
+      image["description"] = cleaned
+      changed = True
+  return changed
+
 class AdminApiException(Exception):
   """ An exception we plan for. """
   pass
@@ -71,6 +103,7 @@ def writeCollectionJson(collection, root=None):
   toWrite = dict(collection)
   toWrite.pop("order", None)
   toWrite.pop("ready", None)
+  cleanCollectionTextFields(toWrite)
   text = json.dumps(toWrite, indent=2, ensure_ascii=False) + "\n"
   tmpPath = path.with_suffix(".json.tmp")
   with tmpPath.open("w", encoding="utf-8") as fh:
@@ -113,9 +146,9 @@ def saveDescription(payload, root=None):
     image = images[imageIx]
     if not isinstance(image, dict):
       raise AdminApiException("Invalid imageIx")
-    image["description"] = text
+    image["description"] = cleanTextField(text)
   else:
-    collection[field] = text
+    collection[field] = cleanTextField(text)
 
   return writeCollectionJson(collection, root=root)
 
@@ -426,6 +459,25 @@ class TestModule(unittest.TestCase):
     self.assertNotIn("order", saved)
     self.assertNotIn("ready", saved)
 
+  def test_writeCollectionJsonStripsWhitespace(self):
+    collection = {
+      "cNum": 9,
+      "title": "  Jaclyn’s School \n",
+      "description": "Thumbnails. \n\nMore. \n",
+      "indexDescription": " Index. ",
+      "posted": " 2026-07-29 ",
+      "images": [
+        {"description": "  First. \n\nSecond. \n"},
+      ],
+    }
+    path = writeCollectionJson(collection, root=self.root)
+    saved = json.loads(path.read_text(encoding="utf-8"))
+    self.assertEqual(saved["title"], "Jaclyn’s School")
+    self.assertEqual(saved["description"], "Thumbnails.\n\nMore.")
+    self.assertEqual(saved["indexDescription"], "Index.")
+    self.assertEqual(saved["posted"], "2026-07-29")
+    self.assertEqual(saved["images"][0]["description"], "First.\n\nSecond.")
+
   def test_saveCollectionPost(self):
     server = AdminHTTPServer(("127.0.0.1", 0), ApiHandler, self.root)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
@@ -515,6 +567,23 @@ class TestModule(unittest.TestCase):
     self.assertEqual(saved["description"], "new thumbs")
     self.assertEqual(saved["indexDescription"], "old index")
     self.assertEqual(saved["images"][0]["description"], "img0")
+
+  def test_cleanTextField(self):
+    self.assertEqual(cleanTextField("  First. \n\nSecond. \n"),
+      "First.\n\nSecond.")
+    self.assertEqual(cleanTextField("plain"), "plain")
+
+  def test_saveDescriptionStripsWhitespace(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "imageDescription",
+      "imageIx": 0,
+      "text": "  First line. \n\nSecond line. \n",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["images"][0]["description"],
+      "First line.\n\nSecond line.")
 
   def test_saveDescriptionImage(self):
     self.writeOriginalCollection()
