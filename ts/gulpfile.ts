@@ -16,9 +16,6 @@ import fs from "fs";
 import path from "path";
 import os from "os";
 import { URL } from "url";
-import jpeg from "jpeg-js";
-import exif from "exif-parser";
-
 import { TaskCallback } from "undertaker";
 
 // Minimize the javascript.
@@ -44,7 +41,6 @@ let help = `
    vindex -- Validate index html
    vready -- Validate images and thumbnails pages for all collections.
              g vready 58 validates one collection.
-   vsize  -- Validate json images width, height and size match on disk values.
 
 * all: Compile most everything in parallel: ts, pages (not tsync, vpages).
 `
@@ -445,35 +441,6 @@ gulp.task("csjson", function (cb) {
   return cb()
 })
 
-gulp.task("vsize", function (cb) {
-  // Validate the width, height and size of images on disk match what the json file says.
-  const collections = getReadyCollections()
-  fancyLog(`${collections.length} collections`)
-  for (let ix = 0; ix < collections.length; ix++) {
-    const cNum = collections[ix].cNum
-    fancyLog(`${cNum}`)
-
-    const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`
-    const cinfo: CJson.Collection = readJsonFile(cjsonFilename)
-
-    cinfo.images.forEach(image => {
-      fancyLog(`${image.iPreview}`)
-      try {
-        validateImageDisk(image)
-      }
-      catch (error) {
-        if (error instanceof Error) {
-          fancyLog(`${error}`)
-        }
-        else {
-          throw error
-        }
-      }
-    });
-  }
-  return cb()
-})
-
 gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
   ["ts", "pages", "css"])]));
 
@@ -853,14 +820,6 @@ function validateCinfoZoomPoints(numImages: number,
   });
 }
 
-// Read files on disk and:
-// Make sure the preview dimensions make the width and height specified.
-// Make sure the thumbnail is 480 by 480
-// Make sure the images are jpegs.
-// Make sure there are not extra files in the folder other than the collection. cjson, previews, thumbnails, images.html, thumbnails.html.
-// Make sure the file sizes match "size" and "tsize".
-// Make sure the tin thumbnail exists.
-
 function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
   requireDescriptions: boolean) {
   // Validate the images field of the cinfo.
@@ -885,110 +844,6 @@ function validateCinfoImages(cNum: number, cinfo: CJson.Collection,
     validateCinfoImage(cNum, ix, requireDescriptions, image)
   });
 }
-
-export function getImagePath(basename: string) {
-  // Return the path given an image basename.
-  const obj = parseImageName(basename) ?? parseLiveVideoName(basename)
-  if (obj == null)
-    throw new Error(`Invalid basename name: ${basename}`);
-  return `dist/images/c${obj.cNum}/${basename}`;
-}
-
-export function validateImageDisk(image: CJson.Image) {
-  // Read the image preview and thumbnail files on disk and throw an
-  // error if the image info doesn't match the metadata in the cjson.
-
-  const previewPath = getImagePath(image.iPreview)
-  const thumbnailPath = getImagePath(image.iThumbnail)
-
-  // Ensure the preview file exists.
-  if (!fs.existsSync(previewPath)) {
-    throw new Error(`Preview file not found: ${previewPath}`);
-  }
-
-  // Ensure the thumbnail file exists.
-  if (!fs.existsSync(thumbnailPath)) {
-    throw new Error(`Thumbnail file not found: ${thumbnailPath}`);
-  }
-
-  // Validate the preview file.
-  const previewStats = fs.statSync(previewPath);
-  const previewDimensions = getJpegDimensions(previewPath);
-  if (previewDimensions.width !== image.width || previewDimensions.height !== image.height) {
-    throw new Error(
-      `${image.iPreview} dimensions (${previewDimensions.width}x${previewDimensions.height}) do not match cjson: (${image.width}x${image.height}).`
-    );
-  }
-  if (previewStats.size !== image.size) {
-    throw new Error(
-      `${image.iPreview} file size (${previewStats.size} bytes) does not match cjson: ${image.size} bytes.`
-    );
-  }
-
-  // Validate the thumbnail file.
-  const thumbnailStats = fs.statSync(thumbnailPath);
-  const thumbnailDimensions = getJpegDimensions(thumbnailPath);
-  if (thumbnailDimensions.width !== 480 || thumbnailDimensions.height !== 480) {
-    throw new Error(
-      `${image.iThumbnail} dimensions (${thumbnailDimensions.width}x${thumbnailDimensions.height}) are not 480x480.`
-    );
-  }
-  if (thumbnailStats.size !== image.sizet) {
-    throw new Error(
-      `${image.iThumbnail} file size (${thumbnailStats.size} bytes) does not match cjson: ${image.sizet} bytes.`
-    );
-  }
-
-  if (image.iLiveVideo) {
-    const liveVideoPath = getImagePath(image.iLiveVideo)
-    if (!fs.existsSync(liveVideoPath)) {
-      throw new Error(`Live video file not found: ${liveVideoPath}`);
-    }
-    const liveVideoStats = fs.statSync(liveVideoPath);
-    if (liveVideoStats.size !== image.liveSize) {
-      throw new Error(
-        `${image.iLiveVideo} file size (${liveVideoStats.size} bytes) does not match cjson: ${image.liveSize} bytes.`
-      );
-    }
-  }
-}
-
-
-
-export function getJpegDimensions(filename: string): { width: number; height: number } {
-  // Get the dimensions of a JPEG image, adjusting for EXIF orientation.
-
-  let jpegData: Buffer;
-  try {
-    jpegData = fs.readFileSync(filename);
-  } catch {
-    throw new Error(`Unable to read: ${filename}`);
-  }
-
-  let rawImageData;
-  try {
-    rawImageData = jpeg.decode(jpegData, { useTArray: true });
-  } catch {
-    throw new Error(`Invalid JPEG file: ${filename}`);
-  }
-
-  let width = rawImageData.width;
-  let height = rawImageData.height;
-
-  // Parse EXIF data to check for orientation.
-  const parser = exif.create(jpegData);
-  const exifData = parser.parse();
-  const orientation = exifData.tags?.Orientation;
-
-  // Adjust dimensions based on EXIF orientation.
-  if (orientation === 6 || orientation === 8) {
-    // Orientation 6 (90° CW) or 8 (90° CCW) swaps width and height.
-    [width, height] = [height, width];
-  }
-
-  return { width, height };
-}
-
 
 export function validateImageName(cNum: number, ix: number,
   nameType: string, name: string) {

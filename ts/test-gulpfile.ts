@@ -16,10 +16,7 @@ import {
   validateCinfoNoReading,
   validateCinfoImage,
   validateImageName,
-  getJpegDimensions,
-  getImagePath,
   readCJsonFile,
-  validateImageDisk,
   parseBrandingIni,
   brandingFromValues,
   readBranding,
@@ -573,52 +570,6 @@ function validateCollections() {
   })
 }
 
-function testGetImagePath(basename: string, ePath: string) {
-  const path = getImagePath(basename)
-  gotExpected(path, ePath)
-}
-
-function getImagePathSuite() {
-  const fn = testGetImagePath
-
-  test(fn, "c1-1-p.jpg", "dist/images/c1/c1-1-p.jpg")
-  test(fn, "c4-10-p.jpg", "dist/images/c4/c4-10-p.jpg")
-  testThrow("Invalid basename name: bogus.jpg", fn, "bogus.jpg")
-  test(fn, "c4-10-t.jpg", "dist/images/c4/c4-10-t.jpg")
-  test(fn, "c21-16-v.mp4", "dist/images/c21/c21-16-v.mp4")
-}
-
-function testGetJpegDimensions(filename: string, eDims: { width: number, height: number }) {
-  // Test the getJpegDimensions function.
-
-  const dims = getJpegDimensions(filename)
-  gotExpected(dims, eDims)
-}
-
-function getJpegDimensionsSuite() {
-  const fn = testGetJpegDimensions
-
-  test(fn, "dist/images/c1/c1-1-p.jpg", {"width":3024,"height":4032})
-  test(fn, "dist/images/c1/c1-1-t.jpg", {"width":480,"height":480})
-  testThrow("Invalid JPEG file: dist/icons/icon-128.png", fn, "dist/icons/icon-128.png")
-  testThrow("Unable to read: bogusfile", fn, "bogusfile")
-}
-
-function validateImageDiskSuite() {
-  const fn = validateImageDisk
-
-  test(fn, createTestImage(1, 2, 4032, 3024, 3871458, 70466))
-  testThrow("c1-2-p.jpg dimensions (4032x3024) do not match cjson: (4031x3024).",
-    fn, createTestImage(1, 2, 4031, 3024, 3871458, 70466))
-  testThrow("c1-2-p.jpg file size (3871458 bytes) does not match cjson: 12345 bytes.",
-    fn, createTestImage(1, 2, 4032, 3024, 12345, 70466))
-  testThrow("c1-2-t.jpg file size (70466 bytes) does not match cjson: 888 bytes.",
-    fn, createTestImage(1, 2, 4032, 3024, 3871458, 888))
-
-  // exif orientation swap
-  test(fn, createTestImage(8, 1, 3024, 4032, 1578565, 63852))
-}
-
 function brandingSuite() {
   const source = "tmp/test-branding.ini"
   const parsed = parseBrandingIni(`
@@ -694,9 +645,6 @@ function testGulpfile() {
   runSuite(validateCinfoImageSuite)
   runSuite(validateCinfoNoReadingSuite)
   runSuite(validateCollections)
-  runSuite(getImagePathSuite)
-  runSuite(getJpegDimensionsSuite)
-  runSuite(validateImageDiskSuite)
   runSuite(brandingSuite)
 }
 
