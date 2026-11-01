@@ -36,8 +36,6 @@ let help = `
 
     index -- Create the main index page.
     ready -- Create the images and thumbnails pages for all collections.
- modified -- Update index thumbnails, remove unused images for modified collections and
-             remove leftover order from the json.
       css -- Minimize the collection.css file.
     tsync -- Update the template's replace blocks in sync with the header.tea content.
 
@@ -424,35 +422,7 @@ gulp.task("css", function (cb) {
     .pipe(gulp.dest("dist/"));
 })
 
-gulp.task("modified", function (cb) {
-  // Update index thumbnails and remove unused images for modified
-  // collections. Remove the modified flag when done.
-
-  const collections = getReadyCollections()
-
-  for (let ix = 0; ix < collections.length; ix++) {
-    const indexCollection = collections[ix]
-    const cNum = indexCollection.cNum
-    syncIndexThumbnail(cNum, indexCollection.iThumbnail)
-
-    if (!indexCollection.modified)
-      continue
-
-    fancyLog(`Clean up modified collection: ${cNum}`)
-
-    const unusedPathsAndImages = removeUnusedImages(cNum, true)
-    unusedPathsAndImages.unusedPaths.forEach(path => {
-      let msg: string
-      fancyLog(`Removed: ${path}`)
-    })
-
-    // Remove the modified and order field from the cjson.
-    removeModifiedAndOrder(cNum)
-  }
-  return cb()
-});
-
-gulp.task("pages", gulp.parallel("index", "ready", "modified", "css"));
+gulp.task("pages", gulp.parallel("index", "ready", "css"));
 
 gulp.task('readme', function () {
   const parameters = [
@@ -665,6 +635,10 @@ function readAndValidateCjson(cjsonFile: string): CJson.Collection {
     delete cinfo.order
     stripped = true
   }
+  if ("modified" in cinfo) {
+    delete (cinfo as { modified?: boolean }).modified
+    stripped = true
+  }
   if (stripped)
     fs.writeFileSync(cjsonFile, JSON.stringify(cinfo, null, 2), "utf8")
   const basename = path.basename(cjsonFile)
@@ -788,7 +762,7 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
     "cNum", "images", "zoomPoints"
   ]
   const optionalFields = [
-    "building", "modified", "location", "url",
+    "building", "location", "url",
   ]
   validateFields(cNum, cinfo, requiredFields, optionalFields)
 
@@ -799,11 +773,6 @@ export function validateCinfoNoReading(cNum: number, cinfo: CJson.Collection) {
   // If building exists, it should be true.
   if ("building" in cinfo && cinfo.building !== true) {
     throw new Error(`The collection ${cinfo.cNum} building field \
-must be true when it exists.`)
-  }
-  // If modified exists, it should be true.
-  if ("modified" in cinfo && cinfo.modified !== true) {
-    throw new Error(`The collection ${cinfo.cNum} modified field \
 must be true when it exists.`)
   }
   if ("location" in cinfo) {
@@ -883,8 +852,6 @@ function validateCinfoZoomPoints(numImages: number,
     }
   });
 }
-
-// When modified is true there might be unused images or the tin thumbnail might be wrong.
 
 // Read files on disk and:
 // Make sure the preview dimensions make the width and height specified.
@@ -1178,13 +1145,15 @@ function generateCollectionsJson() {
         liveINums.push(imageName.iNum)
     }
 
+    const iThumbnail = indexThumbnailName(cinfo)
+    syncIndexThumbnail(cinfo.cNum, iThumbnail)
+
     const indexCollection: CJson.IndexCollection = {
       cNum: cinfo.cNum,
       building: cinfo.building ?? false,
       title: cinfo.title,
-      modified: cinfo.modified ?? false,
       indexDescription: cinfo.indexDescription,
-      iThumbnail: indexThumbnailName(cinfo),
+      iThumbnail: iThumbnail,
       posted: cinfo.posted,
       iCount: cinfo.images.length,
       totalSize: totalSize,
@@ -1246,14 +1215,3 @@ function compareContentsLog(srcPath: string, destPath: string): boolean {
   return same;
 }
 
-function removeModifiedAndOrder(cNum: number) {
-  // Remove the modified flag and leftover order list from the cjson file.
-
-  const cjsonFilename = `dist/images/c${cNum}/c${cNum}.json`;
-  const cjson: CJson.Collection = readJsonFile(cjsonFilename);
-  delete cjson.modified;
-  delete cjson.order;
-  delete (cjson as { ready?: boolean }).ready;
-
-  fs.writeFileSync(cjsonFilename, JSON.stringify(cjson, null, 2), "utf8");
-}

@@ -123,15 +123,6 @@ namespace CJson {
     // opening the collection for everyone to see. The maker command
     // creates the flag when the collection is created.
     building?: boolean;
-
-    // The modified field tells the build process that the collection
-    // has been modified or is new.  When
-    // true, the build process (the gulp modified task):
-    // * copies the tin thumbnail file to the shared location
-    // * removes the old tin thumbnail if it exists
-    // * removes any unused collection image files
-    // * removes the modified field when done
-    modified?: boolean;
   }
 
   // The csjson.json file's (csjson) definition.
@@ -141,7 +132,6 @@ namespace CJson {
     // derived from it.
     cNum: number,
     building: boolean;
-    modified: boolean,
     title: string,
     indexDescription: string,
     // The collection's thumbnail used in the index. Copied from the

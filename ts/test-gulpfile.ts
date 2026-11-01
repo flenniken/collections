@@ -203,7 +203,6 @@ interface CinfoOptions {
   zoomPointKeys?: string[];
   order?: number[];
   building?: boolean;
-  modified?: boolean;
 }
   // Create a valid test cinfo object for the given collection number.
   // * cNum is the collection number.
@@ -246,8 +245,6 @@ function createTestCinfo(options?: CinfoOptions): CJson.Collection {
 
   if (options?.building !== undefined)
     cinfo.building = options.building
-  if (options?.modified !== undefined)
-    cinfo.modified = options.modified
 
   // Set the order field when it is specified.
   if (options?.order !== undefined) {
@@ -550,15 +547,16 @@ zoomPoints."
   cinfo = createTestCinfo({numImages: 1, building: false})
   testThrow(message, fn, 4, cinfo)
 
-  // The modified field must be true when it exists.
-  message = "The collection 4 modified field must be true when it exists."
-  cinfo = createTestCinfo({numImages: 1, building: true, modified: false})
-  testThrow(message, fn, 4, cinfo)
-
   // Order is not persisted on disk.
   message = "Collection 4 has extra fields: order."
   cinfo = createTestCinfo({numImages: 1, order: [0],
     zoomPointKeys: ["933x432", "432x933"]})
+  testThrow(message, fn, 4, cinfo)
+
+  message = "Collection 4 has extra fields: modified."
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]});
+  (cinfo as { modified?: boolean }).modified = true
   testThrow(message, fn, 4, cinfo)
 }
 
