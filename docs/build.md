@@ -61,17 +61,38 @@ The environment has a few aliases defined for common commands:
 ~~~
 (debian)~/collections $ alias
 
-alias g='gulp'
 alias jqless='jq -C | less -RF'
+alias l='mylisttail'
 alias ll='ls -l'
 alias ls='ls --color=auto'
+alias lsd='mylistdir'
 alias sudo='sudo '
+alias utc='date -u +"%Y-%m-%d %H:%M:%S"'
 ~~~
 
-Edit `~/.aws/branding.ini` and set `admin_phone` before you compile the
-image page. See [aws-config.md](aws-config.md#branding).
+`♫ Note`: g is a bash function to run gulp.
 
 You stop the environment by typing ctrl-d.
+
+[⬇](#Contents)
+
+# Setup Container
+
+The first time you run the container after building it you need to
+setup a few things.  You will see Warnings printed out telling what
+you need to do.
+
+~~~
+Warning 1: aws command line credentials are missing.
+Run: 'aws configure' to set them. See docs/aws-config.md for more info by
+running: glow docs/aws-config.md
+
+Warning 3: The notification VAPID keys are missing. Save them to ~/.aws/vapid.
+See docs/aws-config.md for more info by running: glow docs/aws-config.md
+
+Warning 4: The branding.ini file is missing admin_phone. Edit ~/.aws/branding.ini.
+See docs/aws-config.md for more info by running: glow docs/aws-config.md
+~~~
 
 [⬇](#Contents)
 
@@ -81,7 +102,7 @@ You build the app in the docker container with the gulp app by typing
 “g all”.
 
 Changed files go the dist folder.  The process builds everything but
-only copies a file when the new bytes are different then the existing
+only copies a file when the new bytes are different then the previous
 bytes.  The build process is fast enough for this to work well and no
 complex dependencies need to be maintained.
 
@@ -129,30 +150,27 @@ Type g to see all the tasks:
 ~~~
 (debian)~/collections $ g
 
-Tasks:
-* ts -- Compile and minimize ts files to dist/js.
-    i -- Compile image.ts
-    t -- Compile thumbnails.ts
-    x -- Compile index.ts
-    sw -- Compile sw.ts
-* pages -- Create all the pages from templates.
+* ts: Compile and optionally minimize ts files to dist/js.
+
+        i -- Compile image.ts
+        t -- Compile thumbnails.ts
+        x -- Compile index.ts
+       sw -- Compile sw.ts
+
+* pages: Create all the pages from templates.
+
     index -- Create the main index page.
-    thumbnails1 -- Create the thumbnails page for collection 1.
-    thumbnails2 -- Create the thumbnails page for collection 2.
-    image1 -- Create the image page for collection 1.
-    image2 -- Create the image page for collection 2.
-* vpages -- Validate all the html files.
-    vindex -- Validate index html
-    vthumbnails1 -- Validate thumbnails html for collection 1.
-    vthumbnails2 -- Validate thumbnails html for collection 2.
-    vimage1 -- Validate image html for collection 1.
-    vimage2 -- Validate image html for collection 2.
-* css -- Minimize the collection.css file.
-* syncronize -- Syncronize the template's replace blocks with header.tea content.
-* watch -- (alias gw) Watch file changes and call the appropriate task. You can
-    run it in the background with alias gw.
-* readme -- Show the readme file with glow.
-* all -- Compile everything in parallel, tasks ts, pages and css.
+    ready -- Create the images and thumbnails pages for all collections.
+      css -- Minimize the collection.css file.
+    tsync -- Update the template's replace blocks in sync with the header.tea content.
+
+* vpages: Validate all the html files.
+
+   vindex -- Validate index html
+   vready -- Validate images and thumbnails pages for all collections.
+             g vready 58 validates one collection.
+
+* all: Compile most everything in parallel: ts, pages (not tsync, vpages).
 ~~~
 
 [⬇](#Contents)
@@ -166,74 +184,12 @@ compiled resources are put here.
 The collection image files are not checked in. They are managed
 outside this project. The collection cjson files are checked in.
 
-~~~
-(debian)~/collections $ tree dist
-
-dist
-|-- collections.css
-|-- collections.webmanifest
-|-- favicon.ico
-|-- icons
-|   |-- 6-dots-rotate.svg
-|   |-- blank.svg
-|   |-- photo.svg
-|   |-- download.svg
-|   |-- icon-128.png
-...
-|   |-- index.svg
-|   |-- refresh.svg
-|   |-- thumbnails.svg
-|   |-- trash-can.svg
-|   |-- user.svg
-|   `-- xclose.svg
-|-- images
-|   |-- c1
-|   |   |-- c1-1-p.jpg
-|   |   |-- c1-1-t.jpg
-|   |   |-- c1-2-p.jpg
-|   |   |-- c1-2-t.jpg
-|   |   |-- c1-3-p.jpg
-|   |   |-- c1-3-t.jpg
-...
-|   |   |-- c1.json
-|   |   |-- image-1.html
-|   |   `-- thumbnails-1.html
-|   |-- c2
-|   |   |-- c2-1-p.jpg
-|   |   |-- c2-1-t.jpg
-|   |   |-- c2-2-p.jpg
-|   |   |-- c2-2-t.jpg
-|   |   |-- c2-3-p.jpg
-|   |   |-- c2-3-t.jpg
-...
-|   |   |-- c2.json
-|   |   |-- image-2.html
-|   |   `-- thumbnails-2.html
-|   `-- c3
-|       |-- c3-1-p.jpg
-|       |-- c3-1-t.jpg
-|       |-- c3-2-p.jpg
-|       |-- c3-2-t.jpg
-|       |-- c3-3-p.jpg
-|       |-- c3-3-t.jpg
-...
-|       `-- c3.json
-|-- index.html
-|-- js
-|   |-- image.js
-|   |-- index.js
-|   `-- thumbnails.js
-|-- sw.js
-`-- tin
-    |-- c1-3-t.jpg
-    `-- c2-1-t.jpg
-~~~
-
 <style>body { max-width: 40em}</style>
 
 # Contents
 
 * [Build Setup](#build-setup) -- how to download the code and create the docker build container.
 * [Build All](#build-all) -- how to build all.
-* [Build Tasks](#build-tasks) -- how to build individual files: html, js, css, readme, etc.
+* [Setup Container](#setup-container) -- how to configure the container the first time.
+* [Build Tasks](#build-tasks) -- how to build individual files and other tasks.
 * [Build Folder](#build-folder) -- talks about the build folder.
