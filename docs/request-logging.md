@@ -22,8 +22,10 @@ We configured CloudFront to copy its edge logs to the
 `logs/cloudfront` in S3. From there you can copy them locally for
 analysis.
 
-Lambda logs can also be copied, though the process is manual. The
-destination is `logs/lambda`.
+Lambda@Edge logs cannot go to S3 automatically the way CloudFront
+logs do. They are written to CloudWatch in the region nearest the
+edge POP. Copy them with `scripts/copy-lambda-logs` into
+`logs/lambda`.
 
 The S3 and local folder structure:
 
@@ -41,25 +43,27 @@ The Cloudfront log copy to S3 is configured in the console. Look for
 "Standard log destinations" and log to your bucket e.g. `sflennikco`
 using the Partitioning `/logs/cloudfront`.
 
-For Lambda you use the console to manually copy them to S3. You find
-the logs in the nearest region to the edge location. You determine the
-edge location from the cloud-logs command. The location field starts
-with an airport code. For example for the location SEA900-P1 you would
-look in the us-west-2 region.
+Lambda@Edge has no CloudFront-style "standard logs to S3" setting.
+A subscription in every region would be needed, and new POPs create
+new log groups later, so that is not worth it.
 
-From the region you can manually copy them to S3 using the CloudWatch
-console.  Use "logs/lambda" as the prefix.  If you mistakenly use a
-leading slash, it will go to the wrong location (to a S3 folder called
-"/"). Here are the steps:
+Copy logs for the POP in the request log:
 
-* open the CloudWatch (not Cloudfront) Console the for the region closest to the edge.
-* select the region closes to the request.  select us-west-2 for edge location SEA900-P1.
-* click Logs → "Logs groups" in the left panel
-* select the log group, e.g. /aws/lambda/us-east-1.validateImageRequest
-* click Actions → "Export Data to Amazon S3"
-* configure the time range if necessary
-* select the bucket name `sflennikco` and enter `logs/lambda` for "S3 bucket prefix" -- notice no leading slash
-* click Export
+~~~
+# from docker container
+scripts/copy-lambda-logs SEA900-P13
+scripts/sync-logs
+~~~
+
+The first three letters of the edge location are an airport code.
+SEA is us-west-2. The script reads
+`/aws/lambda/us-east-1.validateImageRequest` in that region (or the
+nearest region that has the log group) and writes gzipped files to
+`s3://<bucket>/logs/lambda/<day>-SEA900-P13.log.gz`. Lambda logs are
+not tagged by POP, so the file is that region's events for the last
+two UTC days by default (`--days`). If CloudWatch returns
+AccessDenied, attach **CloudWatchLogsReadOnlyAccess** to the docker
+IAM user.
 
 # Sync Logs
 
@@ -301,8 +305,8 @@ with its invalidate UI.  To remove the first collection’s images use
 * record the download id
 * repeat for user 2
 * wait 5 minutes
-* manually copy the lambda logs to S3
-* download the logs locally with: "scripts/sync"
+* copy the lambda logs: `scripts/copy-lambda-logs SEA900-P1`
+* download the logs locally with: `scripts/sync-logs`
 * view the cloudfront logs for user 1 misses and user 2 hits: "scripts/view-requests"
 * view the lambda logs for the both users:  "scripts/view-download ...".  The second user should by mostly "warm start".
 

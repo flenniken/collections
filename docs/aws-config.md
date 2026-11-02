@@ -61,6 +61,7 @@ CloudFrontFullAccess
 AmazonDynamoDBFullAccess
 AmazonAPIGatewayAdministrator
 AWSLambda_FullAccess
+CloudWatchLogsReadOnlyAccess
 ~~~
 
 * Enter a tag for the user with key "collections" and value:

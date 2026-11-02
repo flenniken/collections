@@ -1,0 +1,413 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+"""
+Copy Lambda@Edge CloudWatch logs for an edge location to S3.
+
+Lambda@Edge writes logs to CloudWatch in the region nearest the POP,
+not to S3. CloudFront standard logs can go straight to S3; Lambda
+cannot. This script reads the CloudWatch log group and writes gzipped
+files to s3://<bucket>/logs/lambda/ so scripts/sync-logs can pull them.
+
+Usage:
+  scripts/copy-lambda-logs SEA900-P13
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+import argparse
+import gzip
+import re
+import signal
+import sys
+import textwrap
+import traceback
+import unittest
+from datetime import datetime, timedelta, timezone
+
+import boto3
+from botocore.exceptions import ClientError
+from boto_client import getBotoClient, getAwsSettings
+
+LOG_GROUP = "/aws/lambda/us-east-1.validateImageRequest"
+S3_PREFIX = "logs/lambda"
+EDGE_RE = re.compile(r"^([A-Za-z]{3})[A-Za-z0-9-]*$")
+DEFAULT_DAYS = 2
+
+# Lambda@Edge runs in these regional edge cache regions. Logs for a
+# POP land in the nearest of these, not at the airport itself.
+REC_REGIONS = (
+  "us-east-1", "us-east-2", "us-west-1", "us-west-2",
+  "eu-west-1", "eu-west-2", "eu-central-1",
+  "ap-south-1", "ap-northeast-1", "ap-northeast-2",
+  "ap-southeast-1", "ap-southeast-2", "sa-east-1",
+)
+
+# First three letters of x-edge-location (IATA) to a regional cache.
+# Unknown codes still work: the script looks through REC_REGIONS.
+AIRPORT_REGION = {
+  "ANC": "us-west-2", "ATL": "us-east-1", "AUS": "us-east-1",
+  "BNA": "us-east-1", "BOS": "us-east-1", "BWI": "us-east-1",
+  "CLE": "us-east-2", "CLT": "us-east-1", "CMH": "us-east-2",
+  "DEN": "us-west-2", "DFW": "us-east-2", "DTW": "us-east-2",
+  "EWR": "us-east-1", "FLL": "us-east-1", "HNL": "us-west-2",
+  "IAD": "us-east-1", "IAH": "us-east-1", "IND": "us-east-2",
+  "JAX": "us-east-1", "JFK": "us-east-1", "LAS": "us-west-1",
+  "LAX": "us-west-1", "MCI": "us-east-2", "MCO": "us-east-1",
+  "MEM": "us-east-1", "MIA": "us-east-1", "MSP": "us-east-2",
+  "ORD": "us-east-2", "PDX": "us-west-2", "PHL": "us-east-1",
+  "PHX": "us-west-1", "PIT": "us-east-2", "RDU": "us-east-1",
+  "SAN": "us-west-1", "SEA": "us-west-2", "SFO": "us-west-1",
+  "SJC": "us-west-1", "SLC": "us-west-2", "STL": "us-east-2",
+  "TPA": "us-east-1", "YUL": "us-east-1", "YVR": "us-west-2",
+  "YYZ": "us-east-1",
+  "AMS": "eu-central-1", "ARN": "eu-central-1", "ATH": "eu-central-1",
+  "BCN": "eu-central-1", "BER": "eu-central-1", "BRU": "eu-central-1",
+  "CDG": "eu-west-1", "CPH": "eu-central-1", "DUB": "eu-west-1",
+  "DUS": "eu-central-1", "EDI": "eu-west-2", "FCO": "eu-central-1",
+  "FRA": "eu-central-1", "HAM": "eu-central-1", "HEL": "eu-central-1",
+  "LHR": "eu-west-2", "LIS": "eu-west-1", "MAD": "eu-central-1",
+  "MAN": "eu-west-2", "MRS": "eu-west-1", "MUC": "eu-central-1",
+  "MXP": "eu-central-1", "OSL": "eu-central-1", "PRG": "eu-central-1",
+  "VIE": "eu-central-1", "WAW": "eu-central-1", "ZRH": "eu-central-1",
+  "BOM": "ap-south-1", "DEL": "ap-south-1", "HYD": "ap-south-1",
+  "HKG": "ap-southeast-1", "ICN": "ap-northeast-2", "KIX": "ap-northeast-1",
+  "KUL": "ap-southeast-1", "MEL": "ap-southeast-2", "NRT": "ap-northeast-1",
+  "SIN": "ap-southeast-1", "SYD": "ap-southeast-2",
+  "GRU": "sa-east-1", "GIG": "sa-east-1",
+}
+
+
+class CopyLogsException(Exception):
+  """ An exception we plan for. """
+  pass
+
+
+def parseEdgeLocation(value):
+  """
+  Return (edge, airport) for a CloudFront POP code like SEA900-P13.
+  """
+  if not isinstance(value, str):
+    raise CopyLogsException("Specify an edge location, e.g. SEA900-P13.")
+  edge = value.strip().upper()
+  match = EDGE_RE.match(edge)
+  if not match:
+    raise CopyLogsException(
+      f"Invalid edge location: {value}. Use the request-log code, "
+      "e.g. SEA900-P13.")
+  return edge, match.group(1)
+
+
+def guessedRegion(airport):
+  """
+  Return the regional cache we expect for this airport code, or None.
+  """
+  return AIRPORT_REGION.get(airport)
+
+
+def s3ObjectKey(day, edge):
+  """
+  Return the S3 key under logs/lambda for one day's events.
+  """
+  return f"{S3_PREFIX}/{day}-{edge}.log.gz"
+
+
+def groupEventsByDay(events):
+  """
+  Return {UTC date: [message, ...]} from FilterLogEvents events.
+  """
+  byDay = {}
+  for event in events:
+    ts = event.get("timestamp")
+    message = event.get("message")
+    if ts is None or not isinstance(message, str):
+      continue
+    day = datetime.fromtimestamp(ts / 1000, tz=timezone.utc).strftime(
+      "%Y-%m-%d")
+    line = message if message.endswith("\n") else message + "\n"
+    byDay.setdefault(day, []).append(line)
+  return byDay
+
+
+def gzipLines(lines):
+  """
+  Return gzip bytes for the log lines.
+  """
+  return gzip.compress("".join(lines).encode("utf-8"))
+
+
+def windowMs(days, now=None):
+  """
+  Return (startMs, endMs) covering the last `days` days.
+  """
+  if days < 1:
+    raise CopyLogsException("--days must be 1 or more.")
+  if now is None:
+    now = datetime.now(timezone.utc)
+  end = now
+  start = end - timedelta(days=days)
+  return int(start.timestamp() * 1000), int(end.timestamp() * 1000)
+
+
+def logGroupExists(logs, logGroup):
+  """
+  Return true when the log group exists in this client's region.
+  """
+  try:
+    response = logs.describe_log_groups(logGroupNamePrefix=logGroup)
+  except ClientError:
+    return False
+  for group in response.get("logGroups", []):
+    if group.get("logGroupName") == logGroup:
+      return True
+  return False
+
+
+def regionCandidates(airport, regionOverride):
+  """
+  Return regions to try, guessed region first.
+  """
+  if regionOverride:
+    return [regionOverride]
+  guessed = guessedRegion(airport)
+  regions = []
+  if guessed:
+    regions.append(guessed)
+  for region in REC_REGIONS:
+    if region not in regions:
+      regions.append(region)
+  return regions
+
+
+def findLogRegion(airport, logGroup, regionOverride=None, logsForRegion=None):
+  """
+  Return the CloudWatch region that has the Lambda@Edge log group.
+  """
+  factory = logsForRegion or (lambda region: boto3.client("logs",
+    region_name=region))
+  tried = []
+  for region in regionCandidates(airport, regionOverride):
+    tried.append(region)
+    if logGroupExists(factory(region), logGroup):
+      return region
+  raise CopyLogsException(
+    f"No {logGroup} log group near {airport}. Tried: {', '.join(tried)}.")
+
+
+def fetchLogEvents(logs, logGroup, startMs, endMs):
+  """
+  Return FilterLogEvents events for the time window.
+  """
+  events = []
+  kwargs = {
+    "logGroupName": logGroup,
+    "startTime": startMs,
+    "endTime": endMs,
+  }
+  while True:
+    response = logs.filter_log_events(**kwargs)
+    events.extend(response.get("events", []))
+    token = response.get("nextToken")
+    if not token:
+      break
+    kwargs["nextToken"] = token
+  return events
+
+
+def uploadDayLogs(s3Client, bucket, day, edge, lines):
+  """
+  Gzip the day's lines and put them in S3. Return the key.
+  """
+  key = s3ObjectKey(day, edge)
+  s3Client.put_object(
+    Bucket=bucket,
+    Key=key,
+    Body=gzipLines(lines),
+    ContentType="application/gzip",
+  )
+  return key
+
+
+def copyLambdaLogs(edgeLocation, days=DEFAULT_DAYS, regionOverride=None,
+    logGroup=LOG_GROUP, logsForRegion=None, s3Client=None, bucket=None):
+  """
+  Copy CloudWatch Lambda@Edge logs for the POP to s3 logs/lambda.
+  Return the list of S3 keys written.
+  """
+  edge, airport = parseEdgeLocation(edgeLocation)
+  startMs, endMs = windowMs(days)
+  region = findLogRegion(airport, logGroup, regionOverride=regionOverride,
+    logsForRegion=logsForRegion)
+  guessed = guessedRegion(airport)
+  if guessed and region != guessed:
+    print(f"Logs are in {region}, not {guessed}.")
+  else:
+    print(f"Reading {logGroup} in {region}")
+  factory = logsForRegion or (lambda r: boto3.client("logs", region_name=r))
+  events = fetchLogEvents(factory(region), logGroup, startMs, endMs)
+  byDay = groupEventsByDay(events)
+  if not byDay:
+    print("No log events in that time range.")
+    return []
+  if s3Client is None:
+    s3Client = getBotoClient("s3")
+  if bucket is None:
+    bucket = getAwsSettings()["settings"]["bucket_name"]
+  keys = []
+  for day in sorted(byDay):
+    key = uploadDayLogs(s3Client, bucket, day, edge, byDay[day])
+    keys.append(key)
+    print(f"Wrote s3://{bucket}/{key} ({len(byDay[day])} events)")
+  return keys
+
+
+def process(args):
+  copyLambdaLogs(args.edge, days=args.days, regionOverride=args.region)
+
+
+def parseCommandLine():
+  if len(sys.argv) == 1:
+    sys.argv.append("-h")
+  else:
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ["-t", "--test"]:
+        sys.argv.pop(ix + 1)
+        return argparse.Namespace(test=True)
+
+  parser = argparse.ArgumentParser(
+    prog="copy-lambda-logs",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=textwrap.dedent(__doc__))
+  parser.add_argument("edge", nargs="?",
+    help="CloudFront edge location from the request log, e.g. SEA900-P13")
+  parser.add_argument("--days", type=int, default=DEFAULT_DAYS,
+    help="how many UTC days of logs to copy (default 2)")
+  parser.add_argument("--region",
+    help="CloudWatch region, skipping the airport-code guess")
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests")
+  args = parser.parse_args(sys.argv[1:])
+  if not args.test and not args.edge:
+    parser.error("Specify an edge location, e.g. SEA900-P13.")
+  return args
+
+
+def signalHandler(sig, frame):
+  print("\n")
+  sys.exit(1)
+
+
+def main(args):
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    process(args)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except CopyLogsException as ex:
+    print(str(ex))
+    return 1
+  except Exception:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0
+
+
+class TestModule(unittest.TestCase):
+
+  def test_parseEdgeLocation(self):
+    self.assertEqual(parseEdgeLocation("SEA900-P13"),
+      ("SEA900-P13", "SEA"))
+    self.assertEqual(parseEdgeLocation("iad89-p1"), ("IAD89-P1", "IAD"))
+    with self.assertRaises(CopyLogsException):
+      parseEdgeLocation("")
+    with self.assertRaises(CopyLogsException):
+      parseEdgeLocation("12SEA")
+
+  def test_guessedRegion(self):
+    self.assertEqual(guessedRegion("SEA"), "us-west-2")
+    self.assertEqual(guessedRegion("IAD"), "us-east-1")
+    self.assertIsNone(guessedRegion("XXX"))
+
+  def test_s3ObjectKey(self):
+    self.assertEqual(s3ObjectKey("2026-10-29", "SEA900-P13"),
+      "logs/lambda/2026-10-29-SEA900-P13.log.gz")
+
+  def test_groupEventsByDay(self):
+    start = datetime(2026, 10, 29, 23, 0, tzinfo=timezone.utc)
+    later = datetime(2026, 10, 30, 1, 0, tzinfo=timezone.utc)
+    grouped = groupEventsByDay([
+      {"timestamp": int(start.timestamp() * 1000), "message": "a"},
+      {"timestamp": int(later.timestamp() * 1000), "message": "b\n"},
+    ])
+    self.assertEqual(list(grouped["2026-10-29"]), ["a\n"])
+    self.assertEqual(list(grouped["2026-10-30"]), ["b\n"])
+
+  def test_windowMs(self):
+    now = datetime(2026, 10, 31, 12, 0, tzinfo=timezone.utc)
+    start, end = windowMs(2, now=now)
+    self.assertEqual(end, int(now.timestamp() * 1000))
+    self.assertEqual(start, int((now - timedelta(days=2)).timestamp() * 1000))
+    with self.assertRaises(CopyLogsException):
+      windowMs(0, now=now)
+
+  def test_gzipLines(self):
+    data = gzip.decompress(gzipLines(["one\n", "two\n"]))
+    self.assertEqual(data, b"one\ntwo\n")
+
+  def test_findLogRegion(self):
+    groups = {"us-west-2": [LOG_GROUP]}
+    def fakeLogs(region):
+      class Client:
+        def describe_log_groups(self, logGroupNamePrefix):
+          names = groups.get(region, [])
+          return {"logGroups": [{"logGroupName": n} for n in names
+            if n.startswith(logGroupNamePrefix)]}
+      return Client()
+    self.assertEqual(findLogRegion("SEA", LOG_GROUP, logsForRegion=fakeLogs),
+      "us-west-2")
+    groups = {"eu-west-2": [LOG_GROUP]}
+    self.assertEqual(findLogRegion("LHR", LOG_GROUP, logsForRegion=fakeLogs),
+      "eu-west-2")
+    groups = {}
+    with self.assertRaises(CopyLogsException):
+      findLogRegion("XXX", LOG_GROUP, logsForRegion=fakeLogs)
+
+  def test_copyLambdaLogs_uploads(self):
+    now = datetime.now(timezone.utc)
+    ts = int(now.timestamp() * 1000)
+    day = now.strftime("%Y-%m-%d")
+    uploaded = {}
+    class S3:
+      def put_object(self, Bucket, Key, Body, ContentType):
+        uploaded["bucket"] = Bucket
+        uploaded["key"] = Key
+        uploaded["body"] = Body
+        uploaded["type"] = ContentType
+    def fakeLogs(region):
+      class Client:
+        def describe_log_groups(self, logGroupNamePrefix):
+          return {"logGroups": [{"logGroupName": LOG_GROUP}]}
+        def filter_log_events(self, **kwargs):
+          return {"events": [
+            {"timestamp": ts, "message": "hello"},
+          ]}
+      return Client()
+    keys = copyLambdaLogs("SEA900-P13", days=1, logsForRegion=fakeLogs,
+      s3Client=S3(), bucket="sflennikco")
+    self.assertEqual(keys, [f"logs/lambda/{day}-SEA900-P13.log.gz"])
+    self.assertEqual(uploaded["bucket"], "sflennikco")
+    self.assertEqual(uploaded["type"], "application/gzip")
+    self.assertEqual(gzip.decompress(uploaded["body"]), b"hello\n")
+
+
+if __name__ == "__main__":
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)

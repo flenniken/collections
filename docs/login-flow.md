@@ -229,12 +229,11 @@ No lambda log files found with that day.
 
 **Lambda log**
 
-Since the edge location was SEA900-P1 the region is probably
-us-west2. Go to the AWS lambda console for Oregon region (us-west2)
-and copy the logs to s3. (See the full procedure in the logging
-doc). Then sync the logs locally and run the view-download command:
+Since the edge location was SEA900-P1, copy that POP's Lambda logs
+to S3, then sync locally and run view-download again:
 
 ~~~
+scripts/copy-lambda-logs SEA900-P1
 scripts/sync-logs
 scripts/view-download 2025-02-25 O4YGRbu1
 
