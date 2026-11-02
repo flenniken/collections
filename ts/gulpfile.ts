@@ -9,7 +9,6 @@ import uglify from "gulp-uglify";
 import fancyLog from "fancy-log";
 import child_process from "child_process";
 import cleanCSS from "gulp-clean-css";
-import using from 'gulp-using';
 import gulpif from 'gulp-if';
 import ts from 'gulp-typescript';
 import fs from "fs";
@@ -55,8 +54,33 @@ gulp.task("default", function(cb){
   cb()
 });
 
+// Compact g all logging. Collection html lines print only when the
+// dist file changed. Index, css, and js lines always print. Gulp
+// --silent hides Starting/Finished timestamps.
+let quietAll = false
+let copiedToDist = 0
+let buildStartedMs = 0
+
+function logCompile(label: string, filePath: string, same: boolean,
+    always: boolean) {
+  // Record whether dist was updated and print a compile line.
+  if (!same)
+    copiedToDist++
+  if (!always && same)
+    return
+  console.log(`${label} -- ${filePath} ${same ? "same" : "updated"}`)
+}
+
+function finishQuietAll() {
+  const seconds = ((Date.now() - buildStartedMs) / 1000).toFixed(2)
+  if (copiedToDist === 0)
+    console.log(`${seconds} no changes.`)
+  else
+    console.log(`${seconds} changed files copied to dist folder.`)
+}
+
 function ts2js(srcList: string[], destFile: string, destDir: string,
-  tsOptions: ts.Settings | null) {
+  tsOptions: ts.Settings | null, label: string, filePath: string) {
   // Compile a list of typescript files to one javascript file and
   // optionally minimize it.
 
@@ -75,16 +99,14 @@ function ts2js(srcList: string[], destFile: string, destDir: string,
   const destPath = `${destDir}/${destFile}`
 
   return gulp.src(srcList)
-    .pipe(using({prefix:'File size:', filesize:true, color: "green"}))
     .pipe(ts(tsOptions))
-    .pipe(using({prefix:'Compiled', filesize:true, color: "blue"}))
     .pipe(gulpif(minimize, uglify()))
-    .pipe(gulpif(minimize, using({prefix:'Minimized', filesize:true, color: "blue"})))
     .pipe(gulp.dest("tmp"))
     .pipe(gulpif(
-      // Only copy to dest if files are different
-      file => {
-        return !compareContentsLog(tmpPath, destPath);
+      () => {
+        const same = compareContents(tmpPath, destPath)
+        logCompile(label, filePath, same, true)
+        return !same
       },
       gulp.dest(destDir)
     ));
@@ -175,18 +197,21 @@ export function writeBrandingTs(destPath = "tmp/branding.ts",
 // image page
 gulp.task('i', function () {
   const brandingPath = writeBrandingTs()
-  return ts2js(image_ts, 'image.js', "dist/js", null)
+  return ts2js(image_ts, 'image.js', "dist/js", null,
+    "Compiled image page ts", "js/image.js")
     .on("end", () => fs.rmSync(brandingPath, { force: true }))
 });
 
 // thumbnails page
 gulp.task('t', function () {
-  return ts2js(thumbnails_ts, 'thumbnails.js', "dist/js", null)
+  return ts2js(thumbnails_ts, 'thumbnails.js', "dist/js", null,
+    "Compiled thumbnails page ts", "js/thumbnails.js")
 });
 
 // index page
 gulp.task('x', function () {
-  return ts2js(index_ts, 'index.js', "dist/js", null)
+  return ts2js(index_ts, 'index.js', "dist/js", null,
+    "Compiled index page ts", "index.js")
 });
 
 gulp.task('sw', function () {
@@ -200,7 +225,8 @@ gulp.task('sw', function () {
   }
   // Store sw.js in the root so it has control of all files in the
   // root and subfolders below.
-  return ts2js(sw_ts, 'sw.js', "dist", options)
+  return ts2js(sw_ts, 'sw.js', "dist", options,
+    "Compiled service worker ts", "sw.js")
 });
 
 gulp.task("ts", gulp.parallel(["i", "t", "x", "sw"]))
@@ -282,27 +308,43 @@ gulp.task("vready", function (cb) {
 
 gulp.task("vpages", gulp.parallel("vindex", "vready"));
 
+interface CompileLog {
+  label: string
+  filePath: string
+  always: boolean
+}
+
 function runStaticteaTask(parameters: string[], tmpFilename: string,
-  distFilename: string, cb: TaskCallback) {
+  distFilename: string, cb: TaskCallback, compileLog: CompileLog) {
   // Run a statictea task and copy the result to the dist folder when it
   // changes.
 
-  const child = child_process.spawn("statictea", parameters, {stdio: "inherit"});
-
-  child.on('exit', (code) => {
-    // Error out when statictea returns a non-zero return code.
-    if (code !== 0)
-      throw new Error("statictea template error")
-
-    // Copy the template result to the dist folder when it is
-    // different than before.
-    if (!compareContentsLog(tmpFilename, distFilename)) {
-      fs.copyFile(tmpFilename, distFilename, (err) => {
-        if (err)
-          throw err;
-      });
+  const child = child_process.spawn("statictea", parameters, {
+    stdio: ["ignore", "ignore", "pipe"],
+  })
+  let errText = ""
+  if (child.stderr)
+    child.stderr.on("data", (chunk) => { errText += chunk })
+  let finished = false
+  const finish = (err?: Error) => {
+    if (finished)
+      return
+    finished = true
+    cb(err)
+  }
+  child.on("error", (err) => finish(err))
+  child.on("exit", (code) => {
+    if (code !== 0) {
+      if (errText)
+        console.error(errText)
+      finish(new Error("statictea template error"))
+      return
     }
-    cb()
+    const same = compareContents(tmpFilename, distFilename)
+    logCompile(compileLog.label, compileLog.filePath, same, compileLog.always)
+    if (!same)
+      fs.copyFileSync(tmpFilename, distFilename)
+    finish()
   })
 }
 
@@ -318,7 +360,6 @@ statictea \
   -s env/aws-settings.json
   -r tmp/index.html
 */
-  fancyLog("Compiling index template.")
   generateCollectionsJsonOnce()
   const parameters = [
     "-t", "pages/index-tmpl.html",
@@ -328,14 +369,17 @@ statictea \
     "-s", "env/aws-settings.json",
     "-r", "tmp/index.html",
   ]
-  runStaticteaTask(parameters, "tmp/index.html", "dist/index.html", cb)
+  runStaticteaTask(parameters, "tmp/index.html", "dist/index.html", cb, {
+    label: "Compiled index html",
+    filePath: "dist/index.html",
+    always: true,
+  })
 })
 
 gulp.task("ready", function (cb) {
   // Create the thumbnails and image pages for all collections.
   const collections = getReadyCollections()
   const numCollections = collections.length
-  fancyLog(`${numCollections} collections`)
   if (numCollections == 0)
     return cb()
 
@@ -343,12 +387,20 @@ gulp.task("ready", function (cb) {
   if (!fs.existsSync(tmpDir))
     fs.mkdirSync(tmpDir, { recursive: true })
 
+  let pending = numCollections * 2
+  let firstError: Error | undefined
+  const done: TaskCallback = (err) => {
+    if (err && !firstError)
+      firstError = err instanceof Error ? err : new Error(String(err))
+    pending--
+    if (pending <= 0)
+      cb(firstError)
+  }
   for (let ix = 0; ix < numCollections; ix++) {
     const cNum = collections[ix].cNum
-    thumbnailsPage(cNum, ()=>{})
-    imagePage(cNum, ()=>{})
+    thumbnailsPage(cNum, done)
+    imagePage(cNum, done)
   }
-  cb()
 })
 
 function thumbnailsPage(cNum: number, cb: TaskCallback) {
@@ -362,7 +414,6 @@ statictea \
   -r dist/images/cx/thumbnails-x.html
 */
 
-  fancyLog(`Building collection ${cNum} thumbnails page.`)
   const tmpFilename = `tmp/html/thumbnails-${cNum}.html`
   const distFilename = `dist/images/c${cNum}/thumbnails-${cNum}.html`
   const parameters = [
@@ -371,7 +422,11 @@ statictea \
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]
-  runStaticteaTask(parameters, tmpFilename, distFilename, cb)
+  runStaticteaTask(parameters, tmpFilename, distFilename, cb, {
+    label: "Compiled thumbnail html",
+    filePath: distFilename,
+    always: false,
+  })
 }
 
 function imagePage(cNum: number, cb: TaskCallback) {
@@ -385,7 +440,6 @@ statictea \
   -r dist/images/cx/image-x.html
 */
 
-  fancyLog(`Building collection ${cNum} images page.`)
   const tmpFilename = `tmp/html/image-${cNum}.html`
   const distFilename = `dist/images/c${cNum}/image-${cNum}.html`
   const parameters = [
@@ -394,7 +448,11 @@ statictea \
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]
-  runStaticteaTask(parameters, tmpFilename, distFilename, cb)
+  runStaticteaTask(parameters, tmpFilename, distFilename, cb, {
+    label: "Compiled image html",
+    filePath: distFilename,
+    always: false,
+  })
 }
 
 gulp.task("tsync", function (cb) {
@@ -416,12 +474,18 @@ statictea -u -o pages/header.tea -t pages/thumbnails-tmpl.html
   cb()
 })
 
-gulp.task("css", function (cb) {
+gulp.task("css", function () {
   return gulp.src(["pages/collections.css"])
-    .pipe(using({prefix:'Compiling', filesize:true, color: "green"}))
     .pipe(cleanCSS({compatibility: "ie8"}))
-    .pipe(using({prefix:'Copy', path:'relative', filesize: true}))
-    .pipe(gulp.dest("dist/"));
+    .pipe(gulp.dest("tmp"))
+    .pipe(gulpif(
+      () => {
+        const same = compareContents("tmp/collections.css", "dist/collections.css")
+        logCompile("Compiled css", "pages/collections.css", same, true)
+        return !same
+      },
+      gulp.dest("dist/")
+    ))
 })
 
 gulp.task("pages", gulp.parallel("index", "ready", "css"));
@@ -447,8 +511,20 @@ gulp.task("csjson", function (cb) {
   return cb()
 })
 
-gulp.task("all", gulp.series(["missing-folders", gulp.parallel(
-  ["ts", "pages", "css"])]));
+gulp.task("all", gulp.series(
+  function quietStart(cb) {
+    quietAll = true
+    copiedToDist = 0
+    buildStartedMs = Date.now()
+    cb()
+  },
+  "missing-folders",
+  gulp.parallel("ts", "pages"),
+  function quietFinish(cb) {
+    finishQuietAll()
+    cb()
+  }
+));
 
 
 let builtOnce = false
@@ -952,14 +1028,18 @@ function syncIndexThumbnail(cNum: number, thumbnailBasename: string) {
   if (!fs.existsSync(destFilename)) {
     const srcFilename = path.join(`dist/images/c${cNum}`, thumbnailBasename)
     fs.copyFileSync(srcFilename, destFilename)
-    fancyLog(`Copied ${thumbnailBasename} to tin folder.`)
+    copiedToDist++
+    if (!quietAll)
+      fancyLog(`Copied ${thumbnailBasename} to tin folder.`)
   }
   const tinFolder = path.join("dist/tin")
   fs.readdirSync(tinFolder).forEach((file) => {
     if (file.startsWith(`c${cNum}-`) && file != thumbnailBasename) {
       const fullPath = path.join(tinFolder, file)
       fs.unlinkSync(fullPath)
-      fancyLog(`Removed old ${fullPath} from the tin folder.`)
+      copiedToDist++
+      if (!quietAll)
+        fancyLog(`Removed old ${fullPath} from the tin folder.`)
     }
   })
 }
@@ -1063,16 +1143,4 @@ function compareContents(sourceFilename: string, destFilename: string) {
   return sourceContent.equals(destContent)
 }
 
-function compareContentsLog(srcPath: string, destPath: string): boolean {
-  // Compare the contents of two files and log the result. Return true
-  // when the files are the same, false when they are different.
-
-  const same = compareContents(srcPath, destPath);
-  if (same) {
-    fancyLog(`${destPath} is unchanged.`);
-  } else {
-      fancyLog(`---> Copy to ${destPath}`);
-  }
-  return same;
-}
 

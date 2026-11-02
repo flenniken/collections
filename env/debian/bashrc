@@ -22,6 +22,10 @@ function g {
     gulp --cwd . --gulpfile tmp/gulpfile.js vready --cnum="$2"
     return
   fi
+  if [[ "$1" == "all" ]]; then
+    NODE_NO_WARNINGS=1 gulp --cwd . --gulpfile tmp/gulpfile.js --silent all
+    return
+  fi
   gulp --cwd . --gulpfile tmp/gulpfile.js "$@"
 }
 
