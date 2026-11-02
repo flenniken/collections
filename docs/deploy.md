@@ -14,7 +14,15 @@ in S3 for new content.
 
 You can issue CloudFront invalidation requests every time your site is
 updated so the new files are removed from the cache.  The deploy
-script does this.
+script does this. AWS gives 1,000 free invalidation paths per month;
+each path, including a wildcard, counts as one. Deploy copies every
+changed file to S3, then invalidates a small set of wildcards:
+`/images/cN/*.html` for collections whose HTML changed, `/js/*`,
+`/tin/*`, `/icons/*`, and exact paths for root files such as
+`index.html`. Collection json, jpg, and mp4 files are not invalidated.
+The site does not fetch the json files; photos are new or rarely
+recropped. When more than 15 collection HTML folders change in one
+sync, deploy invalidates `/*` instead.
 
 Index thumbnails in `tin/`, icons, `favicon.ico`, and
 `collections.webmanifest` get `Cache-Control: max-age=2592000` on S3
@@ -66,6 +74,6 @@ scripts/deploy -s
 
 # Contents
 
-* [Cache Behavior](#cache-behavior) -- how the cloudfront cache works and how tin and icon files get max-age.
+* [Cache Behavior](#cache-behavior) -- how the cloudfront cache works, how tin and icon files get max-age, and how invalidation paths are collapsed.
 * [List Modified](#list-modified) -- how to list the files that need to be deployed.
 * [Sync](#sync) -- how to deploy changed files.

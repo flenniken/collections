@@ -28,7 +28,17 @@ import hashlib
 import mimetypes
 import tempfile
 import shutil
+import re
 from boto3.s3.transfer import TransferConfig
+
+# CloudFront counts each invalidation path, including wildcards, against
+# 1,000 free paths per month. Collection photos stay cached; skip them.
+COLLECTION_HTML_RE = re.compile(r"^images/c(\d+)/[^/]+\.html$")
+COLLECTION_SKIP_RE = re.compile(
+  r"^images/c\d+/[^/]+\.(json|jpg|mp4)$")
+# More than this many collection HTML folders means a site-wide HTML
+# rebuild. /* is one path then, at the cost of a cold photo cache.
+WIDE_HTML_INVALIDATION = 15
 
 class DeployException(Exception):
   """ An exception we plan for. """
@@ -188,8 +198,9 @@ def syncTinCacheControl(s3Client, bucket_name, cloudfrontClient, distribution_id
     return
 
   copyFilesToS3(s3Client, bucket_name, filenames)
+  paths = invalidationPaths(filenames)
   invalidation_id = invalidateCloudFrontCache(cloudfrontClient, distribution_id,
-    filenames)
+    paths)
   if invalidation_id:
     waitForDeployed(cloudfrontClient, distribution_id, invalidation_id)
 
@@ -206,12 +217,65 @@ def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   # Copy the modified files to S3.
   copyFilesToS3(s3Client, bucket_name, modifiedFiles)
 
-  # Invalidate the modified files in the CloudFront cache.
-  invalidation_id = invalidateCloudFrontCache(cloudfrontClient, distribution_id, modifiedFiles)
+  paths = invalidationPaths(modifiedFiles)
+  if not paths:
+    print("No CloudFront invalidation needed.")
+    return
 
-  # Wait for the CloudFront invalidation to complete.
+  invalidation_id = invalidateCloudFrontCache(cloudfrontClient, distribution_id,
+    paths)
   if invalidation_id:
     waitForDeployed(cloudfrontClient, distribution_id, invalidation_id)
+
+def skipCloudFrontInvalidation(filename):
+  """
+  Return true when the file is copied to S3 but should not be
+  invalidated. Collection json is a backup; the site does not fetch
+  it. New and rarely recropped jpg/mp4 files are left in cache.
+  """
+  key = filename.replace("\\", "/")
+  return COLLECTION_SKIP_RE.match(key) is not None
+
+def invalidationPaths(modifiedFiles):
+  """
+  Collapse modified dist paths into a few CloudFront wildcard paths.
+  Each returned path counts as one invalidation. Collection json and
+  photos are omitted. When many collection HTML folders change, use
+  /* instead of one /images/cN/*.html per folder.
+  """
+  htmlCollections = set()
+  js = icons = tin = False
+  exact = set()
+  for filename in modifiedFiles:
+    key = filename.replace("\\", "/")
+    if skipCloudFrontInvalidation(key):
+      continue
+    match = COLLECTION_HTML_RE.match(key)
+    if match:
+      htmlCollections.add(int(match.group(1)))
+      continue
+    if key.startswith("js/"):
+      js = True
+      continue
+    if key.startswith("icons/"):
+      icons = True
+      continue
+    if key.startswith("tin/"):
+      tin = True
+      continue
+    exact.add("/" + key)
+
+  if len(htmlCollections) > WIDE_HTML_INVALIDATION:
+    return ["/*"]
+  paths = [f"/images/c{cNum}/*.html" for cNum in sorted(htmlCollections)]
+  if js:
+    paths.append("/js/*")
+  if icons:
+    paths.append("/icons/*")
+  if tin:
+    paths.append("/tin/*")
+  paths.extend(sorted(exact))
+  return paths
 
 def invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths):
   """
@@ -220,6 +284,9 @@ def invalidateCloudFrontCache(cloudfrontClient, distribution_id, paths):
   """
   if not paths:
     return None
+
+  for path in paths:
+    print(f"Invalidate {path}")
 
   # Ensure all paths start with a forward slash
   normalized_paths = [f"/{path}" if not path.startswith("/") else path for path in paths]
@@ -340,14 +407,13 @@ def getFileHashes(path):
   Get the md5 hashes of the files in the given folder.
   """
   fileHashes = {}
-  for root, dirs, files in os.walk('dist'):
+  for root, dirs, files in os.walk(path):
     for filename in files:
       filepath = os.path.join(root, filename)
       if not os.path.isfile(filepath):
         continue
       md5_hash = md5File(filepath)
-      # Store the relative path to the file in the dist folder.
-      relative_path = os.path.relpath(filepath, 'dist')
+      relative_path = os.path.relpath(filepath, path)
       fileHashes[relative_path] = md5_hash
   return fileHashes
 
@@ -495,6 +561,58 @@ class TestModule(unittest.TestCase):
     with self.assertRaises(FileNotFoundError):
       openForHash("/no/such/file", retries=0, delay=0)
 
+  def test_invalidationPaths(self):
+    self.assertEqual(invalidationPaths([]), [])
+    self.assertEqual(invalidationPaths([
+      "images/c59/c59.json",
+      "images/c59/c59-1-p.jpg",
+      "images/c59/c59-1-t.jpg",
+      "images/c59/c59-1-v.mp4",
+    ]), [])
+    self.assertEqual(invalidationPaths([
+      "images/c59/image-59.html",
+      "images/c59/thumbnails-59.html",
+      "images/c59/c59.json",
+      "images/c59/c59-4-p.jpg",
+      "index.html",
+      "js/index.js",
+      "js/image.js",
+      "collections.css",
+      "tin/c59-4-t.jpg",
+    ]), [
+      "/images/c59/*.html",
+      "/js/*",
+      "/tin/*",
+      "/collections.css",
+      "/index.html",
+    ])
+    self.assertEqual(invalidationPaths([
+      "images/c12/image-12.html",
+      "images/c59/thumbnails-59.html",
+      "sw.js",
+    ]), [
+      "/images/c12/*.html",
+      "/images/c59/*.html",
+      "/sw.js",
+    ])
+    self.assertEqual(invalidationPaths([
+      "icons/photo.svg",
+      "favicon.ico",
+      "collections.webmanifest",
+      "tin/c1-1-t.jpg",
+    ]), [
+      "/icons/*",
+      "/tin/*",
+      "/collections.webmanifest",
+      "/favicon.ico",
+    ])
+    manyHtml = [f"images/c{n}/image-{n}.html" for n in range(1, 17)]
+    self.assertEqual(invalidationPaths(manyHtml + ["index.html"]), ["/*"])
+    self.assertTrue(skipCloudFrontInvalidation("images/c4/c4.json"))
+    self.assertTrue(skipCloudFrontInvalidation("images/c4/c4-1-p.jpg"))
+    self.assertFalse(skipCloudFrontInvalidation("images/c4/image-4.html"))
+    self.assertFalse(skipCloudFrontInvalidation("index.html"))
+
   def test_s3UploadExtraArgs(self):
     self.assertEqual(s3UploadExtraArgs("tin/c1-1-t.jpg", "image/jpeg"), {
       "ContentType": "image/jpeg",
@@ -600,7 +718,7 @@ class TestModule(unittest.TestCase):
       self.assertTrue(info["Size"] >= 0)
 
   def test_getFileHashes(self):
-    fileHashes = getFileHashes('dist')
+    fileHashes = getFileHashes("dist/js")
     # print("")
     # for filename, md5 in fileHashes.items():
     #   print(f"{md5}: {filename}")
