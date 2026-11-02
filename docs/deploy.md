@@ -19,10 +19,12 @@ each path, including a wildcard, counts as one. Deploy copies every
 changed file to S3, then invalidates a small set of wildcards:
 `/images/cN/*.html` for collections whose HTML changed, `/js/*`,
 `/tin/*`, `/icons/*`, and exact paths for root files such as
-`index.html`. Collection json, jpg, and mp4 files are not invalidated.
-The site does not fetch the json files; photos are new or rarely
-recropped. When more than 15 collection HTML folders change in one
-sync, deploy invalidates `/*` instead.
+`index.html`. Collection json is not invalidated; the site does not
+fetch it. New jpg and mp4 files are not invalidated, because they are
+not in CloudFront yet. A jpg or mp4 that already existed on S3 and
+changed is invalidated so a delete-and-redownload gets the new bytes.
+When more than 15 collection HTML folders change in one sync, deploy
+invalidates `/*` instead.
 
 Index thumbnails in `tin/`, icons, `favicon.ico`, and
 `collections.webmanifest` get `Cache-Control: max-age=2592000` on S3

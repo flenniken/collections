@@ -32,10 +32,12 @@ import re
 from boto3.s3.transfer import TransferConfig
 
 # CloudFront counts each invalidation path, including wildcards, against
-# 1,000 free paths per month. Collection photos stay cached; skip them.
+# 1,000 free paths per month. Collection json is a backup and is never
+# fetched. New jpg/mp4 files are not in CloudFront yet; changed ones
+# are, so they must be invalidated or a re-download keeps the old file.
 COLLECTION_HTML_RE = re.compile(r"^images/c(\d+)/[^/]+\.html$")
-COLLECTION_SKIP_RE = re.compile(
-  r"^images/c\d+/[^/]+\.(json|jpg|mp4)$")
+COLLECTION_JSON_RE = re.compile(r"^images/c\d+/[^/]+\.json$")
+COLLECTION_IMAGE_RE = re.compile(r"^images/c\d+/[^/]+\.(jpg|mp4)$")
 # More than this many collection HTML folders means a site-wide HTML
 # rebuild. /* is one path then, at the cost of a cold photo cache.
 WIDE_HTML_INVALIDATION = 15
@@ -209,7 +211,8 @@ def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   Copy the modified website files to S3 and invalidate them in the CloudFront cache.
   Print the S3 files invalidated.
   """
-  modifiedFiles = getModifiedFiles(s3Client, bucket_name)
+  s3FileHashes = getS3FileHashes(s3Client, bucket_name)
+  modifiedFiles = getModifiedFiles(s3Client, bucket_name, s3FileHashes)
   if not modifiedFiles:
     print("No modified files found.")
     return
@@ -217,7 +220,7 @@ def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   # Copy the modified files to S3.
   copyFilesToS3(s3Client, bucket_name, modifiedFiles)
 
-  paths = invalidationPaths(modifiedFiles)
+  paths = invalidationPaths(modifiedFiles, s3FileHashes)
   if not paths:
     print("No CloudFront invalidation needed.")
     return
@@ -227,28 +230,34 @@ def syncModifiedFiles(s3Client, bucket_name, cloudfrontClient, distribution_id):
   if invalidation_id:
     waitForDeployed(cloudfrontClient, distribution_id, invalidation_id)
 
-def skipCloudFrontInvalidation(filename):
+def skipCloudFrontInvalidation(filename, existingS3Keys=None):
   """
   Return true when the file is copied to S3 but should not be
   invalidated. Collection json is a backup; the site does not fetch
-  it. New and rarely recropped jpg/mp4 files are left in cache.
+  it. New jpg/mp4 files are not in CloudFront yet. Changed jpg/mp4
+  files were cached, so they must be invalidated.
   """
   key = filename.replace("\\", "/")
-  return COLLECTION_SKIP_RE.match(key) is not None
+  if COLLECTION_JSON_RE.match(key):
+    return True
+  if COLLECTION_IMAGE_RE.match(key):
+    return existingS3Keys is None or key not in existingS3Keys
+  return False
 
-def invalidationPaths(modifiedFiles):
+def invalidationPaths(modifiedFiles, existingS3Keys=None):
   """
   Collapse modified dist paths into a few CloudFront wildcard paths.
-  Each returned path counts as one invalidation. Collection json and
-  photos are omitted. When many collection HTML folders change, use
-  /* instead of one /images/cN/*.html per folder.
+  Each returned path counts as one invalidation. Collection json is
+  omitted. New jpg/mp4 files are omitted; changed ones get exact
+  paths. When many collection HTML folders change, use /* instead of
+  one /images/cN/*.html per folder.
   """
   htmlCollections = set()
   js = icons = tin = False
   exact = set()
   for filename in modifiedFiles:
     key = filename.replace("\\", "/")
-    if skipCloudFrontInvalidation(key):
+    if skipCloudFrontInvalidation(key, existingS3Keys):
       continue
     match = COLLECTION_HTML_RE.match(key)
     if match:
@@ -432,12 +441,13 @@ def getS3FileHashes(s3Client, bucket_name):
     s3FileHashes[filename] = md5_hash
   return s3FileHashes
 
-def getModifiedFiles(s3Client, bucket_name):
+def getModifiedFiles(s3Client, bucket_name, s3FileHashes=None):
   """
   Return the modified website files in the dist folder.
   """
   modified = []
-  s3FileHashes = getS3FileHashes(s3Client, bucket_name)
+  if s3FileHashes is None:
+    s3FileHashes = getS3FileHashes(s3Client, bucket_name)
   for root, dirs, files in os.walk("dist"):
     for filename in files:
       filepath = os.path.join(root, filename)
@@ -608,8 +618,25 @@ class TestModule(unittest.TestCase):
     ])
     manyHtml = [f"images/c{n}/image-{n}.html" for n in range(1, 17)]
     self.assertEqual(invalidationPaths(manyHtml + ["index.html"]), ["/*"])
+    self.assertEqual(invalidationPaths([
+      "images/c59/c59.json",
+      "images/c59/c59-4-p.jpg",
+      "images/c59/c59-5-p.jpg",
+      "images/c59/c59-1-v.mp4",
+    ], {
+      "images/c59/c59.json",
+      "images/c59/c59-4-p.jpg",
+      "images/c59/c59-1-v.mp4",
+    }), [
+      "/images/c59/c59-1-v.mp4",
+      "/images/c59/c59-4-p.jpg",
+    ])
     self.assertTrue(skipCloudFrontInvalidation("images/c4/c4.json"))
+    self.assertTrue(skipCloudFrontInvalidation("images/c4/c4.json",
+      {"images/c4/c4.json"}))
     self.assertTrue(skipCloudFrontInvalidation("images/c4/c4-1-p.jpg"))
+    self.assertFalse(skipCloudFrontInvalidation("images/c4/c4-1-p.jpg",
+      {"images/c4/c4-1-p.jpg"}))
     self.assertFalse(skipCloudFrontInvalidation("images/c4/image-4.html"))
     self.assertFalse(skipCloudFrontInvalidation("index.html"))
 
