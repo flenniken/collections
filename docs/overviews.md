@@ -82,8 +82,8 @@ sw.js is made from:
 * all.ts
 
 Most of the icons are svg files. They are MIT licensed files from the
-internet. The png icons come from the same Ocean Side beach image at
-different resolutions.
+internet or they are created by AI.  The png icons come from the same
+Ocean Side beach image at different resolutions.
 
 Each collection consists 8, 10, 12, 14, or 16 full resolution jpg
 images at their original aspect ratio. Each image has an associated
@@ -94,8 +94,9 @@ Shown below are the first collection's image files.  Each file is
 named after its collection "c1" in this case.  The full resolution
 files end with "p.jpg".  The p stands for preview; preview of the
 original raw file. The thumbnail images end with "t.jpg". The middle
-number starts a 1 and it determines the position on the thumbnail page
-and the order on the image page.
+number starts at 1. The collection image order is determine by the
+cN.json file not the number in the files. Optional Live photos and
+movie files end with "v.mp4".
 
 The image files are not checked in.
 
@@ -123,7 +124,9 @@ images
 ~~~
 
 The thumbnails used by the index page are duplicated in the tin
-(thumbnail index) folder.
+(thumbnail index) folder. If you shared the thumbnails with the image
+folders, this would complicate the authentication. Also when you delete
+a collection you want the index thumbnail to still exist.
 
 ~~~
 tin
@@ -136,14 +139,14 @@ photos, dng, jpg, and tiff files. They are processed in photoshop or
 camera raw to produce the website images.  The website treats the
 images as immutable.
 
-The index and image json files are currently created by hand.  The
-aws-settings.json file is created by the cognito script by querying
-AWS.
+The aws-settings.json file is created by the cognito script by
+querying AWS.
 
 The production files are stored locally in the dist folder. For
 production they’re stored in the AWS S3 flennikco bucket. AWS
 Cloudfront copies them as needed to its edge location caches around
-the world.
+the world. The cN.json file is stored in the dist/image folders for a
+backup, it is not downloaded by the app.
 
 [⬇](#Contents)
 
@@ -208,13 +211,32 @@ install. The application cache is the offline fallback.
 
 The TypeScript code is divided into small, modular files that are
 concatenated during compilation to produce three main JavaScript
-files: index.js, thumbnails.js, and images.js (one for each of
-Collection's pages).
+files: index.js, thumbnails.js, and images.js.
 
 This modular approach keeps related code in focused, manageable files
 that are easier to understand and maintain. The concatenation into
 larger JavaScript files reduces HTTP requests and improves page load
 performance compared to serving many smaller files.
+
+[⬇](#Contents)
+
+# Admin
+
+Admin users can edit collections while running the app on localhost.
+They see extra icons and they can edit descriptions inline. On the
+thumbnails page they can edit the order and create new
+thumbnails. There is a admin api to support this. A python web server
+runs on localhost so the web app can post edits and save to the dist
+folder.
+
+Admin APIs:
+
+* saveCollection -- saves the cN.json file.  Used when editing the zoom-points.
+* saveDescription -- saves the description into the current cN.json file in the dist folder.
+* saveOrder -- saves the image order in the cN.json file.
+* saveThumbnail -- creates a new thumbnail from the p.jpg file using the specified crop rectangle.
+
+<style>body { max-width: 40em}</style>
 
 # Contents
 
@@ -222,3 +244,4 @@ performance compared to serving many smaller files.
 * [Login](#login) -- how the login process works.
 * [Service Worker](#service-worker) -- how the sw.ts file caches files for performance and fresh connect.
 * [Typescript Files](#typescript-files) -- how the typescript is divided into small modular files.
+* [Admin](#admin) -- admin users can edit collections.

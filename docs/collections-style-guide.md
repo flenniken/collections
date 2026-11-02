@@ -118,9 +118,9 @@ Each document ends with a table of contents (TOC) section called
 
 # Firefox
 
-You can test the documents using the Firefox browser since it has
-built in Markdown support.  From Firefox on your desktop open a
-document to proof it.
+I test the documents using Firefox browser with the Github Markdown
+Viewer extension.  From Firefox on your desktop open a document to
+proof it.
 
 You can open the [developer.md](developer.md) file as an index to the
 other docs. Clicking the links take you to the associated document.

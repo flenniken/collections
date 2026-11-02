@@ -10,23 +10,6 @@ Switch the domain from sflennik.com to flenniken.net.
 
 [⬇](#Contents)
 
-# Scroll Description
-
-Done. Each image on the image page sizes the strip to its own
-height, so a long description or map does not leave whitespace under
-the other photos.
-
-[⬇](#Contents)
-
-# One Line Index
-
-Done. The newest 10 collections keep the full card with big
-thumbnail, date, and description. Older collections use a one line
-entry with a 32 x 32 thumbnail that opens the image page, the title,
-and download or trash when needed.
-
-[⬇](#Contents)
-
 # More Button
 
 When there are a lot of collections, show buttons at the bottom of
@@ -50,201 +33,6 @@ The image json shouldn't be checked in.
 
 [⬇](#Contents)
 
-# Readable Build Messages
-
-Only print important build messages when running "g all". Currently
-most of the message are just noise. For example after changing
-image.ts and running "g all" you see
-
-~~~
-(debian)~/collections $ g all
-[20:26:32] Using gulpfile ~/collections/tmp/gulpfile.js
-[20:26:32] Starting 'all'...
-[20:26:32] Starting 'missing-folders'...
-[20:26:32] Finished 'missing-folders' after 4.54 ms
-[20:26:32] Starting 'ts'...
-[20:26:32] Starting 'pages'...
-[20:26:32] Starting 'css'...
-[20:26:32] Starting 'm-css'...
-[20:26:32] Starting 'vpages'...
-[20:26:32] Starting 'i'...
-[20:26:32] Starting 't'...
-[20:26:32] Starting 'x'...
-[20:26:32] Starting 'sw'...
-[20:26:32] Starting 'cm'...
-[20:26:32] Starting 'index'...
-[20:26:32] Starting 'maker'...
-[20:26:32] Starting 'ready'...
-[20:26:32] Starting 'modified'...
-[20:26:32] Starting 'css'...
-[20:26:32] Starting 'm-css'...
-[20:26:32] Starting 'vindex'...
-[20:26:32] Starting 'vmaker'...
-[20:26:32] Starting 'vready'...
-[20:26:32] Compiling index template.
-[20:26:32] Compiling the maker template
-[20:26:32] 6 ready collections
-[20:26:32] Building collection 6 thumbnails page.
-[20:26:32] Building collection 6 images page.
-[20:26:32] Building collection 5 thumbnails page.
-[20:26:32] Building collection 5 images page.
-[20:26:32] Building collection 4 thumbnails page.
-[20:26:32] Building collection 4 images page.
-[20:26:32] Building collection 3 thumbnails page.
-[20:26:32] Building collection 3 images page.
-[20:26:32] Building collection 2 thumbnails page.
-[20:26:32] Building collection 2 images page.
-[20:26:32] Building collection 1 thumbnails page.
-[20:26:32] Building collection 1 images page.
-[20:26:32] Finished 'ready' after 71 ms
-[20:26:32] Clean up modified collection: 6
-[20:26:32] Clean up modified collection: 5
-[20:26:32] Clean up modified collection: 4
-[20:26:32] Clean up modified collection: 3
-[20:26:32] Clean up modified collection: 2
-[20:26:32] Clean up modified collection: 1
-[20:26:32] Finished 'modified' after 91 ms
-[20:26:32] Validating html file: dist/index.html.
-[20:26:32] Finished 'vindex' after 92 ms
-[20:26:32] Validating html file: dist/maker.html.
-[20:26:32] Finished 'vmaker' after 93 ms
-[20:26:32] 6 ready collections
-[20:26:32] Validate: 6
-[20:26:32] Validating html file: dist/images/c6/image-6.html.
-[20:26:32] Validating html file: dist/images/c6/thumbnails-6.html.
-[20:26:32] Validate: 5
-[20:26:32] Validating html file: dist/images/c5/image-5.html.
-[20:26:32] Validating html file: dist/images/c5/thumbnails-5.html.
-[20:26:32] Validate: 4
-[20:26:32] Validating html file: dist/images/c4/image-4.html.
-[20:26:32] Validating html file: dist/images/c4/thumbnails-4.html.
-[20:26:32] Validate: 3
-[20:26:32] Validating html file: dist/images/c3/image-3.html.
-[20:26:32] Validating html file: dist/images/c3/thumbnails-3.html.
-[20:26:32] Validate: 2
-[20:26:32] Validating html file: dist/images/c2/image-2.html.
-[20:26:32] Validating html file: dist/images/c2/thumbnails-2.html.
-[20:26:32] Validate: 1
-[20:26:32] Validating html file: dist/images/c1/image-1.html.
-[20:26:32] Validating html file: dist/images/c1/thumbnails-1.html.
-[20:26:32] Finished 'vready' after 260 ms
-[20:26:32] Finished 'vpages' after 266 ms
-[20:26:32] dist/index.html is unchanged.
-[20:26:32] Finished 'index' after 307 ms
-[20:26:32] dist/maker.html is unchanged.
-[20:26:32] Finished 'maker' after 312 ms
-[20:26:32] dist/images/c6/thumbnails-6.html is unchanged.
-[20:26:32] dist/images/c6/image-6.html is unchanged.
-[20:26:32] dist/images/c5/thumbnails-5.html is unchanged.
-[20:26:32] dist/images/c5/image-5.html is unchanged.
-[20:26:32] dist/images/c4/thumbnails-4.html is unchanged.
-[20:26:32] dist/images/c4/image-4.html is unchanged.
-[20:26:32] dist/images/c3/thumbnails-3.html is unchanged.
-[20:26:32] dist/images/c3/image-3.html is unchanged.
-[20:26:32] dist/images/c2/thumbnails-2.html is unchanged.
-[20:26:32] dist/images/c2/image-2.html is unchanged.
-[20:26:32] dist/images/c1/thumbnails-1.html is unchanged.
-[20:26:32] dist/images/c1/image-1.html is unchanged.
-[20:26:32] Compiling ./pages/collections.css - 4.76 kB
-[20:26:32] Copy collections.css - 2.99 kB
-[20:26:32] Compiling ./pages/collections.css - 4.76 kB
-[20:26:32] Copy collections.css - 2.99 kB
-[20:26:32] Compiling ./pages/maker.css - 3.9 kB
-[20:26:32] Copy maker.css - 3.07 kB
-[20:26:32] Compiling ./pages/maker.css - 3.9 kB
-[20:26:32] Copy maker.css - 3.07 kB
-[20:26:32] File size: ./ts/all.ts - 1.01 kB
-[20:26:33] File size: ./ts/all.ts - 1.01 kB
-[20:26:33] File size: ./ts/all.ts - 1.01 kB
-[20:26:33] File size: ./ts/all.ts - 1.01 kB
-[20:26:33] File size: ./ts/all.ts - 1.01 kB
-[20:26:33] File size: ./ts/win.ts - 2.19 kB
-[20:26:33] File size: ./ts/win.ts - 2.19 kB
-[20:26:33] File size: ./ts/win.ts - 2.19 kB
-[20:26:33] File size: ./ts/sw.ts - 6.86 kB
-[20:26:33] w3c-html-validator ✔ pass dist/images/c3/thumbnails-3.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c6/thumbnails-6.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c5/thumbnails-5.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c1/image-1.html
-[20:26:33] w3c-html-validator ✔ pass dist/maker.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c2/image-2.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c4/image-4.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c4/thumbnails-4.html
-[20:26:33] w3c-html-validator ✔ pass dist/index.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c6/image-6.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c5/image-5.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c1/thumbnails-1.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c3/image-3.html
-[20:26:33] w3c-html-validator ✔ pass dist/images/c2/thumbnails-2.html
-[20:26:33] Compiled ./sw.js - 8.14 kB
-(node:5070) [DEP0180] DeprecationWarning: fs.Stats constructor is deprecated.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-[20:26:33] File size: ./ts/win.ts - 2.19 kB
-[20:26:33] File size: ./ts/cjsonDefinition.ts - 5.12 kB
-[20:26:33] File size: ./ts/cjsonDefinition.ts - 5.12 kB
-[20:26:33] File size: ./ts/thumbnails.ts - 2.9 kB
-[20:26:34] Compiled ./thumbnails.js - 6.04 kB
-[20:26:34] File size: ./ts/cjsonDefinition.ts - 5.12 kB
-[20:26:34] Finished 'css' after 1.9 s
-[20:26:34] Finished 'm-css' after 1.9 s
-[20:26:34] Finished 'pages' after 1.9 s
-[20:26:34] Finished 'css' after 1.9 s
-[20:26:34] Finished 'm-css' after 1.9 s
-[20:26:34] File size: ./ts/userInfo.ts - 926 B
-[20:26:34] File size: ./ts/userInfo.ts - 926 B
-[20:26:34] File size: ./ts/maker.ts - 26.57 kB
-[20:26:34] dist/sw.js is unchanged.
-[20:26:34] Finished 'sw' after 1.91 s
-[20:26:34] File size: ./ts/login.ts - 7.51 kB
-[20:26:34] File size: ./ts/test-maker.ts - 18.39 kB
-[20:26:34] Compiled ./maker.js - 48.62 kB
-[20:26:34] dist/js/thumbnails.js is unchanged.
-[20:26:34] Finished 't' after 2.49 s
-[20:26:34] File size: ./ts/image.ts - 25.44 kB
-[20:26:35] Compiled ./image.js - 29.77 kB
-[20:26:35] File size: ./ts/download.ts - 6.46 kB
-[20:26:35] File size: ./ts/index.ts - 12.28 kB
-[20:26:35] Compiled ./index.js - 30.93 kB
-[20:26:35] ---> Copy to dist/js/image.js
-[20:26:35] dist/maker.js is unchanged.
-[20:26:35] Finished 'cm' after 3.4 s
-[20:26:35] dist/js/index.js is unchanged.
-[20:26:35] Finished 'x' after 3.41 s
-[20:26:35] Finished 'i' after 3.41 s
-[20:26:35] Finished 'ts' after 3.41 s
-[20:26:35] Finished 'all' after 3.42 s
-~~~
-
-The only lines I want to see are the warnings and the copy line:
-
-~~~
-[20:26:33] Compiled ./sw.js - 8.14 kB
-(node:5070) [DEP0180] DeprecationWarning: fs.Stats constructor is deprecated.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-[20:26:35] ---> Copy to dist/js/image.js
-~~~
-
-[⬇](#Contents)
-
-# Play Live Photos
-
-Done. Live Photo videos play on the image page when you press and
-hold a photo that has a `-v.mp4` file. Offline download and cache
-include live videos when present.
-
-[⬇](#Contents)
-
-# Encourage Preferred Usage
-
-The encouraged user interaction is to scroll to find a collection on
-the index page then go to the image page to view the photos.  The
-collection order and story is intended to be viewed starting from the
-start.  Later after viewing the collection, the thumbnail view is a
-quick way to revisit an image. We don't encourage starting with the
-thumbnail view.
-
-[⬇](#Contents)
-
 # Image Click does Nothing
 
 Why the clicking an index image does nothing. Is there a better way?
@@ -256,21 +44,8 @@ strange page or switch apps. I seen this happen many times with the
 iphone app.
 
 It goes against the user expectation to do nothing. Is there a way to
-support clicking on the index picture and without the mentioned bad
+support tapping on the index picture and without the mentioned bad
 things happening?  Overlay the image icon on top of the thumbnail?
-
-[⬇](#Contents)
-
-# Screen Size
-
-Adjust the test portrait and landscape dimensions in Chrome developer
-tools to match my iphone dimensions.  It seems to be off by 1.  Maybe
-there is a difference between browsers?  The code logs that there are
-no zoom points for the current size so it generates some based on the
-existing ones.
-
-* Chrome: 430 x 932 and 932 x 430
-* IPhone: 430 x 933 and 932 x 430
 
 [⬇](#Contents)
 
@@ -333,18 +108,6 @@ and share the code between a website and a node based build and test
 system?
 
 We recently updated node from 18 to 22, I think this helps.
-
-Why does file size repeat? is all.ts built over and over?
-
-~~~
-[21:50:12] File size: ./ts/all.ts - 1.01 kB
-[21:50:12] File size: ./ts/all.ts - 1.01 kB
-[21:50:12] File size: ./ts/all.ts - 1.01 kB
-[21:50:12] File size: ./ts/all.ts - 1.01 kB
-[21:50:12] File size: ./ts/all.ts - 1.01 kB
-[21:50:12] File size: ./ts/win.ts - 2.19 kB
-[21:50:12] File size: ./ts/win.ts - 2.19 kB
-~~~
 
 [⬇](#Contents)
 
@@ -433,8 +196,6 @@ filename, date or other metadata.
 # Contents
 
 * [Use flenniken.net](#use-flenniken.net) -- switch the domain from sflennik.com to flenniken.net.
-* [Scroll Description](#scroll-description) -- done.
-* [One Line Index](#one-line-index) -- done.
 * [More Button](#more-button) -- add a button at the bottom of the index when there are a lot of collections.
 * [Test Image Page](#test-image-page) -- write unit tests for the image page.
 * [Remove Branding](#remove-branding) -- make it easy to rebrand, name, icons, domain, etc.
@@ -442,7 +203,6 @@ filename, date or other metadata.
 * [Play Live Photos](#play-live-photos) -- done.
 * [Encourage Preferred Usage](#encourage-preferred-usage) -- encourage visiting the image page from start to finish.
 * [Image Click does Nothing](#image-click-does-nothing) -- why the clicking an index image does nothing.
-* [Screen Size](#screen-size) -- determine the screen size on the iphone and is it stable.
 * [Description Formatting](#description-formatting) -- support basic description formatting.
 * [Zoom Point Generation](#zoom-point-generation) -- test calculating a new zoom point set for the resolution.
 * [testValidateImageRequest.js](#testValidateImageRequest-js) -- redo the test using the same style as the other test code.

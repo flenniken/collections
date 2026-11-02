@@ -84,14 +84,13 @@ you need to do.
 
 ~~~
 Warning 1: aws command line credentials are missing.
-Run: 'aws configure' to set them. See docs/aws-config.md for more info by
-running: glow docs/aws-config.md
+Run: 'aws configure' to set them. See docs/aws-config.md.
 
-Warning 3: The notification VAPID keys are missing. Save them to ~/.aws/vapid.
-See docs/aws-config.md for more info by running: glow docs/aws-config.md
+Warning 3: The notification VAPID keys are missing.
+Save them to ~/.aws/vapid. See docs/aws-config.md.
 
-Warning 4: The branding.ini file is missing admin_phone. Edit ~/.aws/branding.ini.
-See docs/aws-config.md for more info by running: glow docs/aws-config.md
+Warning 4: The branding.ini file is missing admin_phone.
+Edit ~/.aws/branding.ini. See docs/aws-config.md.
 ~~~
 
 [⬇](#Contents)

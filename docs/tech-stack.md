@@ -13,6 +13,7 @@ Collection’s cool tech stack:
 * static website — no server except AWS services — simple, cheap
 * Docker build environment
 * Python for configuration scripts and testing
+* Python web server for localhost editing api
 * Progressive Web App (PWA)
 
 PWA enables:

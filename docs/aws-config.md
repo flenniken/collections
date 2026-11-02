@@ -29,7 +29,7 @@ since there is less to understand and debug.
 Note: You need collections installed on your local machine and the
 docker container running.
 
-The examples uses the sflennik.com domain and the sflennikco bucket
+The examples uses the `sflennik.com` domain and the `sflennikco` bucket
 name.  Replace these with your names when running the examples.
 
 [⬇](#Contents)
@@ -210,23 +210,18 @@ notifications, and testing.
 The image-page message balloon reads your phone number and feedback
 text from `~/.aws/branding.ini` so they are not stored in git. The
 docker image copies a template into that file. Edit it in the
-container after you create a new one.
+container.
 
 ~~~
-# from docker container
-cat > ~/.aws/branding.ini << 'EOF'
-admin_phone = "+1XXXXXXXXXX"
-feedback_message = "Image ${previewName}.  Hi Steve, \nI like this photo and "
-EOF
+# in docker container
+nano ~/.aws/branding.ini
 ~~~
 
-`admin_phone` is the SMS To number, with a plus and country code.
-`feedback_message` is the pre-filled body. `${previewName}` is replaced
-with the current photo’s filename, for example `c40-2-p.jpg`. `\n` is a
-newline.
+`admin_phone` is the SMS To number to use (your phone number). It
+starts with with a plus sign and country code, use 1 for the US.
 
-`g i` and `g all` fail when the file is missing or when either value
-is empty. Recreate this file when you rebuild the docker container.
+`g all` fails when the file is missing or when either value
+is empty.
 
 [⬇](#Contents)
 
@@ -309,7 +304,7 @@ aws s3 ls s3://sflennikco/icons/ # variable
 In the aws route53 console register a domain. The domain must be
 registered with aws to use it with CloudFront.
 
-I registered sflennik.com for $14 per year. You will get an email from
+I registered sflennik.com for $16 per year. You will get an email from
 noreply@registrar.amazon in a few minutes.
 
 The process will automatically create a zone for sflennik.com in
@@ -651,7 +646,9 @@ console. I used:
 * steve.flenniken@gmail.com
 * steve.flenniken+admin@gmail.com
 
-Follow the Create User procedure.
+Follow the Create User procedure:
+
+* [Create User](create-user.md) -— how to create a new user.
 
 [⬇](#Contents)
 
