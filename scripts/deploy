@@ -411,9 +411,65 @@ def fileMatchesS3Etag(path, etag, chunksize=S3_MULTIPART_CHUNKSIZE):
     return etag == multipartEtag(path, chunksize=chunksize)
   return etag == md5File(path)
 
-def getFileHashes(path):
+# Local MD5 cache so deploy hashes only new or changed dist files.
+HASH_CACHE_PATH = "tmp/dist-hashes.txt"
+
+def hashForS3Compare(path):
   """
-  Get the md5 hashes of the files in the given folder.
+  Return the local hash that compares to the S3 ETag: whole-file MD5
+  under 8 MB, multipart ETag at or above the upload threshold.
+  """
+  if os.path.getsize(path) >= S3_MULTIPART_THRESHOLD:
+    return multipartEtag(path)
+  return md5File(path)
+
+def loadHashCache(cachePath=None):
+  """
+  Return {relative_path: (mtime_ns, hash)} from the deploy hash cache.
+  """
+  if cachePath is None:
+    cachePath = HASH_CACHE_PATH
+  cache = {}
+  if not os.path.isfile(cachePath):
+    return cache
+  with open(cachePath, "r", encoding="utf-8") as fh:
+    for line in fh:
+      line = line.strip()
+      if not line or line.startswith("#"):
+        continue
+      parts = line.split(None, 2)
+      if len(parts) != 3:
+        continue
+      mtime_s, file_hash, relpath = parts
+      try:
+        mtime_ns = int(mtime_s)
+      except ValueError:
+        continue
+      cache[relpath] = (mtime_ns, file_hash)
+  return cache
+
+def saveHashCache(cache, cachePath=None):
+  """
+  Write the deploy hash cache. One line per file: mtime hash path.
+  """
+  if cachePath is None:
+    cachePath = HASH_CACHE_PATH
+  folder = os.path.dirname(cachePath)
+  if folder:
+    os.makedirs(folder, exist_ok=True)
+  tmpPath = cachePath + ".tmp"
+  with open(tmpPath, "w", encoding="utf-8") as fh:
+    fh.write("# mtime_ns hash relative_path\n")
+    for relpath in sorted(cache):
+      mtime_ns, file_hash = cache[relpath]
+      fh.write(f"{mtime_ns} {file_hash} {relpath}\n")
+  os.replace(tmpPath, cachePath)
+
+def getFileHashes(path, cache=None):
+  """
+  Get the hashes of the files in the given folder. When cache is a
+  dict of {relative_path: (mtime_ns, hash)}, reuse the hash when the
+  filetime matches and update the cache for new or changed files.
   """
   fileHashes = {}
   for root, dirs, files in os.walk(path):
@@ -421,9 +477,20 @@ def getFileHashes(path):
       filepath = os.path.join(root, filename)
       if not os.path.isfile(filepath):
         continue
-      md5_hash = md5File(filepath)
-      relative_path = os.path.relpath(filepath, path)
-      fileHashes[relative_path] = md5_hash
+      relative_path = os.path.relpath(filepath, path).replace("\\", "/")
+      try:
+        mtime_ns = os.stat(filepath).st_mtime_ns
+        cached = cache.get(relative_path) if cache is not None else None
+        if cached and cached[0] == mtime_ns:
+          file_hash = cached[1]
+        else:
+          file_hash = hashForS3Compare(filepath)
+          if cache is not None:
+            cache[relative_path] = (mtime_ns, file_hash)
+      except FileNotFoundError:
+        print(f"warning: skipped missing file: {filepath}")
+        continue
+      fileHashes[relative_path] = file_hash
   return fileHashes
 
 def getS3FileHashes(s3Client, bucket_name):
@@ -448,18 +515,19 @@ def getModifiedFiles(s3Client, bucket_name, s3FileHashes=None):
   modified = []
   if s3FileHashes is None:
     s3FileHashes = getS3FileHashes(s3Client, bucket_name)
-  for root, dirs, files in os.walk("dist"):
-    for filename in files:
-      filepath = os.path.join(root, filename)
-      if not os.path.isfile(filepath):
-        continue
-      relative_path = os.path.relpath(filepath, "dist")
-      s3hash = s3FileHashes.get(relative_path)
-      try:
-        if s3hash is None or not fileMatchesS3Etag(filepath, s3hash):
-          modified.append(relative_path)
-      except FileNotFoundError:
-        print(f"warning: skipped missing file: {filepath}")
+  cache = loadHashCache()
+  localHashes = getFileHashes("dist", cache)
+  for key in list(cache):
+    if key not in localHashes:
+      del cache[key]
+  saveHashCache(cache)
+  for relative_path, localHash in localHashes.items():
+    s3hash = s3FileHashes.get(relative_path)
+    if s3hash is None:
+      modified.append(relative_path)
+      continue
+    if s3hash.strip('"') != localHash:
+      modified.append(relative_path)
 
   return modified
 
@@ -754,6 +822,42 @@ class TestModule(unittest.TestCase):
       self.assertTrue(len(filename) > 0)
       self.assertEqual(len(md5), 32)
       self.assertTrue(md5.isalnum())
+
+  def test_hashCacheRoundTrip(self):
+    folder = tempfile.mkdtemp()
+    try:
+      cachePath = os.path.join(folder, "hashes.txt")
+      relpath = "js/index.js"
+      cache = {relpath: (123, "d41d8cd98f00b204e9800998ecf8427e")}
+      saveHashCache(cache, cachePath)
+      loaded = loadHashCache(cachePath)
+      self.assertEqual(loaded[relpath], cache[relpath])
+    finally:
+      shutil.rmtree(folder)
+
+  def test_getFileHashes_usesCacheWhenMtimeMatches(self):
+    folder = tempfile.mkdtemp()
+    try:
+      path = os.path.join(folder, "a.txt")
+      with open(path, "wb") as fh:
+        fh.write(b"hello")
+      cache = {}
+      hashes = getFileHashes(folder, cache)
+      expected = hashlib.md5(b"hello").hexdigest()
+      self.assertEqual(hashes["a.txt"], expected)
+      self.assertEqual(cache["a.txt"][1], expected)
+      mtime_ns = cache["a.txt"][0]
+      with open(path, "wb") as fh:
+        fh.write(b"changed")
+      os.utime(path, ns=(mtime_ns, mtime_ns))
+      hashes = getFileHashes(folder, cache)
+      self.assertEqual(hashes["a.txt"], expected)
+      with open(path, "wb") as fh:
+        fh.write(b"changed")
+      hashes = getFileHashes(folder, cache)
+      self.assertEqual(hashes["a.txt"], hashlib.md5(b"changed").hexdigest())
+    finally:
+      shutil.rmtree(folder)
 
   def test_getS3FileHashes(self):
     awsSettings = getAwsSettings()

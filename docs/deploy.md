@@ -55,6 +55,11 @@ the whole file. Files 8 MB or larger are uploaded in parts, so their
 ETag is not a whole-file MD5; the script matches that multipart ETag
 instead of copying them every time.
 
+Local hashes are stored in `tmp/dist-hashes.txt` with each file's
+mtime. Unchanged files reuse the cached hash; only new or
+touched files are hashed again. Delete that file to rebuild the
+cache.
+
 ~~~
 deploy —m
 ~~~
