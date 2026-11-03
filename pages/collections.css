@@ -171,11 +171,16 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: inherit;
+  text-decoration: none;
 }
 
-#index .collection.compact .title.editable:focus {
-  overflow: visible;
-  text-overflow: clip;
+#index .collection.compact[data-cached="1"] .title {
+  cursor: pointer;
+}
+
+#index .collection.compact:not([data-cached="1"]) .title {
+  cursor: default;
 }
 
 #index .collection.compact .line-icons {

@@ -175,7 +175,8 @@ view photos only after you open it from that icon.
       <img class="line-thumb" src="{tinUrl}" alt="{titleAttr}"
         width="32" height="32" draggable="false"
         onclick="viewCollection({num})">
-      <p class="title">{title}</p>
+      <a class="title" href="images/c{num}/image-{num}.html"
+        onclick="viewCollection({num}); return false;">{title}</a>
       <div class="line-icons">
         <img class="icon withoutImages" src="icons/download.svg"
           onclick="downloadCollection({num})" alt="download collection images">

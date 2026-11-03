@@ -203,7 +203,7 @@ function setupIndexDescriptionEditing() {
 
   csjson.indexCollections.forEach((c) => {
     const card = document.getElementById(`c${c.cNum}`)
-    if (!card)
+    if (!card || card.classList.contains("compact"))
       return
 
     const titleEl = card.querySelector(".title") as HTMLElement | null
