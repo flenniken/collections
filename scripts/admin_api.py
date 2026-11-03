@@ -37,6 +37,7 @@ SAVE_PATHS = (
   "/saveCollection", "/saveDescription", "/saveOrder", "/saveThumbnail",
 )
 THUMB_SIZE = 480
+COMPACT_SIZE = 96
 JPEG_QUALITY = 80
 PREVIEW_RE = re.compile(r"^c(\d+)-(\d+)-p\.jpg$")
 TEXT_FIELDS = (
@@ -240,6 +241,52 @@ def thumbnailNameFromPreview(preview):
     raise AdminApiException("Invalid preview")
   return f"c{match.group(1)}-{match.group(2)}-t.jpg"
 
+def smallThumbnailName(thumbName):
+  """
+  Return cN-M-s.jpg for a 480 thumbnail basename.
+  """
+  if not isinstance(thumbName, str) or not thumbName.endswith("-t.jpg"):
+    raise AdminApiException("Invalid thumbnail")
+  return thumbName[:-6] + "-s.jpg"
+
+def writeSmallThumbnail(srcPath, destPath):
+  """
+  Write a 96 x 96 JPEG from a 480 thumbnail.
+  """
+  srcPath = Path(srcPath)
+  destPath = Path(destPath)
+  destPath.parent.mkdir(parents=True, exist_ok=True)
+  tmpPath = destPath.with_name(destPath.name + ".tmp")
+  with Image.open(srcPath) as img:
+    small = img.convert("RGB").resize(
+      (COMPACT_SIZE, COMPACT_SIZE), Image.Resampling.LANCZOS)
+    small.save(
+      tmpPath,
+      format="JPEG",
+      quality=JPEG_QUALITY,
+      optimize=True,
+    )
+  tmpPath.replace(destPath)
+
+def syncSmallTinThumbnails(root=None):
+  """
+  Write missing or stale 96 x 96 tin files from the 480 tin files.
+  Return how many files were written.
+  """
+  tinDir = (root or COLLECTIONS_ROOT) / "dist" / "tin"
+  if not tinDir.is_dir():
+    return 0
+  written = 0
+  for tPath in sorted(tinDir.glob("*-t.jpg")):
+    sPath = tinDir / smallThumbnailName(tPath.name)
+    if (sPath.is_file()
+        and sPath.stat().st_mtime >= tPath.stat().st_mtime
+        and sPath.stat().st_size > 0):
+      continue
+    writeSmallThumbnail(tPath, sPath)
+    written += 1
+  return written
+
 def writeCroppedThumbnail(previewPath, thumbPath, left, top, side=None):
   """
   Write a 480 x 480 JPEG from a square crop of the preview.
@@ -327,8 +374,10 @@ def saveThumbnail(payload, root=None):
   if imageIx == 0:
     tinDir.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(thumbPath, tinPath)
+    writeSmallThumbnail(thumbPath, tinDir / smallThumbnailName(thumbName))
   elif tinPath.is_file():
     shutil.copyfile(thumbPath, tinPath)
+    writeSmallThumbnail(thumbPath, tinDir / smallThumbnailName(thumbName))
   return thumbPath
 
 class ApiHandler(BaseHTTPRequestHandler):
@@ -829,6 +878,10 @@ class TestModule(unittest.TestCase):
     tin = self.root / "dist" / "tin" / "c9-1-t.jpg"
     self.assertTrue(tin.is_file())
     self.assertEqual(tin.stat().st_size, path.stat().st_size)
+    small = self.root / "dist" / "tin" / "c9-1-s.jpg"
+    self.assertTrue(small.is_file())
+    with Image.open(small) as compact:
+      self.assertEqual(compact.size, (96, 96))
 
   def test_saveThumbnail_center_not_left_mark(self):
     self.writeCollectionForThumb()
@@ -889,6 +942,24 @@ class TestModule(unittest.TestCase):
         "side": 479,
       }, root=self.root)
 
+  def test_smallThumbnailName(self):
+    self.assertEqual(smallThumbnailName("c9-1-t.jpg"), "c9-1-s.jpg")
+    self.assertEqual(smallThumbnailName("c10-12-t.jpg"), "c10-12-s.jpg")
+    with self.assertRaises(AdminApiException):
+      smallThumbnailName("c9-1-p.jpg")
+
+  def test_syncSmallTinThumbnails(self):
+    tin = self.root / "dist" / "tin"
+    tin.mkdir(parents=True)
+    src = tin / "c9-1-t.jpg"
+    self.writePreviewJpeg("c9-1-t.jpg", 480, 480, (0, 0, 255))
+    shutil.copyfile(self.folder / "c9-1-t.jpg", src)
+    self.assertEqual(syncSmallTinThumbnails(root=self.root), 1)
+    small = tin / "c9-1-s.jpg"
+    with Image.open(small) as compact:
+      self.assertEqual(compact.size, (96, 96))
+    self.assertEqual(syncSmallTinThumbnails(root=self.root), 0)
+
   def test_saveThumbnail_second_image_skips_missing_tin(self):
     self.writeCollectionForThumb()
     self.writePreviewJpeg("c9-2-p.jpg", 800, 1000, (0, 255, 0))
@@ -899,6 +970,7 @@ class TestModule(unittest.TestCase):
       "top": 0,
     }, root=self.root)
     self.assertFalse((self.root / "dist" / "tin" / "c9-2-t.jpg").exists())
+    self.assertFalse((self.root / "dist" / "tin" / "c9-2-s.jpg").exists())
     self.assertTrue((self.folder / "c9-2-t.jpg").is_file())
 
   def test_saveThumbnailPost(self):

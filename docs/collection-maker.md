@@ -433,7 +433,8 @@ __File Roles__
 | -------- | -------- |
 | -p.jpg | The still photo shown on the image page, used for dimensions in cjson, zoom/pan, and offline download |
 | -v.mp4 | Optional motion clip. Live Photos play on press-and-hold. Longer videos show a play button, play to the end, then stop |
-| -t.jpg | Square thumbnail for the index and thumbnail pages |
+| -t.jpg | Square 480 thumbnail for featured index cards and thumbnail pages |
+| -s.jpg | Square 96 thumbnail in `tin/` for compact index rows |
 
 ♫ Notes:
 

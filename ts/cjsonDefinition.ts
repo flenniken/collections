@@ -134,9 +134,11 @@ namespace CJson {
     building: boolean;
     title: string,
     indexDescription: string,
-    // The collection's thumbnail used in the index. Copied from the
-    // first collection photo.
+    // The collection's 480 thumbnail used on the featured index
+    // cards. Copied from the first collection photo, e.g. c2-1-t.jpg.
     iThumbnail: string,
+    // The 96 x 96 tin file for compact index rows, e.g. c2-1-s.jpg.
+    iSmall: string,
     posted: string,
     // The number of previews in the collection.
     iCount: number,

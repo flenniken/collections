@@ -1020,11 +1020,28 @@ function indexThumbnailName(cinfo: CJson.Collection): string {
   return ""
 }
 
+export function smallThumbnailName(thumbnailBasename: string): string {
+  // c5-3-t.jpg -> c5-3-s.jpg for the compact index row.
+  if (!thumbnailBasename.endsWith("-t.jpg"))
+    return ""
+  return thumbnailBasename.slice(0, -6) + "-s.jpg"
+}
+
+function tinCollectionNum(filename: string): number | null {
+  // Collection number from a tin basename, or null.
+  const match = filename.match(/^c(\d+)-\d+-[ts]\.jpg$/)
+  if (!match)
+    return null
+  return parseInt(match[1], 10)
+}
+
 function syncIndexThumbnail(cNum: number, thumbnailBasename: string) {
-  // Copy the first-photo thumbnail to dist/tin and remove leftovers.
+  // Copy the first-photo 480 thumbnail to dist/tin and drop leftovers.
   if (!thumbnailBasename)
     return
-  const destFilename = path.join("dist/tin", thumbnailBasename)
+  const tinFolder = "dist/tin"
+  const destFilename = path.join(tinFolder, thumbnailBasename)
+  const smallBasename = smallThumbnailName(thumbnailBasename)
   if (!fs.existsSync(destFilename)) {
     const srcFilename = path.join(`dist/images/c${cNum}`, thumbnailBasename)
     fs.copyFileSync(srcFilename, destFilename)
@@ -1032,16 +1049,36 @@ function syncIndexThumbnail(cNum: number, thumbnailBasename: string) {
     if (!quietAll)
       fancyLog(`Copied ${thumbnailBasename} to tin folder.`)
   }
-  const tinFolder = path.join("dist/tin")
-  fs.readdirSync(tinFolder).forEach((file) => {
-    if (file.startsWith(`c${cNum}-`) && file != thumbnailBasename) {
-      const fullPath = path.join(tinFolder, file)
-      fs.unlinkSync(fullPath)
-      copiedToDist++
-      if (!quietAll)
-        fancyLog(`Removed old ${fullPath} from the tin folder.`)
-    }
-  })
+  const keep = new Set([thumbnailBasename, smallBasename])
+  for (const file of fs.readdirSync(tinFolder)) {
+    if (tinCollectionNum(file) !== cNum || keep.has(file))
+      continue
+    fs.unlinkSync(path.join(tinFolder, file))
+    copiedToDist++
+    if (!quietAll)
+      fancyLog(`Removed old ${file} from the tin folder.`)
+  }
+}
+
+function syncSmallTinThumbnails() {
+  // Write missing 96 x 96 tin files from the 480 tin files.
+  const out = child_process.execFileSync(
+    "python3",
+    ["-c",
+      "from admin_api import syncSmallTinThumbnails; print(syncSmallTinThumbnails())"],
+    {
+      encoding: "utf8",
+      env: { ...process.env, PYTHONPATH: path.join(process.cwd(), "scripts") },
+    },
+  ).trim()
+  const n = parseInt(out, 10)
+  if (!Number.isFinite(n) || n < 0)
+    throw new Error(`syncSmallTinThumbnails: unexpected output: ${out}`)
+  if (n > 0) {
+    copiedToDist += n
+    if (!quietAll)
+      console.log(`Wrote ${n} small tin thumbnails.`)
+  }
 }
 
 function generateCollectionsJson() {
@@ -1095,6 +1132,7 @@ function generateCollectionsJson() {
       title: cinfo.title,
       indexDescription: cinfo.indexDescription,
       iThumbnail: iThumbnail,
+      iSmall: smallThumbnailName(iThumbnail),
       posted: cinfo.posted,
       iCount: cinfo.images.length,
       totalSize: totalSize,
@@ -1103,6 +1141,8 @@ function generateCollectionsJson() {
     };
     csjson.indexCollections.push(indexCollection);
   }
+
+  syncSmallTinThumbnails()
 
   // Write the collections.json file.
   fs.writeFileSync(outputFile, JSON.stringify(csjson, null, 2), 'utf8');

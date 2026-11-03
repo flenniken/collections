@@ -126,12 +126,16 @@ images
 The thumbnails used by the index page are duplicated in the tin
 (thumbnail index) folder. If you shared the thumbnails with the image
 folders, this would complicate the authentication. Also when you delete
-a collection you want the index thumbnail to still exist.
+a collection you want the index thumbnail to still exist. Each
+collection has a 480 x 480 `-t.jpg` for the featured cards and a
+96 x 96 `-s.jpg` for the compact one-line rows.
 
 ~~~
 tin
   c1-3-t.jpg
+  c1-3-s.jpg
   c2-1-t.jpg
+  c2-1-s.jpg
 ~~~
 
 Most of the image files are taken by me. The originals are iphone live

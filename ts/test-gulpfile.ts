@@ -10,6 +10,7 @@ import {
   ImageName,
   UnusedPathsAndImages,
   parseImageName,
+  smallThumbnailName,
   getCollectionImages,
   getUnusedImageFiles,
   removeUnusedImages,
@@ -120,6 +121,18 @@ function parseImageNameSuite() {
   test(testParseImageName, 'c1-2-q.jpg', null)
   test(testParseImageName, 'c1-2-p.jpgg', null)
   test(testParseImageName, '/images/c1/c1-2-t.jpg', null)
+}
+
+function testSmallThumbnailName(basename: string, expected: string) {
+  gotExpected(smallThumbnailName(basename), expected,
+    `smallThumbnailName(${basename})`)
+}
+
+function smallThumbnailNameSuite() {
+  test(testSmallThumbnailName, "c5-3-t.jpg", "c5-3-s.jpg")
+  test(testSmallThumbnailName, "c10-1-t.jpg", "c10-1-s.jpg")
+  test(testSmallThumbnailName, "", "")
+  test(testSmallThumbnailName, "c5-3-p.jpg", "")
 }
 
 function testGetCollectionImages(cNum: number, eImageNumbers: number[]) {
@@ -643,6 +656,7 @@ function testGulpfile() {
 
   runSuite(parseCliCollectionNumSuite)
   runSuite(parseImageNameSuite)
+  runSuite(smallThumbnailNameSuite)
   runSuite(getCollectionImagesSuite)
   runSuite(getUnusedImageFilesSuite)
   runSuite(removeUnusedImagesSuite)
