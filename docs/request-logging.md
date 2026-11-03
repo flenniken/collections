@@ -399,6 +399,70 @@ find logs -mtime +30 | wc -l
 0
 ~~~
 
+# Recent Downloads
+
+You can tell when a collection is downloaded and by who using the
+following command:
+
+~~~
+scripts/view-requests \
+  | awk '{ if (length($5) == 8 && length($6) == 8 && \
+  index($10, "/images/c") == 1) {t[$5] = $0} }\
+  END {for (it in t) print t[it]} ' \
+  | awk '{print $1, $2, $6, substr($10, 9,  3)}' \
+  | sort \
+  | less
+~~~
+
+The date, time, first 8 digits of the user id, and the collection
+number are listed:
+
+~~~
+2026-10-04 17:51:08 0801f3d0 c45
+2026-10-04 23:19:28 983103d0 c45
+2026-10-05 01:26:30 e8515380 c45
+2026-10-05 17:32:57 0801f3d0 c46
+2026-10-05 22:24:08 e8515380 c46
+2026-10-07 17:25:28 38616370 c46
+2026-10-07 17:26:40 38616370 c45
+2026-10-08 15:57:06 0801f3d0 c47
+~~~
+
+To see which users have downloaded something recently:
+
+~~~
+scripts/view-requests \
+  | awk '{ if (length($5) == 8 && length($6) == 8 && \
+  index($10, "/images/c") == 1) {t[$5] = $0} }\
+  END {for (it in t) print t[it]} ' \
+  | awk '{print $6}' \
+  | sort \
+  | uniq \
+  > ids.txt
+cat ids.txt
+~~~
+
+Here are the recent active users:
+
+~~~
+0801f3d0
+0861d3e0
+38616370
+38a1c3d0
+68615360
+68d1f310
+983103d0
+a8e1d370
+e8515380
+~~~
+
+You can match the user ids with the user names:
+
+~~~
+scripts/cognito -l > users.txt
+grep -f ids.txt users.txt
+~~~
+
 <style>body { max-width: 40em}</style>
 
 # Contents
@@ -415,3 +479,4 @@ find logs -mtime +30 | wc -l
 * [Download ID](#download-id) -- how the download id ties together the Cloudfront and Lambda logs.
 * [Status Codes](#status-codes) -- how to count the status code types and investigate them.
 * [Remove Old Logs](#remove-old-logs) -- how old logs are deleted.
+* [Recent Downloads](#recent-downloads) -- how to determine the recent downloads, when and who.
