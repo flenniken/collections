@@ -41,18 +41,6 @@ self.addEventListener("install", (event: Event) => {
   (event as ExtendableEvent).waitUntil((self as unknown as ServiceWorkerGlobalScope).skipWaiting())
 })
 
-async function openCreateCache(): Promise<Cache> {
-  // Open or create the application cache and return it. When the
-  // application cache is not supported or cannot be opened or created
-  // generate an exception.
-
-  let cache: Cache
-  cache = await caches.open(appCacheName);
-  if (!cache)
-    throw new Error("Unable to open the application cache.")
-  return cache
-}
-
 self.addEventListener("activate", event => {
   // https://web.dev/learn/pwa/service-workers:
   //

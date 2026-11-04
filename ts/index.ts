@@ -450,35 +450,6 @@ function hideAboutBox(element: Element) {
   get("about-box").style.display = 'none'
 }
 
-async function removeCollection(cNum: number) {
-  const quota = await getUsageQuotaString(cNum)
-  const message = `${quota}
-
-Are you sure you want to delete this collection's images from the cache?`
-  if (confirm(message) == true) {
-    const indexCollection = getIndexCollection(cNum)
-    if (indexCollection.iNumList == null) {
-      logError("missing iNumList")
-      return
-    }
-    log(`remove collection ${cNum} from the app cache`)
-    const urls = getCollectionUrls(cNum, indexCollection.iNumList,
-        indexCollection.liveINums ?? [])
-    const cache = await openCreateCache()
-
-    setCollectionState(cNum, "withoutImages")
-
-    urls.forEach( (url) => {
-      cache.delete(url).then((response) => {
-        log(`removed ${url}`)
-      });
-    })
-
-  } else {
-    log("Nothing removed")
-  }
-}
-
 async function collectionHasCachedImages(cNum: number): Promise<boolean> {
   // Return true when this collection's photos are in the app cache.
   const cache = await openCreateCache()

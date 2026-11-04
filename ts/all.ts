@@ -34,3 +34,37 @@ class Timer {
     log(`${three(this.seconds())}s ----- ${message}`)
   }
 }
+
+async function openCreateCache(): Promise<Cache> {
+  // Open or create the application cache and return it.
+  if (typeof caches === "undefined")
+    throw new Error("The application cache is not supported.")
+  const cache = await caches.open(appCacheName)
+  if (!cache)
+    throw new Error("Unable to open the application cache.")
+  return cache
+}
+
+function isCollectionCachePath(pathname: string, cNum: number): boolean {
+  // True for this collection's cached photos, pages, and ready mark.
+  if (pathname === `/c${cNum}-ready`)
+    return true
+  return pathname.startsWith(`/images/c${cNum}/`)
+}
+
+async function deleteCollectionFromCache(cNum: number) {
+  // Remove this collection's files from the application cache.
+  const cache = await openCreateCache()
+  const requests = await cache.keys()
+  const pending: Promise<boolean>[] = []
+  for (const request of requests) {
+    let pathname = request.url
+    try {
+      pathname = new URL(request.url).pathname
+    } catch {
+    }
+    if (isCollectionCachePath(pathname, cNum))
+      pending.push(cache.delete(request))
+  }
+  await Promise.all(pending)
+}

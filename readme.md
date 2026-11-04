@@ -44,7 +44,7 @@ The icons do the following:
 * ![view images](dist/icons/photo.svg) view the collection's images
 * ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
 * ![download images](dist/icons/download.svg) download the collection's images
-* ![delete cached images](dist/icons/trash-can.svg) delete the collection's cached images
+* ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images and return to the index
 * ![share image](dist/icons/share.svg) on the image page, share the image
 * ![message Steve](dist/icons/message.svg) on the image page, send Steve a text about the photo
 

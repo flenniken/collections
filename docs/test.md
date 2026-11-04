@@ -129,6 +129,8 @@ When making changes to the image page test them with these steps:
 * scroll h & v in landscape mode
 * no flash on load and no flash on rotate
 * tap the thumbnails menu icon
+* tap the trash can on the thumbnails page, confirm, and verify you
+  return to the index with that collection no longer downloaded
 * tap the index menu icon
   * tap the share icon and verify the share sheet appears, or the photo downloads
   * tap the message balloon and verify Messages opens to the number in

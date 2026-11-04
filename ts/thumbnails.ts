@@ -882,3 +882,18 @@ function sizeImages() {
     topBar!.style.height = "0"
   }
 }
+
+async function removeThisCollection() {
+  // Delete this collection's cached photos and return to the index.
+  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  if (!(cNum > 0))
+    return
+  const message = "Are you sure you want to delete this collection's images from the cache?"
+  if (confirm(message) != true) {
+    log("Nothing removed")
+    return
+  }
+  log(`remove collection ${cNum} from the app cache`)
+  await deleteCollectionFromCache(cNum)
+  window.location.assign("/index.html")
+}
