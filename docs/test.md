@@ -142,9 +142,9 @@ When making changes to the image page test them with these steps:
     it again to hide the controls, then save with the download icon
   * as admin, verify the preview filename appears above the icons and
     changes when you swipe to the next photo
-  * as admin, tap an index description, edit it, tap away, and verify
+  * as admin on localhost, tap an index description, edit it, tap away, and verify
     `indexDescription` is updated in `cN.json`
-  * as admin, tap the thumbnails page description, edit it, tap away,
+  * as admin on localhost, tap the thumbnails page description, edit it, tap away,
     and verify `description` is updated in `cN.json`
   * as admin on localhost, long-press a thumbnail, drag it onto
     another, drop, and verify the photos reorder in `cN.json`

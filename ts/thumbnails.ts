@@ -117,9 +117,9 @@ function setupCollectionMap(location: string) {
 }
 
 function setupThumbnailTextEditing() {
-  // Title and posted date are edited on the index. Admins can edit
-  // the collection description here.
-  if (!isAdmin())
+  // Title and posted date are edited on the index. A localhost admin
+  // can edit the collection description here.
+  if (!isAdmin() || !isLocalhost())
     return
 
   const hint = document.getElementById("heading-edit-hint")
@@ -135,11 +135,6 @@ function setupThumbnailTextEditing() {
     return
   let current = ""
   enablePlaintextEditing(el, () => current, async (text) => {
-    if (!isLocalhost()) {
-      current = text
-      log("Save on localhost to keep the change.")
-      return
-    }
     try {
       await saveDescription(cNum, "description", text)
       current = text

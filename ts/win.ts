@@ -195,7 +195,7 @@ interface EditingOptions {
 
 function enablePlaintextEditing(el: HTMLElement, getOriginal: () => string,
     onCommit: (text: string) => Promise<void>, options?: EditingOptions) {
-  // Let an admin tap the element and edit it in place.
+  // Let a localhost admin tap the element and edit it in place.
   el.setAttribute("contenteditable", "plaintext-only")
   if (el.contentEditable !== "plaintext-only")
     el.contentEditable = "true"

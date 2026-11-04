@@ -197,8 +197,9 @@ async function refreshIndexFieldsFromJson() {
 }
 
 function setupIndexDescriptionEditing() {
-  // Let an admin tap title, posted date, and descriptions in place.
-  if (!isAdmin())
+  // Let a localhost admin tap title, posted date, and descriptions
+  // in place.
+  if (!isAdmin() || !isLocalhost())
     return
 
   csjson.indexCollections.forEach((c) => {
@@ -209,11 +210,6 @@ function setupIndexDescriptionEditing() {
     const titleEl = card.querySelector(".title") as HTMLElement | null
     if (titleEl) {
       enablePlaintextEditing(titleEl, () => c.title, async (text) => {
-        if (!isLocalhost()) {
-          c.title = text
-          log("Save on localhost to keep the change.")
-          return
-        }
         try {
           await saveDescription(c.cNum, "title", text)
           c.title = text
@@ -230,11 +226,6 @@ function setupIndexDescriptionEditing() {
     const postedEl = card.querySelector(".posted") as HTMLElement | null
     if (postedEl) {
       enablePostedDateEditing(postedEl, () => c.posted, async (text) => {
-        if (!isLocalhost()) {
-          c.posted = text
-          log("Save on localhost to keep the change.")
-          return
-        }
         try {
           await saveDescription(c.cNum, "posted", text)
           c.posted = text
@@ -249,11 +240,6 @@ function setupIndexDescriptionEditing() {
     if (!el)
       return
     enablePlaintextEditing(el, () => c.indexDescription, async (text) => {
-      if (!isLocalhost()) {
-        c.indexDescription = text
-        log("Save on localhost to keep the change.")
-        return
-      }
       try {
         await saveDescription(c.cNum, "indexDescription", text)
         c.indexDescription = text

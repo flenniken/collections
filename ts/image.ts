@@ -1812,8 +1812,8 @@ function applyFetchedCollectionText(collection: CJson.Collection,
 }
 
 function setupDescriptionEditing() {
-  // Let an admin tap a description and edit it in place.
-  if (!isAdmin())
+  // Let a localhost admin tap a description and edit it in place.
+  if (!isAdmin() || !isLocalhost())
     return
 
   const descriptions = area!.querySelectorAll(".description")
@@ -1828,12 +1828,6 @@ function setupDescriptionEditing() {
 
 async function saveEditedDescription(imageIx: number, text: string) {
   // Merge the image description into the collection json on disk.
-  if (!isLocalhost()) {
-    cJson.images[imageIx].description = text
-    log("Save with the download icon to keep the change.")
-    return
-  }
-
   try {
     await saveDescription(cJson.cNum, "imageDescription", text, imageIx)
     cJson.images[imageIx].description = text
