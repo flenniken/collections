@@ -498,6 +498,15 @@ body.thumb-reordering {
   -webkit-touch-callout: none;
 }
 
+@media (orientation: landscape) {
+  #images .location-map,
+  #thumbnails .location-map {
+    aspect-ratio: auto;
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
 #images .location-map::after,
 #thumbnails .location-map::after {
   content: "";
