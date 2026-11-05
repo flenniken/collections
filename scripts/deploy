@@ -249,8 +249,10 @@ def invalidationPaths(modifiedFiles, existingS3Keys=None):
   Collapse modified dist paths into a few CloudFront wildcard paths.
   Each returned path counts as one invalidation. Collection json is
   omitted. New jpg/mp4 files are omitted; changed ones get exact
-  paths. When many collection HTML folders change, use /* instead of
-  one /images/cN/*.html per folder.
+  paths.   When many collection HTML folders change, use /* instead of
+  one /images/cN/* per folder. CloudFront only treats * as a
+  wildcard when it is the last character, so /images/cN/*.html
+  would not match image-N.html or its brotli/gzip copies.
   """
   htmlCollections = set()
   js = icons = tin = False
@@ -276,7 +278,10 @@ def invalidationPaths(modifiedFiles, existingS3Keys=None):
 
   if len(htmlCollections) > WIDE_HTML_INVALIDATION:
     return ["/*"]
-  paths = [f"/images/c{cNum}/*.html" for cNum in sorted(htmlCollections)]
+  paths = [f"/images/c{cNum}/*" for cNum in sorted(htmlCollections)]
+  # Folder wildcards already cover jpg/mp4 in those collections.
+  exact = {p for p in exact if not any(
+    p.startswith(f"/images/c{cNum}/") for cNum in htmlCollections)}
   if js:
     paths.append("/js/*")
   if icons:
@@ -658,7 +663,7 @@ class TestModule(unittest.TestCase):
       "collections.css",
       "tin/c59-4-t.jpg",
     ]), [
-      "/images/c59/*.html",
+      "/images/c59/*",
       "/js/*",
       "/tin/*",
       "/collections.css",
@@ -669,9 +674,17 @@ class TestModule(unittest.TestCase):
       "images/c59/thumbnails-59.html",
       "sw.js",
     ]), [
-      "/images/c12/*.html",
-      "/images/c59/*.html",
+      "/images/c12/*",
+      "/images/c59/*",
       "/sw.js",
+    ])
+    self.assertEqual(invalidationPaths([
+      "images/c59/image-59.html",
+      "images/c59/c59-4-p.jpg",
+    ], {
+      "images/c59/c59-4-p.jpg",
+    }), [
+      "/images/c59/*",
     ])
     self.assertEqual(invalidationPaths([
       "icons/photo.svg",

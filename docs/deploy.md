@@ -17,14 +17,20 @@ updated so the new files are removed from the cache.  The deploy
 script does this. AWS gives 1,000 free invalidation paths per month;
 each path, including a wildcard, counts as one. Deploy copies every
 changed file to S3, then invalidates a small set of wildcards:
-`/images/cN/*.html` for collections whose HTML changed, `/js/*`,
+`/images/cN/*` for collections whose HTML changed, `/js/*`,
 `/tin/*`, `/icons/*`, and exact paths for root files such as
-`index.html`. Collection json is not invalidated; the site does not
-fetch it. New jpg and mp4 files are not invalidated, because they are
-not in CloudFront yet. A jpg or mp4 that already existed on S3 and
-changed is invalidated so a delete-and-redownload gets the new bytes.
-When more than 15 collection HTML folders change in one sync, deploy
-invalidates `/*` instead.
+`index.html`. CloudFront only treats `*` as a wildcard when it is
+the last character, so `/images/cN/*.html` would not match
+`image-N.html` or the brotli/gzip copies CloudFront stores for
+Safari. `/images/cN/*` also drops that collection's photos from
+CloudFront; the next download refills them from S3. Collection
+json is not listed on its own; the site does not fetch it. New jpg
+and mp4 files are not invalidated, because they are not in
+CloudFront yet. A jpg or mp4 that already existed on S3 and
+changed is invalidated so a delete-and-redownload gets the new
+bytes, unless that collection's HTML also changed and `/images/cN/*`
+already covers the folder. When more than 15 collection HTML
+folders change in one sync, deploy invalidates `/*` instead.
 
 Index thumbnails in `tin/`, icons, `favicon.ico`, and
 `collections.webmanifest` get `Cache-Control: max-age=2592000` on S3
