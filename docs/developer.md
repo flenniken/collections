@@ -17,3 +17,4 @@ This page links to documents of interest to developers.
 * [Login Flow](login-flow.md) -— how use the login-flow command to verify the authentication flow and troubleshoot issues.
 * [Notification](notification.md) -— how notifications and the red badge works.
 * [Road Map](road-map.md) -— planned near term features.
+* [Caches](caches.md) -— the caches we use and how they work.
