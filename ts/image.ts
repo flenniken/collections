@@ -1875,10 +1875,29 @@ async function downloadCjson() {
 let sharePreviewFile: File | null = null
 let sharePreviewIx: number | null = null
 
+function previewUrl(imageIx: number): {url: string, filename: string} {
+  const filename = cJson.images[imageIx].iPreview
+  return {filename, url: `/images/c${cJson.cNum}/${filename}`}
+}
+
+async function previewFileFromCache(imageIx: number): Promise<File | null> {
+  // Use the jpeg the image page already cached. This does not go
+  // through fetch, so CloudFront is not contacted.
+  const {url, filename} = previewUrl(imageIx)
+  const cache = await openCreateCache()
+  const response = await cache.match(url, {ignoreSearch: true})
+  if (!response || !response.ok)
+    return null
+  const blob = await response.blob()
+  const type = blob.type || "image/jpeg"
+  return new File([blob], filename, {type: type})
+}
+
 async function fetchPreviewFile(imageIx: number): Promise<File> {
-  const image = cJson.images[imageIx]
-  const filename = image.iPreview
-  const baseUrl = `/images/c${cJson.cNum}/${filename}`
+  const fromCache = await previewFileFromCache(imageIx)
+  if (fromCache)
+    return fromCache
+  const {url: baseUrl, filename} = previewUrl(imageIx)
   const auth = await liveVideoAuthInit()
   const url = `${baseUrl}${auth.urlSuffix}`
   const init: RequestInit = auth.headers ? { headers: auth.headers } : {}
@@ -1887,14 +1906,14 @@ async function fetchPreviewFile(imageIx: number): Promise<File> {
     throw new Error(`fetch failed: ${response.status}`)
   const blob = await response.blob()
   const type = blob.type || "image/jpeg"
-  return new File([blob], filename, { type: type })
+  return new File([blob], filename, {type: type})
 }
 
 async function updateSharePreview(imageIx: number) {
   sharePreviewIx = imageIx
   sharePreviewFile = null
   try {
-    const file = await fetchPreviewFile(imageIx)
+    const file = await previewFileFromCache(imageIx)
     if (sharePreviewIx === imageIx)
       sharePreviewFile = file
   } catch (err) {
