@@ -122,7 +122,7 @@ async function setCollectionState(cNum: number, collectionState: string) {
     await cache.put(c2ReadyRequest, c2ReadyResponse)
 
     // const text = await readyResponse.text()
-    log(`Collection ${cNum} is ready. ${count} images.`);
+    // log(`Collection ${cNum} is ready. ${count} images.`);
   } else if (collectionState == "withoutImages") {
     await cache.delete(c2ReadyRequest)
   }
@@ -144,7 +144,7 @@ async function setIndexCollectionStates() {
     if (readyResponse) {
       setCollectionState(cNum, "withImages")
     } else {
-      log(`Collection ${cNum} is not cached yet.`);
+      // log(`Collection ${cNum} is not cached yet.`);
       setCollectionState(cNum, "withoutImages")
     }
   })
