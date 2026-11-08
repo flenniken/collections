@@ -262,8 +262,11 @@ You will see:
 
 # Delete Collection
 
-When you delete a collection it deletes files in the cache that start
-with images/cN.
+When you delete a collection it deletes the collection files given by
+a list of numbers stored in the thumbnails page from
+pages/collections.json.  It used to scan the whole cache for files
+that begin with the collection number "images/cN/... but that took
+about 6 seconds.
 
 <style>body { max-width: 40em}</style>
 
