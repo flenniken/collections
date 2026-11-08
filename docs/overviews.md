@@ -171,7 +171,7 @@ You can login when developing on localhost:8000.  There are redirect
 urls for this. Note that downloading from localhost downloads from the
 local images folder and does not go to cloudfront.
 
-Admin users see the refresh and download icons.
+Admin users see the download icon.
 
 Collections uses the AWS Cognito service to handle login.  This allows
 collections to be a public static website without a backend server
@@ -185,29 +185,27 @@ manually with the AWS Cognito console.
 # Service Worker
 
 The sw typescript file is a Service Worker implementation that manages
-file caching.  This enables the app to work offline and provides
-better performance.
+file caching. This enables the app to work offline and to show new
+content without a manual refresh.
 
-The service worker intercepts all HTTP/HTTPS requests and maintains
-its own application cache separate from the browser's default cache.
+The service worker intercepts GET requests and stores files in the
+application cache together with each file's ETag. It does not use
+the browser HTTP cache.
 
-It handles image files differently then the other files:
+Every request is network first: the worker sends If-None-Match with
+the stored ETag. CloudFront returns 304 when the file is unchanged,
+and the worker uses the cached bytes. When the ETag differs, it
+downloads the new file and updates the cache. When the network is
+down, it uses the cache.
 
-* For image files, it checks the cache first and only fetches from the
-network if not found in the cache. This optimizes image loading and
-enables offline access.
+Collection photos still need the Cognito auth header. An img tag
+cannot send it, so the page keeps the current access token in
+IndexedDB and refreshes it. The worker reads that token when
+revalidating jpg and mp4 files. If the token is missing or expired,
+it uses the cached file.
 
-* For tin thumbnails, icons, favicon, and the web manifest, it uses
-the browser HTTP cache. A fresh max-age copy skips the network. A
-reload revalidates. The application cache is the offline fallback.
-
-* For HTML, CSS, and page JS, it shows the cached file immediately,
-then revalidates in the background. When index.html changes, the
-index page reloads so a newly published collection appears. A
-manual refresh skips the cache and goes to the network.
-
-* For sw.js, it revalidates every launch so a new service worker can
-install. The application cache is the offline fallback.
+sw.js itself is fetched without the application cache so a new worker
+can install.
 
 [⬇](#Contents)
 

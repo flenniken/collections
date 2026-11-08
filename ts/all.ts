@@ -6,8 +6,103 @@
 // images.
 const appCacheName = "collections-v1"
 
+const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60 * 1000
+
 const log = console.log
 const logError = console.error
+
+function accessTokenExpFromJwt(access_token: string): number | null {
+  // Read the exp claim from a JWT access token.
+  try {
+    const part = access_token.split('.')[1]
+    const padding = '='.repeat((4 - part.length % 4) % 4)
+    const base64 = (part + padding).replace(/\-/g, '+').replace(/_/g, '/')
+    const payload = JSON.parse(atob(base64))
+    if (typeof payload.exp === "number")
+      return payload.exp * 1000
+  } catch {
+  }
+  return null
+}
+
+type ImageAuth = {accessToken: string, userId: string, exp: number | null}
+
+const imageAuthDbName = "collections-auth"
+const imageAuthStore = "auth"
+const imageAuthKey = "current"
+
+function isImageAuthValid(auth: ImageAuth | null): auth is ImageAuth {
+  if (!auth || !auth.accessToken || !auth.userId)
+    return false
+  const exp = auth.exp ?? accessTokenExpFromJwt(auth.accessToken)
+  if (!exp)
+    return true
+  return Date.now() < exp
+}
+
+function openImageAuthDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(imageAuthDbName, 1)
+    request.onupgradeneeded = () => {
+      const db = request.result
+      if (!db.objectStoreNames.contains(imageAuthStore))
+        db.createObjectStore(imageAuthStore)
+    }
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+}
+
+async function storeImageAuth(auth: ImageAuth) {
+  const db = await openImageAuthDb()
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(imageAuthStore, "readwrite")
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+      tx.objectStore(imageAuthStore).put(auth, imageAuthKey)
+    })
+  }
+  finally {
+    db.close()
+  }
+}
+
+async function readImageAuth(): Promise<ImageAuth | null> {
+  const db = await openImageAuthDb()
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(imageAuthStore, "readonly")
+      const request = tx.objectStore(imageAuthStore).get(imageAuthKey)
+      request.onsuccess = () => {
+        const value = request.result as ImageAuth | undefined
+        if (value && value.accessToken && value.userId)
+          resolve(value)
+        else
+          resolve(null)
+      }
+      request.onerror = () => reject(request.error)
+    })
+  }
+  finally {
+    db.close()
+  }
+}
+
+async function clearImageAuth() {
+  const db = await openImageAuthDb()
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(imageAuthStore, "readwrite")
+      tx.oncomplete = () => resolve()
+      tx.onerror = () => reject(tx.error)
+      tx.objectStore(imageAuthStore).delete(imageAuthKey)
+    })
+  }
+  finally {
+    db.close()
+  }
+}
 
 function two(num: number) {
   // Return the number rounded to two decimal places.
@@ -17,6 +112,17 @@ function two(num: number) {
 function three(num: number) {
   // Return the number rounded to three decimal places.
   return Math.round(num * 1000 ) / 1000;
+}
+
+function getRandom8(): string {
+  // Return a random string of 8 alphanumeric characters (base62).
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  let result = ""
+  for (let i = 0; i < 8; i++) {
+    const randomIndex = Math.floor(Math.random() * chars.length)
+    result += chars[randomIndex]
+  }
+  return result
 }
 
 class Timer {

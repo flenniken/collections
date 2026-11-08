@@ -23,21 +23,22 @@ changed file to S3, then invalidates a small set of wildcards:
 the last character, so `/images/cN/*.html` would not match
 `image-N.html` or the brotli/gzip copies CloudFront stores for
 Safari. `/images/cN/*` also drops that collection's photos from
-CloudFront; the next download refills them from S3. Collection
+CloudFront; the next visit refills them from S3. Collection
 json is not listed on its own; the site does not fetch it. New jpg
 and mp4 files are not invalidated, because they are not in
 CloudFront yet. A jpg or mp4 that already existed on S3 and
-changed is invalidated so a delete-and-redownload gets the new
-bytes, unless that collection's HTML also changed and `/images/cN/*`
+changed is invalidated so If-None-Match sees the new ETag,
+unless that collection's HTML also changed and `/images/cN/*`
 already covers the folder. When more than 15 collection HTML
 folders change in one sync, deploy invalidates `/*` instead.
 
 Index thumbnails in `tin/`, icons, `favicon.ico`, and
-`collections.webmanifest` get `Cache-Control: max-age=2592000` on S3
-so the browser can reuse a fresh copy without a CloudFront round
-trip. HTML, JS, CSS, and collection photos are uploaded without that
-header. A recropped tin file or a new icon shows after a refresh, or
-when the month expires.
+`collections.webmanifest` get `Cache-Control: max-age=2592000` on S3.
+The service worker does not use the browser HTTP cache; it
+revalidates every file with If-None-Match. HTML, JS, CSS, and
+collection photos are uploaded without that header. A recropped tin
+file or a new icon shows on the next visit when CloudFront's ETag
+changes.
 
 Deploy compares file bytes, not headers. Existing objects do not pick
 up max-age until you copy them again. Do that once:

@@ -34,7 +34,7 @@ from boto3.s3.transfer import TransferConfig
 # CloudFront counts each invalidation path, including wildcards, against
 # 1,000 free paths per month. Collection json is a backup and is never
 # fetched. New jpg/mp4 files are not in CloudFront yet; changed ones
-# are, so they must be invalidated or a re-download keeps the old file.
+# are, so they must be invalidated or If-None-Match keeps the old file.
 COLLECTION_HTML_RE = re.compile(r"^images/c(\d+)/[^/]+\.html$")
 COLLECTION_JSON_RE = re.compile(r"^images/c\d+/[^/]+\.json$")
 COLLECTION_IMAGE_RE = re.compile(r"^images/c\d+/[^/]+\.(jpg|mp4)$")

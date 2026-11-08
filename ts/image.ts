@@ -96,6 +96,7 @@ async function handleLoad() {
   startTimer.log("load event")
 
   // Show the admin icons when an admin is logged in.
+  publishImageAuth()
   showAdminIcons()
   if (isLocalhost())
     await refreshImageFieldsFromJson()

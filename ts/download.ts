@@ -109,17 +109,6 @@ function getCollectionUrls(cNum: number, iNumList: number[],
   return urls
 }
 
-function getRandom8(): string {
-  // Return a random string of 8 alphanumeric characters (base62).
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    const randomIndex = Math.floor(Math.random() * chars.length);
-    result += chars[randomIndex];
-  }
-  return result;
-}
-
 function getUTCDateTime() {
   const now = new Date()
   const dateString = now.toISOString()

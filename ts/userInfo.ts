@@ -18,8 +18,6 @@ interface CognitoAuth {
   client_id: string
 }
 
-const ACCESS_TOKEN_REFRESH_BUFFER_MS = 60 * 1000
-
 let refreshAccessTokenPromise: Promise<UserInfo | null> | null = null
 
 function fetchUserInfo() {
@@ -32,12 +30,44 @@ function fetchUserInfo() {
   return JSON.parse(userInfoJson) as UserInfo;
 }
 
+function imageAuthFromUserInfo(userInfo: UserInfo): ImageAuth {
+  return {
+    accessToken: userInfo.access_token,
+    userId: userInfo.userId,
+    exp: accessTokenExpiresAt(userInfo),
+  }
+}
+
+async function publishImageAuth(userInfo?: UserInfo | null) {
+  // Keep IndexedDB in sync with the current access token. The service
+  // worker reads it when revalidating collection photos.
+  let info: UserInfo | null
+  if (userInfo === undefined)
+    info = await ensureValidAccessToken()
+  else if (!userInfo)
+    info = null
+  else if (isAccessTokenExpired(userInfo))
+    info = await ensureValidAccessToken()
+  else
+    info = userInfo
+  try {
+    if (!info || !info.access_token || !info.userId)
+      await clearImageAuth()
+    else
+      await storeImageAuth(imageAuthFromUserInfo(info))
+  }
+  catch (error) {
+    logError(`Unable to store image auth: ${error}`)
+  }
+}
+
 function storeUserInfo(userInfo: UserInfo) {
   // Store the user information in local storage.
   log("store user info")
   const userInfoJson = JSON.stringify(userInfo)
   log(userInfoJson)
   localStorage.setItem('userInfo', userInfoJson);
+  void publishImageAuth(userInfo)
 }
 
 function clearUserInfo() {
@@ -47,6 +77,7 @@ function clearUserInfo() {
   localStorage.removeItem("cognitoAuth")
   localStorage.removeItem("notificationsOn")
   localStorage.removeItem("notificationsVapidPublicKey")
+  void clearImageAuth()
 }
 
 function hasLoggedIn(): boolean {
@@ -87,20 +118,6 @@ function tokenExpiresAt(access_token: string, expires_in?: number): number | und
   if (typeof expires_in === "number")
     return Date.now() + expires_in * 1000
   return accessTokenExpFromJwt(access_token) ?? undefined
-}
-
-function accessTokenExpFromJwt(access_token: string): number | null {
-  // Read the exp claim from a JWT access token.
-  try {
-    const part = access_token.split('.')[1]
-    const padding = '='.repeat((4 - part.length % 4) % 4)
-    const base64 = (part + padding).replace(/\-/g, '+').replace(/_/g, '/')
-    const payload = JSON.parse(atob(base64))
-    if (typeof payload.exp === "number")
-      return payload.exp * 1000
-  } catch {
-  }
-  return null
 }
 
 function accessTokenExpiresAt(userInfo: UserInfo): number | null {
@@ -187,3 +204,5 @@ async function ensureValidAccessToken(): Promise<UserInfo | null> {
   }
   return refreshAccessTokenPromise
 }
+
+void publishImageAuth()

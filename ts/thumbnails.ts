@@ -44,6 +44,7 @@ function handleDOMContentLoaded() {
 
 async function handleLoad() {
   log("load event")
+  publishImageAuth()
   topHeaderHeight = cssNum("--top-header-height")
   log(`topHeaderHeight: ${topHeaderHeight}`)
   let location = document.body.dataset.location || ""

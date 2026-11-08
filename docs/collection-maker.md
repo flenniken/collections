@@ -377,9 +377,9 @@ g all
 scripts/deploy -s
 ~~~
 
-♫ Note: If you edit your photos after deploying them, the iPhone will
-continue to use the photos it has cached.  To see the new ones, delete
-the collection and download them again.
+♫ Note: After you deploy edited photos, the next visit revalidates
+each file with If-None-Match. Unchanged files stay cached; changed
+ones download automatically.
 
 [⬇](#Contents)
 

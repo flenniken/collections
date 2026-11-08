@@ -35,6 +35,7 @@ function registerServerWorker() {
   // Log when the service worker is ready.
   navigator.serviceWorker.ready.then((registration) => {
     log("Service worker ready.");
+    publishImageAuth()
   });
 }
 
@@ -281,6 +282,7 @@ async function handleLoad() {
   log(`Available width and height: (${availW}, ${availH})`)
 
   installBanner()
+  publishImageAuth()
 
   // Show the admin icons when an admin is logged in.
   showHideAdminUI("index")
@@ -370,25 +372,6 @@ function installBanner() {
   log("Running on Safari, show install banner.")
   get("install-banner").style.display = "block"
 }
-
-addEventListener("message", (event: MessageEvent) => {
-  // The service worker posts reload-index when a background fetch
-  // found a new index.html (a newly published collection).
-  const data = event.data as { action?: string } | string
-  log(`Message received: ${event.data}`)
-  if (typeof data === "object" && data && data.action === "reload-index") {
-    log("Reload index, new content.")
-    window.location.replace(
-      window.location.pathname + window.location.search + window.location.hash)
-  }
-})
-
-// onmessage = (e) => {
-//   log("Message received from main script");
-//   const workerResult = "hello";
-//   log("Posting message back to main script");
-//   postMessage(workerResult);
-// }
 
 function handleResize() {
   log("resize event")
