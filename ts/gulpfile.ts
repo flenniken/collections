@@ -119,7 +119,8 @@ function ts2js(srcList: string[], destFile: string, destDir: string,
 // objects.
 const image_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "tmp/branding.ts", "ts/image.ts"]
-const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/userInfo.ts", "ts/thumbnails.ts"]
+const thumbnails_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts",
+                  "ts/userInfo.ts", "ts/thumbnails.ts"]
 const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInfo.ts",
                   "ts/login.ts", "ts/download.ts", "ts/notify.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
@@ -409,16 +410,24 @@ function thumbnailsPage(cNum: number, cb: TaskCallback) {
 /*
 statictea \
   -t pages/thumbnails-tmpl.html \
-  -s dist/images/cx/cx.json \
+  -s tmp/html/cx-thumbnails.json \
   -o pages/header.tea \
   -r dist/images/cx/thumbnails-x.html
 */
+
+  const cjson = readJsonFile(`dist/images/c${cNum}/c${cNum}.json`)
+  const csjson = readJsonFile("pages/collections.json") as CJson.Csjson
+  const indexCollection = csjson.indexCollections.find(c => c.cNum === cNum)
+  if (!indexCollection)
+    throw new Error(`Collection ${cNum} missing from pages/collections.json`)
+  const serverJson = `tmp/html/c${cNum}-thumbnails.json`
+  fs.writeFileSync(serverJson, JSON.stringify({...cjson, indexCollection}))
 
   const tmpFilename = `tmp/html/thumbnails-${cNum}.html`
   const distFilename = `dist/images/c${cNum}/thumbnails-${cNum}.html`
   const parameters = [
     "-t", "pages/thumbnails-tmpl.html",
-    "-s", `dist/images/c${cNum}/c${cNum}.json`,
+    "-s", serverJson,
     "-o", "pages/header.tea",
     "-r", tmpFilename,
   ]

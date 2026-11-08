@@ -53,6 +53,22 @@ self.addEventListener("activate", event => {
   })())
 })
 
+self.addEventListener("message", (event: Event) => {
+  const messageEvent = event as ExtendableMessageEvent
+  const data = messageEvent.data as {
+    action?: string, cNum?: number, iNumList?: number[], liveINums?: number[]
+  } | null
+  if (!data || data.action !== "delete-collection")
+    return
+  const cNum = data.cNum
+  const iNumList = data.iNumList
+  if (!(typeof cNum === "number" && cNum > 0) || !iNumList)
+    return
+  logsw(`delete collection ${cNum}`)
+  messageEvent.waitUntil(deleteCollectionFromCache(cNum, iNumList,
+    data.liveINums ?? []))
+})
+
 self.addEventListener("push", (event: Event) => {
   const pushEvent = (<PushEvent>event)
   pushEvent.waitUntil((async () => {

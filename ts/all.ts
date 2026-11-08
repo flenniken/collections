@@ -151,26 +151,32 @@ async function openCreateCache(): Promise<Cache> {
   return cache
 }
 
-function isCollectionCachePath(pathname: string, cNum: number): boolean {
-  // True for this collection's cached photos, pages, and ready mark.
-  if (pathname === `/c${cNum}-ready`)
-    return true
-  return pathname.startsWith(`/images/c${cNum}/`)
+function getCollectionUrls(cNum: number, iNumList: number[],
+    liveINums: number[] = []): string[] {
+  // Return a list of the collection's urls. This includes the images
+  // and the html pages -- everything needed to view the collection
+  // thumbnails and image pages.
+
+  const urls: string[] = []
+
+  for (const iNum of iNumList) {
+    urls.push(`/images/c${cNum}/c${cNum}-${iNum}-p.jpg`)
+    urls.push(`/images/c${cNum}/c${cNum}-${iNum}-t.jpg`)
+  }
+  for (const iNum of liveINums) {
+    urls.push(`/images/c${cNum}/c${cNum}-${iNum}-v.mp4`)
+  }
+  urls.push(`/images/c${cNum}/image-${cNum}.html`)
+  urls.push(`/images/c${cNum}/thumbnails-${cNum}.html`)
+
+  return urls
 }
 
-async function deleteCollectionFromCache(cNum: number) {
+async function deleteCollectionFromCache(cNum: number, iNumList: number[],
+    liveINums: number[] = []) {
   // Remove this collection's files from the application cache.
   const cache = await openCreateCache()
-  const requests = await cache.keys()
-  const pending: Promise<boolean>[] = []
-  for (const request of requests) {
-    let pathname = request.url
-    try {
-      pathname = new URL(request.url).pathname
-    } catch {
-    }
-    if (isCollectionCachePath(pathname, cNum))
-      pending.push(cache.delete(request))
-  }
-  await Promise.all(pending)
+  const urls = getCollectionUrls(cNum, iNumList, liveINums)
+  urls.push(`/c${cNum}-ready`)
+  await Promise.all(urls.map(url => cache.delete(url, {ignoreSearch: true})))
 }

@@ -85,30 +85,6 @@ async function downloadCollection(cNum: number) {
   downloadCollectionImages(cache, indexCollection)
 }
 
-function getCollectionUrls(cNum: number, iNumList: number[],
-    liveINums: number[] = []): string[] {
-  // Return a list of the collection's urls. This includes the images
-  // and the html pages -- everything needed to view the collection
-  // thumbnails and image pages.
-
-  let urls: string[] = []
-
-  // Try to download a file that doesn't exist for testing the error path.
-  // urls.push("js/missing.js")
-
-  for (const iNum of iNumList) {
-    urls.push(`images/c${cNum}/c${cNum}-${iNum}-p.jpg`)
-    urls.push(`images/c${cNum}/c${cNum}-${iNum}-t.jpg`)
-  }
-  for (const iNum of liveINums) {
-    urls.push(`images/c${cNum}/c${cNum}-${iNum}-v.mp4`)
-  }
-  urls.push(`images/c${cNum}/image-${cNum}.html`)
-  urls.push(`images/c${cNum}/thumbnails-${cNum}.html`)
-
-  return urls
-}
-
 function getUTCDateTime() {
   const now = new Date()
   const dateString = now.toISOString()

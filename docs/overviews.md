@@ -46,6 +46,7 @@ thumbnails-1.html is made from:
 
 * thumbnails-tmpl.html
 * c1.json
+* the matching collection from collections.json
 * header.tea
 
 images-1.html is made from:

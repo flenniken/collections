@@ -2,7 +2,12 @@
 
 /// <reference path="./win.ts" />
 /// <reference path="./all.ts" />
+/// <reference path="./cjsonDefinition.ts" />
 /// <reference path="./userInfo.ts" />
+
+// The index collection is defined in the thumbnails html from
+// collections.json.
+var indexCollection: CJson.IndexCollection
 
 // The available screen area.
 let availWidth = 0
@@ -881,7 +886,7 @@ function sizeImages() {
 
 async function removeThisCollection() {
   // Delete this collection's cached photos and return to the index.
-  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  const cNum = indexCollection.cNum
   if (!(cNum > 0))
     return
   const message = "Are you sure you want to delete this collection's images from the cache?"
@@ -890,6 +895,16 @@ async function removeThisCollection() {
     return
   }
   log(`remove collection ${cNum} from the app cache`)
-  await deleteCollectionFromCache(cNum)
+  const iNumList = indexCollection.iNumList
+  const liveINums = indexCollection.liveINums ?? []
+  const cache = await openCreateCache()
+  await cache.delete(`/c${cNum}-ready`)
+  const worker = navigator.serviceWorker && navigator.serviceWorker.controller
+  if (worker)
+    worker.postMessage({
+      action: "delete-collection", cNum, iNumList, liveINums,
+    })
+  else
+    await deleteCollectionFromCache(cNum, iNumList, liveINums)
   window.location.assign("/index.html")
 }
