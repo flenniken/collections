@@ -18,19 +18,20 @@ We show how to do these steps in detail below.
 # Create Folder
 
 Create a tmp folder for the new collection named with the next
-collection prefix. List `dist/images` to find the next name. For the
-example below, create c29. Make sure to create the cnum bash variable,
-it will be used in multiple commands.
+collection prefix.
+
+The following command lists `dist/images` to find the last collection
+name then it adds one to it. It will print two lines, one to create a
+bash variable and one to create the new folder.  Copy and paste to run
+them.  The cnum bash variable will be used in multiple later commands.
 
 ~~~
 # from container
-printf '%s\n' dist/images/c*/ | sort -V | tail -3
+printf 'cnum=c%s\nmkdir tmp/$cnum\n' \
+  "$(( $(printf '%s\n' dist/images/c*/ \
+  | sort -V | tail -1 | sed 's/.*c//;s|/||') + 1 ))"
 
-dist/images/c26/
-dist/images/c27/
-dist/images/c28/
-
-cnum=c29 # variable
+cnum=c29
 mkdir tmp/$cnum
 ~~~
 

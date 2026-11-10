@@ -1,0 +1,226 @@
+{
+  "title": "Yellowstone Color",
+  "indexDescription": "Pictures of Yellowstone National Park by Barb Rose-Leigh.",
+  "description": "Barb Rose-Leigh visited Yellowstone National Park and took pictures of the mud pots in July 2026.",
+  "cNum": 61,
+  "posted": "2026-11-09",
+  "location": "44.61909086284231, -110.5610232106176",
+  "images": [
+    {
+      "description": "This must be new mud because the dead trees are still standing.",
+      "iPreview": "c61-3-p.jpg",
+      "iThumbnail": "c61-3-t.jpg",
+      "width": 1536,
+      "height": 2048,
+      "size": 879647,
+      "sizet": 49939,
+      "location": "",
+      "taken": ""
+    },
+    {
+      "description": "The Yellowstone Caldera is a massive active supervolcano that last erupted 631,000 years ago.",
+      "iPreview": "c61-4-p.jpg",
+      "iThumbnail": "c61-4-t.jpg",
+      "width": 1536,
+      "height": 2048,
+      "size": 624735,
+      "sizet": 38894,
+      "location": "",
+      "taken": ""
+    },
+    {
+      "description": "Yellowstone has about half of the globe's active geysers.",
+      "iPreview": "c61-1-p.jpg",
+      "iThumbnail": "c61-1-t.jpg",
+      "width": 1536,
+      "height": 2048,
+      "size": 1069094,
+      "sizet": 65626,
+      "location": "",
+      "taken": ""
+    },
+    {
+      "description": "You can tell the pool is large by comparing with the small trees in the background.",
+      "iPreview": "c61-2-p.jpg",
+      "iThumbnail": "c61-2-t.jpg",
+      "width": 1536,
+      "height": 2048,
+      "size": 523505,
+      "sizet": 45536,
+      "location": "",
+      "taken": ""
+    },
+    {
+      "description": "Vivid clouds over the river.  We walked by the river when it was near flooding in Billings Montana when we visited June 2023.",
+      "iPreview": "c61-5-p.jpg",
+      "iThumbnail": "c61-5-t.jpg",
+      "width": 3000,
+      "height": 4000,
+      "size": 2570998,
+      "sizet": 61099,
+      "location": "",
+      "taken": "2026-07-08T12:21:15"
+    },
+    {
+      "description": "Mud flow with steam hovering on the edge.",
+      "iPreview": "c61-6-p.jpg",
+      "iThumbnail": "c61-6-t.jpg",
+      "width": 3000,
+      "height": 4000,
+      "size": 1427277,
+      "sizet": 40697,
+      "location": "",
+      "taken": "2026-07-08T14:40:28"
+    },
+    {
+      "description": "Interesting patterns.",
+      "iPreview": "c61-7-p.jpg",
+      "iThumbnail": "c61-7-t.jpg",
+      "width": 3000,
+      "height": 4000,
+      "size": 2120180,
+      "sizet": 52227,
+      "location": "",
+      "taken": "2026-07-08T14:41:18"
+    },
+    {
+      "description": "Red muddy water and steam.",
+      "iPreview": "c61-8-p.jpg",
+      "iThumbnail": "c61-8-t.jpg",
+      "width": 3000,
+      "height": 4000,
+      "size": 1055690,
+      "sizet": 27425,
+      "location": "",
+      "taken": "2026-07-08T14:42:37"
+    },
+    {
+      "description": "Yellowstone National Park was created in 1872.",
+      "iPreview": "c61-10-p.jpg",
+      "iThumbnail": "c61-10-t.jpg",
+      "width": 3000,
+      "height": 4000,
+      "size": 2566947,
+      "sizet": 54932,
+      "location": "",
+      "taken": "2026-07-08T17:19:11"
+    },
+    {
+      "description": "Looks like the lake's drain.",
+      "iPreview": "c61-9-p.jpg",
+      "iThumbnail": "c61-9-t.jpg",
+      "width": 4000,
+      "height": 3000,
+      "size": 2004151,
+      "sizet": 59784,
+      "location": "",
+      "taken": "2026-07-08T17:02:03"
+    }
+  ],
+  "zoomPoints": {
+    "430x933": [
+      {
+        "scale": 0.45556640625,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.45556640625000006,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.45556640625,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.45556640625,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.23325,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.23325,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.21808163430518387,
+        "tx": -98.3313738065167,
+        "ty": 58.87732567318818
+      },
+      {
+        "scale": 0.23325,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.23325,
+        "tx": -134.875,
+        "ty": 0
+      },
+      {
+        "scale": 0.30543064443657714,
+        "tx": -488.106775177332,
+        "ty": 19.150775085611485
+      }
+    ],
+    "932x430": [
+      {
+        "scale": 0.6838462655771398,
+        "tx": -35.73397967127485,
+        "ty": -611.0166595969004
+      },
+      {
+        "scale": 0.6086869080840985,
+        "tx": -0.9417860993272669,
+        "ty": -342.90097061844074
+      },
+      {
+        "scale": 0.626054781440819,
+        "tx": -26.335393586530444,
+        "ty": -575.0786022265468
+      },
+      {
+        "scale": 0.6174985057037091,
+        "tx": 0.3179152739837434,
+        "ty": -537.5432780549513
+      },
+      {
+        "scale": 0.3209950426748524,
+        "tx": -15.373246708924725,
+        "ty": -302.9409308658846
+      },
+      {
+        "scale": 0.3205978418157015,
+        "tx": 0.062312337292382836,
+        "ty": -399.76355452617804
+      },
+      {
+        "scale": 0.33590626187646144,
+        "tx": -3.3617121274808284,
+        "ty": -49.46143160581852
+      },
+      {
+        "scale": 0.3384539788847464,
+        "tx": -43.37256958127267,
+        "ty": -202.46474474034835
+      },
+      {
+        "scale": 0.34470471041623935,
+        "tx": -94.17191111958272,
+        "ty": -616.7814492653873
+      },
+      {
+        "scale": 0.233,
+        "tx": 0,
+        "ty": -134.5
+      }
+    ]
+  }
+}

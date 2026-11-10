@@ -1,6 +1,29 @@
 {
   "indexCollections": [
     {
+      "cNum": 61,
+      "building": false,
+      "title": "Yellowstone Color",
+      "indexDescription": "Pictures of Yellowstone National Park by Barb Rose-Leigh.",
+      "iThumbnail": "c61-3-t.jpg",
+      "iSmall": "c61-3-s.jpg",
+      "posted": "2026-11-09",
+      "iCount": 10,
+      "totalSize": 15338383,
+      "iNumList": [
+        3,
+        4,
+        1,
+        2,
+        5,
+        6,
+        7,
+        8,
+        10,
+        9
+      ]
+    },
+    {
       "cNum": 60,
       "building": false,
       "title": "Bemelmans Bar",
