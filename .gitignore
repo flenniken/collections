@@ -6,9 +6,7 @@ dist/index.html
 dist/maker.html
 dist/sw.js
 dist/maker.js
-dist/images/*/*.jpg
-dist/images/*/*.mp4
-dist/images/*/*.html
+dist/images/*/*
 dist/tin/
 dist/collections.css
 dist/maker.css
