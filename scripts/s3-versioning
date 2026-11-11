@@ -1,0 +1,265 @@
+#!/usr/bin/python3
+
+# This is the help text shown with -h:
+"""
+Enable S3 versioning and keep the last 10 versions of each file.
+
+Html and json change often and are small, so 10 versions is enough
+history to restore a collection if you need an older copy. Jpg and
+mp4 are larger but are rarely overwritten, so they usually have one
+version. Versioning also means a delete adds a delete marker instead
+of removing the bytes.
+
+The lifecycle replaces the bucket's rules with:
+
+* current object plus the 10 most recent previous versions
+* log files under logs/ still expire after 30 days
+* unfinished multipart uploads abort after 7 days
+
+Usage:
+  scripts/s3-versioning --apply
+  scripts/s3-versioning --show
+  scripts/s3-versioning --apply sflennikco
+"""
+
+import os
+
+if not os.environ.get("coder_env"):
+  print("Run from the Collection's docker environment.")
+  exit(1)
+
+import argparse
+import json
+import signal
+import sys
+import textwrap
+import traceback
+import unittest
+
+from botocore.exceptions import ClientError
+from boto_client import getBotoClient, getAwsSettings
+
+KEEP_NONCURRENT = 10
+LOG_PREFIX = "logs"
+LOG_EXPIRATION_DAYS = 30
+MULTIPART_ABORT_DAYS = 7
+
+
+class VersioningException(Exception):
+  """ An exception we plan for. """
+  pass
+
+
+def lifecycleRules():
+  """
+  Return the bucket lifecycle rules. S3 replaces the whole
+  configuration on put, so this includes log expiration.
+  """
+  return [
+    {
+      "ID": "DeleteAfter30Days",
+      "Status": "Enabled",
+      "Filter": {"Prefix": LOG_PREFIX},
+      "Expiration": {"Days": LOG_EXPIRATION_DAYS},
+    },
+    {
+      "ID": "ExpireOldLogVersions",
+      "Status": "Enabled",
+      "Filter": {"Prefix": LOG_PREFIX},
+      "NoncurrentVersionExpiration": {"NoncurrentDays": 1},
+    },
+    {
+      "ID": "KeepTenNoncurrentVersions",
+      "Status": "Enabled",
+      "Filter": {"Prefix": ""},
+      "NoncurrentVersionExpiration": {
+        "NoncurrentDays": 1,
+        "NewerNoncurrentVersions": KEEP_NONCURRENT,
+      },
+    },
+    {
+      "ID": "AbortIncompleteMultipartUploads",
+      "Status": "Enabled",
+      "Filter": {"Prefix": ""},
+      "AbortIncompleteMultipartUpload": {
+        "DaysAfterInitiation": MULTIPART_ABORT_DAYS,
+      },
+    },
+  ]
+
+
+def bucketName(name=None):
+  """ Return the bucket name from the argument or aws-settings.json. """
+  if name:
+    return name
+  return getAwsSettings()["settings"]["bucket_name"]
+
+
+def enableVersioning(s3Client, bucket):
+  """ Turn on bucket versioning. Idempotent if it is already on. """
+  s3Client.put_bucket_versioning(
+    Bucket=bucket,
+    VersioningConfiguration={"Status": "Enabled"})
+
+
+def putLifecycle(s3Client, bucket):
+  """ Replace the bucket lifecycle with the versioning and log rules. """
+  s3Client.put_bucket_lifecycle_configuration(
+    Bucket=bucket,
+    LifecycleConfiguration={"Rules": lifecycleRules()})
+
+
+def getVersioning(s3Client, bucket):
+  """ Return the versioning status string, or Suspended/unset. """
+  response = s3Client.get_bucket_versioning(Bucket=bucket)
+  return response.get("Status", "Disabled")
+
+
+def getLifecycle(s3Client, bucket):
+  """ Return the lifecycle rules, or [] when none are set. """
+  try:
+    response = s3Client.get_bucket_lifecycle_configuration(Bucket=bucket)
+  except ClientError as ex:
+    code = ex.response.get("Error", {}).get("Code", "")
+    if code in ("NoSuchLifecycleConfiguration", "NoSuchLifecycleConfig"):
+      return []
+    raise
+  return response.get("Rules", [])
+
+
+def showConfig(s3Client, bucket):
+  """ Print the current versioning status and lifecycle rules. """
+  status = getVersioning(s3Client, bucket)
+  rules = getLifecycle(s3Client, bucket)
+  print(f"Bucket: {bucket}")
+  print(f"Versioning: {status}")
+  print("Lifecycle:")
+  print(json.dumps(rules, indent=2, default=str))
+
+
+def applyConfig(s3Client, bucket):
+  """ Enable versioning and put the keep-10-versions lifecycle. """
+  enableVersioning(s3Client, bucket)
+  putLifecycle(s3Client, bucket)
+
+
+def parseCommandLine():
+  if len(sys.argv) == 1:
+    sys.argv.append("-h")
+  else:
+    for ix, arg in enumerate(sys.argv[1:]):
+      if arg in ["-t", "--test"]:
+        sys.argv.pop(ix + 1)
+        return argparse.Namespace(test=True)
+
+  parser = argparse.ArgumentParser(
+    prog="s3-versioning",
+    formatter_class=argparse.RawDescriptionHelpFormatter,
+    description=textwrap.dedent(__doc__))
+  parser.add_argument("-a", "--apply", action="store_true",
+    help="enable versioning and the keep-10-versions lifecycle")
+  parser.add_argument("-s", "--show", action="store_true",
+    help="show the current versioning and lifecycle configuration")
+  parser.add_argument("-t", "--test", action="store_true",
+    help="run internal unit tests")
+  parser.add_argument("bucket", nargs="?",
+    help="S3 bucket name (default: bucket_name from aws-settings.json)")
+  args = parser.parse_args(sys.argv[1:])
+  if not args.test and not args.apply and not args.show:
+    if args.bucket:
+      args.apply = True
+    else:
+      parser.error("Specify --apply or --show.")
+  return args
+
+
+def signalHandler(sig, frame):
+  print("\n")
+  sys.exit(1)
+
+
+def process(args):
+  s3Client = getBotoClient("s3")
+  bucket = bucketName(args.bucket)
+  if args.apply:
+    applyConfig(s3Client, bucket)
+    print(f"Enabled versioning on {bucket}.")
+    print(f"Keeping the current object plus {KEEP_NONCURRENT} previous versions.")
+    print(f"Log files under {LOG_PREFIX}/ expire after {LOG_EXPIRATION_DAYS} days.")
+  if args.show:
+    showConfig(s3Client, bucket)
+
+
+def main(args):
+  signal.signal(signal.SIGINT, signalHandler)
+  try:
+    process(args)
+  except KeyboardInterrupt:
+    print("\nStopping")
+  except VersioningException as ex:
+    print(str(ex))
+    return 1
+  except Exception:
+    print("Unexpected exception")
+    print(traceback.format_exc())
+    return 1
+  return 0
+
+
+class TestModule(unittest.TestCase):
+
+  def test_lifecycleKeepsTenVersions(self):
+    rules = {rule["ID"]: rule for rule in lifecycleRules()}
+    keep = rules["KeepTenNoncurrentVersions"]
+    expiration = keep["NoncurrentVersionExpiration"]
+    self.assertEqual(keep["Status"], "Enabled")
+    self.assertEqual(keep["Filter"]["Prefix"], "")
+    self.assertEqual(expiration["NewerNoncurrentVersions"], 10)
+    self.assertEqual(expiration["NoncurrentDays"], 1)
+
+  def test_lifecycleDeletesOldLogs(self):
+    rules = {rule["ID"]: rule for rule in lifecycleRules()}
+    logs = rules["DeleteAfter30Days"]
+    self.assertEqual(logs["Filter"]["Prefix"], "logs")
+    self.assertEqual(logs["Expiration"]["Days"], 30)
+    oldVersions = rules["ExpireOldLogVersions"]
+    self.assertEqual(oldVersions["Filter"]["Prefix"], "logs")
+    self.assertEqual(oldVersions["NoncurrentVersionExpiration"]["NoncurrentDays"], 1)
+
+  def test_lifecycleAbortsMultipart(self):
+    rules = {rule["ID"]: rule for rule in lifecycleRules()}
+    abort = rules["AbortIncompleteMultipartUploads"]
+    self.assertEqual(abort["AbortIncompleteMultipartUpload"]["DaysAfterInitiation"], 7)
+
+  def test_bucketNameOverride(self):
+    self.assertEqual(bucketName("other-bucket"), "other-bucket")
+
+  def test_applyConfigCallsS3(self):
+    calls = []
+    class S3:
+      def put_bucket_versioning(self, Bucket, VersioningConfiguration):
+        calls.append(("versioning", Bucket, VersioningConfiguration))
+      def put_bucket_lifecycle_configuration(self, Bucket, LifecycleConfiguration):
+        calls.append(("lifecycle", Bucket, LifecycleConfiguration))
+    applyConfig(S3(), "sflennikco")
+    self.assertEqual(calls[0][0], "versioning")
+    self.assertEqual(calls[0][1], "sflennikco")
+    self.assertEqual(calls[0][2], {"Status": "Enabled"})
+    self.assertEqual(calls[1][0], "lifecycle")
+    self.assertEqual(calls[1][2]["Rules"][2]["ID"], "KeepTenNoncurrentVersions")
+
+  def test_getLifecycleMissing(self):
+    class S3:
+      def get_bucket_lifecycle_configuration(self, Bucket):
+        raise ClientError(
+          {"Error": {"Code": "NoSuchLifecycleConfiguration", "Message": ""}},
+          "GetBucketLifecycleConfiguration")
+    self.assertEqual(getLifecycle(S3(), "sflennikco"), [])
+
+
+if __name__ == "__main__":
+  args = parseCommandLine()
+  if args.test:
+    sys.exit(unittest.main())
+  rc = main(args)
+  sys.exit(rc)

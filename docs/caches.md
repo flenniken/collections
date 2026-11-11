@@ -23,7 +23,10 @@ caches:
 
 The production site files are deployed to S3.  Files are stored
 uncompressed.  Cloudfront pulls from S3 when needed to satisfy network
-requests and it caches the result in its cache.
+requests and it caches the result in its cache. S3 versioning keeps
+the current object plus the 10 most recent previous versions so a
+delete or overwrite is recoverable. Run `scripts/s3-versioning --apply`
+once; see [AWS Config](aws-config.md#create-s3-bucket).
 
 Below we list the headers for image-59.html:
 

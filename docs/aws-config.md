@@ -250,12 +250,31 @@ aws s3api get-bucket-location --bucket sflennikco # variable
 }
 ~~~
 
-Configure S3 so 30 day old log files get automatically deleted. Pass
-in the bucket name, for example sflennikco:
+Turn on S3 versioning and expire log files after 30 days. Versioning
+keeps the current file plus the 10 most recent previous versions, so
+an accidental delete is recoverable and you have html and json
+history. Jpg and mp4 files are larger but are rarely overwritten, so
+they usually have one version.
 
 ~~~
-scripts/config-log-rotate sflennikco
+scripts/s3-versioning --apply
 ~~~
+
+Show the current versioning and lifecycle rules:
+
+~~~
+scripts/s3-versioning --show
+~~~
+
+List previous versions of a json file:
+
+~~~
+aws s3api list-object-versions --bucket sflennikco \
+    --prefix images/c60/c60.json
+~~~
+
+Copy one back with `aws s3api get-object` and the VersionId from that
+listing.
 
 [⬇](#Contents)
 

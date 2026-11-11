@@ -356,10 +356,11 @@ user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
 # Remove Old Logs
 
 The S3 bucket is configured to remove log files that are older than 30
-days.  You run the script config-log-rotate to set this up:
+days. Website files keep the current version plus the 10 most recent
+previous versions. You run s3-versioning to set this up:
 
 ~~~
-scripts/config-log-rotate
+scripts/s3-versioning --apply
 ~~~
 
 You can test by listing the oldest logs on S3 and comparing that with
