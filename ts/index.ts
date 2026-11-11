@@ -167,9 +167,11 @@ function showHideAdminUI(pageId: string) {
 }
 
 async function refreshIndexFieldsFromJson() {
-  // Pull title, posted date, and index description from each
-  // collection json so a reload matches in-place edits without g all.
-  await Promise.all(csjson.indexCollections.map(async (c) => {
+  // Pull title, posted date, and index description from the featured
+  // collection json files so a reload matches in-place edits without
+  // g all. Compact rows are not edited on the index.
+  const featured = csjson.indexCollections.slice(0, 10)
+  await Promise.all(featured.map(async (c) => {
     const cinfo = await fetchCollectionJson(c.cNum)
     if (!cinfo)
       return
