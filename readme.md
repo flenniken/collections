@@ -40,6 +40,7 @@ when off online.
 The icons do the following:
 
 * ![about](dist/icons/icon-32.png) about the app
+* ![refresh](dist/icons/refresh.svg) in the about box, reload the collection list
 * ![login and logout](dist/icons/user.svg) login and logout
 * ![view images](dist/icons/photo.svg) view the collection's images
 * ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails

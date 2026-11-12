@@ -234,6 +234,12 @@
   margin-bottom: 0.5em;
 }
 
+#index #about-box .bottom-menu {
+  margin-left: -10px;
+  height: 3em;
+  padding-top: 4px;
+}
+
 #notify-prompt {
   display: none;
   text-align: center;
@@ -725,7 +731,7 @@ li.admin.visible {
   display: block;
 }
 
-#about-box .icon {
+#close-about {
   width: 2em;
   float: none;
   margin-left: -18px;

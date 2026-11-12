@@ -380,6 +380,8 @@ function handleResize() {
 }
 
 function refreshPage() {
+  // Reload index.html so a new collection list appears. The about
+  // box uses this; the collection list is baked into the page.
   log("refresh")
   location.reload()
 }
