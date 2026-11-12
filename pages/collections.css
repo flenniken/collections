@@ -662,7 +662,13 @@ body.thumb-reordering {
 }
 
 .top-menu {
-  margin-top: var(--top-header-height);
+  /* iOS 26+ draws a frosted glass over the status-bar band. Keep the
+     Collections title and login circle below that overlay. Desktop
+     has no inset, so this stays the old 60px. */
+  margin-top: max(
+    var(--top-header-height),
+    calc(env(safe-area-inset-top, 0px) + 36px)
+  );
   padding-bottom: 2em;
 }
 
