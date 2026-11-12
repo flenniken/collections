@@ -770,15 +770,20 @@ ${missingFields.join(", ")}.`)
   }
 }
 
+const LOCATION_RE = /^\s*[+-]?\d+\.?\d*\s*,\s*[+-]?\d+\.?\d*\s*$/
+
 export function validLocationString(value: string): boolean {
-  // Return true when value is "lat,lng" in decimal degrees.
-  const parts = value.split(",")
-  if (parts.length != 2)
+  // Return true when value is empty or "lat,lng" in decimal degrees.
+  // Empty is common: no GPS. The regex rejects parseFloat leftovers
+  // like 12abc and scientific notation like 12e2.
+  if (value === "")
+    return true
+  if (!LOCATION_RE.test(value))
     return false
-  const lat = parseFloat(parts[0].trim())
-  const lng = parseFloat(parts[1].trim())
-  return isFinite(lat) && isFinite(lng) &&
-    lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
+  const parts = value.split(",")
+  const lat = parseFloat(parts[0])
+  const lng = parseFloat(parts[1])
+  return lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180
 }
 
 export function validUrlString(value: string): boolean {
@@ -837,7 +842,7 @@ must be true when it exists.`)
     if (typeof cinfo.location !== "string") {
       throw new Error(`The collection ${cinfo.cNum} location must be a string.`)
     }
-    if (cinfo.location.trim() !== "" && !validLocationString(cinfo.location)) {
+    if (!validLocationString(cinfo.location)) {
       throw new Error(`The collection ${cinfo.cNum} location is invalid.`)
     }
   }

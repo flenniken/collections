@@ -543,6 +543,12 @@ body.thumb-reordering {
   -webkit-touch-callout: default;
 }
 
+#images .location-coords.editable,
+#thumbnails .location-coords.editable {
+  min-height: 1.4em;
+  padding: 0.25em 0.5em;
+}
+
 #images #menu {
   margin: 0 1em 1em 1em;
   font-size: 2em;

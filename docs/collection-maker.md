@@ -187,13 +187,17 @@ changed, the json file is left alone.
 __Optional Thumbnails Page Map__
 
 You can optionally add a location for the thumbnails page
-which will show a map below its description.  Open the cN.json and add
-the location as shown below.
+which will show a map below its description. As a localhost admin,
+tap the coordinates under the map, or the Location placeholder when
+there is no map, and paste the Google Maps lat,lng string. The same
+placeholder is under each photo on the image page for that photo's
+GPS.
 
 You can get the GPS coordinates from google maps by dropping a pin
 then opening the information below. It will show something like
-(45.6868445, -121.3035183) which you can copy and paste as show below
-with the location line:
+(45.6868445, -121.3035183). Paste it without the parentheses:
+
+You can still put the location in cN.json by hand:
 
 ~~~
   "cNum": 35,
@@ -276,15 +280,16 @@ http://localhost:8000/
 
 __Edit Details__
 
-Edit titles, posted dates, and descriptions in place while logged in
-as admin. Empty fields show a placeholder so you can tap them. On
-localhost the change is automatically merged into
+Edit titles, posted dates, descriptions, and locations in place while
+logged in as admin. Empty fields show a placeholder so you can tap
+them. On localhost the change is automatically merged into
 `dist/images/cN/cN.json` when you tap away.
 
-Thumbnails page -- edit collection description and set the image order
-with drag and drop. Title and posted date are shown here but edited on
-the index. The page reads them from the collection json so they stay
-current without `g all`.
+Thumbnails page -- edit collection description and location, and set
+the image order with drag and drop. Title and posted date are shown
+here but edited on the index. The page reads them from the collection
+json so they stay current without `g all`. Paste a Google Maps
+lat,lng string into Location, for example `47.6761750,-122.2685556`.
 
 To set the image order use localhost as admin, long-press a thumbnail on the thumbnails page
 then drag it to a new place. The admin API rearranges the `images` (and

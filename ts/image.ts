@@ -101,6 +101,7 @@ async function handleLoad() {
   if (isLocalhost())
     await refreshImageFieldsFromJson()
   setupDescriptionEditing()
+  setupLocationEditing()
   setupZoomPad()
 
   topHeaderHeight = cssNum("--top-header-height")
@@ -185,9 +186,9 @@ function setupImageDetails() {
       }
     }
     const parsed = parseLocation(image.location)
-    if (!parsed)
+    if (!parsed && !isLocalAdmin())
       return
-    insertAfter.after(createLocationMap(parsed.lat, parsed.lng))
+    insertAfter.after(createLocationBlock(image.location))
   })
   observeColboxHeights()
   syncAreaHeight()
@@ -1776,12 +1777,14 @@ async function refreshImageFieldsFromJson() {
     const el = descriptions[ix]
     if (el)
       el.textContent = image.description
+    syncImageLocationBlock(ix)
   })
 }
 
 function applyFetchedCollectionText(collection: CJson.Collection,
     original: CJson.Collection, cinfo: Record<string, unknown>) {
-  const keys = ["title", "description", "indexDescription", "posted"] as const
+  const keys = ["title", "description", "indexDescription", "posted",
+    "location"] as const
   for (const key of keys) {
     const value = cinfo[key]
     if (typeof value === "string") {
@@ -1792,24 +1795,109 @@ function applyFetchedCollectionText(collection: CJson.Collection,
   const fetchedImages = cinfo.images
   if (!Array.isArray(fetchedImages))
     return
-  const byPreview = new Map<string, string>()
+  const byPreview = new Map<string, {description?: string, location?: string}>()
   for (const item of fetchedImages) {
     if (item == null || typeof item !== "object")
       continue
     const image = item as Record<string, unknown>
-    if (typeof image.iPreview === "string" &&
-        typeof image.description === "string")
-      byPreview.set(image.iPreview, image.description)
+    if (typeof image.iPreview !== "string")
+      continue
+    const fields: {description?: string, location?: string} = {}
+    if (typeof image.description === "string")
+      fields.description = image.description
+    if (typeof image.location === "string")
+      fields.location = image.location
+    byPreview.set(image.iPreview, fields)
   }
   collection.images.forEach((image, ix) => {
-    const description = byPreview.get(image.iPreview)
-    if (description === undefined)
+    const fields = byPreview.get(image.iPreview)
+    if (!fields)
       return
-    image.description = description
     const orig = original.images[ix]
-    if (orig && orig.iPreview === image.iPreview)
-      orig.description = description
+    if (fields.description !== undefined) {
+      image.description = fields.description
+      if (orig && orig.iPreview === image.iPreview)
+        orig.description = fields.description
+    }
+    if (fields.location !== undefined) {
+      image.location = fields.location
+      if (orig && orig.iPreview === image.iPreview)
+        orig.location = fields.location
+    }
   })
+}
+
+function imageLocationInsertAfter(colbox: HTMLElement): Element | null {
+  // Return the last of description, link, and capture time so the
+  // map stays below those fields.
+  const description = colbox.querySelector(".description")
+  if (!description)
+    return null
+  const taken = colbox.querySelector(".taken")
+  if (taken)
+    return taken
+  const infoLink = colbox.querySelector(".info-link")
+  if (infoLink)
+    return infoLink
+  return description
+}
+
+function syncImageLocationBlock(imageIx: number) {
+  // Match the location block to the collection json after a fetch.
+  const colbox = get(`cb${imageIx + 1}`)
+  const location = cJson.images[imageIx].location || ""
+  const parsed = parseLocation(location)
+  let wrap = colbox.querySelector(".location") as HTMLElement | null
+  if (!wrap) {
+    if (!parsed && !isLocalAdmin())
+      return
+    const after = imageLocationInsertAfter(colbox)
+    if (!after)
+      return
+    after.after(createLocationBlock(location))
+    observeLocationMaps()
+    return
+  }
+  setLocationBlock(wrap, location)
+}
+
+function setupLocationEditing() {
+  // Let a localhost admin paste each photo's GPS into cN.json.
+  if (!isLocalAdmin())
+    return
+  cJson.images.forEach((_image, ix) => {
+    const colbox = get(`cb${ix + 1}`)
+    let wrap = colbox.querySelector(".location") as HTMLElement | null
+    if (!wrap) {
+      const after = imageLocationInsertAfter(colbox)
+      if (!after)
+        return
+      wrap = createLocationBlock(cJson.images[ix].location)
+      after.after(wrap)
+      observeLocationMaps()
+    }
+    const coords = wrap.querySelector(".location-coords") as HTMLElement | null
+    if (!coords)
+      return
+    enableLocationEditing(coords, () => cJson.images[ix].location || "",
+      (text) => saveEditedLocation(ix, text))
+  })
+  log("Admin location editing is on.")
+}
+
+async function saveEditedLocation(imageIx: number, text: string) {
+  // Merge the image location into the collection json on disk.
+  try {
+    await saveDescription(cJson.cNum, "imageLocation", text, imageIx)
+    cJson.images[imageIx].location = text
+    const colbox = get(`cb${imageIx + 1}`)
+    const wrap = colbox.querySelector(".location") as HTMLElement | null
+    if (wrap)
+      setLocationBlock(wrap, text)
+    log(`Location ${imageIx + 1} saved.`)
+  } catch (error) {
+    logError("Location save failed", error)
+  }
 }
 
 function setupDescriptionEditing() {

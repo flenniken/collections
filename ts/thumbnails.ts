@@ -109,17 +109,44 @@ function setupCollectionLink(url: unknown) {
 
 function setupCollectionMap(location: string) {
   // Show a collection map under the description, below the link
-  // when both are set.
+  // when both are set. A localhost admin always gets a coords line
+  // so an empty location can be pasted.
   document.querySelector("#thumbnails .location")?.remove()
   const parsed = parseLocation(location)
-  if (!parsed)
+  if (!parsed && !isLocalAdmin())
     return
   const desc = document.getElementById("description")
   if (!desc)
     return
   const after = document.querySelector("#thumbnails .info-link") || desc
-  after.after(createLocationMap(parsed.lat, parsed.lng))
+  after.after(createLocationBlock(location))
   observeLocationMaps()
+  setupCollectionLocationEditing(location)
+}
+
+function setupCollectionLocationEditing(location: string) {
+  // Let a localhost admin paste collection GPS into cN.json.
+  if (!isLocalAdmin())
+    return
+  const coords = document.querySelector("#thumbnails .location-coords") as HTMLElement | null
+  if (!coords)
+    return
+  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  if (!(cNum > 0))
+    return
+  let current = location.trim()
+  enableLocationEditing(coords, () => current, async (text) => {
+    try {
+      await saveDescription(cNum, "location", text)
+      current = text
+      const wrap = coords.closest(".location") as HTMLElement | null
+      if (wrap)
+        setLocationBlock(wrap, text)
+      log("Location saved.")
+    } catch (error) {
+      logError("Location save failed", error)
+    }
+  })
 }
 
 function setupThumbnailTextEditing() {

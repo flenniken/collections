@@ -69,6 +69,11 @@ function isLocalhost(): boolean {
   return host === "localhost" || host === "127.0.0.1"
 }
 
+function isLocalAdmin(): boolean {
+  // Return true when an admin is editing on the docker nginx server.
+  return isAdmin() && isLocalhost()
+}
+
 function isRunningFromInstalledIcon(): boolean {
   // Return true when the app is running as an installed PWA from its
   // home screen or desktop icon.
@@ -104,7 +109,7 @@ async function saveCollection(collection: { cNum: number }) {
 }
 
 type TextField = "description" | "indexDescription" | "imageDescription" |
-  "title" | "posted"
+  "title" | "posted" | "location" | "imageLocation"
 
 async function saveDescription(cNum: number, field: TextField,
     text: string, imageIx?: number) {
@@ -115,7 +120,7 @@ async function saveDescription(cNum: number, field: TextField,
     text: string
     imageIx?: number
   } = { cNum, field, text }
-  if (field == "imageDescription") {
+  if (field == "imageDescription" || field == "imageLocation") {
     if (imageIx === undefined)
       throw new Error("imageIx is required")
     payload.imageIx = imageIx
@@ -133,8 +138,16 @@ async function saveDescription(cNum: number, field: TextField,
       body: JSON.stringify(payload),
       keepalive: true
     })
-  if (!response.ok)
-    throw new Error(`Save failed: ${response.status}`)
+  if (!response.ok) {
+    let detail = `${response.status}`
+    try {
+      const result = await response.json()
+      if (result && typeof result.message === "string" && result.message)
+        detail = result.message
+    } catch {
+    }
+    throw new Error(`Save failed: ${detail}`)
+  }
   return await response.json()
 }
 
@@ -330,18 +343,17 @@ function createInfoLink(href: string, text: string): HTMLParagraphElement {
   return wrap
 }
 
+const LOCATION_RE = /^\s*[+-]?\d+\.?\d*\s*,\s*[+-]?\d+\.?\d*\s*$/
+
 function parseLocation(location?: string): {lat: number, lng: number} | null {
   // Return lat and lng from a collection location string, or null
-  // when there is no GPS.
-  if (!location)
+  // when there is no GPS. The regex rejects parseFloat leftovers
+  // like 12abc and scientific notation like 12e2.
+  if (!location || !LOCATION_RE.test(location))
     return null
   const parts = location.split(",")
-  if (parts.length != 2)
-    return null
-  const lat = parseFloat(parts[0].trim())
-  const lng = parseFloat(parts[1].trim())
-  if (!isFinite(lat) || !isFinite(lng))
-    return null
+  const lat = parseFloat(parts[0])
+  const lng = parseFloat(parts[1])
   if (lat < -90 || lat > 90 || lng < -180 || lng > 180)
     return null
   return {lat, lng}
@@ -365,13 +377,9 @@ function osmEmbedUrl(lat: number, lng: number): string {
   return `https://www.openstreetmap.org/export/embed.html?${params.toString()}`
 }
 
-function createLocationMap(lat: number, lng: number): HTMLElement {
-  // Return a tappable map that opens Google Maps, with copyable
-  // coordinates under it. The iframe src is set later, when the map
-  // is near the viewport, so OpenStreetMap does not block page load.
-  const wrap = document.createElement("div")
-  wrap.className = "location"
-
+function createLocationMapLink(lat: number, lng: number): HTMLAnchorElement {
+  // Return a tappable map that opens Google Maps. The iframe src is
+  // set later, when the map is near the viewport.
   const link = document.createElement("a")
   link.className = "location-map"
   link.href = googleMapsUrl(lat, lng)
@@ -379,15 +387,55 @@ function createLocationMap(lat: number, lng: number): HTMLElement {
   link.rel = "noopener noreferrer"
   link.setAttribute("aria-label", "Open location in Google Maps")
   link.dataset.osmSrc = osmEmbedUrl(lat, lng)
+  enableMapTapOrScroll(link)
+  return link
+}
 
+function createLocationBlock(location?: string): HTMLElement {
+  // Return a map plus coordinates. Coordinates stay outside the map
+  // link so they can be copied or edited. An empty location is a
+  // coords line with no map, for the localhost admin placeholder.
+  const wrap = document.createElement("div")
+  wrap.className = "location"
+  const parsed = parseLocation(location)
+  if (parsed)
+    wrap.appendChild(createLocationMapLink(parsed.lat, parsed.lng))
   const coords = document.createElement("span")
   coords.className = "location-coords"
-  coords.textContent = `${lat.toFixed(7)}, ${lng.toFixed(7)}`
-
-  wrap.appendChild(link)
+  coords.textContent = (location ?? "").trim()
   wrap.appendChild(coords)
-  enableMapTapOrScroll(link)
   return wrap
+}
+
+function setLocationBlock(wrap: HTMLElement, location: string) {
+  // Update the map and coords for a new location string. Empty
+  // removes the map and leaves the coords line for editing.
+  wrap.querySelector(".location-map")?.remove()
+  const parsed = parseLocation(location)
+  const coords = wrap.querySelector(".location-coords") as HTMLElement | null
+  if (parsed) {
+    const link = createLocationMapLink(parsed.lat, parsed.lng)
+    wrap.insertBefore(link, coords)
+    observeLocationMaps()
+  }
+  if (coords)
+    coords.textContent = location.trim()
+}
+
+function enableLocationEditing(coords: HTMLElement, getOriginal: () => string,
+    onCommit: (text: string) => Promise<void>) {
+  // Let a localhost admin paste a Google Maps lat,lng string.
+  enablePlaintextEditing(coords, getOriginal, async (text) => {
+    const original = getOriginal().trim()
+    if (text === original)
+      return
+    if (text !== "" && !parseLocation(text)) {
+      coords.textContent = original
+      logError("Location must be lat,lng like 47.6761750,-122.2685556")
+      return
+    }
+    await onCommit(text)
+  }, { placeholder: "Location", singleLine: true })
 }
 
 function enableMapTapOrScroll(link: HTMLElement) {

@@ -42,6 +42,7 @@ JPEG_QUALITY = 80
 PREVIEW_RE = re.compile(r"^c(\d+)-(\d+)-p\.jpg$")
 TEXT_FIELDS = (
   "description", "indexDescription", "imageDescription", "title", "posted",
+  "location", "imageLocation",
 )
 
 def cleanTextField(text):
@@ -50,10 +51,25 @@ def cleanTextField(text):
   lines = text.replace("\r\n", "\n").split("\n")
   return "\n".join(line.rstrip() for line in lines).strip()
 
+LOCATION_RE = re.compile(r"^\s*[+-]?\d+\.?\d*\s*,\s*[+-]?\d+\.?\d*\s*$")
+
+def validLocationString(value):
+  # True for empty or a lat,lng pair in decimal degrees.
+  # The regex rejects float leftovers like 12abc and scientific
+  # notation like 12e2.
+  if value == "":
+    return True
+  if not LOCATION_RE.fullmatch(value):
+    return False
+  parts = value.split(",")
+  lat = float(parts[0])
+  lng = float(parts[1])
+  return -90 <= lat <= 90 and -180 <= lng <= 180
+
 def cleanCollectionTextFields(collection):
-  # Strip whitespace from title, posted, and description fields.
+  # Strip whitespace from title, posted, description, and location fields.
   changed = False
-  for key in ("title", "posted", "description", "indexDescription"):
+  for key in ("title", "posted", "description", "indexDescription", "location"):
     value = collection.get(key)
     if not isinstance(value, str):
       continue
@@ -67,13 +83,14 @@ def cleanCollectionTextFields(collection):
   for image in images:
     if not isinstance(image, dict):
       continue
-    value = image.get("description")
-    if not isinstance(value, str):
-      continue
-    cleaned = cleanTextField(value)
-    if cleaned != value:
-      image["description"] = cleaned
-      changed = True
+    for key in ("description", "location"):
+      value = image.get(key)
+      if not isinstance(value, str):
+        continue
+      cleaned = cleanTextField(value)
+      if cleaned != value:
+        image[key] = cleaned
+        changed = True
   return changed
 
 class AdminApiException(Exception):
@@ -137,7 +154,11 @@ def saveDescription(payload, root=None):
   if collection.get("cNum") != payload.get("cNum"):
     raise AdminApiException("cNum does not match file")
 
-  if field == "imageDescription":
+  cleaned = cleanTextField(text)
+  if field in ("location", "imageLocation") and not validLocationString(cleaned):
+    raise AdminApiException("Invalid location")
+
+  if field in ("imageDescription", "imageLocation"):
     imageIx = payload.get("imageIx")
     if not isinstance(imageIx, int) or isinstance(imageIx, bool) or imageIx < 0:
       raise AdminApiException("Invalid imageIx")
@@ -147,9 +168,10 @@ def saveDescription(payload, root=None):
     image = images[imageIx]
     if not isinstance(image, dict):
       raise AdminApiException("Invalid imageIx")
-    image["description"] = cleanTextField(text)
+    key = "description" if field == "imageDescription" else "location"
+    image[key] = cleaned
   else:
-    collection[field] = cleanTextField(text)
+    collection[field] = cleaned
 
   return writeCollectionJson(collection, root=root)
 
@@ -622,6 +644,28 @@ class TestModule(unittest.TestCase):
       "First.\n\nSecond.")
     self.assertEqual(cleanTextField("plain"), "plain")
 
+  def test_validLocationString(self):
+    self.assertTrue(validLocationString(""))
+    self.assertTrue(validLocationString("47.6761750,-122.2685556"))
+    self.assertTrue(validLocationString("47.6761750, -122.2685556"))
+    self.assertTrue(validLocationString("90,180"))
+    self.assertTrue(validLocationString("-90,-180"))
+    self.assertTrue(validLocationString(" -90 , -180 "))
+    self.assertTrue(validLocationString("0,0"))
+    self.assertTrue(validLocationString("+47.6761750,-122.2685556"))
+    self.assertFalse(validLocationString("12abc, 34xyz"))
+    self.assertFalse(validLocationString("12e2,0"))
+    self.assertFalse(validLocationString("90abc,180xxx"))
+    self.assertFalse(validLocationString("90.1,0"))
+    self.assertFalse(validLocationString("-90.1,0"))
+    self.assertFalse(validLocationString("0,180.1"))
+    self.assertFalse(validLocationString("0,-180.1"))
+    self.assertFalse(validLocationString("not-a-location"))
+    self.assertFalse(validLocationString("47.6761750"))
+    self.assertFalse(validLocationString("47.6761750,-122.2685556,0"))
+    self.assertFalse(validLocationString("inf,0"))
+    self.assertFalse(validLocationString("0,nan"))
+
   def test_saveDescriptionStripsWhitespace(self):
     self.writeOriginalCollection()
     saveDescription({
@@ -669,6 +713,53 @@ class TestModule(unittest.TestCase):
     saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
     self.assertEqual(saved["posted"], "2026-09-13")
     self.assertEqual(saved["title"], "Keep me")
+
+  def test_saveLocation(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "location",
+      "text": "47.6761750,-122.2685556",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["location"], "47.6761750,-122.2685556")
+    self.assertEqual(saved["title"], "Keep me")
+
+  def test_saveLocationEmpty(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "location",
+      "text": "47.6761750,-122.2685556",
+    }, root=self.root)
+    saveDescription({
+      "cNum": 9,
+      "field": "location",
+      "text": "",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["location"], "")
+
+  def test_saveLocationInvalid(self):
+    self.writeOriginalCollection()
+    with self.assertRaises(AdminApiException):
+      saveDescription({
+        "cNum": 9,
+        "field": "location",
+        "text": "not-a-location",
+      }, root=self.root)
+
+  def test_saveImageLocation(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "imageLocation",
+      "imageIx": 0,
+      "text": "47.6761750, -122.2685556",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["images"][0]["location"], "47.6761750, -122.2685556")
+    self.assertEqual(saved["images"][1].get("location"), None)
 
   def test_saveDescriptionInvalidField(self):
     self.writeOriginalCollection()

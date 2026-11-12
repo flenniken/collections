@@ -146,6 +146,12 @@ When making changes to the image page test them with these steps:
     `indexDescription` is updated in `cN.json`
   * as admin on localhost, tap the thumbnails page description, edit it, tap away,
     and verify `description` is updated in `cN.json`
+  * as admin on localhost, tap Location under the thumbnails map (or
+    the placeholder when there is no map), paste `47.6761750,-122.2685556`,
+    tap away, and verify `location` is updated in `cN.json`
+  * as admin on localhost, tap Location under an image, paste
+    coordinates, tap away, and verify that photo's `location` is
+    updated in `cN.json`
   * as admin on localhost, long-press a thumbnail, drag it onto
     another, drop, and verify the photos reorder in `cN.json`
   * as admin on localhost, Command-click a thumbnail, drag the

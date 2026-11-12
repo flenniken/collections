@@ -22,7 +22,8 @@ import {
   brandingFromValues,
   readBranding,
   writeBrandingTs,
-  parseCliCollectionNum
+  parseCliCollectionNum,
+  validLocationString
 } from './gulpfile';
 
 if (!process.env.coder_env) {
@@ -430,6 +431,16 @@ function validateCinfoNoReadingSuite() {
 
   cinfo = createTestCinfo({numImages: 1,
     zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.location = "12abc, 34xyz"
+  testThrow("The collection 4 location is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
+  cinfo.location = "12e2,0"
+  testThrow("The collection 4 location is invalid.", fn, 4, cinfo)
+
+  cinfo = createTestCinfo({numImages: 1,
+    zoomPointKeys: ["933x432", "432x933"]})
   cinfo.url = ["https://en.wikipedia.org/wiki/Madrid", "Madrid"]
   test(fn, 4, cinfo)
 
@@ -634,6 +645,34 @@ feedback_message = "Image \${previewName}.  Hi, "
   })
 }
 
+function testValidLocationString(value: string, expected: boolean) {
+  gotExpected(validLocationString(value), expected,
+    `validLocationString(${JSON.stringify(value)})`)
+}
+
+function validLocationStringSuite() {
+  test(testValidLocationString, "", true)
+  test(testValidLocationString, "47.6761750,-122.2685556", true)
+  test(testValidLocationString, "47.6761750, -122.2685556", true)
+  test(testValidLocationString, "90,180", true)
+  test(testValidLocationString, "-90,-180", true)
+  test(testValidLocationString, " -90 , -180 ", true)
+  test(testValidLocationString, "0,0", true)
+  test(testValidLocationString, "+47.6761750,-122.2685556", true)
+  test(testValidLocationString, "12abc, 34xyz", false)
+  test(testValidLocationString, "12e2,0", false)
+  test(testValidLocationString, "90abc,180xxx", false)
+  test(testValidLocationString, "90.1,0", false)
+  test(testValidLocationString, "-90.1,0", false)
+  test(testValidLocationString, "0,180.1", false)
+  test(testValidLocationString, "0,-180.1", false)
+  test(testValidLocationString, "not-a-location", false)
+  test(testValidLocationString, "47.6761750", false)
+  test(testValidLocationString, "47.6761750,-122.2685556,0", false)
+  test(testValidLocationString, "inf,0", false)
+  test(testValidLocationString, "0,nan", false)
+}
+
 function parseCliCollectionNumSuite() {
   test(() => {
     gotExpected(parseCliCollectionNum([]), null)
@@ -654,6 +693,7 @@ function testGulpfile() {
 
   console.log("Test gulpfile.ts")
 
+  runSuite(validLocationStringSuite)
   runSuite(parseCliCollectionNumSuite)
   runSuite(parseImageNameSuite)
   runSuite(smallThumbnailNameSuite)
