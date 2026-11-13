@@ -221,7 +221,20 @@
   border: solid blue;
   display: none;
   margin-top: 1em;
+  margin-left: 1px;
+  margin-right: 1px;
   padding-left: 10px;
+}
+
+#index #about-box p {
+  font-size: 1.5em;
+  margin-top: 0;
+}
+
+#index #about-user-guide,
+#index #about-notifications,
+#index #about-iphone-notifications {
+  margin-bottom: 0.15em;
 }
 
 #index #about-notifications-enable-msg {

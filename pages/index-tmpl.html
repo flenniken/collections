@@ -66,7 +66,6 @@ body {
     <div id="about-box">
       <img id="close-about" class="icon" src="icons/x-letter.svg"
         alt="close about box" onclick="hideAboutBox(this)">
-      <h3>Collections by Steve Flenniken</h3>
       <p>
 Look at each photo in portrait and landscape orientation. Scroll
 down to read the descriptions. Read about the collection on the
@@ -77,20 +76,16 @@ For more information on how to use the app read the user guide
 (readme) on github. Developers can learn how to build and modify
 the source there too.
       </p>
-      <ul>
-        <li>
-          <a href="https://github.com/flenniken/collections" target="_blank">
-            github collections</a> &mdash; user guide and source code
-        </li>
-      </ul>
-      <p id="about-notifications"></p>
+      <p id="about-user-guide">🔑 <a href="https://github.com/flenniken/collections"
+        target="_blank">User guide</a></p>
+      <p id="about-notifications">🔔 Notifications off</p>
+      <p id="about-installed-icon">😎 Not running from installed icon</p>
       <p id="about-notifications-enable-msg"></p>
       <button id="about-notifications-enable" type="button"
         onclick="enableNotificationsFromAboutBox()">Turn on notifications</button>
       <p id="about-iphone-notifications"></p>
-      <p id="about-installed-icon"></p>
       <div class="bottom-menu">
-        <img class="icon" src="icons/refresh.svg"
+        <img class="icon right" src="icons/refresh.svg"
           onclick="refreshPage()" alt="refresh collection list">
       </div>
     </div>

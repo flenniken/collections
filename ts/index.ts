@@ -387,21 +387,12 @@ function refreshPage() {
 }
 
 function updateAboutInstalledIcon() {
-  // On iPhone Safari, show whether the app was launched from the home
-  // screen icon. Other browsers, including Chrome, leave this blank.
+  // Show whether the app was launched from its home screen icon.
   const el = get("about-installed-icon")
-  if (!isIosSafari() || navigator.platform != "iPhone") {
-    el.textContent = ""
-    el.style.display = "none"
-    return
-  }
-  el.style.display = ""
   if (isRunningFromInstalledIcon()) {
-    el.textContent = "😎  running from installed icon"
+    el.textContent = "😎 Running from installed icon"
   } else {
-    el.textContent = "Not running from the home screen icon. Install and run " +
-      "Collections from its home screen icon then images fill the screen and " +
-      "notifications work."
+    el.textContent = "😎 Not running from installed icon"
   }
 }
 

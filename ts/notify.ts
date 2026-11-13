@@ -308,7 +308,7 @@ function updateAboutNotifications() {
   updateNotifyPrompt()
 
   const on = "Notification" in window && Notification.permission === "granted"
-  status.textContent = on ? "🔔 Notifications on" : "Notifications off"
+  status.textContent = on ? "🔔 Notifications on" : "🔔 Notifications off"
 
   if (canRequestNotificationPermission()) {
     enableMsg.textContent =
