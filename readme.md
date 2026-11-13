@@ -39,15 +39,15 @@ when off online.
 
 The icons do the following:
 
-* ![about](dist/icons/icon-32.png) about the app
-* ![refresh](dist/icons/refresh.svg) in the about box, reload the collection list
 * ![login and logout](dist/icons/user.svg) login and logout
+* ![download images](dist/icons/download.svg) download the collection's images
 * ![view images](dist/icons/photo.svg) view the collection's images
 * ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
-* ![download images](dist/icons/download.svg) download the collection's images
-* ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images and return to the index
 * ![share image](dist/icons/share.svg) on the image page, share the image
 * ![message Steve](dist/icons/message.svg) on the image page, send Steve a text about the photo
+* ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images
+* ![about](dist/icons/icon-32.png) about the app
+* ![refresh](dist/icons/refresh.svg) in the about box, reload the collection list
 
 [⬇](#Contents)
 
