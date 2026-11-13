@@ -16,7 +16,7 @@ page, the image page and the thumbnails page.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# Index Page
+# [![icon](dist/icons/index.svg)](#) Index Page
 
 [![Index Page](docs/index.png)](#)
 
@@ -25,7 +25,7 @@ most recent collection on top. You can scroll through the list.
 
 The newest 10 collections show a title, big thumbnail, description,
 and post date. Older collections show a one line entry with a small
-thumbnail that opens the images, and the title.
+thumbnail and the title.
 
 You login with your email and password by clicking the circle icon in
 the upper righthand side of the index page. You see your first initial
@@ -43,6 +43,7 @@ The icons do the following:
 * ![download images](dist/icons/download.svg) download the collection's images
 * ![view images](dist/icons/photo.svg) view the collection's images
 * ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
+* ![view index](dist/icons/index.svg) view the collections index
 * ![share image](dist/icons/share.svg) on the image page, share the image
 * ![message Steve](dist/icons/message.svg) on the image page, send Steve a text about the photo
 * ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images
@@ -51,7 +52,7 @@ The icons do the following:
 
 [⬇](#Contents)
 
-# Image Page
+# ![view images](dist/icons/photo.svg) Image Page
 
 [![Image Page](docs/image.png)](#)
 
@@ -71,7 +72,7 @@ collection. The next and previous images line up pixel perfect side by
 side.  This is good for multi-images that look like one wide image.
 
 You scroll to the bottom to see a description of the image, the time
-the photo was taken and an option map showing where photo was taken.
+the photo was taken and an optional map showing where photo was taken.
 
 You go back to the thumbnails or index page by scrolling to the bottom
 and tapping the thumbnail or index icon. Tap the share icon to save
@@ -81,7 +82,7 @@ filled in.
 
 [⬇](#Contents)
 
-# Thumbnails Page
+# ![view images](dist/icons/thumbnails.svg) Thumbnails Page
 
 [![Thumbnails Page](docs/thumbnails.png)](#)
 
@@ -116,6 +117,16 @@ https://collections.sflennik.com
 
 [![icon](docs/rounded-icon.png)](#)
 
+[⬇](#Contents)
+
+# Notifications
+
+Turn on notifications and you will get notified when a new collection
+appears. At most you will get one notification per day.  Set
+notifications with the system settings:
+
+Settings > Notifications > Collections
+
 <style>body { max-width: 40em}</style>
 
 # Contents
@@ -124,6 +135,7 @@ https://collections.sflennik.com
 * [Image Page](#image-page)
 * [Thumbnails Page](#thumbnails-page)
 * [Run Collections](#run-collections)
+* [Notifications](#notifications)
 
 # Other
 
