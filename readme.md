@@ -53,6 +53,7 @@ The icons do the following:
 
 [⬇](#Contents)
 
+<a id="image-page"></a>
 # ![view images](dist/icons/photo.svg) Image Page
 
 [![Image Page](docs/image.png)](#)
@@ -83,6 +84,7 @@ filled in.
 
 [⬇](#Contents)
 
+<a id="thumbnails-page"></a>
 # ![view images](dist/icons/thumbnails.svg) Thumbnails Page
 
 [![Thumbnails Page](docs/thumbnails.png)](#)
