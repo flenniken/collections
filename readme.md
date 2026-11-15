@@ -47,7 +47,7 @@ The icons do the following:
 * ![share image](dist/icons/share.svg) on the image page, share the image
 * ![message Steve](dist/icons/message.svg) on the image page, send Steve a text about the photo
 * ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images
-* ![about](dist/icons/icon-32.png) about the app
+* ![about](docs/about.png) about the app
 * ![refresh](dist/icons/refresh.svg) in the about box, reload the collection list
 
 [⬇](#Contents)
