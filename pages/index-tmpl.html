@@ -18,10 +18,15 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <meta name="apple-mobile-web-app-status-bar-style"
       content="black-translucent">
 <!--$ endblock -->
-  <title>Flenniken.net Collections</title>
+<!--$ block -->
+<!--$ : siteTitle = html(s.site_name, "body") -->
+<!--$ : siteTitleAttr = html(s.site_name, "attribute") -->
+<!--$ : authorAttr = html(s.author, "attribute") -->
+  <title>{siteTitle}</title>
   <meta name="description"
-    content="Flenniken.net Collections">
-  <meta name="author" content="Steve Flenniken">
+    content="{siteTitleAttr}">
+  <meta name="author" content="{authorAttr}">
+<!--$ endblock -->
   <meta name="theme-color" content="white">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta property="og:image" content="icons/icon-512.png">

@@ -1,0 +1,25 @@
+$$ # Web app manifest. Built from env/branding/webmanifest.json.
+$$ block
+{
+  "name": "{s.name}",
+  "short_name": "{s.short_name}",
+  "description": "{s.description}",
+$$ endblock
+  "id": "/index.html",
+  "icons": [
+$$ block
+$$ : t.repeat = len(s.icons)
+$$ : dim = s.icons[t.row]
+$$ : comma = if((add(t.row, 1) == len(s.icons)), "", ",")
+    {
+      "src": "icons/icon-{dim}.png",
+      "sizes": "{dim}x{dim}",
+      "type": "image/png"
+    }{comma}
+$$ endblock
+  ],
+  "start_url": "index.html",
+  "display": "standalone",
+  "theme_color": "#638ec0",
+  "background_color": "white"
+}

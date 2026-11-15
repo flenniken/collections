@@ -1,0 +1,6 @@
+{
+  "name": "Collections",
+  "short_name": "Collections",
+  "description": "A website for privately sharing your photos with friends and family on an iphone.",
+  "icons": [32, 64, 96, 128, 168, 192, 256, 512]
+}

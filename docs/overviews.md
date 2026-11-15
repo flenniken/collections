@@ -38,9 +38,10 @@ file. All templates share the same header tea file.
 index.html is made from:
 
 * index-tmpl.html
-* index.json
+* collections.json
 * header.tea
 * aws-settings.json
+* branding.json
 
 thumbnails-1.html is made from:
 

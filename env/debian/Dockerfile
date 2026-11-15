@@ -121,10 +121,7 @@ RUN sudo ./aws/install
 # Copy in the glow config file.
 COPY --chown=coder:coder glow.yml /home/coder/.config/glow/glow.yml
 
-# Branding used by the image-page feedback SMS. Edit admin_phone in
-# the container. See docs/aws-config.md.
 RUN mkdir -p /home/coder/.aws
-COPY --chown=coder:coder branding.ini /home/coder/.aws/branding.ini
 
 COPY --chown=coder:coder start-container /home/coder/start-container
 RUN chmod +x /home/coder/start-container

@@ -89,8 +89,8 @@ Run: 'aws configure' to set them. See docs/aws-config.md.
 Warning 3: The notification VAPID keys are missing.
 Save them to ~/.aws/vapid. See docs/aws-config.md.
 
-Warning 4: The branding.ini file is missing admin_phone.
-Edit ~/.aws/branding.ini. See docs/aws-config.md.
+Warning 4: The branding.json file is missing admin_phone.
+Edit env/branding/branding.json. See docs/aws-config.md.
 ~~~
 
 [⬇](#Contents)

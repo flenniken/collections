@@ -208,21 +208,28 @@ notifications, and testing.
 
 # Branding
 
-The image-page message balloon reads your phone number and feedback
-text from `~/.aws/branding.ini` so they are not stored in git. The
-docker image copies a template into that file. Edit it in the
-container.
+Site name, author, SMS phone number, feedback text, the home-screen
+icons, and favicon live in `env/branding/`. That folder is not stored
+in git. `env/branding.example/` has a generic copy. The first `g all`
+copies the example into `env/branding/` when `branding.json` is
+missing.
+
+Edit `env/branding/branding.json` and `env/branding/webmanifest.json`
+and replace the `icon-*.png` files and `favicon.ico` with yours.
 
 ~~~
 # in docker container
-nano ~/.aws/branding.ini
+nano env/branding/branding.json
 ~~~
 
-`admin_phone` is the SMS To number to use (your phone number). It
-starts with with a plus sign and country code, use 1 for the US.
+`site_name` is the index title. `author` is the HTML author tag.
+`webmanifest.json` holds the home-screen app name, short name,
+description, and icon sizes. `admin_phone` is the SMS To number (plus
+sign and country code; use 1 for the US). `feedback_message` must
+contain `${previewName}`.
 
-`g all` fails when the file is missing or when either value
-is empty.
+`g all` fails when the file is missing or when `site_name`,
+`admin_phone`, or `feedback_message` is empty.
 
 [⬇](#Contents)
 

@@ -18,7 +18,6 @@ import {
   validateCinfoImage,
   validateImageName,
   readCJsonFile,
-  parseBrandingIni,
   brandingFromValues,
   readBranding,
   writeBrandingTs,
@@ -595,51 +594,64 @@ function validateCollections() {
 }
 
 function brandingSuite() {
-  const source = "tmp/test-branding.ini"
-  const parsed = parseBrandingIni(`
-# comment
-[branding]
-admin_phone = "+15555550100"
-feedback_message = "Image \${previewName}.  Hi Steve, \\nI like this photo and "
-`)
+  const source = "tmp/test-branding.json"
+  const parsed = {
+    site_name: "Collections",
+    author: "Ada",
+    admin_phone: "+15555550100",
+    feedback_message: "Image ${previewName}.  Hi Steve, \nI like this photo and ",
+  }
   test(() => {
     const branding = brandingFromValues(parsed, source)
+    gotExpected(branding.siteName, "Collections")
+    gotExpected(branding.author, "Ada")
     gotExpected(branding.adminPhone, "+15555550100")
     gotExpected(branding.feedbackMessage,
       "Image ${previewName}.  Hi Steve, \nI like this photo and ")
   })
 
-  testThrow(`${source} is missing admin_phone.`, brandingFromValues, {}, source)
+  testThrow(`${source} is missing site_name.`, brandingFromValues, {
+    admin_phone: "+15555550100",
+    feedback_message: "Image ${previewName}.",
+  }, source)
+  testThrow(`${source} is missing admin_phone.`, brandingFromValues, {
+    site_name: "Collections",
+  }, source)
   testThrow(`${source} is missing feedback_message.`, brandingFromValues, {
+    site_name: "Collections",
     admin_phone: "+15555550100",
   }, source)
   testThrow(`${source} has an invalid admin_phone.`, brandingFromValues, {
+    site_name: "Collections",
     admin_phone: "2065550100",
     feedback_message: "Image ${previewName}.",
   }, source)
   testThrow(`${source} feedback_message must contain \${previewName}.`,
     brandingFromValues, {
+      site_name: "Collections",
       admin_phone: "+15555550100",
       feedback_message: "Hi Steve, ",
     }, source)
 
-  const missing = path.join("tmp", "missing-branding.ini")
+  const missing = path.join("tmp", "missing-branding.json")
   testThrow(`Missing ${missing}. See docs/aws-config.md`, readBranding, missing)
 
   test(() => {
-    const iniPath = path.join("tmp", "test-branding.ini")
+    const jsonPath = path.join("tmp", "test-branding.json")
     const tsPath = path.join("tmp", "test-branding.ts")
-    fs.writeFileSync(iniPath, `
-admin_phone = "+15555550100"
-feedback_message = "Image \${previewName}.  Hi, "
-`)
+    fs.writeFileSync(jsonPath, JSON.stringify({
+      site_name: "Collections",
+      author: "",
+      admin_phone: "+15555550100",
+      feedback_message: "Image ${previewName}.  Hi, ",
+    }))
     try {
-      writeBrandingTs(tsPath, iniPath)
+      writeBrandingTs(tsPath, jsonPath)
       const generated = fs.readFileSync(tsPath, "utf8")
       gotExpected(generated.includes('const FEEDBACK_SMS = "+15555550100"'), true)
       gotExpected(generated.includes("Image ${previewName}.  Hi, "), true)
     } finally {
-      fs.rmSync(iniPath, { force: true })
+      fs.rmSync(jsonPath, { force: true })
       fs.rmSync(tsPath, { force: true })
     }
   })

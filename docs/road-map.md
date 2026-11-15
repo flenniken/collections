@@ -27,9 +27,10 @@ other low level functions.
 
 # Remove Branding
 
-Make it easy to rebrand the code. Currently the desktop icon, the name "Flenniken Collections" and the domain sflennik.com would be replaced when someone builds their own collection web site. Maybe use a config file and make these things variables?
-
-The image json shouldn't be checked in.
+Done. Site name, author, SMS text, and app icons live in
+`env/branding/`, which is not stored in git. See
+[aws-config.md](aws-config.md#branding). The collection json files are
+not stored in git.
 
 [⬇](#Contents)
 

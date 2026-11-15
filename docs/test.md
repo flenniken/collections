@@ -134,7 +134,7 @@ When making changes to the image page test them with these steps:
 * tap the index menu icon
   * tap the share icon and verify the share sheet appears, or the photo downloads
   * tap the message balloon and verify Messages opens to the number in
-    ~/.aws/branding.ini with the configured feedback text for the
+    env/branding/branding.json with the configured feedback text for the
     current photo
   * as admin on localhost, tap the download icon and verify it writes
     `dist/images/cN/cN.json` instead of downloading a file

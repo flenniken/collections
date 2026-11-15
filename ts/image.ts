@@ -2073,7 +2073,7 @@ async function shareCurrentImage() {
 }
 
 function feedbackSmsUrl(previewName: string): string {
-  // FEEDBACK_SMS and FEEDBACK_MESSAGE come from ~/.aws/branding.ini.
+  // FEEDBACK_SMS and FEEDBACK_MESSAGE come from env/branding/branding.json.
   const body = FEEDBACK_MESSAGE.split("${previewName}").join(previewName)
   return `sms:${FEEDBACK_SMS}?&body=${encodeURIComponent(body)}`
 }

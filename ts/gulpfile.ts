@@ -13,7 +13,6 @@ import gulpif from 'gulp-if';
 import ts from 'gulp-typescript';
 import fs from "fs";
 import path from "path";
-import os from "os";
 import { URL } from "url";
 import { TaskCallback } from "undertaker";
 
@@ -33,6 +32,7 @@ let help = `
     index -- Create the main index page.
     ready -- Create the images and thumbnails pages for all collections.
       css -- Minimize the collection.css file.
+ manifest -- Create collections.webmanifest from webmanifest.json.
     tsync -- Update the template's replace blocks in sync with the header.tea content.
 
 * vpages: Validate all the html files.
@@ -125,41 +125,57 @@ const index_ts = ["ts/all.ts", "ts/win.ts", "ts/cjsonDefinition.ts", "ts/userInf
                   "ts/login.ts", "ts/download.ts", "ts/notify.ts", "ts/index.ts"]
 const sw_ts = ["ts/all.ts", 'ts/sw.ts']
 
-export function brandingIniPath(): string {
-  return path.join(os.homedir(), ".aws", "branding.ini")
+const brandingDir = "env/branding"
+const brandingExampleDir = "env/branding.example"
+
+export function brandingJsonPath(): string {
+  return path.join(brandingDir, "branding.json")
 }
 
-export function parseBrandingIni(text: string): Record<string, string> {
-  // Return key/value pairs from a branding.ini file. Quoted values
-  // may use \n for a newline. ${previewName} is left for the page.
-  const values: Record<string, string> = {}
-  for (const rawLine of text.split(/\r?\n/)) {
-    const line = rawLine.trim()
-    if (!line || line.startsWith("#") || line.startsWith("["))
-      continue
-    const eq = line.indexOf("=")
-    if (eq < 0)
-      continue
-    const key = line.slice(0, eq).trim()
-    let value = line.slice(eq + 1).trim()
-    if ((value.startsWith('"') && value.endsWith('"') && value.length >= 2) ||
-        (value.startsWith("'") && value.endsWith("'") && value.length >= 2))
-      value = value.slice(1, -1)
-    value = value.replace(/\\n/g, "\n").replace(/\\t/g, "\t")
-    values[key] = value
+export function webmanifestJsonPath(): string {
+  return path.join(brandingDir, "webmanifest.json")
+}
+
+export function ensureBrandingDir(): void {
+  // Copy env/branding.example into env/branding when the local
+  // branding.json is missing.
+  const destJson = brandingJsonPath()
+  if (fs.existsSync(destJson))
+    return
+  if (!fs.existsSync(brandingExampleDir))
+    throw new Error(`Missing ${brandingExampleDir}.`)
+  fs.mkdirSync(brandingDir, { recursive: true })
+  for (const name of fs.readdirSync(brandingExampleDir)) {
+    fs.copyFileSync(path.join(brandingExampleDir, name),
+      path.join(brandingDir, name))
   }
-  return values
 }
 
 export interface Branding {
+  siteName: string
+  author: string
   adminPhone: string
   feedbackMessage: string
 }
 
+function brandingStringField(data: Record<string, unknown>, key: string,
+    source: string): string {
+  const value = data[key]
+  if (value === undefined || value === null)
+    return ""
+  if (typeof value !== "string")
+    throw new Error(`${source} ${key} must be a string.`)
+  return value
+}
+
 export function brandingFromValues(values: Record<string, string>,
     source: string): Branding {
+  const siteName = (values["site_name"] ?? "").trim()
+  const author = values["author"] ?? ""
   const adminPhone = (values["admin_phone"] ?? "").trim()
   const feedbackMessage = values["feedback_message"] ?? ""
+  if (!siteName)
+    throw new Error(`${source} is missing site_name.`)
   if (!adminPhone)
     throw new Error(`${source} is missing admin_phone.`)
   if (!/^\+[0-9]{10,15}$/.test(adminPhone))
@@ -169,30 +185,99 @@ export function brandingFromValues(values: Record<string, string>,
   if (!feedbackMessage.includes("${previewName}"))
     throw new Error(
       `${source} feedback_message must contain \${previewName}.`)
-  return { adminPhone, feedbackMessage }
+  return { siteName, author, adminPhone, feedbackMessage }
 }
 
-export function readBranding(iniPath?: string): Branding {
-  const filename = iniPath ?? brandingIniPath()
+export function readBranding(jsonPath?: string): Branding {
+  if (!jsonPath)
+    ensureBrandingDir()
+  const filename = jsonPath ?? brandingJsonPath()
   if (!fs.existsSync(filename))
     throw new Error(`Missing ${filename}. See docs/aws-config.md`)
-  const text = fs.readFileSync(filename, "utf8")
-  return brandingFromValues(parseBrandingIni(text), filename)
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(fs.readFileSync(filename, "utf8"))
+  } catch {
+    throw new Error(`${filename} is not valid JSON.`)
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed))
+    throw new Error(`${filename} must be a JSON object.`)
+  const data = parsed as Record<string, unknown>
+  const values = {
+    site_name: brandingStringField(data, "site_name", filename),
+    author: brandingStringField(data, "author", filename),
+    admin_phone: brandingStringField(data, "admin_phone", filename),
+    feedback_message: brandingStringField(data, "feedback_message", filename),
+  }
+  return brandingFromValues(values, filename)
 }
 
 export function writeBrandingTs(destPath = "tmp/branding.ts",
-    iniPath?: string): string {
+    jsonPath?: string): string {
   // Write FEEDBACK_SMS and FEEDBACK_MESSAGE for the image page.
-  const branding = readBranding(iniPath)
+  const branding = readBranding(jsonPath)
   const dir = path.dirname(destPath)
   if (!fs.existsSync(dir))
     fs.mkdirSync(dir, { recursive: true })
   const content =
-    "// Generated from ~/.aws/branding.ini. Do not edit.\n" +
+    "// Generated from env/branding/branding.json. Do not edit.\n" +
     `const FEEDBACK_SMS = ${JSON.stringify(branding.adminPhone)}\n` +
     `const FEEDBACK_MESSAGE = ${JSON.stringify(branding.feedbackMessage)}\n`
   fs.writeFileSync(destPath, content)
   return destPath
+}
+
+function copyIfChanged(src: string, dest: string, label: string,
+    filePath: string) {
+  const destDir = path.dirname(dest)
+  if (!fs.existsSync(destDir))
+    fs.mkdirSync(destDir, { recursive: true })
+  const same = compareContents(src, dest)
+  if (!same)
+    fs.copyFileSync(src, dest)
+  logCompile(label, filePath, same, false)
+}
+
+function brandingIconSizes(): number[] {
+  // Icon pixel sizes from env/branding/webmanifest.json.
+  const filename = webmanifestJsonPath()
+  if (!fs.existsSync(filename))
+    throw new Error(`Missing ${filename}. See docs/aws-config.md`)
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(fs.readFileSync(filename, "utf8"))
+  } catch {
+    throw new Error(`${filename} is not valid JSON.`)
+  }
+  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed))
+    throw new Error(`${filename} must be a JSON object.`)
+  const icons = (parsed as Record<string, unknown>)["icons"]
+  if (!Array.isArray(icons) || icons.length === 0)
+    throw new Error(`${filename} is missing icons.`)
+  const sizes: number[] = []
+  for (const dim of icons) {
+    if (typeof dim !== "number" || !Number.isInteger(dim) || dim <= 0)
+      throw new Error(`${filename} icons must be positive integers.`)
+    sizes.push(dim)
+  }
+  return sizes
+}
+
+export function copyBrandingAssets(): void {
+  // Copy branded icons and favicon from env/branding into dist.
+  ensureBrandingDir()
+  for (const size of brandingIconSizes()) {
+    const name = `icon-${size}.png`
+    const src = path.join(brandingDir, name)
+    if (!fs.existsSync(src))
+      throw new Error(`Missing ${src}.`)
+    copyIfChanged(src, path.join("dist/icons", name),
+      "Copied branding icon", `icons/${name}`)
+  }
+  const favicon = path.join(brandingDir, "favicon.ico")
+  if (!fs.existsSync(favicon))
+    throw new Error(`Missing ${favicon}.`)
+  copyIfChanged(favicon, "dist/favicon.ico", "Copied favicon", "favicon.ico")
 }
 
 // image page
@@ -359,15 +444,18 @@ statictea \
   -o pages/header.tea \
   -o pages/index.tea \
   -s env/aws-settings.json
+  -s env/branding/branding.json
   -r tmp/index.html
 */
   generateCollectionsJsonOnce()
+  readBranding()
   const parameters = [
     "-t", "pages/index-tmpl.html",
     "-s", "pages/collections.json",
     "-o", "pages/header.tea",
     "-o", "pages/index.tea",
     "-s", "env/aws-settings.json",
+    "-s", brandingJsonPath(),
     "-r", "tmp/index.html",
   ]
   runStaticteaTask(parameters, "tmp/index.html", "dist/index.html", cb, {
@@ -497,7 +585,29 @@ gulp.task("css", function () {
     ))
 })
 
-gulp.task("pages", gulp.parallel("index", "ready", "css"));
+gulp.task("branding-assets", function (cb) {
+  // Copy env/branding icons and favicon into dist.
+  copyBrandingAssets()
+  cb()
+})
+
+gulp.task("manifest", function (cb) {
+  // Create collections.webmanifest from env/branding/webmanifest.json.
+  ensureBrandingDir()
+  const parameters = [
+    "-t", "pages/webmanifest-tmpl.json",
+    "-s", webmanifestJsonPath(),
+    "-r", "tmp/collections.webmanifest",
+  ]
+  runStaticteaTask(parameters, "tmp/collections.webmanifest",
+    "dist/collections.webmanifest", cb, {
+      label: "Compiled webmanifest",
+      filePath: "dist/collections.webmanifest",
+      always: true,
+    })
+})
+
+gulp.task("pages", gulp.parallel("index", "ready", "css", "manifest"));
 
 gulp.task('readme', function () {
   const parameters = [
@@ -528,6 +638,7 @@ gulp.task("all", gulp.series(
     cb()
   },
   "missing-folders",
+  "branding-assets",
   gulp.parallel("ts", "pages"),
   function quietFinish(cb) {
     finishQuietAll()

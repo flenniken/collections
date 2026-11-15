@@ -13,6 +13,10 @@ dist/collections.css
 dist/maker.css
 tokens.json
 env/aws-settings.json
+env/branding/
+dist/collections.webmanifest
+dist/favicon.ico
+dist/icons/icon-*.png
 .vscode/
 __pycache__/
 env/lambda/*/*.zip

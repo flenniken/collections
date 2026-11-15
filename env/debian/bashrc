@@ -81,10 +81,11 @@ if [[ ! -s "/home/coder/.aws/vapid" ]] || ! grep -qi '^\[VAPID\]' /home/coder/.a
   echo 'See docs/aws-config.md for more info.'
 fi
 
-if [[ ! -s "/home/coder/.aws/branding.ini" ]] || ! grep -qE '^admin_phone *= *"?\+[0-9]' /home/coder/.aws/branding.ini; then
+if [[ ! -s "/home/coder/collections/env/branding/branding.json" ]] ||
+   ! python3 -c 'import json,re,sys; p=json.load(open("/home/coder/collections/env/branding/branding.json")); sys.exit(0 if re.fullmatch(r"\+[0-9]{10,15}", p.get("admin_phone","")) else 1)' 2>/dev/null; then
   echo
-  echo -e "$blueWarning 4: The branding.ini file is missing admin_phone."
-  echo "Run: nano ~/.aws/branding.ini"
+  echo -e "$blueWarning 4: The branding.json file is missing admin_phone."
+  echo "Run: nano env/branding/branding.json"
   echo "See docs/aws-config.md for more info."
 fi
 
