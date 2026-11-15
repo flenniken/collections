@@ -16,6 +16,7 @@ page, the image page and the thumbnails page.
 
 [⬇](#Contents) (table of contents at the bottom)
 
+<a id="index-page"></a>
 # <img src="dist/icons/index.svg" alt=""> Index Page
 
 [![Index Page](docs/index.png)](#)
