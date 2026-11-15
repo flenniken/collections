@@ -16,7 +16,8 @@ page, the image page and the thumbnails page.
 
 [⬇](#Contents) (table of contents at the bottom)
 
-# [![icon](dist/icons/index.svg)](#) Index Page
+<a id="index-page"></a>
+# <img src="dist/icons/index.svg" alt=""> Index Page
 
 [![Index Page](docs/index.png)](#)
 
@@ -52,6 +53,7 @@ The icons do the following:
 
 [⬇](#Contents)
 
+<a id="image-page"></a>
 # ![view images](dist/icons/photo.svg) Image Page
 
 [![Image Page](docs/image.png)](#)
@@ -82,6 +84,7 @@ filled in.
 
 [⬇](#Contents)
 
+<a id="thumbnails-page"></a>
 # ![view images](dist/icons/thumbnails.svg) Thumbnails Page
 
 [![Thumbnails Page](docs/thumbnails.png)](#)
