@@ -484,13 +484,78 @@ body.thumb-reordering {
 #images .info-link,
 #thumbnails .info-link {
   margin: -0.25em 1em 1em 1em;
-  font-size: 1em;
+  font-size: 1.5em;
   overflow-wrap: anywhere;
 }
 
 #images .info-link a,
 #thumbnails .info-link a {
   color: #007aff;
+}
+
+#images .info-link-placeholder,
+#thumbnails .info-link-placeholder {
+  display: inline-block;
+  min-width: 3em;
+  min-height: 1.2em;
+  cursor: text;
+}
+
+#images .info-link-placeholder:empty::before,
+#thumbnails .info-link-placeholder:empty::before {
+  content: attr(data-placeholder);
+  color: #888;
+}
+
+#images .info-link-editable,
+#thumbnails .info-link-editable,
+#images .info-link-editable a,
+#thumbnails .info-link-editable a {
+  cursor: text;
+}
+
+#images .info-link.info-link-edit,
+#thumbnails .info-link.info-link-edit {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35em;
+  font-size: 1em;
+  color: #333;
+}
+
+#images .info-link-edit-row,
+#thumbnails .info-link-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+#images .info-link-edit-row input,
+#thumbnails .info-link-edit-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: 1em;
+  padding: 0.15em 0.3em;
+}
+
+#images .info-link-edit-actions,
+#thumbnails .info-link-edit-actions {
+  display: flex;
+  gap: 0.4em;
+}
+
+#images .info-link-edit button,
+#thumbnails .info-link-edit button {
+  font-size: 1em;
+  padding: 0.15em 0.5em;
+  cursor: pointer;
+}
+
+#images .info-link-edit button:disabled,
+#thumbnails .info-link-edit button:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 #images .taken {

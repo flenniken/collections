@@ -151,6 +151,44 @@ async function saveDescription(cNum: number, field: TextField,
   return await response.json()
 }
 
+async function saveInfoLink(cNum: number, href: string, text: string,
+    imageIx?: number) {
+  // Merge a [href, text] url pair into the collection json on disk.
+  // Both empty removes the url field.
+  const field = imageIx === undefined ? "url" : "imageUrl"
+  const payload: {
+    cNum: number
+    field: "url" | "imageUrl"
+    href: string
+    text: string
+    imageIx?: number
+  } = { cNum, field, href, text }
+  if (imageIx !== undefined)
+    payload.imageIx = imageIx
+  const response = await fetch(
+    "http://localhost:3001/saveDescription",
+    {
+      method: "POST",
+      headers:
+      {
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify(payload),
+      keepalive: true
+    })
+  if (!response.ok) {
+    let detail = `${response.status}`
+    try {
+      const result = await response.json()
+      if (result && typeof result.message === "string" && result.message)
+        detail = result.message
+    } catch {
+    }
+    throw new Error(`Save failed: ${detail}`)
+  }
+  return await response.json()
+}
+
 async function saveOrder(cNum: number, order: number[]) {
   // Reorder images in the collection json on disk.
   const response = await fetch(
@@ -332,15 +370,166 @@ function parseInfoLink(url: unknown): {href: string, text: string} | null {
 
 function createInfoLink(href: string, text: string): HTMLParagraphElement {
   // Return a tappable link for an optional collection or image URL.
+  // Empty href and text show a placeholder so a localhost admin can
+  // tap to add a link.
   const wrap = document.createElement("p")
   wrap.className = "info-link"
-  const link = document.createElement("a")
-  link.href = href
-  link.target = "_blank"
-  link.rel = "noopener noreferrer"
-  link.textContent = text
-  wrap.appendChild(link)
+  setInfoLink(wrap, href, text)
   return wrap
+}
+
+function setInfoLink(wrap: HTMLElement, href: string, text: string) {
+  // Show the link, or a placeholder when both fields are empty.
+  wrap.classList.remove("info-link-edit")
+  wrap.replaceChildren()
+  const parsed = parseHttpUrl(href)
+  const label = text.trim()
+  if (parsed && label) {
+    const link = document.createElement("a")
+    link.href = parsed
+    link.target = "_blank"
+    link.rel = "noopener noreferrer"
+    link.textContent = label
+    wrap.appendChild(link)
+    return
+  }
+  const placeholder = document.createElement("span")
+  placeholder.className = "info-link-placeholder"
+  placeholder.dataset.placeholder = "Link"
+  wrap.appendChild(placeholder)
+}
+
+function enableInfoLinkEditing(wrap: HTMLElement,
+    getOriginal: () => {href: string, text: string},
+    onCommit: (href: string, text: string) => Promise<void>) {
+  // Let a localhost admin tap the link or placeholder and edit href
+  // plus label in a three-line dialog. Command-click (Control-click
+  // on Windows) follows the existing link so it can be tested.
+  if (wrap.dataset.linkEditing === "1")
+    return
+  wrap.dataset.linkEditing = "1"
+  wrap.classList.add("info-link-editable")
+  wrap.addEventListener("click", (event) => {
+    if (wrap.classList.contains("info-link-edit"))
+      return
+    if ((event.metaKey || event.ctrlKey) && wrap.querySelector("a"))
+      return
+    event.preventDefault()
+    event.stopPropagation()
+    openInfoLinkEditor(wrap, getOriginal, onCommit)
+  })
+}
+
+function openInfoLinkEditor(wrap: HTMLElement,
+    getOriginal: () => {href: string, text: string},
+    onCommit: (href: string, text: string) => Promise<void>) {
+  // Replace the link with Link, Text, and Save / Cancel on three lines.
+  const original = getOriginal()
+  wrap.classList.add("info-link-edit")
+  wrap.replaceChildren()
+
+  const hrefInput = document.createElement("input")
+  hrefInput.type = "text"
+  hrefInput.className = "info-link-href"
+  hrefInput.placeholder = "Http link"
+  hrefInput.value = original.href
+  hrefInput.setAttribute("aria-label", "Link")
+  hrefInput.autocomplete = "off"
+  hrefInput.spellcheck = false
+
+  const textInput = document.createElement("input")
+  textInput.type = "text"
+  textInput.className = "info-link-text"
+  textInput.placeholder = "text"
+  textInput.value = original.text
+  textInput.setAttribute("aria-label", "Text")
+  textInput.autocomplete = "off"
+
+  const save = document.createElement("button")
+  save.type = "button"
+  save.textContent = "Save"
+
+  const cancel = document.createElement("button")
+  cancel.type = "button"
+  cancel.textContent = "Cancel"
+
+  const hrefRow = document.createElement("label")
+  hrefRow.className = "info-link-edit-row"
+  hrefRow.append("Link: ", hrefInput)
+
+  const textRow = document.createElement("label")
+  textRow.className = "info-link-edit-row"
+  textRow.append("Text: ", textInput)
+
+  const actions = document.createElement("div")
+  actions.className = "info-link-edit-actions"
+  actions.append(save, cancel)
+
+  wrap.append(hrefRow, textRow, actions)
+
+  function pairFromInputs(): {href: string, text: string} {
+    return { href: hrefInput.value.trim(), text: textInput.value.trim() }
+  }
+
+  function updateSaveEnabled() {
+    const {href, text} = pairFromInputs()
+    const both = parseHttpUrl(href) !== null && text !== ""
+    const neither = href === "" && text === ""
+    const hadLink = original.href !== "" || original.text !== ""
+    save.disabled = !(both || (neither && hadLink))
+  }
+
+  function closeEditor(href: string, text: string) {
+    wrap.removeEventListener("keydown", onKey)
+    setInfoLink(wrap, href, text)
+  }
+
+  function onKey(event: KeyboardEvent) {
+    if (event.key === "Escape") {
+      event.preventDefault()
+      closeEditor(original.href, original.text)
+      return
+    }
+    if (event.key !== "Enter")
+      return
+    // Let Enter click Save or Cancel when that button is focused.
+    if (event.target === save || event.target === cancel)
+      return
+    event.preventDefault()
+    void saveEdit()
+  }
+
+  async function saveEdit() {
+    if (save.disabled)
+      return
+    const {href, text} = pairFromInputs()
+    if (href === original.href && text === original.text) {
+      closeEditor(href, text)
+      return
+    }
+    try {
+      await onCommit(href, text)
+      closeEditor(href, text)
+    } catch (error) {
+      logError("Link save failed", error)
+    }
+  }
+
+  hrefInput.addEventListener("input", updateSaveEnabled)
+  textInput.addEventListener("input", updateSaveEnabled)
+  save.addEventListener("click", (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    void saveEdit()
+  })
+  cancel.addEventListener("click", (event) => {
+    event.preventDefault()
+    event.stopPropagation()
+    closeEditor(original.href, original.text)
+  })
+  wrap.addEventListener("keydown", onKey)
+  updateSaveEnabled()
+  hrefInput.focus()
 }
 
 const LOCATION_RE = /^\s*[+-]?\d+\.?\d*\s*,\s*[+-]?\d+\.?\d*\s*$/

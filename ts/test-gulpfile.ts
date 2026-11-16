@@ -22,7 +22,8 @@ import {
   readBranding,
   writeBrandingTs,
   parseCliCollectionNum,
-  validLocationString
+  validLocationString,
+  validUrlString
 } from './gulpfile';
 
 if (!process.env.coder_env) {
@@ -662,6 +663,25 @@ function testValidLocationString(value: string, expected: boolean) {
     `validLocationString(${JSON.stringify(value)})`)
 }
 
+function testValidUrlString(value: string, expected: boolean) {
+  gotExpected(validUrlString(value), expected,
+    `validUrlString(${JSON.stringify(value)})`)
+}
+
+function validUrlStringSuite() {
+  test(testValidUrlString, "https://en.wikipedia.org/wiki/Alhambra", true)
+  test(testValidUrlString, "http://example.com", true)
+  test(testValidUrlString, " https://example.com/path ", true)
+  test(testValidUrlString, "http://localhost:8000/", true)
+  test(testValidUrlString, "", false)
+  test(testValidUrlString, "  ", false)
+  test(testValidUrlString, "ftp://example.com", false)
+  test(testValidUrlString, "javascript:alert(1)", false)
+  test(testValidUrlString, "https://", false)
+  test(testValidUrlString, "not-a-url", false)
+  test(testValidUrlString, "https://user:pass@example.com", false)
+}
+
 function validLocationStringSuite() {
   test(testValidLocationString, "", true)
   test(testValidLocationString, "47.6761750,-122.2685556", true)
@@ -706,6 +726,7 @@ function testGulpfile() {
   console.log("Test gulpfile.ts")
 
   runSuite(validLocationStringSuite)
+  runSuite(validUrlStringSuite)
   runSuite(parseCliCollectionNumSuite)
   runSuite(parseImageNameSuite)
   runSuite(smallThumbnailNameSuite)

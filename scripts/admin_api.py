@@ -20,6 +20,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 from PIL import Image, ImageDraw, ImageOps
@@ -44,6 +45,9 @@ TEXT_FIELDS = (
   "description", "indexDescription", "imageDescription", "title", "posted",
   "location", "imageLocation",
 )
+URL_FIELDS = (
+  "url", "imageUrl",
+)
 
 def cleanTextField(text):
   # Drop leading and trailing whitespace, and spaces at the end of
@@ -65,6 +69,25 @@ def validLocationString(value):
   lat = float(parts[0])
   lng = float(parts[1])
   return -90 <= lat <= 90 and -180 <= lng <= 180
+
+def validUrlString(value):
+  # True for an http or https URL with a host and no userinfo.
+  if not isinstance(value, str):
+    return False
+  trimmed = value.strip()
+  if trimmed == "":
+    return False
+  try:
+    parsed = urlparse(trimmed)
+  except ValueError:
+    return False
+  if parsed.scheme not in ("http", "https"):
+    return False
+  if parsed.username or parsed.password:
+    return False
+  if not parsed.netloc:
+    return False
+  return True
 
 def cleanCollectionTextFields(collection):
   # Strip whitespace from title, posted, description, and location fields.
@@ -129,6 +152,60 @@ def writeCollectionJson(collection, root=None):
   tmpPath.replace(path)
   return path
 
+def saveUrlField(payload, root=None):
+  """
+  Merge or remove a [href, text] url pair in dist/images/cN/cN.json.
+  Both empty removes the key. One without the other is invalid.
+  """
+  href = payload.get("href")
+  text = payload.get("text")
+  if not isinstance(href, str) or not isinstance(text, str):
+    raise AdminApiException("Invalid url")
+  href = href.strip()
+  label = cleanTextField(text)
+  if href == "" and label == "":
+    pair = None
+  elif href == "" or label == "":
+    raise AdminApiException("Url and text are both required")
+  elif not validUrlString(href):
+    raise AdminApiException("Invalid url")
+  else:
+    pair = [href, label]
+
+  path = collectionJsonPath(payload, root=root)
+  if not path.is_file():
+    raise AdminApiException(f"Missing collection json: {path}")
+  try:
+    collection = json.loads(path.read_text(encoding="utf-8"))
+  except json.JSONDecodeError:
+    raise AdminApiException("Invalid collection json")
+  if not isinstance(collection, dict):
+    raise AdminApiException("Invalid collection json")
+  if collection.get("cNum") != payload.get("cNum"):
+    raise AdminApiException("cNum does not match file")
+
+  field = payload.get("field")
+  if field == "imageUrl":
+    imageIx = payload.get("imageIx")
+    if not isinstance(imageIx, int) or isinstance(imageIx, bool) or imageIx < 0:
+      raise AdminApiException("Invalid imageIx")
+    images = collection.get("images")
+    if not isinstance(images, list) or imageIx >= len(images):
+      raise AdminApiException("Invalid imageIx")
+    image = images[imageIx]
+    if not isinstance(image, dict):
+      raise AdminApiException("Invalid imageIx")
+    if pair is None:
+      image.pop("url", None)
+    else:
+      image["url"] = pair
+  elif pair is None:
+    collection.pop("url", None)
+  else:
+    collection["url"] = pair
+
+  return writeCollectionJson(collection, root=root)
+
 def saveDescription(payload, root=None):
   """
   Merge one text field into dist/images/cN/cN.json.
@@ -136,6 +213,8 @@ def saveDescription(payload, root=None):
   if not isinstance(payload, dict):
     raise AdminApiException("Invalid JSON")
   field = payload.get("field")
+  if field in URL_FIELDS:
+    return saveUrlField(payload, root=root)
   if field not in TEXT_FIELDS:
     raise AdminApiException("Invalid field")
   text = payload.get("text")
@@ -760,6 +839,109 @@ class TestModule(unittest.TestCase):
     saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
     self.assertEqual(saved["images"][0]["location"], "47.6761750, -122.2685556")
     self.assertEqual(saved["images"][1].get("location"), None)
+
+  def test_validUrlString(self):
+    self.assertTrue(validUrlString("https://en.wikipedia.org/wiki/Alhambra"))
+    self.assertTrue(validUrlString("http://example.com"))
+    self.assertTrue(validUrlString(" https://example.com/path "))
+    self.assertTrue(validUrlString("http://localhost:8000/"))
+    self.assertFalse(validUrlString(""))
+    self.assertFalse(validUrlString("  "))
+    self.assertFalse(validUrlString("ftp://example.com"))
+    self.assertFalse(validUrlString("javascript:alert(1)"))
+    self.assertFalse(validUrlString("https://"))
+    self.assertFalse(validUrlString("not-a-url"))
+    self.assertFalse(validUrlString("https://user:pass@example.com"))
+
+  def test_saveUrl(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "url",
+      "href": "https://en.wikipedia.org/wiki/Alhambra",
+      "text": "Alhambra",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["url"],
+      ["https://en.wikipedia.org/wiki/Alhambra", "Alhambra"])
+    self.assertEqual(saved["title"], "Keep me")
+
+  def test_saveUrlEmptyRemoves(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "url",
+      "href": "https://en.wikipedia.org/wiki/Alhambra",
+      "text": "Alhambra",
+    }, root=self.root)
+    saveDescription({
+      "cNum": 9,
+      "field": "url",
+      "href": "",
+      "text": "",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertNotIn("url", saved)
+
+  def test_saveUrlOneSided(self):
+    self.writeOriginalCollection()
+    with self.assertRaises(AdminApiException):
+      saveDescription({
+        "cNum": 9,
+        "field": "url",
+        "href": "https://example.com",
+        "text": "",
+      }, root=self.root)
+    with self.assertRaises(AdminApiException):
+      saveDescription({
+        "cNum": 9,
+        "field": "url",
+        "href": "",
+        "text": "Alhambra",
+      }, root=self.root)
+
+  def test_saveUrlInvalid(self):
+    self.writeOriginalCollection()
+    with self.assertRaises(AdminApiException):
+      saveDescription({
+        "cNum": 9,
+        "field": "url",
+        "href": "not-a-url",
+        "text": "Alhambra",
+      }, root=self.root)
+
+  def test_saveImageUrl(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "imageUrl",
+      "imageIx": 0,
+      "href": "https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid",
+      "text": "Plaza Mayor",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["images"][0]["url"],
+      ["https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid", "Plaza Mayor"])
+    self.assertEqual(saved["images"][1].get("url"), None)
+
+  def test_saveImageUrlEmptyRemoves(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "imageUrl",
+      "imageIx": 0,
+      "href": "https://example.com",
+      "text": "Example",
+    }, root=self.root)
+    saveDescription({
+      "cNum": 9,
+      "field": "imageUrl",
+      "imageIx": 0,
+      "href": "",
+      "text": "",
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertNotIn("url", saved["images"][0])
 
   def test_saveDescriptionInvalidField(self):
     self.writeOriginalCollection()

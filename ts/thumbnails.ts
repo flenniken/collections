@@ -97,14 +97,34 @@ async function refreshThumbnailHeading(): Promise<Record<string, unknown> | null
 
 function setupCollectionLink(url: unknown) {
   // Show a collection link under the description when url is set.
+  // A localhost admin always gets a placeholder so an empty link
+  // can be added.
   document.querySelector("#thumbnails .info-link")?.remove()
   const parsed = parseInfoLink(url)
-  if (!parsed)
+  if (!parsed && !isLocalAdmin())
     return
   const desc = document.getElementById("description")
   if (!desc)
     return
-  desc.after(createInfoLink(parsed.href, parsed.text))
+  const wrap = createInfoLink(parsed?.href || "", parsed?.text || "")
+  desc.after(wrap)
+  setupCollectionLinkEditing(wrap, parsed)
+}
+
+function setupCollectionLinkEditing(wrap: HTMLElement,
+    parsed: {href: string, text: string} | null) {
+  // Let a localhost admin edit the collection url pair in cN.json.
+  if (!isLocalAdmin())
+    return
+  const cNum = parseInt(document.body.dataset.cnum || "", 10)
+  if (!(cNum > 0))
+    return
+  let current = { href: parsed?.href || "", text: parsed?.text || "" }
+  enableInfoLinkEditing(wrap, () => current, async (href, text) => {
+    await saveInfoLink(cNum, href, text)
+    current = { href, text }
+    log("Link saved.")
+  })
 }
 
 function setupCollectionMap(location: string) {

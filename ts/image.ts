@@ -102,6 +102,7 @@ async function handleLoad() {
     await refreshImageFieldsFromJson()
   setupDescriptionEditing()
   setupLocationEditing()
+  setupUrlEditing()
   setupZoomPad()
 
   topHeaderHeight = cssNum("--top-header-height")
@@ -173,8 +174,8 @@ function setupImageDetails() {
       return
     let insertAfter: Element = description
     const infoLink = parseInfoLink(image.url)
-    if (infoLink) {
-      const link = createInfoLink(infoLink.href, infoLink.text)
+    if (infoLink || isLocalAdmin()) {
+      const link = createInfoLink(infoLink?.href || "", infoLink?.text || "")
       insertAfter.after(link)
       insertAfter = link
     }
@@ -1777,6 +1778,7 @@ async function refreshImageFieldsFromJson() {
     const el = descriptions[ix]
     if (el)
       el.textContent = image.description
+    syncImageInfoLink(ix)
     syncImageLocationBlock(ix)
   })
 }
@@ -1792,21 +1794,39 @@ function applyFetchedCollectionText(collection: CJson.Collection,
       original[key] = value
     }
   }
+  const fetchedUrl = parseInfoLink(cinfo.url)
+  if (fetchedUrl) {
+    collection.url = [fetchedUrl.href, fetchedUrl.text]
+    original.url = [fetchedUrl.href, fetchedUrl.text]
+  } else {
+    delete collection.url
+    delete original.url
+  }
   const fetchedImages = cinfo.images
   if (!Array.isArray(fetchedImages))
     return
-  const byPreview = new Map<string, {description?: string, location?: string}>()
+  const byPreview = new Map<string, {
+    description?: string
+    location?: string
+    url?: [string, string] | null
+  }>()
   for (const item of fetchedImages) {
     if (item == null || typeof item !== "object")
       continue
     const image = item as Record<string, unknown>
     if (typeof image.iPreview !== "string")
       continue
-    const fields: {description?: string, location?: string} = {}
+    const fields: {
+      description?: string
+      location?: string
+      url?: [string, string] | null
+    } = {}
     if (typeof image.description === "string")
       fields.description = image.description
     if (typeof image.location === "string")
       fields.location = image.location
+    const parsedUrl = parseInfoLink(image.url)
+    fields.url = parsedUrl ? [parsedUrl.href, parsedUrl.text] : null
     byPreview.set(image.iPreview, fields)
   }
   collection.images.forEach((image, ix) => {
@@ -1824,6 +1844,15 @@ function applyFetchedCollectionText(collection: CJson.Collection,
       if (orig && orig.iPreview === image.iPreview)
         orig.location = fields.location
     }
+    if (fields.url) {
+      image.url = fields.url
+      if (orig && orig.iPreview === image.iPreview)
+        orig.url = fields.url
+    } else {
+      delete image.url
+      if (orig && orig.iPreview === image.iPreview)
+        delete orig.url
+    }
   })
 }
 
@@ -1840,6 +1869,23 @@ function imageLocationInsertAfter(colbox: HTMLElement): Element | null {
   if (infoLink)
     return infoLink
   return description
+}
+
+function syncImageInfoLink(imageIx: number) {
+  // Match the info link to the collection json after a fetch.
+  const colbox = get(`cb${imageIx + 1}`)
+  const parsed = parseInfoLink(cJson.images[imageIx].url)
+  let wrap = colbox.querySelector(".info-link") as HTMLElement | null
+  if (!wrap) {
+    if (!parsed && !isLocalAdmin())
+      return
+    const description = colbox.querySelector(".description")
+    if (!description)
+      return
+    description.after(createInfoLink(parsed?.href || "", parsed?.text || ""))
+    return
+  }
+  setInfoLink(wrap, parsed?.href || "", parsed?.text || "")
 }
 
 function syncImageLocationBlock(imageIx: number) {
@@ -1898,6 +1944,39 @@ async function saveEditedLocation(imageIx: number, text: string) {
   } catch (error) {
     logError("Location save failed", error)
   }
+}
+
+function setupUrlEditing() {
+  // Let a localhost admin edit each photo's url pair in cN.json.
+  if (!isLocalAdmin())
+    return
+  cJson.images.forEach((_image, ix) => {
+    const colbox = get(`cb${ix + 1}`)
+    let wrap = colbox.querySelector(".info-link") as HTMLElement | null
+    if (!wrap) {
+      const description = colbox.querySelector(".description")
+      if (!description)
+        return
+      const parsed = parseInfoLink(cJson.images[ix].url)
+      wrap = createInfoLink(parsed?.href || "", parsed?.text || "")
+      description.after(wrap)
+    }
+    enableInfoLinkEditing(wrap, () => {
+      const parsed = parseInfoLink(cJson.images[ix].url)
+      return { href: parsed?.href || "", text: parsed?.text || "" }
+    }, (href, text) => saveEditedUrl(ix, href, text))
+  })
+  log("Admin link editing is on.")
+}
+
+async function saveEditedUrl(imageIx: number, href: string, text: string) {
+  // Merge the image url pair into the collection json on disk.
+  await saveInfoLink(cJson.cNum, href, text, imageIx)
+  if (href && text)
+    cJson.images[imageIx].url = [href, text]
+  else
+    delete cJson.images[imageIx].url
+  log(`Link ${imageIx + 1} saved.`)
 }
 
 function setupDescriptionEditing() {

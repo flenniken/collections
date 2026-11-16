@@ -280,20 +280,41 @@ http://localhost:8000/
 
 __Edit Details__
 
-Edit titles, posted dates, descriptions, and locations in place while
-logged in as admin. Empty fields show a placeholder so you can tap
-them. On localhost the change is automatically merged into
-`dist/images/cN/cN.json` when you tap away.
+Edit titles, posted dates, descriptions, locations, and url links in
+place while logged in as admin. Empty fields show a placeholder so
+you can tap them. On localhost the change is automatically merged
+into `dist/images/cN/cN.json` when you tap away, or when you tap
+Save on the link dialog.
 
-Thumbnails page -- edit collection description and location, and set
-the image order with drag and drop. Title and posted date are shown
-here but edited on the index. The page reads them from the collection
-json so they stay current without `g all`. Paste a Google Maps
-lat,lng string into Location, for example `47.6761750,-122.2685556`.
+__Thumbnails Page__
 
-To set the image order use localhost as admin, long-press a thumbnail on the thumbnails page
-then drag it to a new place. The admin API rearranges the `images` (and
-zoom points) in `cN.json`. Run `g all` so the image page matches.
+On the thumbnails page logged in as admin on localhost you can edit
+the collection:
+
+* collection description
+* optional GPS location
+* optional url
+* order images
+* crop thumbnails
+* title and post date appear but are edited on the index page.
+
+The fields stay current without `g all` so a refresh doesn't wipe them
+out.
+
+For the GPS Location, paste a Google Maps lat,lng string, for example
+`47.6761750,-122.2685556`.
+
+Link editing shows three lines: Link, Text, then Save Cancel. Both
+fields are required to Save. Cancel leaves the previous link. Clearing
+both fields and saving removes `url` from the json. Command-click
+(Control-click on Windows) an existing link to open it instead of
+editing. On the image page, tap Link under a photo to set that photo's
+url the same way.
+
+To set the image order, long-press a thumbnail on the thumbnails page
+then drag it to a new place. The admin API rearranges the `images`
+(and zoom points) in `cN.json`. Run `g all` afterwards so the image
+page is rebuilt and matches the new order.
 
 Command-click it (Control-click on Windows) to open a crop
 dialog. The square starts as large as it can.  Drag it to move, or

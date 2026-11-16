@@ -152,6 +152,14 @@ When making changes to the image page test them with these steps:
   * as admin on localhost, tap Location under an image, paste
     coordinates, tap away, and verify that photo's `location` is
     updated in `cN.json`
+  * as admin on localhost, tap Link under the thumbnails description
+    (or the placeholder when there is no link), enter an http link and
+    text, tap Save, and verify `url` is updated in `cN.json`. Save
+    stays disabled until both fields are filled. Tap Cancel to leave
+    the existing link unchanged. Command-click (Control-click on
+    Windows) the existing link and verify it opens instead of editing
+  * as admin on localhost, tap Link under an image, enter both fields,
+    tap Save, and verify that photo's `url` is updated in `cN.json`
   * as admin on localhost, long-press a thumbnail, drag it onto
     another, drop, and verify the photos reorder in `cN.json`
   * as admin on localhost, Command-click a thumbnail, drag the
