@@ -144,6 +144,9 @@ When making changes to the image page test them with these steps:
     changes when you swipe to the next photo
   * as admin on localhost, tap an index description, edit it, tap away, and verify
     `indexDescription` is updated in `cN.json`
+  * as admin on localhost, tap Admin -- cN or Public on a featured
+    card and verify `building` is added or removed in `cN.json`. Off
+    localhost, only Admin -- cN appears for building collections
   * as admin on localhost, tap the thumbnails page description, edit it, tap away,
     and verify `description` is updated in `cN.json`
   * as admin on localhost, tap Location under the thumbnails map (or

@@ -206,6 +206,33 @@ def saveUrlField(payload, root=None):
 
   return writeCollectionJson(collection, root=root)
 
+def saveBuildingField(payload, root=None):
+  """
+  Set or remove building in dist/images/cN/cN.json.
+  True writes "building": true. False removes the key.
+  """
+  building = payload.get("building")
+  if building is not True and building is not False:
+    raise AdminApiException("Invalid building")
+
+  path = collectionJsonPath(payload, root=root)
+  if not path.is_file():
+    raise AdminApiException(f"Missing collection json: {path}")
+  try:
+    collection = json.loads(path.read_text(encoding="utf-8"))
+  except json.JSONDecodeError:
+    raise AdminApiException("Invalid collection json")
+  if not isinstance(collection, dict):
+    raise AdminApiException("Invalid collection json")
+  if collection.get("cNum") != payload.get("cNum"):
+    raise AdminApiException("cNum does not match file")
+
+  if building:
+    collection["building"] = True
+  else:
+    collection.pop("building", None)
+  return writeCollectionJson(collection, root=root)
+
 def saveDescription(payload, root=None):
   """
   Merge one text field into dist/images/cN/cN.json.
@@ -215,6 +242,8 @@ def saveDescription(payload, root=None):
   field = payload.get("field")
   if field in URL_FIELDS:
     return saveUrlField(payload, root=root)
+  if field == "building":
+    return saveBuildingField(payload, root=root)
   if field not in TEXT_FIELDS:
     raise AdminApiException("Invalid field")
   text = payload.get("text")
@@ -839,6 +868,42 @@ class TestModule(unittest.TestCase):
     saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
     self.assertEqual(saved["images"][0]["location"], "47.6761750, -122.2685556")
     self.assertEqual(saved["images"][1].get("location"), None)
+
+  def test_saveBuildingTrue(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "building",
+      "building": True,
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertEqual(saved["building"], True)
+    self.assertEqual(saved["title"], "Keep me")
+
+  def test_saveBuildingFalseRemoves(self):
+    self.writeOriginalCollection()
+    saveDescription({
+      "cNum": 9,
+      "field": "building",
+      "building": True,
+    }, root=self.root)
+    saveDescription({
+      "cNum": 9,
+      "field": "building",
+      "building": False,
+    }, root=self.root)
+    saved = json.loads((self.folder / "c9.json").read_text(encoding="utf-8"))
+    self.assertNotIn("building", saved)
+
+  def test_saveBuildingInvalid(self):
+    self.writeOriginalCollection()
+    for building in ("true", 1, 0, None, "yes"):
+      with self.assertRaises(AdminApiException):
+        saveDescription({
+          "cNum": 9,
+          "field": "building",
+          "building": building,
+        }, root=self.root)
 
   def test_validUrlString(self):
     self.assertTrue(validUrlString("https://en.wikipedia.org/wiki/Alhambra"))

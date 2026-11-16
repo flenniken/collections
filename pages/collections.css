@@ -113,6 +113,14 @@
   text-align: left;
 }
 
+#index .collection:not(.compact) .building-mark.public {
+  color: #888;
+}
+
+#index .collection:not(.compact) .building-mark-toggle {
+  cursor: pointer;
+}
+
 #index .collection .building-mark:empty {
   display: none;
 }

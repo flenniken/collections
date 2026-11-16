@@ -181,6 +181,7 @@ async function refreshIndexFieldsFromJson() {
       c.posted = cinfo.posted
     if (typeof cinfo.indexDescription === "string")
       c.indexDescription = cinfo.indexDescription
+    c.building = cinfo.building === true
     const card = document.getElementById(`c${c.cNum}`)
     if (!card)
       return
@@ -196,6 +197,7 @@ async function refreshIndexFieldsFromJson() {
     const descEl = card.querySelector(".description")
     if (descEl)
       descEl.textContent = c.indexDescription
+    syncIndexBuildingMark(card, c)
   }))
 }
 
@@ -255,6 +257,58 @@ function setupIndexDescriptionEditing() {
   log("Admin index editing is on.")
 }
 
+function buildingMarkLabel(cNum: number, building: boolean): string {
+  return building ? `Admin -- c${cNum}` : "Public"
+}
+
+function syncIndexBuildingMark(card: HTMLElement, c: CJson.IndexCollection) {
+  // Show Admin -- cN when building. On localhost admin, public
+  // collections show Public so the mark stays clickable.
+  const mark = card.querySelector(".building-mark") as HTMLElement | null
+  if (!mark)
+    return
+  if (isLocalAdmin()) {
+    mark.textContent = buildingMarkLabel(c.cNum, c.building)
+    mark.classList.toggle("public", !c.building)
+    return
+  }
+  mark.textContent = c.building ? buildingMarkLabel(c.cNum, true) : ""
+  mark.classList.remove("public")
+}
+
+function setupBuildingMarkEditing() {
+  // Let a localhost admin tap Admin -- cN / Public to set building.
+  if (!isLocalAdmin())
+    return
+  csjson.indexCollections.forEach((c) => {
+    const card = document.getElementById(`c${c.cNum}`)
+    if (!card || card.classList.contains("compact"))
+      return
+    const mark = card.querySelector(".building-mark") as HTMLElement | null
+    if (!mark)
+      return
+    syncIndexBuildingMark(card, c)
+    mark.classList.add("building-mark-toggle")
+    mark.addEventListener("click", async () => {
+      if (mark.dataset.saving === "1")
+        return
+      const next = !c.building
+      mark.dataset.saving = "1"
+      try {
+        await saveBuilding(c.cNum, next)
+        c.building = next
+        syncIndexBuildingMark(card, c)
+        log(next
+          ? `Collection ${c.cNum} is admin only.`
+          : `Collection ${c.cNum} is public.`)
+      } catch (error) {
+        logError("Building save failed", error)
+      }
+      delete mark.dataset.saving
+    })
+  })
+}
+
 function isIndexCollectionImage(target: EventTarget | null): boolean {
   return target instanceof Element &&
     !!(target.closest(".thumbnail") || target.closest(".line-thumb"))
@@ -291,6 +345,7 @@ async function handleLoad() {
   if (isLocalhost())
     await refreshIndexFieldsFromJson()
   setupIndexDescriptionEditing()
+  setupBuildingMarkEditing()
   setupIndexImageDragGuard()
 
   // This fails when you are not logged in. Is it ever needed?

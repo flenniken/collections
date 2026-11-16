@@ -189,6 +189,33 @@ async function saveInfoLink(cNum: number, href: string, text: string,
   return await response.json()
 }
 
+async function saveBuilding(cNum: number, building: boolean) {
+  // Set or remove building in the collection json on disk.
+  const payload = { cNum, field: "building", building }
+  const response = await fetch(
+    "http://localhost:3001/saveDescription",
+    {
+      method: "POST",
+      headers:
+      {
+        "Content-Type": "text/plain"
+      },
+      body: JSON.stringify(payload),
+      keepalive: true
+    })
+  if (!response.ok) {
+    let detail = `${response.status}`
+    try {
+      const result = await response.json()
+      if (result && typeof result.message === "string" && result.message)
+        detail = result.message
+    } catch {
+    }
+    throw new Error(`Save failed: ${detail}`)
+  }
+  return await response.json()
+}
+
 async function saveOrder(cNum: number, order: number[]) {
   // Reorder images in the collection json on disk.
   const response = await fetch(

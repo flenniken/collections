@@ -238,8 +238,8 @@ folder.
 Admin APIs:
 
 * saveCollection -- saves the cN.json file.  Used when editing the zoom-points.
-* saveDescription -- saves a text field or a url `[href, text]` pair
-  into the current cN.json file in the dist folder.
+* saveDescription -- saves a text field, a url `[href, text]` pair, or
+  the building flag into the current cN.json file in the dist folder.
 * saveOrder -- saves the image order in the cN.json file.
 * saveThumbnail -- creates a new thumbnail from the p.jpg file using the specified crop rectangle.
 

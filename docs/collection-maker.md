@@ -393,9 +393,10 @@ scripts/deploy -s
 
 # Publish
 
-Once the collection looks good, you remove the "building" field from
-the cjson with your text editor, build all, then deploy again.  This
-publishes it to the world.
+Once the collection looks good, publish it from localhost as admin by
+tapping the red **Admin -- cN** mark on the index card so it switches
+to **Public**. That removes `"building": true` from `cN.json`. Tap
+**Public** to make it admin-only again. Then build all and deploy.
 
  ~~"building": true,~~
 
