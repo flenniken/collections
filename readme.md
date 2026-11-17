@@ -19,7 +19,8 @@ page, the image page and the thumbnails page.
 <a id="index-page"></a>
 # <img src="dist/icons/index.svg" alt=""> Index Page
 
-[![Index Page](docs/index.png)](#)
+<img src="docs/index.png" alt="Index Page" height="256">
+
 
 The index page shows the sorted list of available collections with the
 most recent collection on top. You can scroll through the list.
@@ -37,20 +38,6 @@ button.
 You must be logged in to download and view new collections. You can
 continue to view already downloaded collections when not logged in or
 when off online.
-
-The icons do the following:
-
-* ![login and logout](dist/icons/user.svg) login and logout
-* ![download images](dist/icons/download.svg) download the collection's images
-* ![view images](dist/icons/photo.svg) view the collection's images
-* ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
-* ![view index](dist/icons/index.svg) view the collections index
-* ![share image](dist/icons/share.svg) on the image page, share the image
-* ![message Steve](dist/icons/message.svg) on the image page, send Steve a text about the photo
-* ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images
-* ![about](docs/about.png) about the app
-* ![refresh](dist/icons/refresh.svg) in the about box, reload the collection list
-* ![load times](dist/icons/clock.svg) in the about box, as admin, show recent index load times
 
 [⬇](#Contents)
 
@@ -88,7 +75,7 @@ filled in.
 <a id="thumbnails-page"></a>
 # ![view images](dist/icons/thumbnails.svg) Thumbnails Page
 
-[![Thumbnails Page](docs/thumbnails.png)](#)
+<img src="docs/thumbnails.png" alt="Thumbnails Page" height="256">
 
 The thumbnails page shows the collection’s thumbnails.
 
@@ -100,6 +87,24 @@ the index icon.
 
 Tapping the photo icon shows the first photo full size on the image
 page.
+
+[⬇](#Contents)
+
+# Icons
+
+The icons do the following:
+
+* ![login and logout](dist/icons/user.svg) login and logout
+* ![download images](dist/icons/download.svg) download the collection's images
+* ![view images](dist/icons/photo.svg) view the collection's images
+* ![view thumbnails](dist/icons/thumbnails.svg) view the collection's thumbnails
+* ![view index](dist/icons/index.svg) view the collections index
+* ![share image](dist/icons/share.svg) on the image page, share the image
+* ![message Steve](dist/icons/message.svg) on the image page, send Steve a text about the photo
+* ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images
+* ![about](docs/about.png) about the app
+* ![refresh](dist/icons/refresh.svg) in the about box, reload the collection list
+* ![load times](dist/icons/clock.svg) in the about box, as admin, show recent index load times
 
 [⬇](#Contents)
 
@@ -135,11 +140,12 @@ Settings > Notifications > Collections
 
 # Contents
 
-* [Index Page](#index-page)
-* [Image Page](#image-page)
-* [Thumbnails Page](#thumbnails-page)
-* [Run Collections](#run-collections)
-* [Notifications](#notifications)
+* [Index Page](#index-page) -- how to use the index page.
+* [Image Page](#image-page) -- how to use the image page.
+* [Thumbnails Page](#thumbnails-page) -- how to use the thumbnails page.
+* [Icons](#icons) -- what the icons do.
+* [Run Collections](#run-collections) -- how to install and run collections.
+* [Notifications](#notifications) -- how to get notified when a new collection is published.
 
 # Other
 

@@ -46,14 +46,22 @@ It’s also good for making screenshots that include the bezel.
 * take a screenshot cmd-shift-4
 * open the sceenshot in photoshop
 * pull guides out from the rulers to define the crop area
-* crop using the guides
-* select pixels in a corner
-* make the corner pixels transparent: menu > file > clear
+* crop using the guides -- crop tool, 0 x 0, snap to rulers, click crop tool
+* select pixels in a corner with magic wand
+* make the corner pixels transparent by pressing the delete key
 * repeat for the other corners
-* save the png file to the tmp folder called index-orig.png for example
-* scale the long side to 256 in photoshop: menu > image > size
+* scale the long side to 512 in photoshop: menu > image > size
 * "save as" to a name in the docs folder, for example index.png
 * test in Firefox
+
+♫ Note: The image height is 256 in the readme but when you enlarge the
+text with `cmd +` the extra pixels are used and the text looks better.
+
+♫ Note: The readme uses html to scale down the image:
+
+~~~
+<img src="docs/index.png" alt="Index Page" height="256">
+~~~
 
 [⬇](#Contents)
 
