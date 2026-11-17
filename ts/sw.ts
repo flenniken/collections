@@ -254,26 +254,29 @@ self.addEventListener("fetch", (event: Event) => {
     const cached = await cacheMatch(cache, request)
 
     try {
-      const response = await fetch(await netRequest(request, cached))
+      const requestToSend = await netRequest(request, cached)
+      const netT0 = performance.now()
+      const response = await fetch(requestToSend)
+      const took = ` ${Math.round(performance.now() - netT0)}ms`
       if (response.status === 304) {
         if (cached) {
-          logsw(`304 ${sUrl(url)}${xCache(response)}`)
+          logsw(`304 ${sUrl(url)}${xCache(response)}${took}`)
           return withRange(request, cached)
         }
-        logsw(`304 with no cache: ${sUrl(url)}${xCache(response)}`)
+        logsw(`304 with no cache: ${sUrl(url)}${xCache(response)}${took}`)
         return new Response(null, {status: 404})
       }
       if (response.status === 200) {
         const bareRequest = new Request(stripUrlParameters(url))
         await cache.put(bareRequest, response.clone())
-        logsw(`200 ${sUrl(url)}${xCache(response)}`)
+        logsw(`200 ${sUrl(url)}${xCache(response)}${took}`)
         return withRange(request, response)
       }
       if (cached) {
-        logsw(`net ${response.status}, cache ${sUrl(url)}${xCache(response)}`)
+        logsw(`net ${response.status}, cache ${sUrl(url)}${xCache(response)}${took}`)
         return withRange(request, cached)
       }
-      logsw(`net ${response.status}: ${sUrl(url)}${xCache(response)}`)
+      logsw(`net ${response.status}: ${sUrl(url)}${xCache(response)}${took}`)
       return new Response(null, {status: response.status})
     }
     catch (error) {

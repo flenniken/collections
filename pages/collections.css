@@ -261,6 +261,22 @@
   padding-top: 4px;
 }
 
+#index #about-box .bottom-menu .icon.admin.visible {
+  display: inline;
+}
+
+#index #load-times {
+  display: none;
+  font-size: 1.5em;
+  line-height: 1.35;
+  white-space: pre-wrap;
+  margin: 0 0 1em 0;
+}
+
+#index #load-times.visible {
+  display: block;
+}
+
 #notify-prompt {
   display: none;
   text-align: center;

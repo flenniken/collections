@@ -30,6 +30,10 @@ initial-scale=1, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
   <meta name="theme-color" content="white">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta property="og:image" content="icons/icon-512.png">
+  <script>
+  var indexLoadStarted = performance.now() / 1000
+  console.log(indexLoadStarted.toFixed(2) + "s -- Index load started")
+  </script>
   <link rel="shortcut icon" href="favicon.ico">
   <link rel="stylesheet" href="collections.css">
   <link rel="manifest" href="collections.webmanifest">
@@ -89,9 +93,12 @@ the source there too.
       <button id="about-notifications-enable" type="button"
         onclick="enableNotificationsFromAboutBox()">Turn on notifications</button>
       <p id="about-iphone-notifications"></p>
+      <pre id="load-times"></pre>
       <div class="bottom-menu">
         <img class="icon right" src="icons/refresh.svg"
           onclick="refreshPage()" alt="refresh collection list">
+        <img class="icon right admin" src="icons/clock.svg"
+          onclick="showLoadTimes()" alt="index load times">
       </div>
     </div>
   </div>

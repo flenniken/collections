@@ -190,7 +190,9 @@ The sw typescript file is a Service Worker implementation that manages
 file caching. This enables the app to work offline. Collection files
 update on the next request. The index list is baked into index.html,
 so you reload that page to see a new collection. The about box has a
-refresh icon for that.
+refresh icon for that. Index load times are logged to the console and
+stored on the device. An admin clock icon in the about box shows the
+recent loads.
 
 The service worker intercepts GET requests and stores files in the
 application cache together with each file's ETag. It does not use

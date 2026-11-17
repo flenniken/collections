@@ -50,6 +50,7 @@ The icons do the following:
 * ![delete cached images](dist/icons/trash-can.svg) on the thumbnails page, delete the collection's cached images
 * ![about](docs/about.png) about the app
 * ![refresh](dist/icons/refresh.svg) in the about box, reload the collection list
+* ![load times](dist/icons/clock.svg) in the about box, as admin, show recent index load times
 
 [⬇](#Contents)
 

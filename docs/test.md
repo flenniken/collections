@@ -128,6 +128,8 @@ When making changes to the image page test them with these steps:
 * rotate the last image then rotate it back and verify it remains on the same image
 * scroll h & v in landscape mode
 * no flash on load and no flash on rotate
+* as admin, open the about box, tap the clock icon, and verify recent
+  index load times are listed
 * tap the thumbnails menu icon
 * tap the trash can on the thumbnails page, confirm, and verify you
   return to the index with that collection no longer downloaded

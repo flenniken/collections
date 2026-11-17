@@ -9,6 +9,161 @@
 // collections.json file.
 var csjson: CJson.Csjson
 
+// Set by an inline script at the top of index.html. Seconds from
+// navigation start, which is when the service worker starts the
+// index.html fetch.
+declare var indexLoadStarted: number | undefined
+
+const INDEX_LOAD_LOGS_KEY = "indexLoadLogs"
+const INDEX_LOAD_LOGS_MAX = 20
+
+interface IndexLoadMark {
+  sec: number
+  label: string
+}
+
+interface IndexLoadRecord {
+  at: number
+  total: number
+  marks: IndexLoadMark[]
+}
+
+class IndexLoadLog {
+  // Elapsed-time log for one index page load. 0.00s is navigation
+  // start, when the service worker begins fetching index.html.
+  private marks: IndexLoadMark[] = []
+
+  constructor() {
+    const started = typeof indexLoadStarted === "number"
+      ? indexLoadStarted
+      : performance.now() / 1000
+    this.marks.push({ sec: started, label: "Index load started" })
+  }
+
+  mark(label: string) {
+    this.markAt(performance.now() / 1000, label)
+  }
+
+  markAt(sec: number, label: string) {
+    this.marks.push({ sec, label })
+    log(`${sec.toFixed(2)}s -- ${label}`)
+  }
+
+  markScriptsCssIcons() {
+    // Wall-clock time of the last script, stylesheet, icon, or
+    // webmanifest response. These are the service worker 304 checks
+    // that run before the window load event.
+    const sec = chromeResourcesEndSec()
+    if (sec == null)
+      return
+    this.markAt(sec, "Scripts, CSS, icons")
+  }
+
+  finish() {
+    this.mark("Load finished")
+    this.marks.sort((a, b) => a.sec - b.sec)
+    storeIndexLoadRecord({
+      at: Date.now(),
+      total: this.marks[this.marks.length - 1].sec,
+      marks: this.marks,
+    })
+  }
+}
+
+const indexLoadLog = new IndexLoadLog()
+
+function isChromeResource(url: string): boolean {
+  // Page chrome revalidated by the service worker: JS, CSS, icons,
+  // favicon, and the webmanifest. Index thumbs under /tin/ are not
+  // included; they show up in the window load event instead.
+  let path: string
+  try {
+    path = new URL(url).pathname
+  } catch {
+    return false
+  }
+  if (path.startsWith("/icons/") || path === "/favicon.ico")
+    return true
+  return path.endsWith(".js") || path.endsWith(".css") ||
+    path.endsWith(".svg") || path.endsWith(".webmanifest")
+}
+
+function chromeResourcesEndSec(): number | null {
+  let end = 0
+  const resources = performance.getEntriesByType("resource")
+  for (let i = 0; i < resources.length; i++) {
+    const entry = resources[i] as PerformanceResourceTiming
+    if (isChromeResource(entry.name) && entry.responseEnd > end)
+      end = entry.responseEnd
+  }
+  if (end <= 0)
+    return null
+  return end / 1000
+}
+
+function storeIndexLoadRecord(record: IndexLoadRecord) {
+  // Keep the latest index load logs on this device.
+  let list: IndexLoadRecord[] = []
+  try {
+    const raw = localStorage.getItem(INDEX_LOAD_LOGS_KEY)
+    if (raw)
+      list = JSON.parse(raw) as IndexLoadRecord[]
+  } catch {
+  }
+  if (!Array.isArray(list))
+    list = []
+  list.unshift(record)
+  try {
+    localStorage.setItem(INDEX_LOAD_LOGS_KEY,
+      JSON.stringify(list.slice(0, INDEX_LOAD_LOGS_MAX)))
+  } catch {
+  }
+}
+
+function formatLoadWhen(ms: number): string {
+  // Return "11-16-2026 4:18:19 pm".
+  const d = new Date(ms)
+  const month = (d.getMonth() + 1).toString().padStart(2, "0")
+  const day = d.getDate().toString().padStart(2, "0")
+  const year = d.getFullYear()
+  let hour = d.getHours()
+  const minute = d.getMinutes().toString().padStart(2, "0")
+  const second = d.getSeconds().toString().padStart(2, "0")
+  const ampm = hour >= 12 ? "pm" : "am"
+  hour = hour % 12
+  if (hour == 0)
+    hour = 12
+  return `${month}-${day}-${year} ${hour}:${minute}:${second} ${ampm}`
+}
+
+function formatIndexLoadLogs(): string {
+  let list: IndexLoadRecord[] = []
+  try {
+    const raw = localStorage.getItem(INDEX_LOAD_LOGS_KEY)
+    if (raw)
+      list = JSON.parse(raw) as IndexLoadRecord[]
+  } catch {
+  }
+  if (!Array.isArray(list) || list.length == 0)
+    return "No index load times yet."
+  return list.map((record) => {
+    const lines = record.marks.map((mark) =>
+      `  ${mark.sec.toFixed(2)}s -- ${mark.label}`)
+    return `${record.total.toFixed(2)}s load ${formatLoadWhen(record.at)}\n${lines.join("\n")}`
+  }).join("\n")
+}
+
+function showLoadTimes() {
+  // Show or hide the stored index load logs in the about box.
+  const el = get("load-times")
+  if (el.classList.contains("visible")) {
+    el.classList.remove("visible")
+    return
+  }
+  el.textContent = formatIndexLoadLogs()
+  el.classList.add("visible")
+}
+
 // Whether the app was started by clicking a desktop icon or not.
 let runningFromIcon = false
 
@@ -137,17 +292,14 @@ async function setIndexCollectionStates() {
     return
   }
 
-  csjson.indexCollections.forEach(async (indexCollections: CJson.IndexCollection) => {
-    const cNum = indexCollections.cNum
-    const readyRequest = new Request(`c${cNum}-ready`)
-    const readyResponse = await cache.match(readyRequest);
-    if (readyResponse) {
-      setCollectionState(cNum, "withImages")
-    } else {
-      // log(`Collection ${cNum} is not cached yet.`);
-      setCollectionState(cNum, "withoutImages")
-    }
-  })
+  await Promise.all(csjson.indexCollections.map(async (indexCollection) => {
+    const cNum = indexCollection.cNum
+    const readyResponse = await cache.match(new Request(`c${cNum}-ready`))
+    if (readyResponse)
+      await setCollectionState(cNum, "withImages")
+    else
+      await setCollectionState(cNum, "withoutImages")
+  }))
 }
 
 function showHideAdminUI(pageId: string) {
@@ -328,7 +480,8 @@ function setupIndexImageDragGuard() {
 }
 
 async function handleLoad() {
-  log("Window load event")
+  indexLoadLog.markScriptsCssIcons()
+  indexLoadLog.mark("Window load event")
 
   log(`window.location.search: "${window.location.search}"`)
   const state = getSearchParam("state")
@@ -342,24 +495,16 @@ async function handleLoad() {
 
   // Show the admin icons when an admin is logged in.
   showHideAdminUI("index")
-  if (isLocalhost())
+  if (isLocalhost()) {
     await refreshIndexFieldsFromJson()
+    indexLoadLog.mark("Refresh collection json")
+  }
   setupIndexDescriptionEditing()
   setupBuildingMarkEditing()
   setupIndexImageDragGuard()
 
-  // This fails when you are not logged in. Is it ever needed?
-  // log("Download shared collection files.")
-  // const sharedCollectionUrls = [
-  //   "js/image.js",
-  //   "js/thumbnails.js",
-  //   "icons/index.svg",
-  // ]
-  // downloadUrls(sharedCollectionUrls)
-
-  if (!iphoneRequiresHomeScreen()) {
+  if (!iphoneRequiresHomeScreen())
     await setIndexCollectionStates()
-  }
   updateAboutNotifications()
 
   // Scroll to the saved scroll position if it exists.
@@ -374,6 +519,7 @@ async function handleLoad() {
   // Show the page now to cut down on page flashing.
   document.body.style.visibility = "visible"
   document.body.style.opacity = "1"
+  indexLoadLog.finish()
 
   // If the user just logged in (state starts with loggedIn), set the
   // UI for a logged in user.
