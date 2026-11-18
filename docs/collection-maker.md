@@ -36,7 +36,7 @@ mkdir tmp/$cnum
 ~~~
 
 Put 8, 10, 12, 14, or 16 of your best photos in the folder. We show
-detailed steps Apple Photos and for Adobe Bridge.
+detailed steps for Apple Photos and for Adobe Bridge.
 
 __Apple Photos__
 

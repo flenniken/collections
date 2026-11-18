@@ -261,7 +261,8 @@ find logs/cloudfront -type f \
     189 200
 ~~~
 
-To look a one of the 401 error requests you find a request id then you look at its log details:
+To look at one of the 401 error requests you find a request id then
+you look at its log details:
 
 ~~~
 scripts/view-requests | less

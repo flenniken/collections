@@ -39,12 +39,18 @@ http://localhost/8000
 
 You can test the install process and two finger touching.  You can see
 the console log in desktop safari like you do when debugging a plugged
-in iphone.
+in iphone. See Screenshots for capturing images that include the
+bezel.
 
-It’s also good for making screenshots that include the bezel.
+[⬇](#Contents)
+
+# Screenshots
+
+The xcode simulator is good for making screenshots that include the
+bezel.
 
 * take a screenshot cmd-shift-4
-* open the sceenshot in photoshop
+* open the screenshot in photoshop
 * pull guides out from the rulers to define the crop area
 * crop using the guides -- crop tool, 0 x 0, snap to rulers, click crop tool
 * select pixels in a corner with magic wand
@@ -92,7 +98,9 @@ To debug:
 * connect iphone with wire
 * launch collections on iphone by tapping the collections desktop icon
 * launch Safari on your mac
-* pull down the develop menu and select collections
+* pull down the develop menu and select collections. You have two
+  selections, one for the normal collections website and one for the
+  service worker. You can launch both at the same time.
 
 [⬇](#Contents)
 
@@ -186,6 +194,7 @@ When making changes to the image page test them with these steps:
 # Contents
 
 * [How to Test](#how-to-test) -- how to test on Safari, Chrome and xcode simulator.
+* [Screenshots](#screenshots) -- how to capture screenshots that include the bezel.
 * [Configure Touch](#configure-touch) -- how to configure touch on the desktop Chrome.
 * [Debug on iPhone](#debug-on-iphone) -- how to debug on an iPhone connected with a wire.
 * [Image Page Tests](#image-page-tests) -- how to run regression tests for the image page.
