@@ -112,7 +112,9 @@ You can use curl to find out what is stored in the Cloudfront
 cache. You can download a file from Cloudfront with curl. You can also
 view the request headers with it.
 
-Note: you cannot download an image jpg without an access token.
+Note: you cannot download /images/ files without an access token.
+That includes html and json as well as jpg and mp4. Use
+`scripts/login-flow -f` to download one with the saved token.
 
 ETag for image-59.html from Safari headers:
 
@@ -120,9 +122,11 @@ ETag for image-59.html from Safari headers:
 ETag: W/"f72b6ac8d14392a6dba30b3a9d6a1d98"
 ~~~
 
-Below we download and show the headers for image-59.html.  Notice the
-ETag matches what Safari shows.  Safari uses Brotli compression (br).
-It compresses a little better than gzip.
+Below we download and show the headers for image-59.html. Notice the
+ETag matches what Safari shows. Safari uses Brotli compression (br).
+It compresses a little better than gzip. This curl needs the same
+auth header and id/user query that login-flow -f sends; without them
+Cloudfront returns 401.
 
 ~~~
 curl -H 'Accept-Encoding: br' -D - -o tmp.html -s \

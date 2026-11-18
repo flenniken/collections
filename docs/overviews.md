@@ -204,11 +204,11 @@ and the worker uses the cached bytes. When the ETag differs, it
 downloads the new file and updates the cache. When the network is
 down, it uses the cache.
 
-Collection photos still need the Cognito auth header. An img tag
-cannot send it, so the page keeps the current access token in
-IndexedDB and refreshes it. The worker reads that token when
-revalidating jpg and mp4 files. If the token is missing or expired,
-it uses the cached file.
+Collection files under /images/ need the Cognito auth header: html,
+json, jpg, and mp4. An img tag cannot send it, so the page keeps the
+current access token in IndexedDB and refreshes it. The worker reads
+that token when revalidating those files. If the token is missing or
+expired, it uses the cached file.
 
 sw.js itself is fetched without the application cache so a new worker
 can install.

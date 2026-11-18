@@ -22,10 +22,10 @@ We configured CloudFront to copy its edge logs to the
 `logs/cloudfront` in S3. From there you can copy them locally for
 analysis.
 
-Lambda@Edge logs cannot go to S3 automatically the way CloudFront
-logs do. They are written to CloudWatch in the region nearest the
-edge POP. Copy them with `scripts/copy-lambda-logs` into
-`logs/lambda`.
+Lambda@Edge logs cannot go to S3 automatically the way CloudFront logs
+do. They are written to CloudWatch in the region nearest the edge
+location. You find the location from the CloudFront log then copy that
+location's logs to `logs/lambda` with `scripts/copy-lambda-logs <location>[O`.  .
 
 The S3 and local folder structure:
 
@@ -39,31 +39,10 @@ logs/
 
 # Configure Logs
 
-The Cloudfront log copy to S3 is configured in the console. Look for
-"Standard log destinations" and log to your bucket e.g. `sflennikco`
-using the Partitioning `/logs/cloudfront`.
+The automatic Cloudfront log copy to S3 is configured in the
+console. Look for "Standard log destinations" and log to your bucket
+e.g. `sflennikco` using the Partitioning `/logs/cloudfront`.
 
-Lambda@Edge has no CloudFront-style "standard logs to S3" setting.
-A subscription in every region would be needed, and new POPs create
-new log groups later, so that is not worth it.
-
-Copy logs for the POP in the request log:
-
-~~~
-# from docker container
-scripts/copy-lambda-logs SEA900-P13
-scripts/sync-logs
-~~~
-
-The first three letters of the edge location are an airport code.
-SEA is us-west-2. The script reads
-`/aws/lambda/us-east-1.validateImageRequest` in that region (or the
-nearest region that has the log group) and writes gzipped files to
-`s3://<bucket>/logs/lambda/<day>-SEA900-P13.log.gz`. Lambda logs are
-not tagged by POP, so the file is that region's events for the last
-two UTC days by default (`--days`). If CloudWatch returns
-AccessDenied, attach **CloudWatchLogsReadOnlyAccess** to the docker
-IAM user.
 
 # Sync Logs
 
@@ -85,7 +64,7 @@ shows the important fields from log lines, instead of all of them, to
 make reading and studying the information much easier.
 
 ~~~
-scripts/view-requests
+scripts/view-requests | less -S
 ~~~
 
 Sample output with the columns numbered:
@@ -118,15 +97,25 @@ utc
 2026-07-07 23:01:31
 ~~~
 
+Once you know the location from the request logs, you can copy those
+lambda logs to S3, then sync local.  For example for the SEA900-P1
+location:
+
+~~~
+# from docker container
+scripts/copy-lambda-logs SEA900-P1
+scripts/sync-logs
+~~~
+
 [⬇](#Contents)
 
 # View Download
 
 The UTC time and download id are logged in the console to make it easer to
-find the AWS logs.
+find the AWS logs. For example:
 
 ~~~
-Download UTC and id: 2026-07-07 20:27:20.610  63ltJt9F
+Download UTC and id: 2025-02-15 01:33:09 A9DxzhqT
 ~~~
 
 The view-download script shows you all the requests for a download. It
@@ -137,7 +126,7 @@ the console log. You run it like this:
 
 ~~~
 # from container
-scripts/view-download 2025-03-21 W4hv4D7m
+scripts/view-download 2025-02-15 A9DxzhqT
 ~~~
 
 Partial Output:
@@ -162,8 +151,9 @@ You can use the show-fields command to see all the details about a
 request.
 
 Each line of the cloud front log contains 39 spaces separated
-fields. The following command shows the fields for a request with
-the field name on the left and the value on the right:
+fields. The following command shows the fields for a request with the
+field name on the left and the value on the right. Specify the request
+id, field 7.
 
 ~~~
 # from container
@@ -231,6 +221,14 @@ its order in the output and each request's group of lines is shown
 together. The requests run in parallel so the times are not sequential
 between groups.
 
+The first three letters of the edge location are an airport code.  SEA
+is us-west-2. The script reads `us-east-1.validateImageRequest` in
+that region (or the nearest region that has the log group) and writes
+gzipped files to
+`s3://<bucket>/logs/lambda/<day>-SEA900-P13.log.gz`. Lambda logs are
+not tagged by location, so the file is that region's events for the
+last two UTC days by default (`--days`).
+
 Example lines with headers:
 
 ~~~
@@ -249,16 +247,22 @@ You can look at the status codes starting from a particular date with
 the following command. It counts each different code:
 
 ~~~
+day='2026-11-18'
 find logs/cloudfront -type f \
   | xargs zcat -f \
   | grep -v '#Fields:\|#Version: 1.0' \
-  | awk '/2025\-02\-14/ {f=1; next} \
+  | awk -vday=$day '/day/ {f=1; next} \
   f {print $11}' \
   | sort | uniq -c | sort -n
 
-      4 304
-     21 401
-    189 200
+      2 400
+      2 404
+    221 401
+    444 000
+   2484 301
+   8189 200
+  13092 403
+  17654 304
 ~~~
 
 To look at one of the 401 error requests you find a request id then

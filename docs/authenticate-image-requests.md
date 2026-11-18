@@ -1,15 +1,17 @@
 # Authenticate Image Requests
 
-Images can only be downloaded by logged in users.
+Files under /images/ can only be downloaded by logged in users. That
+includes collection html, json, jpg, and mp4, so collection text and
+details stay private. Index thumbs under /tin/ stay public.
 
 The server does the validation to prevent non-logged in users from
-downloading images with direct urls and from scripts.
+downloading collection files with direct urls and from scripts.
 
 When the user requests a collection the code adds the user’s access
-token to the image's https requests. The validImageRequest lambda
+token to the /images/ https requests. The validImageRequest lambda
 function is called by Cloudfront for every https request and it checks
 that the token is valid. Since only logged in users have valid tokens,
-only logged in users can download images.
+only logged in users can download those files.
 
 [⬇](#Contents) (table of contents at the bottom)
 
@@ -29,12 +31,12 @@ Here are the main steps for deploying a lambda edge function:
 
 # Test Locally
 
-You can run the testValidateImageRequest script to test the
+You can run the test-validate-image-request  script to test the
 validateImageRequest lambda function:
 
 ~~~
 # from the container
-node scripts/testValidateImageRequest.js
+scripts/test-validate-image-request
 ~~~
 
 The output from the test is shown below. Each line that starts with *
@@ -55,11 +57,11 @@ key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
 jwks: Warm start.
 key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
 warning: Ignoring token expiration for testing.
-expires: 2025-02-19 06:40:17.000
+expires: 2026-11-18 18:50:02.000 
 jwks: Warm start.
 key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
 warning: Ignoring token expiration for testing.
-expires: 2025-02-19 06:40:17.000
+expires: 2026-11-18 18:50:02.000 
 * Test validateRequest with non-image.
 * Test validateRequest with image but no query parameters.
 No query parameters.
@@ -75,15 +77,24 @@ VerifyJwt: Cannot destructure property 'header' of 'jwt.decode(...)' as it is nu
 jwks: Warm start.
 key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
 warning: Ignoring token expiration for testing.
-expires: 2025-02-19 06:40:17.000
+expires: 2026-11-18 18:50:02.000 
 Users do not match.
 Url user: user
-Token user: f86103f0-7021-705f-290b-aa443e8605c2
+Token user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
 * Test validateRequest with image, good case.
 jwks: Warm start.
 key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
 warning: Ignoring token expiration for testing.
-expires: 2025-02-19 06:40:17.000
+expires: 2026-11-18 18:50:02.000 
+* Test validateRequest with collection html but no token.
+No token in the auth header.
+* Test validateRequest with collection json but no token.
+No token in the auth header.
+* Test validateRequest with collection html, good case.
+jwks: Warm start.
+key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
+warning: Ignoring token expiration for testing.
+expires: 2026-11-18 18:50:02.000 
 * Test validateRequest with image but expired token.
 jwks: Warm start.
 key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
@@ -99,15 +110,28 @@ id: asdf
 user: fasdf
 No token in the auth header.
 auth: Failed
-* Test good case.
+* Test handler with expired token.
 url: /images/test.html
 id: 12345678
-user: f86103f0-7021-705f-290b-aa443e8605c2
+user: 0861d3e0-00a1-7058-ad19-4d7b1880d276
 jwks: Warm start.
 key: Hjmm61kvuj9K4xFRIfXxWCvhjHNNxy49CwSPfbBZUr0=
-warning: Ignoring token expiration for testing.
-expires: 2025-02-19 06:40:17.000
-auth: Passed
+VerifyJwt: jwt expired
+auth: Failed
+* Test allowName
+Testing allowName("name")
+Testing allowName("/index.html")
+Testing allowName("/tin/c1-1-s.jpg")
+Testing allowName("/icons/user.svg")
+Testing allowName("images/c1/c1-1-p.jpg")
+Testing allowName("/images/c1/c1-1-p.jpg")
+Testing allowName("/images/c1/c1-1-v.mp4")
+Testing allowName("/images/c1/thumbnails-1.html")
+Testing allowName("images/c1/thumbnails-1.html")
+Testing allowName("/images/c1/image-1.html")
+Testing allowName("/images/c1/image-123.html")
+Testing allowName("/images/c1/c1.json")
+Testing allowName("/images/c1/c1.json?name=Test")
 Success
 ~~~
 
@@ -160,10 +184,12 @@ locally version that you tested with.
 * select the N. Virgina region
 * select the lambda service
 * select the existing function validateImageRequest
-* select the code tab and upload the new version
-* enter node runtime 22.x to match the version tested
-* deploy to lambda edge
-* use viewer request
+* select the code tab and upload the new version:
+    - Update > Update from .zip file > Choose file
+    - Select file env/lambda/auth-image-download/js/lambda-js-24.18.0.zip
+* enter node runtime 24.x to match the version tested
+* deploy to lambda edge: Actions > Deploy to Lambda@Edge
+* select cloudfront, viewer request, and check confirm
 
 [⬇](#Contents)
 

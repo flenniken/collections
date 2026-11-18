@@ -10,7 +10,7 @@ This page links to documents of interest to developers.
 * [Test](test.md) —- how to develop, test and debug.
 * [Deploy](deploy.md) —- how to deploy the website code.
 * [Collection Maker](collection-maker.md) —- how to make a new collection.
-* [Authenticate Image Requests](authenticate-image-requests.md) -— how image requests are authenticated on the server.
+* [Authenticate Image Requests](authenticate-image-requests.md) -— how /images/ requests are authenticated on the server.
 * [Request Logging](request-logging.md) —- how you view https request logs for both cloudfront and lambda.
 * [Collections Style Guide](collections-style-guide.md) -— how to write documents for this project.
 * [Create User](create-user.md) -— how to create a new user.

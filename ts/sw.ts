@@ -124,12 +124,9 @@ function isServiceWorkerUrl(url: string) {
   return path === "/sw.js" || path.endsWith("/sw.js")
 }
 
-function isGatedMediaUrl(url: string) {
-  // Collection jpgs and videos require the Cognito auth header.
-  const path = urlPathname(url)
-  if (!path.startsWith("/images/"))
-    return false
-  return path.endsWith(".jpg") || path.endsWith(".mp4")
+function isGatedUrl(url: string) {
+  // Collection files under /images/ require the Cognito auth header.
+  return urlPathname(url).startsWith("/images/")
 }
 
 function cacheMatch(cache: Cache, request: Request) {
@@ -152,7 +149,8 @@ async function getImageAuth(): Promise<ImageAuth | null> {
 
 async function netRequest(request: Request, cached: Response | undefined): Promise<Request> {
   // Build a no-store GET that revalidates with If-None-Match. Gated
-  // photos get the current Cognito token when the page did not send one.
+  // /images/ files get the current Cognito token when the page did
+  // not send one.
   const headers = new Headers(request.headers)
   headers.delete("Range")
   if (cached) {
@@ -161,7 +159,7 @@ async function netRequest(request: Request, cached: Response | undefined): Promi
       headers.set("If-None-Match", etag)
   }
   let url = request.url
-  if (isGatedMediaUrl(url) && !headers.get("auth")) {
+  if (isGatedUrl(url) && !headers.get("auth")) {
     const auth = await getImageAuth()
     if (auth) {
       headers.set("auth", auth.accessToken)

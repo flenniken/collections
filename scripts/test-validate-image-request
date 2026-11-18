@@ -87,14 +87,15 @@ expected: ${expected}
     };
   }
 
-  async function testVerifyJwt(token, ignoreExpiration, eMsg) {
+  async function testVerifyJwt(token, ignoreExpiration, eMsg, clockTimestamp) {
     // Call verifyJwk with the given token and return the decoded
     // payload. You can ignore the expiration date. If the token is
     // invalid, the error message must match the expected message
-    // (eMsg).
+    // (eMsg). clockTimestamp is seconds; tests use a time after exp
+    // so a current token is treated as expired.
     let payload = null
     try {
-      payload = await verifyJwt(token, ignoreExpiration);
+      payload = await verifyJwt(token, ignoreExpiration, clockTimestamp);
     } catch (err) {
       gotExpected(err.message, eMsg)
     }
@@ -135,9 +136,17 @@ expected: ${expected}
     }
   }
 
-  async function testValidateRequest(url, access_token, id, user, ignoreExpiration, eRet) {
-    const got = await validateRequest(url, access_token, id, user, ignoreExpiration)
+  async function testValidateRequest(url, access_token, id, user, ignoreExpiration, eRet,
+                                     clockTimestamp) {
+    const got = await validateRequest(url, access_token, id, user, ignoreExpiration,
+      clockTimestamp)
     gotExpected(toString(got), toString(eRet))
+  }
+
+  function jwtExpSeconds(token) {
+    const part = token.split('.')[1]
+    const padded = part + '='.repeat((4 - part.length % 4) % 4)
+    return JSON.parse(Buffer.from(padded, 'base64').toString()).exp
   }
 
   // Begin running the tests.
@@ -154,6 +163,9 @@ expected: ${expected}
   // console.log(access_token.length) length = 1041
   if (access_token.length < 100)
     error("The access token string is to short.")
+  // Pretend it is after exp so expired-token tests work while the
+  // saved token is still valid.
+  const afterExp = jwtExpSeconds(access_token) + 10
 
   logProgress('Test getJwks.');
   try {
@@ -210,7 +222,7 @@ expected: ${expected}
   payload = await testVerifyJwt(null, false, 'Missing token.')
 
   logProgress('Test verifyJwt with an expired access token.');
-  payload = await testVerifyJwt(access_token, false, 'jwt expired')
+  payload = await testVerifyJwt(access_token, false, 'jwt expired', afterExp)
   if (payload !== null)
     error('Returned a payload for an expired token.')
 
@@ -269,9 +281,21 @@ expected: ${expected}
   await testValidateRequest("/images/asdf.jpg", access_token, "id", testUser,
     ignoreExpiration, allow)
 
+  logProgress('Test validateRequest with collection html but no token.');
+  await testValidateRequest("/images/c1/image-1.html", '', "id", "user",
+    ignoreExpiration, forbidden)
+
+  logProgress('Test validateRequest with collection json but no token.');
+  await testValidateRequest("/images/c1/c1.json", '', "id", "user",
+    ignoreExpiration, forbidden)
+
+  logProgress('Test validateRequest with collection html, good case.');
+  await testValidateRequest("/images/c1/image-1.html", access_token, "id", testUser,
+    ignoreExpiration, allow)
+
   logProgress('Test validateRequest with image but expired token.');
   await testValidateRequest("/images/asdf.jpg", access_token, "id", testUser,
-    normal, forbidden)
+    normal, forbidden, afterExp)
 
 
   logProgress('Test handler without an images url.');
@@ -283,24 +307,24 @@ expected: ${expected}
   event = makeEvent("/images/test.html", "", "id=asdf&user=fasdf")
   await testHandler(event, normal, forbidden)
 
-  logProgress('Test good case.');
+  logProgress('Test handler with expired token.');
   event = makeEvent("/images/test.html", access_token, `id=12345678&user=${testUser}`)
-  await testHandler(event, ignoreExpiration, allow)
+  await testHandler(event, {clockTimestamp: afterExp}, forbidden)
 
   logProgress('Test allowName');
+  testAllowName("name", true)
+  testAllowName("/index.html", true)
+  testAllowName("/tin/c1-1-s.jpg", true)
+  testAllowName("/icons/user.svg", true)
   testAllowName("images/c1/c1-1-p.jpg", false)
   testAllowName("/images/c1/c1-1-p.jpg", false)
-  testAllowName("name", true)
-  testAllowName("/images/c1/thumbnails-1.html", true)
-  testAllowName("images/c1/thumbnails-1.html", true)
-  testAllowName("/images/c1/image-1.html", true)
-  testAllowName("/images/c1/image-123.html", true)
-  testAllowName("/images/c1/images-1.html", false)
-  testAllowName("/images/c1/c1.json", true)
+  testAllowName("/images/c1/c1-1-v.mp4", false)
+  testAllowName("/images/c1/thumbnails-1.html", false)
+  testAllowName("images/c1/thumbnails-1.html", false)
+  testAllowName("/images/c1/image-1.html", false)
+  testAllowName("/images/c1/image-123.html", false)
+  testAllowName("/images/c1/c1.json", false)
   testAllowName("/images/c1/c1.json?name=Test", false)
-  testAllowName("/images/c1/thumbnails-1a.html", false)
-  testAllowName("/images/c1/athumbnails-1.html", false)
-  testAllowName("/images/c1/thumbnails-1.htm", false)
 
   // error('Test for red.')
   if (errorCount)

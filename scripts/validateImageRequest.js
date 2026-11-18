@@ -42,7 +42,7 @@ function parseQueryString(qs) {
   return result;
 }
 
-async function verifyJwt(token, ignoreExpiration) {
+async function verifyJwt(token, ignoreExpiration, clockTimestamp) {
   // Verify the token is valid for our cognito user.
 
   if (!token) {
@@ -92,11 +92,16 @@ async function verifyJwt(token, ignoreExpiration) {
     issuer: iss,
   }
 
-  // Ignore expiration when testing.
+  // Ignore expiration when testing other token checks.
   if (ignoreExpiration === true) {
     console.log("warning: Ignoring token expiration for testing.")
     options['ignoreExpiration'] = ignoreExpiration
   }
+
+  // Tests pass a clock after exp so a still-valid token is treated as
+  // expired. Production omits this and uses the current time.
+  if (typeof clockTimestamp === "number")
+    options.clockTimestamp = clockTimestamp
 
   // Verify the token was created with the Cognito public key.
   // See https://www.npmjs.com/package/jsonwebtoken for docs.
@@ -115,28 +120,15 @@ async function verifyJwt(token, ignoreExpiration) {
 }
 
 function allowName(url) {
-  // Allow some image folder files to be accessed without authentication.
-
-  // Allow urls outside the image folder to be accessed without
-  // authentication.
+  // Allow files outside /images/ without authentication. Collection
+  // html, json, jpg, and mp4 all require a logged-in user.
   if (!(url.startsWith("/images/") || url.startsWith("images/")))
     return true
-
-  // Use a regular expression to match the allowed file types.
-  const allowedTypes = [
-    /\/thumbnails-\d*.html$/,
-    /\/image-\d*\.html$/,
-    /\/c\d*.json$/,
-  ]
-  for (const type of allowedTypes) {
-    if (type.test(url)) {
-      return true
-    }
-  }
   return false
 }
 
-async function validateRequest(url, token, id, user, ignoreExpiration) {
+async function validateRequest(url, token, id, user, ignoreExpiration,
+                               clockTimestamp) {
   // Return true when the request is valid.
 
   // Allow some files to be accessed without authentication.
@@ -169,7 +161,7 @@ async function validateRequest(url, token, id, user, ignoreExpiration) {
   // Validate the token.
   let payload = {}
   try {
-    payload = await verifyJwt(token, ignoreExpiration);
+    payload = await verifyJwt(token, ignoreExpiration, clockTimestamp);
   }
   catch (err) {
     console.error(`VerifyJwt: ${err.message}`);
@@ -189,8 +181,8 @@ async function validateRequest(url, token, id, user, ignoreExpiration) {
 }
 
 async function handler(event, context) {
-  // Validate the request. For image requests make sure the user is
-  // logged in.
+  // Validate the request. Files under /images/ require a logged-in
+  // user.
 
   // Make sure this code is handling the viewer request event not some
   // other event.
@@ -216,17 +208,17 @@ async function handler(event, context) {
   console.log(`id: ${queryParams.id}`);
   console.log(`user: ${queryParams.user}`);
 
-  // Get the access token from the auth header. It only exists on
-  // image requests.
+  // Get the access token from the auth header.
   let access_token = ""
   if (headers.auth)
     access_token = headers.auth[0].value
 
-  // todo: support expiring passwords.
-  const ignoreExpiration = true
+  let clockTimestamp
+  if (context && typeof context.clockTimestamp === "number")
+    clockTimestamp = context.clockTimestamp
 
   const ok = await validateRequest(url, access_token, queryParams.id,
-                                   queryParams.user, ignoreExpiration)
+                                   queryParams.user, false, clockTimestamp)
 
   if (ok) {
     console.log("auth: Passed");

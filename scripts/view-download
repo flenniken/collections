@@ -62,35 +62,64 @@ if [ ! -s "requests-lines.txt" ]; then
   exit
 fi
 
-# Show the lines that match the request line ids. Sort by the order the
-# requests come in then by time so each request's lines are next to
-# each other.
+# Show the lines that match the request ids. Sort by the time the
+# request started, then by the AWS request id, so one request's lines
+# stay together when lambdas run in parallel.
 cat lambda-files.txt \
   | xargs zcat \
   | grep -F -f requests-lines.txt \
-  | awk '\
-    / START RequestId: / \
-      {id = substr($4, 0, 8); \
-      if (!(id in ids)) { ids[id] = NR};
-      printf "%4s %s %s %s\n", \
-      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; \
-      printf "%4s %s %s %s ", \
-      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; print $5, $6} \
-    /INFO/ \
-      {id = substr($3, 0, 8); \
-      if (!(id in ids)) { ids[id] = NR};
-      printf "%4s %s %s %s ", \
-      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; \
-      for (i = 5; i <= NF; i++) printf "%s ", $i; print ""} \
-    / REPORT RequestId: / \
-      {id = substr($4, 0, 8); \
-      if (!(id in ids)) { ids[id] = NR};
-      printf "%4s %s %s %s ", \
-      ids[id], substr($1, 0, 10), substr($1, 12, 12), id; \
-      printf "%s %s\n", $6, $7} \
+  | awk '
+    function rest(start,   i, s) {
+      s = $start
+      for (i = start + 1; i <= NF; i++)
+        s = s " " $i
+      return s
+    }
+    /^START RequestId: / {
+      n++
+      id[n] = substr($3, 1, 8)
+      ts[n] = ""
+      msg[n] = rest(4)
+      next
+    }
+    /^REPORT RequestId: / {
+      n++
+      id[n] = substr($3, 1, 8)
+      ts[n] = ""
+      msg[n] = rest(4)
+      next
+    }
+    $3 == "INFO" {
+      n++
+      id[n] = substr($2, 1, 8)
+      ts[n] = $1
+      msg[n] = rest(4)
+      if (!(id[n] in min_ts) || ts[n] < min_ts[id[n]])
+        min_ts[id[n]] = ts[n]
+      if (!(id[n] in max_ts) || ts[n] > max_ts[id[n]])
+        max_ts[id[n]] = ts[n]
+      next
+    }
+    END {
+      for (i = 1; i <= n; i++) {
+        group = (id[i] in min_ts) ? min_ts[id[i]] : ts[i]
+        if (group == "")
+          group = "9999"
+        if (ts[i] != "")
+          line_ts = ts[i]
+        else if (msg[i] ~ /^REPORT / || msg[i] ~ /^Duration:/)
+          line_ts = (id[i] in max_ts) ? max_ts[id[i]] : group
+        else
+          line_ts = group
+        date = substr(line_ts, 1, 10)
+        time = substr(line_ts, 12, 12)
+        printf "%s %s %06d %s %s %s %s\n", \
+          group, id[i], i, date, time, id[i], msg[i]
+      }
+    }
     ' \
-  | sort -k1,1n -k3,3 \
-  | awk '{for (i = 2; i <= NF; i++) printf "%s ", $i; print ""}'
+  | sort -k1,1 -k2,2 -k3,3n \
+  | awk '{for (i = 4; i <= NF; i++) printf "%s ", $i; print ""}'
 
 rm -f requests-lines.txt
 rm -f lambda-files.txt

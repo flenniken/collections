@@ -193,9 +193,10 @@ scripts/login-flow -u
 
 # Download Image
 
-You can download an image using the stored token for authentication.
-It downloads to the specified filename.  It tells you the time and
-download id so you can find the associated log lines.
+You can download a /images/ file using the stored token for
+authentication: html, json, jpg, or mp4. It downloads to the specified
+filename. It tells you the time and download id so you can find the
+associated log lines.
 
 ~~~
 scripts/login-flow -f https://collections.sflennik.com/images/c1/c1-1-p.jpg image.jpg
