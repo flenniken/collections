@@ -3,16 +3,15 @@
 [![icon](docs/rounded-icon.png)](#)
 
 You use Collections to privately share your photos with your friends
-and family on an iphone.  It runs in a browser but looks a lot like a
+and family on an iPhone. It runs in a browser but looks a lot like a
 native app.
 
 Each collection contains photos related to a single topic, place, or
-event, with a description about each one. Having associated text and
-good photos is intended to make the collection more meaningful and
-long lasting.
+event, with a description of each one. Associated text and good photos
+are intended to make the collection more meaningful and long-lasting.
 
-You navigate and view collections on three types of pages, the index
-page, the image page and the thumbnails page.
+You navigate and view collections on three types of pages: the index
+page, the image page, and the thumbnails page.
 
 [⬇](#Contents) (table of contents at the bottom)
 
@@ -21,23 +20,22 @@ page, the image page and the thumbnails page.
 
 <img src="docs/index.png" alt="Index Page" height="256">
 
-
 The index page shows the sorted list of available collections with the
-most recent collection on top. You can scroll through the list.
+most recent collection at the top. You can scroll through the list.
 
 The newest 10 collections show a title, big thumbnail, description,
-and post date. Older collections show a one line entry with a small
+and post date. Older collections show a one-line entry with a small
 thumbnail and the title.
 
-You login with your email and password by clicking the circle icon in
-the upper righthand side of the index page. You see your first initial
+You log in with your email and password by clicking the circle icon in
+the upper right-hand side of the index page. You see your first initial
 when logged in, otherwise you see a person's outline. When you are
 logged in and you click the icon, you see your name and the logout
 button.
 
 You must be logged in to download and view new collections. You can
 continue to view already downloaded collections when not logged in or
-when off online.
+when offline.
 
 [⬇](#Contents)
 
@@ -46,27 +44,28 @@ when off online.
 
 [![Image Page](docs/image.png)](#)
 
-The image page shows one image at a time.  The image is custom zoomed
-(a zoom point) to fit the screen showing the best view for the screen
+The image page shows one image at a time. The image is custom zoomed
+(a zoom point) to fit the screen, showing the best view for the screen
 orientation and size.
 
 [![Image Landscape](docs/image-landscape.png)](#)
 
-You can zoom and pan an image with two fingers.  A double tap cycles
+You can zoom and pan an image with two fingers. A double tap cycles
 through the zoom point, fit-to-screen, and fill-screen views. You can
-play live photos with a long press. Longer videos you press a play
+play Live Photos with a long press. For longer videos, you press a play
 button.
 
 You scroll left and right to go to the previous and next images in the
-collection. The next and previous images line up pixel perfect side by
-side.  This is good for multi-images that look like one wide image.
+collection. The next and previous images line up pixel-perfect side by
+side. This is good for multi-images that look like one wide image.
 
 You scroll to the bottom to see a description of the image, the time
-the photo was taken and an optional map showing where photo was taken.
+the photo was taken, an optional map showing where the photo was taken,
+and an optional URL.
 
 You go back to the thumbnails or index page by scrolling to the bottom
 and tapping the thumbnail or index icon. Tap the share icon to save
-the current photo or send it with the phone’s share sheet. Tap the
+the current photo or send it with the phone’s share menu. Tap the
 message balloon to open a text to Steve with the photo’s filename
 filled in.
 
@@ -79,13 +78,14 @@ filled in.
 
 The thumbnails page shows the collection’s thumbnails.
 
-Past the bottom of the thumbnails you see the collection's title and a
-more in depth description of the collection than on the index page.
+Past the bottom of the thumbnails, you see the collection's title and a
+more in-depth description of the collection than on the index page,
+plus an optional map and URL.
 
 You go back to the index page by scrolling to the bottom and tapping
-the index icon.
+the index icon. Tap the trash can icon to delete the cached collection.
 
-Tapping the photo icon shows the first photo full size on the image
+Tapping the photo icon shows the first photo at full size on the image
 page.
 
 [⬇](#Contents)
@@ -109,19 +109,20 @@ The icons do the following:
 
 # Run Collections
 
-You can install the app's icon on your iphone's home screen then tap
-it to run.  This is the recommended way to run Collections because it
+You can install the app's icon on your iPhone's home screen, then tap
+it to run. This is the recommended way to run Collections because it
 looks better and the photos can use the whole screen.
 
 You install the app’s icon on your home screen following these steps:
 
-* launch safari on iphone (it doesn't install on chrome or firefox)
+* launch Safari on iPhone (it doesn't install on Chrome or Firefox)
 * go to:
 
 https://collections.sflennik.com
 
 * tap the share icon at the bottom center of the screen
-* scroll down and select “Add to Home screen” and tap add
+* scroll down and select “Add to Home Screen” and tap Add
+* tap the Collections home screen icon to run
 
 [![icon](docs/rounded-icon.png)](#)
 
@@ -129,8 +130,8 @@ https://collections.sflennik.com
 
 # Notifications
 
-Turn on notifications and you will get notified when a new collection
-appears. At most you will get one notification per day.  Set
+Turn on notifications and you will be notified when a new collection
+appears. At most you will get one notification per day. Set
 notifications with the system settings:
 
 Settings > Notifications > Collections
@@ -143,7 +144,7 @@ Settings > Notifications > Collections
 * [Image Page](#image-page) -- how to use the image page.
 * [Thumbnails Page](#thumbnails-page) -- how to use the thumbnails page.
 * [Icons](#icons) -- what the icons do.
-* [Run Collections](#run-collections) -- how to install and run collections.
+* [Run Collections](#run-collections) -- how to install and run Collections.
 * [Notifications](#notifications) -- how to get notified when a new collection is published.
 
 # Other
