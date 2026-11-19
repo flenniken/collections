@@ -35,8 +35,14 @@ cnum=c29
 mkdir tmp/$cnum
 ~~~
 
+[⬇](#Contents)
+
+# Select Photos
+
 Put 8, 10, 12, 14, or 16 of your best photos in the folder. We show
 detailed steps for Apple Photos and for Adobe Bridge.
+
+Photos must be at least 933 pixels on one side and 700 on the other.
 
 __Apple Photos__
 
@@ -73,18 +79,10 @@ files using Adobe Bridge.
 
 [⬇](#Contents)
 
-# Rename and Convert
+# Rename
 
-You rename and convert the files to the format expected by Collections.
-
-__Standard Rename__
-
-You rename the files to the collection's standard names using the rename
-command as shown below.
-
-You can the rename again after adding images and the standard names are
-left alone. New files take the next number after the highest number in
-the folder. Gaps are kept.
+You rename the files to the name format expected by Collections by
+running the standard-rename command:
 
 ~~~
 # from container
@@ -98,9 +96,16 @@ rename: 3.HEIC -> c29-3-p.HEIC
 ...
 ~~~
 
-__Convert HEIC and MOV__
+You can the rename again after adding images and the existing standard
+names are left alone. New files take the next number after the highest
+number in the folder. Gaps are kept.
 
-Convert HEIC stills to jpg and Live Photo `.mov` files to `.mp4`.
+[⬇](#Contents)
+
+# Convert
+
+If you have `.HEIC` or `mov` files, convert them to `jpg` and `mp4`
+using the convert-heic-mov command.
 
 Live videos are optional. Delete any `.mov` files you do not want to
 keep. Look at them in the finder and drag the ones you don't want to
@@ -131,11 +136,15 @@ remove: c29-10-v.mov
 ...
 ~~~
 
-__Thumbnails__
+[⬇](#Contents)
 
-Make 480 x 480 center-crop thumbnails from the preview files. Existing
-`-t.jpg` files are left alone, so you can add a new preview file and
-re-run the command.
+# Thumbnails
+
+Make 480 x 480 center-crop thumbnails from the preview files by
+running the make-thumbnails command.
+
+Existing thumbnail files, `-t.jpg`, are left alone, so you can add a
+new preview file and re-run the command.
 
 ~~~
 # from container
@@ -150,13 +159,10 @@ make: c29-4-t.jpg
 
 Check the files in the finder. The folder should contain matching
 `-p.jpg` and `-t.jpg` files, optional `-v.mp4` files, and nothing
-extra. Previews must be at least 933 pixels on one side and 700 on
-the other.
+extra.
 
 Later in the editing phase you can create new thumbnails for the ones
-that don't look good.
-
-Duplicate the tmp folder in the Finder if you want a backup.
+that don't look good in the web app.
 
 [⬇](#Contents)
 
@@ -171,10 +177,9 @@ scripts/maker tmp/$cnum
 Wrote tmp/c24/c24.json (16 with GPS, 16 with time)
 ~~~
 
-The json includes every photo in disk order. Titles and descriptions
-are empty. Collections start with the `building` flag, so only admins
-see them. `g all` builds the image and thumbnails pages right away so
-you can edit in place.
+The json (cN.json) includes every photo in disk order. Titles and
+descriptions are empty. Collections start with the `building` flag, so
+only admins see them.
 
 If `cN.json` already exists, maker keeps titles, descriptions, image
 order, zoom points, and other editorial fields. It updates width,
@@ -183,57 +188,6 @@ GPS and time come from each preview's EXIF. If a preview has no GPS or
 time, an existing value in the json is kept. A new photo is appended.
 A photo that is no longer on disk is dropped. When the files have not
 changed, the json file is left alone.
-
-__Optional Thumbnails Page Map__
-
-You can optionally add a location for the thumbnails page
-which will show a map below its description. As a localhost admin,
-tap the coordinates under the map, or the Location placeholder when
-there is no map, and paste the Google Maps lat,lng string. The same
-placeholder is under each photo on the image page for that photo's
-GPS.
-
-You can get the GPS coordinates from google maps by dropping a pin
-then opening the information below. It will show something like
-(45.6868445, -121.3035183). Paste it without the parentheses:
-
-You can still put the location in cN.json by hand:
-
-~~~
-  "cNum": 35,
-  "posted": "",
-  "location": "45.6868445,-121.3035183",
-  "images": [
-~~~
-
-__Optional URL Link__
-
-You can optionally add a `url` on the collection for the thumbnails
-page, or on an image for the image page.  The link shows below the
-description and above the map.  It is an http or https URL plus the
-text shown on the page.
-
-On the collection:
-
-~~~
-  "description": "We walked the Alhambra in the heat.",
-  "url": ["https://en.wikipedia.org/wiki/Alhambra", "Alhambra"],
-  "location": "37.1769,-3.5899",
-~~~
-
-On an image:
-
-~~~
-    "description": "The Court of the Lions.",
-    "url": ["https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid", "Plaza Mayor"],
-    "location": "37.1770,-3.5895",
-~~~
-
-That image link renders as:
-
-~~~
-<a href="https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid">Plaza Mayor</a>
-~~~
 
 [⬇](#Contents)
 
@@ -246,15 +200,24 @@ mv tmp/$cnum dist/images/
 g all
 ~~~
 
+`g all` builds the index, image and thumbnails pages away so
+you can edit in place.
+
+
 [⬇](#Contents)
 
 # Edit Collection
 
-Run Collections logged in as Admin on your desktop Chrome running on local host.
+You edit the collection using the Collection's web app while logged in
+as Admin and running on local host.
+
+Enter the following url in Chrome:
 
 ~~~
 http://localhost:8000/
 ~~~
+
+Quick guide:
 
 * Make sure you are logged in as an admin.
 * Refresh the index page so the new collection appears, cmd-shift-r.
@@ -322,7 +285,7 @@ drag a corner to shrink or grow it. It cannot go below 480 pixels on
 the preview. Then OK. The admin API overwrites the `-t.jpg` file
 from the preview.
 
-__Zoom Points__
+__Zoom Points Chrome__
 
 Set zoom points on localhost Chrome, open the image page as admin. Tap
 the four-arrow icon in the bottom menu to show zoom and pan buttons at
@@ -353,24 +316,7 @@ mac.
 
 Run `g all`, deploy, and check the image pages again.
 
-__Zoom Point Guide__
-
-When setting zoom points for an image, the goal is to make each
-picture look like it was created for the screen it’s displayed
-on, whether in portrait or landscape orientation. A good zoom point
-creates a natural, visually pleasing crop without drawing attention to
-the fact that the image has been zoomed.
-
-A well-chosen zoom point can reduce excessive zooming.  The user
-doesn’t feel the need to see what’s missing.
-
-* Aim for a good full screen fit in both portrait and landscape modes.
-* You are free to zoom in a little aggressively since double tap
-  toggles between the zoom point and fit-to-screen.
-* Avoid forced crops – If it feels cramped or awkward, zoom out, it’s
-  often better to zoom all the way out and show the full frame.
-* Show background – Leave hints of background when it helps tell the
-  bounds.
+See the zoom point guide below for creating good zoom points.
 
 [⬇](#Contents)
 
@@ -394,9 +340,10 @@ scripts/deploy -s
 # Publish
 
 Once the collection looks good, publish it from localhost as admin by
-tapping the red **Admin -- cN** mark on the index card so it switches
-to **Public**. That removes `"building": true` from `cN.json`. Tap
-**Public** to make it admin-only again. Then build all and deploy.
+tapping the red **Admin -- cN** mark on the index collection so it
+switches to **Public**. That removes `"building": true` from
+`cN.json`. Then build all
+and deploy.
 
  ~~"building": true,~~
 
@@ -404,6 +351,8 @@ to **Public**. That removes `"building": true` from `cN.json`. Tap
 g all
 scripts/deploy -s
 ~~~
+
+♫ Note: Tap **Public** to make a collection admin-only.
 
 ♫ Note: After you deploy edited photos, the next visit revalidates
 each file with If-None-Match. Unchanged files stay cached; changed
@@ -424,6 +373,25 @@ scripts/notification --publish all "Manzantia 2026"
 [⬇](#Contents)
 
 # Extras
+
+__Zoom Point Guide__
+
+When setting zoom points for an image, the goal is to make each
+picture look like it was created for the screen it’s displayed
+on, whether in portrait or landscape orientation. A good zoom point
+creates a natural, visually pleasing crop without drawing attention to
+the fact that the image has been zoomed.
+
+A well-chosen zoom point can reduce excessive zooming.  The user
+doesn’t feel the need to see what’s missing.
+
+* Aim for a good full screen fit in both portrait and landscape modes.
+* You are free to zoom in a little aggressively since double tap
+  toggles between the zoom point and fit-to-screen.
+* Avoid forced crops – If it feels cramped or awkward, zoom out, it’s
+  often better to zoom all the way out and show the full frame.
+* Show background – Leave hints of background when it helps tell the
+  bounds.
 
 __Remove DS Store Files__
 
@@ -474,15 +442,69 @@ flatten the image (layer > flatten image), then save to jpg.
 maker command will report the file as MPO format instead of JPEG. MPO
 files are not supported.
 
+__Optional Thumbnails Page Map__
+
+You can optionally add a location for the thumbnails page
+which will show a map below its description. As a localhost admin,
+tap the coordinates under the map, or the Location placeholder when
+there is no map, and paste the Google Maps lat,lng string. The same
+placeholder is under each photo on the image page for that photo's
+GPS.
+
+You can get the GPS coordinates from google maps by dropping a pin
+then opening the information below. It will show something like
+(45.6868445, -121.3035183). Paste it without the parentheses:
+
+You can still put the location in cN.json by hand:
+
+~~~
+  "cNum": 35,
+  "posted": "",
+  "location": "45.6868445,-121.3035183",
+  "images": [
+~~~
+
+__Optional URL Link__
+
+You can optionally add a `url` on the collection for the thumbnails
+page, or on an image for the image page.  The link shows below the
+description and above the map.  It is an http or https URL plus the
+text shown on the page.
+
+On the collection:
+
+~~~
+  "description": "We walked the Alhambra in the heat.",
+  "url": ["https://en.wikipedia.org/wiki/Alhambra", "Alhambra"],
+  "location": "37.1769,-3.5899",
+~~~
+
+On an image:
+
+~~~
+    "description": "The Court of the Lions.",
+    "url": ["https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid", "Plaza Mayor"],
+    "location": "37.1770,-3.5895",
+~~~
+
+That image link renders as:
+
+~~~
+<a href="https://en.wikipedia.org/wiki/Plaza_Mayor,_Madrid">Plaza Mayor</a>
+~~~
+
 <style>body { max-width: 40em}</style>
 
 # Contents
 
 * [Create Folder](#create-folder) -- how to collect, rename, convert, and thumbnail images.
-* [Rename and Convert](#rename-and-convert) -- how to rename and convert the image files to collection files.
+* [Select Photos](#select-photos) -- how to select photos for a new collection.
+* [Rename](#rename) -- how to rename to the names expected by Collections.
+* [Convert](#convert) -- how to convert heic and mov files to jpg and mp4.
+* [Thumbnails](#thumbnails) -- how to make thumbnails.
 * [Make Json File](#make-json-file) -- how to make the collection's json file.
 * [Edit Collection](#edit-collection) -- how to edit descriptions in place and set order.
 * [Deploy](#deploy) -- how to deploy the files to AWS.
 * [Publish](#publish) -- how to publish the collection to the world.
 * [Notify](#notify) -- how to notify users of the new collection.
-* [Extras](#extras) -- how to remove the .DS_Store files and the roles of the collection's files.
+* [Extras](#extras) -- indepth guides and extra how tos.
