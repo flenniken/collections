@@ -2,14 +2,14 @@
 
 You create a new collection by:
 
-* create a folder and add images
-* rename, convert, and make thumbnails
-* create json file
-* move the folder to dist
-* set order on the thumbnails page
-* set descriptions
-* set zoom points
-* publish and notify
+* creating a folder and adding images
+* renaming, converting, and making thumbnails
+* creating a json file
+* moving the folder to dist
+* setting order on the thumbnails page
+* setting descriptions
+* setting zoom points
+* publishing and notifying
 
 We show how to do these steps in detail below.
 
@@ -21,9 +21,9 @@ Create a tmp folder for the new collection named with the next
 collection prefix.
 
 The following command lists `dist/images` to find the last collection
-name then it adds one to it. It will print two lines, one to create a
-bash variable and one to create the new folder.  Copy and paste to run
-them.  The cnum bash variable will be used in multiple later commands.
+name, then adds one to it. It will print two lines, one to create a
+bash variable and one to create the new folder. Copy and paste to run
+them. The cnum bash variable will be used in multiple later commands.
 
 ~~~
 # from container
@@ -55,26 +55,26 @@ For Apple Photos follow these steps:
 * uncheck "Export IPTC as XMP"
 * filename: Sequential, no prefix, no subfolder
 * export into the empty `tmp/cN` folder
-* check the files in the cN folder with the finder
+* check the files in the cN folder with the Finder
 * remove the .mov files you don't want
 
 ♫ Note: Export Unmodified Originals exports the photos without changes
-you might have made, but it gives you the live photo movie files.  If
-you export jpegs, you get your changes but no live movies.
+you might have made, but it gives you the Live Photo movie files. If
+you export JPEGs, you get your changes but no live movies.
 
 ♫ Note: Live Photos export as two files, paired `.HEIC` and `.mov` files.
 
 __Adobe Bridge Photos__
 
-For Adobe Bridge follow these step. You can use Dng, Tiff or jpeg
-files using Adobe Bridge.
+For Adobe Bridge follow these steps. You can use DNG, TIFF, or JPEG
+files.
 
 * Open Adobe Bridge
 * Find a folder of images you want to select from to make a collection
 * Mark the images you want with stars
-* Select the martini shaped icon and select the menu to show your files, e.g. "Show 3 or more stars"
+* Select the martini-shaped icon and select the menu to show your files, e.g. "Show 3 or more stars"
 * Edit the originals now if you want
-* select all then export the files as jpg files to the collection folder, e.g. tmp/c28.  File > Export to > Custom export.   Choose Save to > Specific folder and browse to tmp/c28.  Extension .jpg, Image Quality 8,  Scale image > 100%, Include metadata
+* select all then export the files as jpg files to the collection folder, e.g. tmp/c28. File > Export to > Custom export. Choose Save to > Specific folder and browse to tmp/c28. Extension .jpg, Image Quality 8, Scale image > 100%, Include metadata
 * Use the Finder to check the folder of files
 
 [⬇](#Contents)
@@ -96,7 +96,7 @@ rename: 3.HEIC -> c29-3-p.HEIC
 ...
 ~~~
 
-You can the rename again after adding images and the existing standard
+You can then rename again after adding images and the existing standard
 names are left alone. New files take the next number after the highest
 number in the folder. Gaps are kept.
 
@@ -104,11 +104,11 @@ number in the folder. Gaps are kept.
 
 # Convert
 
-If you have `.HEIC` or `mov` files, convert them to `jpg` and `mp4`
+If you have `.HEIC` or `.mov` files, convert them to `jpg` and `mp4`
 using the convert-heic-mov command.
 
 Live videos are optional. Delete any `.mov` files you do not want to
-keep. Look at them in the finder and drag the ones you don't want to
+keep. Look at them in the Finder and drag the ones you don't want to
 the trash.
 
 If you only have a video, make a jpg preview file by extracting a
@@ -157,7 +157,7 @@ make: c29-4-t.jpg
 ...
 ~~~
 
-Check the files in the finder. The folder should contain matching
+Check the files in the Finder. The folder should contain matching
 `-p.jpg` and `-t.jpg` files, optional `-v.mp4` files, and nothing
 extra.
 
@@ -177,7 +177,7 @@ scripts/maker tmp/$cnum
 Wrote tmp/c24/c24.json (16 with GPS, 16 with time)
 ~~~
 
-The json (cN.json) includes every photo in disk order. Titles and
+The json (`cN.json`) includes every photo in disk order. Titles and
 descriptions are empty. Collections start with the `building` flag, so
 only admins see them.
 
@@ -200,18 +200,17 @@ mv tmp/$cnum dist/images/
 g all
 ~~~
 
-`g all` builds the index, image and thumbnails pages away so
-you can edit in place.
-
+`g all` builds the index, image, and thumbnails pages so you can edit
+in place.
 
 [⬇](#Contents)
 
 # Edit Collection
 
-You edit the collection using the Collection's web app while logged in
-as Admin and running on local host.
+You edit the collection using the Collections web app while logged in
+as admin and running on localhost.
 
-Enter the following url in Chrome:
+Enter the following URL in Chrome:
 
 ~~~
 http://localhost:8000/
@@ -225,18 +224,18 @@ Quick guide:
 * Go to the thumbnails page by clicking the thumbnails icon.
 * Order the thumbnails. Long press a thumbnail and drag it to the new location.
 * Edit the thumbnails that don't look good, cmd-click a thumbnail.
-* Rebuild all the pages, g all, refresh.
+* Rebuild all the pages, `g all`, refresh.
 * Go to the thumbnails page and add the description.
-* Go to the index page and add the title, post date and description.
+* Go to the index page and add the title, post date, and description.
 * Go to the image pages and add the descriptions.
-* Rebuild all the pages, g all, refresh.
-* Go to the image pages and edit the vertical zoom points.  Bring up the zoom and pan controls by clicking the icon at the bottom of the page.  Double click an image to fit it to the center. Zoom in until the screen is filled (if possible) and position left or right. See zoom point guide.
+* Rebuild all the pages, `g all`, refresh.
+* Go to the image pages and edit the vertical zoom points. Bring up the zoom and pan controls by clicking the icon at the bottom of the page. Double click an image to fit it to the center. Zoom in until the screen is filled (if possible) and position left or right. See zoom point guide.
 * Repeat for each image.
 * Save all zoom points by clicking the download icon at the bottom of the page.
-* Rebuild all the pages, g all, refresh.
-* Deploy to AWS, scripts/depoly -s
+* Rebuild all the pages, `g all`, refresh.
+* Deploy to AWS, `scripts/deploy -s`
 * On the iPhone, review the collection.
-* Set the horizontal zoom point for each image, then air drop the json file to the desktop and copy to into the dist folder.
+* Set the horizontal zoom point for each image, then AirDrop the json file to the desktop and copy it into the dist folder.
 * Rebuild and deploy as before.
 * On the iPhone, review the collection.
 * Repeat until good.
@@ -267,7 +266,7 @@ out.
 For the GPS Location, paste a Google Maps lat,lng string, for example
 `47.6761750,-122.2685556`.
 
-Link editing shows three lines: Link, Text, then Save Cancel. Both
+Link editing shows three lines: Link, Text, then Save and Cancel. Both
 fields are required to Save. Cancel leaves the previous link. Clearing
 both fields and saving removes `url` from the json. Command-click
 (Control-click on Windows) an existing link to open it instead of
@@ -279,17 +278,17 @@ then drag it to a new place. The admin API rearranges the `images`
 (and zoom points) in `cN.json`. Run `g all` afterwards so the image
 page is rebuilt and matches the new order.
 
-Command-click it (Control-click on Windows) to open a crop
-dialog. The square starts as large as it can.  Drag it to move, or
+Command-click a thumbnail (Control-click on Windows) to open a crop
+dialog. The square starts as large as it can. Drag it to move, or
 drag a corner to shrink or grow it. It cannot go below 480 pixels on
 the preview. Then OK. The admin API overwrites the `-t.jpg` file
 from the preview.
 
 __Zoom Points Chrome__
 
-Set zoom points on localhost Chrome, open the image page as admin. Tap
+Set zoom points in localhost Chrome: open the image page as admin. Tap
 the four-arrow icon in the bottom menu to show zoom and pan buttons at
-the upper right of the photo.  Zoom and pan each image, then tap the
+the upper right of the photo. Zoom and pan each image, then tap the
 download icon to write `dist/images/cN/cN.json`. Hold a button to
 repeat. Arrow keys and +/- work while the pad is open. Hold Command
 for one-pixel pans and smaller zoom steps.
@@ -298,21 +297,21 @@ Use the same phone viewport you test on an iPhone, for example
 iPhone 14 Pro Max at 430 x 933 and 932 x 430.
 
 Save your zoom points with the download icon. On localhost the
-download icon writes `cjson` directly. 
+download icon writes `cN.json` directly.
 
 __Zoom Points iPhone__
 
 You can still set zoom points on an iPhone with pinch and pan, then
-tap the download icon and air-drop the `cjson` to your desktop and
+tap the download icon and AirDrop the `cN.json` to your desktop and
 copy it to the dist folder.
 
 ~~~
 # from mac collections folder
-cp ~/Download/c26.json dist/images/c26/
+cp ~/Downloads/c26.json dist/images/c26/
 ~~~
 
-♫ Note: air-drop doesn't work when your iphone is plugged into your
-mac.
+♫ Note: AirDrop doesn't work when your iPhone is plugged into your
+Mac.
 
 Run `g all`, deploy, and check the image pages again.
 
@@ -323,7 +322,7 @@ See the zoom point guide below for creating good zoom points.
 # Deploy
 
 The deploy command copies the files to S3 and updates Cloudfront. The
-collections in "building" state are only visible to admins.  This
+collections in "building" state are only visible to admins. This
 allows admins to set zoom points and test the collection before
 publishing. You can tell a collection is admin only by the red
 "Admin -- cN" in the upper left of the collection card.
@@ -342,8 +341,7 @@ scripts/deploy -s
 Once the collection looks good, publish it from localhost as admin by
 tapping the red **Admin -- cN** mark on the index collection so it
 switches to **Public**. That removes `"building": true` from
-`cN.json`. Then build all
-and deploy.
+`cN.json`. Then build all and deploy.
 
  ~~"building": true,~~
 
@@ -352,7 +350,8 @@ g all
 scripts/deploy -s
 ~~~
 
-♫ Note: Tap **Public** to make a collection admin-only.
+♫ Note: Tap **Public** to switch a published collection back to
+admin-only.
 
 ♫ Note: After you deploy edited photos, the next visit revalidates
 each file with If-None-Match. Unchanged files stay cached; changed
@@ -360,14 +359,14 @@ ones download automatically.
 
 [⬇](#Contents)
 
-# Notifiy
+# Notify
 
 You run the notification command to send a notification to all users
-of the new collection. Replace "Manzantia 2026" with the collection
+of the new collection. Replace "Manzanita 2026" with the collection
 title.
 
 ~~~
-scripts/notification --publish all "Manzantia 2026"
+scripts/notification --publish all "Manzanita 2026"
 ~~~
 
 [⬇](#Contents)
@@ -382,29 +381,29 @@ on, whether in portrait or landscape orientation. A good zoom point
 creates a natural, visually pleasing crop without drawing attention to
 the fact that the image has been zoomed.
 
-A well-chosen zoom point can reduce excessive zooming.  The user
+A well-chosen zoom point can reduce excessive zooming. The user
 doesn’t feel the need to see what’s missing.
 
 * Aim for a good full screen fit in both portrait and landscape modes.
 * You are free to zoom in a little aggressively since double tap
   toggles between the zoom point and fit-to-screen.
-* Avoid forced crops – If it feels cramped or awkward, zoom out, it’s
+* Avoid forced crops. If it feels cramped or awkward, zoom out; it's
   often better to zoom all the way out and show the full frame.
-* Show background – Leave hints of background when it helps tell the
+* Show background. Leave hints of background when it helps tell the
   bounds.
 
 __Remove DS Store Files__
 
-The Mac finder creates a .DS_Store file in a folder when it contains
-an image. Remove these files from the distribution files and from S3.
+The Mac Finder creates a .DS_Store file in a folder when you view it.
+Remove these files from the distribution files and from S3.
 
-Delete the DS Store files from the distribution files:
+Delete the .DS_Store files from the distribution files:
 
 ~~~
 find dist -name .DS_Store -delete
 ~~~
 
-List DS Store files in the s3 bucket sflennikco:
+List .DS_Store files in the S3 bucket sflennikco:
 
 ~~~
 aws s3 ls sflennikco --recursive | grep .DS_Store
@@ -417,7 +416,7 @@ aws s3 ls sflennikco --recursive | grep .DS_Store
 2025-09-19 21:55:03       6148 images/c8/.DS_Store
 ~~~
 
-Delete all DS_Store files. Preview with dryrun:
+Delete all .DS_Store files. Preview with dryrun:
 
 ~~~
 aws s3 rm s3://sflennikco --recursive --exclude "*" --include "*.DS_Store" --dryrun
@@ -429,13 +428,13 @@ __File Roles__
 | -------- | -------- |
 | -p.jpg | The still photo shown on the image page, used for dimensions in cjson, zoom/pan, and offline download |
 | -v.mp4 | Optional motion clip. Live Photos play on press-and-hold. Longer videos show a play button, play to the end, then stop |
-| -t.jpg | Square 480 thumbnail for featured index cards and thumbnail pages |
+| -t.jpg | Square 480 thumbnail for featured index cards and the thumbnails page |
 | -s.jpg | Square 96 thumbnail in `tin/` for compact index rows |
 
 ♫ Notes:
 
 * Some types of editing in Photoshop will create layers. You can tell
-when this happens when you save and it has a .psd extention. In this case
+this happened if you save and it has a .psd extension. In this case
 flatten the image (layer > flatten image), then save to jpg.
 
 * If you save the jpgs with "Embed Color Profile..." checked, the
@@ -451,7 +450,7 @@ there is no map, and paste the Google Maps lat,lng string. The same
 placeholder is under each photo on the image page for that photo's
 GPS.
 
-You can get the GPS coordinates from google maps by dropping a pin
+You can get the GPS coordinates from Google Maps by dropping a pin
 then opening the information below. It will show something like
 (45.6868445, -121.3035183). Paste it without the parentheses:
 
@@ -467,8 +466,8 @@ You can still put the location in cN.json by hand:
 __Optional URL Link__
 
 You can optionally add a `url` on the collection for the thumbnails
-page, or on an image for the image page.  The link shows below the
-description and above the map.  It is an http or https URL plus the
+page, or on an image for the image page. The link shows below the
+description and above the map. It is an http or https URL plus the
 text shown on the page.
 
 On the collection:
@@ -497,14 +496,15 @@ That image link renders as:
 
 # Contents
 
-* [Create Folder](#create-folder) -- how to collect, rename, convert, and thumbnail images.
+* [Create Folder](#create-folder) -- how to create the next collection folder.
 * [Select Photos](#select-photos) -- how to select photos for a new collection.
 * [Rename](#rename) -- how to rename to the names expected by Collections.
 * [Convert](#convert) -- how to convert heic and mov files to jpg and mp4.
 * [Thumbnails](#thumbnails) -- how to make thumbnails.
 * [Make Json File](#make-json-file) -- how to make the collection's json file.
+* [Move into Place](#move-into-place) -- how to move the folder into dist and build.
 * [Edit Collection](#edit-collection) -- how to edit descriptions in place and set order.
 * [Deploy](#deploy) -- how to deploy the files to AWS.
 * [Publish](#publish) -- how to publish the collection to the world.
 * [Notify](#notify) -- how to notify users of the new collection.
-* [Extras](#extras) -- indepth guides and extra how tos.
+* [Extras](#extras) -- in-depth guides and extra how-tos.
